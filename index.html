@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ГОЙДА ME ON THE DRON</title>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@4.3.7/dist/mqtt.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Ysabeau+SC:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #ffcc00;
+  --gold-bright: #ffe033;
+  --bg: #060100;
+  --text: #ffecd0;
+  --red: #e0392b;
+  --red-bright: #ff2020;
+  --blue: #2980b9;
+  --green: #27ae60;
+  --purple: #9b44dd;
+  --neon-blue: #00eeff;
+  --neon-green: #44ff00;
+  --neon-pink: #ff00bb;
+  --neon-purple: #cc44ff;
+  --cur: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='44' viewBox='0 0 40 44'%3E%3Cdefs%3E%3ClinearGradient id='br' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23ffe9a8'/%3E%3Cstop offset='.4' stop-color='%23d4a017'/%3E%3Cstop offset='.75' stop-color='%238a5a12'/%3E%3Cstop offset='1' stop-color='%233a2400'/%3E%3C/linearGradient%3E%3CradialGradient id='gem' cx='42%25' cy='38%25' r='62%25'%3E%3Cstop offset='0' stop-color='%23ffffff'/%3E%3Cstop offset='.35' stop-color='%23ff5a4a'/%3E%3Cstop offset='1' stop-color='%237a0000'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cpath d='M12 29 L15 38 L11 36 L9 43 L8 33 Z' fill='%23ff7a1a' opacity='.9'/%3E%3Cg stroke='%231a0d00' stroke-width='1.1' stroke-linejoin='round'%3E%3Cpath d='M6 5 L20 2 L19 24 L13 31 Z' fill='url(%23br)'/%3E%3Cpath d='M20 2 L19 24 L13 31 L20 26 Z' fill='%23a87214' stroke='none' opacity='.7'/%3E%3Cpath d='M9 8 L17 6.5 L16.5 21 L13 25 Z' fill='%23fff4cf' stroke='none' opacity='.35'/%3E%3Ccircle cx='12.5' cy='14' r='3.4' fill='url(%23gem)'/%3E%3Ccircle cx='11.4' cy='12.7' r='1' fill='%23ffffff' stroke='none' opacity='.85'/%3E%3C/g%3E%3C/svg%3E") 6 4, pointer;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{cursor:var(--cur);background:var(--bg);background-image:radial-gradient(ellipse at 50% 40%,#170701 0%,#050100 70%,#000000 100%);font-family:'Ysabeau SC','Georgia',serif;color:var(--text);height:100vh;overflow:hidden;user-select:none;perspective:1200px;}
+body::before{content:'';position:fixed;inset:-10%;z-index:0;pointer-events:none;background:radial-gradient(ellipse at 50% 42%,rgba(130,20,0,.4),rgba(40,8,0,.2) 45%,transparent 75%);animation:cosmicPulse 10s ease-in-out infinite;}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:4;opacity:0;transition:opacity .8s ease;background:radial-gradient(circle,transparent 40%,rgba(0,0,0,.5) 70%,rgba(180,15,0,.7) 100%);}
+body.super-mode-active::after{opacity:.85;}
+@keyframes cosmicPulse{0%,100%{opacity:.5;transform:scale(1);}50%{opacity:.85;transform:scale(1.06);}}
+@keyframes shake{0%,100%{transform:translateX(0);}10%,90%{transform:translateX(-12px) translateY(2px);}30%,70%{transform:translateX(10px) translateY(-2px);}50%{transform:translateX(-6px) translateY(3px);}}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1.4);}80%{opacity:.9;}100%{opacity:0;transform:translateY(-130px) scale(.8);}}
+@keyframes cardIn{from{transform:scale(.2) rotateY(60deg) translateY(150px);opacity:0;}to{transform:scale(1) rotateY(0deg) translateY(0);opacity:1;}}
+.shake{animation:shake .4s ease-out;}
+.info-row{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;}
+.banner{position:fixed;top:8%;width:40px;height:42%;pointer-events:none;z-index:2;background:linear-gradient(180deg,#4a0a0a,#1a0202 70%,#000000);border:1.5px solid rgba(212,160,23,.3);box-shadow:0 12px 28px rgba(0,0,0,.8);transform-origin:top center;animation:bannerSway 6s ease-in-out infinite;opacity:.6;}
+.banner::after{content:'ᚠ';position:absolute;top:20px;left:50%;transform:translateX(-50%);color:var(--gold);font-size:22px;}
+.banner-l{left:16px;}.banner-r{right:16px;animation-delay:3s;}.banner-r::after{content:'ᛟ';}
+@keyframes bannerSway{0%,100%{transform:rotate(1deg) skewX(1deg);}50%{transform:rotate(-1deg) skewX(-1deg);}}
+.base-wrap{width:190px;height:24px;background:rgba(10,5,2,.9);border:2px solid #2f190e;border-radius:6px;position:relative;overflow:hidden;box-shadow:inset 0 2px 6px rgba(0,0,0,.9),0 4px 10px rgba(0,0,0,.6);}
+.base-segment{position:absolute;top:0;bottom:0;border-right:1.5px dashed rgba(212,160,23,.35);z-index:2;}
+.base-fill{height:100%;width:0%;background:linear-gradient(90deg,#d4a017 0%,#ff5500 70%,#39ff14 100%);box-shadow:0 0 12px rgba(255,85,0,.6);transition:width .5s cubic-bezier(.19,1,.22,1);}
+.base-fill.super-mode{background:linear-gradient(90deg,#39ff14,#00ffff,#e0a0ff);box-shadow:0 0 16px rgba(57,255,20,.8);}
+.base-txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:1px;text-shadow:0 1.5px 3px #000;z-index:3;}
+.base-wrap.super-glow{border-color:#39ff14;animation:superBorderPulse 1.5s infinite;}
+@keyframes superBorderPulse{0%,100%{box-shadow:0 0 4px rgba(57,255,20,.4),inset 0 0 8px rgba(57,255,20,.2);}50%{box-shadow:0 0 14px rgba(57,255,20,.8),inset 0 0 14px rgba(57,255,20,.4);}}
+.shield-slot,.reflect-slot{width:32px;height:32px;border-radius:8px;border:2px solid #2d180f;background:rgba(10,5,2,.85);display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .3s cubic-bezier(.175,.885,.32,1.275);box-shadow:inset 0 1px 4px rgba(0,0,0,.8);}
+.shield-slot.active{border-color:var(--neon-blue);background:radial-gradient(circle,#0e3050,#030a10);box-shadow:0 0 12px rgba(0,204,255,.85),inset 0 0 6px rgba(0,204,255,.4);transform:scale(1.1);}
+.reflect-slot.active{border-color:var(--purple);background:radial-gradient(circle,#3a1158,#0a0310);box-shadow:0 0 12px rgba(142,68,173,.85),inset 0 0 6px rgba(142,68,173,.4);transform:scale(1.1);}
+.hand{display:flex;gap:8px;justify-content:center;align-items:flex-end;min-height:160px;padding-top:15px;margin-top:-5px;overflow:visible;}
+.card-container{perspective:900px;flex-shrink:0;width:94px;height:134px;position:relative;transition:transform .3s cubic-bezier(.25,.8,.25,1.15),z-index .3s;z-index:10;}
+.card-container:hover{transform:scale(1.45) translateY(-25px) !important;z-index:100 !important;}
+.card{width:100%;height:100%;border-radius:10px;border:2px solid var(--cbc,#555);border-left-width:5px;background:linear-gradient(165deg,rgba(255,230,170,.12) 0%,rgba(0,0,0,0) 45%),linear-gradient(0deg,rgba(0,0,0,.65) 0%,rgba(0,0,0,0) 65%),var(--cbg,#1e0f07);display:flex;flex-direction:column;align-items:center;padding:6px 5px;text-align:center;position:relative;color:#fff;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.6),0 6px 12px rgba(0,0,0,.8);transform-style:preserve-3d;transition:border-color .15s,box-shadow .15s;}
+.card.click{cursor:var(--cur);}
+.card-shine{position:absolute;inset:0;background:radial-gradient(circle at var(--shine-x,50%) var(--shine-y,50%),rgba(255,255,255,.22) 0%,rgba(255,255,255,0) 65%);pointer-events:none;z-index:5;mix-blend-mode:overlay;opacity:0;transition:opacity .2s;}
+.card-container:hover .card-shine{opacity:1;}
+.card-role-tab{align-self:flex-start;display:flex;align-items:center;gap:2px;padding:1px 4px 1px 3px;margin:-1px 0 2px -3px;background:var(--cbc,#555);color:#0d0400;border-radius:0 4px 4px 0;font-size:6px;font-weight:900;letter-spacing:.3px;text-transform:uppercase;transform:translateZ(8px);}
+.card-emblem{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0px 0 1px;background:radial-gradient(circle at 50% 35%,rgba(255,225,150,.15),rgba(0,0,0,.6));border:1px solid rgba(255,212,120,.25);box-shadow:0 2px 5px rgba(0,0,0,.6);transform:translateZ(12px);}
+.card-ico{font-size:18px;filter:drop-shadow(0 1.5px 3px rgba(0,0,0,.8));}
+.card-name{font-weight:900;font-size:8px;line-height:1.1;letter-spacing:.3px;color:#ffe8b5;text-shadow:0 1px 2px rgba(0,0,0,.9);min-height:18px;display:flex;align-items:center;transform:translateZ(10px);}
+.card-stat{display:flex;align-items:baseline;justify-content:center;gap:1px;margin:0px 0;transform:translateZ(15px);}
+.card-num{font-size:15px;font-weight:900;text-shadow:0 1.5px 3px rgba(0,0,0,.9);}
+.card-unit{font-size:6px;font-weight:bold;opacity:.85;text-transform:uppercase;}
+.kind-dmg .card-num{color:#ff5e3a;}.kind-heal .card-num{color:#5eff8b;}.kind-shield .card-num{color:#5eb5ff;}.kind-draw .card-num{color:#3ae4d0;}.kind-coin .card-num{color:#ffd700;}.kind-base .card-num{color:#ffa000;}
+.card-effect{font-size:6.5px;line-height:1.2;color:#f1ebd9;flex:1;display:flex;align-items:center;justify-content:center;padding:0 1px;transform:translateZ(5px);}
+.card-tag{margin-top:1px;align-self:stretch;font-size:5.5px;font-weight:bold;letter-spacing:.3px;text-transform:uppercase;color:#ffe8b5;background:linear-gradient(90deg,rgba(212,160,23,.22),rgba(120,10,5,.2));border:.5px solid rgba(212,160,23,.4);border-radius:3px;padding:1px;transform:translateZ(6px);}
+.card.back{background:linear-gradient(135deg,#1a0802 0%,#2d1005 50%,#1a0802 100%) !important;border-color:#6b3010 !important;border-left-width:2px;border-width:2px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.card.back::before{content:'';position:absolute;inset:4px;border:1px solid rgba(212,160,23,.2);border-radius:6px;pointer-events:none;}
+.card.back::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(212,160,23,.04) 0px,rgba(212,160,23,.04) 1px,transparent 1px,transparent 8px);pointer-events:none;}
+.card.back .back-rune{font-size:28px;opacity:.55;color:var(--gold);text-shadow:0 0 12px rgba(212,160,23,.8),0 0 4px rgba(212,160,23,.4);animation:backPulse 3s ease-in-out infinite;z-index:1;}
+@keyframes backPulse{0%,100%{opacity:.4;transform:scale(1);}50%{opacity:.7;transform:scale(1.08);}}
+.abil-card-container{perspective:400px;width:148px;height:68px;}
+.abil-card{width:100%;height:100%;border-radius:8px;border:1.5px solid #2f170b;background:rgba(8,3,1,.95);padding:5px 8px;display:flex;flex-direction:column;justify-content:space-between;transition:all .2s cubic-bezier(.175,.885,.32,1.2);box-shadow:0 2px 6px rgba(0,0,0,.7);}
+.abil-card.ready{border-color:var(--bc);background:linear-gradient(135deg,var(--bbg),#0d0401);cursor:var(--cur);}
+.abil-card.ready:hover{transform:translateY(-3px) scale(1.03) rotateX(5deg);box-shadow:0 4px 10px rgba(0,0,0,.8),0 0 6px var(--bc);}
+.abil-card-header{display:flex;justify-content:space-between;align-items:center;font-size:10px;font-weight:900;color:#fff;border-bottom:1.5px solid rgba(255,255,255,.1);padding-bottom:2px;}
+.abil-card-desc{font-size:8.5px;color:#e5dfcf;opacity:.95;line-height:1.2;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.abil-card-cost{font-size:9px;font-weight:bold;color:var(--gold-bright);text-align:center;letter-spacing:.3px;}
+#game{width:100vw;height:100vh;display:grid;grid-template-rows:auto 1fr auto;position:relative;z-index:10;}
+.player-area{padding:8px 16px;background:linear-gradient(180deg,rgba(0,0,0,.88) 0%,rgba(12,5,1,.7) 100%);border:2px solid #2d180f;transition:all .4s ease;position:relative;}
+#p2-area{border-bottom:2px solid #2d180f;}
+#p1-area{border-top:2px solid #2d180f;}
+.player-area.active-turn{border-color:var(--gold-bright) !important;box-shadow:inset 0 0 20px rgba(212,160,23,.15),0 0 25px rgba(212,160,23,.25);background:linear-gradient(180deg,rgba(20,10,2,.92) 0%,rgba(35,18,5,.75) 100%);}
+.player-area.inactive-turn{opacity:.48;filter:grayscale(25%);pointer-events:none;}
+.turn-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,#b8860b,#ffe066,#b8860b);border:1px solid #fff;box-shadow:0 0 10px rgba(255,215,0,.6);border-radius:4px;color:#000;font-size:8px;font-weight:900;padding:2px 8px;letter-spacing:1px;z-index:50;text-transform:uppercase;animation:badgeBlink 1.5s infinite alternate;}
+@keyframes badgeBlink{0%{opacity:.85;transform:translateX(-50%) scale(.95);}100%{opacity:1;transform:translateX(-50%) scale(1.05);}}
+#mid{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;padding:4px 16px;}
+.arena-side{display:flex;align-items:center;justify-content:center;gap:16px;min-height:120px;}
+.pslot{display:flex;justify-content:center;align-items:center;min-height:120px;position:relative;}
+.played{width:86px;height:122px;border-radius:8px;border:2.5px solid var(--gold);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:6px;animation:cardIn .35s cubic-bezier(.19,1,.22,1) both;box-shadow:0 8px 20px rgba(0,0,0,.8);}
+.empty-slot{font-size:32px;opacity:.12;color:var(--gold);animation:emptyRunePulse 4s ease-in-out infinite;}
+@keyframes emptyRunePulse{0%,100%{opacity:.08;}50%{opacity:.25;}}
+#log-panel{position:fixed;right:0;bottom:0;top:0;width:260px;background:rgba(6,2,0,.97);border-left:2px solid #2f190e;z-index:35;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s ease;box-shadow:-6px 0 20px rgba(0,0,0,.8);}
+#log-panel.open{transform:translateX(0);}
+#log-toggle{position:fixed;right:0;bottom:50%;transform:translateY(50%);z-index:36;background:rgba(10,3,0,.95);border:2px solid #3c1e0b;border-right:none;color:var(--gold-bright);font-size:12px;font-weight:900;writing-mode:vertical-rl;padding:10px 5px;cursor:pointer;border-radius:6px 0 0 6px;letter-spacing:1px;transition:right .3s ease,background .2s;}
+#log-panel.open ~ #log-toggle,body:has(#log-panel.open) #log-toggle{right:260px;}
+#log-panel-header{padding:8px 10px;border-bottom:1.5px solid #2f190e;font-size:9px;font-weight:900;color:var(--gold);letter-spacing:2px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;}
+#log{background:transparent;border:none;border-radius:0;padding:6px 10px;flex:1;overflow-y:auto;font-size:10px;line-height:1.4;}
+.log-line{border-left:3px solid transparent;padding-left:6px;margin-bottom:3px;}
+.log-line.lg-atk{border-left-color:var(--red);background:linear-gradient(90deg,rgba(192,57,43,.15),transparent);}
+.log-line.lg-heal{border-left-color:var(--green);background:linear-gradient(90deg,rgba(39,174,96,.12),transparent);}
+.log-line.lg-shield{border-left-color:var(--blue);background:linear-gradient(90deg,rgba(41,128,185,.15),transparent);}
+.log-line.lg-ref{border-left-color:var(--purple);background:linear-gradient(90deg,rgba(142,68,173,.15),transparent);}
+.log-line.lg-goyda{border-left-color:var(--gold-bright);background:linear-gradient(90deg,rgba(255,215,0,.15),transparent);}
+#combo{text-align:center;font-size:10px;color:#ff473a;font-weight:bold;min-height:14px;text-transform:uppercase;letter-spacing:.5px;}
+.discard{display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none;}
+.disc-label{font-size:8px;letter-spacing:1px;color:#9a7b3a;font-weight:bold;text-transform:uppercase;}
+.disc-label span{color:var(--gold-bright);}
+.disc-stack{position:relative;width:44px;height:64px;}
+.disc-card{position:absolute;left:50%;top:0;width:38px;height:52px;border-radius:4px;border:1.5px solid var(--dc,#555);border-left-width:3px;background:repeating-linear-gradient(45deg,#100300,#100300 4px,#1c0902 4px,#1c0902 8px);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 6px rgba(0,0,0,.6);transform:translateX(-50%) translateY(calc(var(--i)*2px)) rotate(calc((var(--i) - 3)*1.5deg));}
+.disc-card.top{transform:translateX(-50%) translateY(-4px) rotate(-1deg) scale(1.06);border-color:var(--gold);}
+.disc-ic{font-size:14px;opacity:.65;}
+#compendium-modal{position:fixed;inset:0;background:rgba(0,0,0,.94);backdrop-filter:blur(8px);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:200;padding:20px;}
+.compendium-container{background:#110603;border:2px solid #502711;box-shadow:0 0 30px rgba(0,0,0,.9);border-radius:12px;width:90%;max-width:1000px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;}
+.compendium-header{padding:14px 20px;border-bottom:2px solid #2d180d;display:flex;justify-content:space-between;align-items:center;}
+.compendium-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:14px;padding:20px;overflow-y:auto;}
+#over{position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,#200303 0%,#000000 100%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:140;}
+#over-txt{font-size:34px;font-weight:900;color:var(--gold-bright);text-shadow:0 0 30px rgba(212,160,23,.8);margin-bottom:20px;text-align:center;letter-spacing:2.5px;line-height:1.4;text-transform:uppercase;}
+#mute,#open-compendium{position:fixed;top:10px;z-index:125;background:rgba(10,3,0,.85);border:1px solid #3c1e0b;color:var(--gold-bright);font-size:14px;height:32px;border-radius:6px;cursor:var(--cur);display:flex;align-items:center;justify-content:center;transition:background .2s;padding:0 10px;}
+#mute{left:16px;}#open-compendium{left:74px;}
+#mute:hover,#open-compendium:hover{background:#200802;}
+.float-num{position:fixed;pointer-events:none;font-weight:900;z-index:999;animation:floatUp 1.2s cubic-bezier(.19,1,.22,1) forwards;text-shadow:0 3px 8px rgba(0,0,0,.9);}
+.fn-dmg{color:var(--red-bright);font-size:32px;}.fn-heal{color:#2ecc71;font-size:26px;}.fn-coin{color:var(--gold-bright);font-size:20px;}.fn-block{color:#00ccff;font-size:18px;}.fn-ref{color:#d8a8ff;font-size:18px;}.fn-base{color:#ffaa00;font-size:20px;}.fn-baseloss{color:#888;font-size:20px;}
+.super-overlay{position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);font-size:34px;font-weight:900;color:#39ff14;text-shadow:0 0 20px #39ff14,0 2px 6px #000;letter-spacing:3px;z-index:120;pointer-events:none;text-align:center;animation:superOverlayPop 1.8s cubic-bezier(.175,.885,.32,1.275) forwards;}
+@keyframes superOverlayPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(-10deg);}25%{opacity:1;transform:translate(-50%,-50%) scale(1.15) rotate(3deg);}75%{opacity:1;transform:translate(-50%,-50%) scale(.98) rotate(0deg);}100%{opacity:0;transform:translate(-50%,-50%) scale(1.1) rotate(0deg);filter:blur(5px);}}
+.scroller-abil{display:flex;gap:8px;justify-content:center;padding:2px 0;min-height:56px;}
+.btn{background:linear-gradient(135deg,var(--gold-bright) 0%,var(--gold) 100%);color:#000;border:none;padding:10px 30px;font-family:inherit;font-size:13px;font-weight:900;border-radius:6px;cursor:var(--cur);letter-spacing:2px;text-transform:uppercase;transition:all .2s cubic-bezier(.175,.885,.32,1.275);box-shadow:0 4px 15px rgba(212,160,23,.4);}
+.btn:hover{transform:translateY(-2px) scale(1.04);box-shadow:0 6px 20px rgba(212,160,23,.7);}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+/* LOBBY */
+#lobby{position:fixed;inset:0;z-index:160;background:radial-gradient(circle at 50% 40%,#150601 0%,#000000 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;}
+.lobby-title{font-size:30px;font-weight:900;color:var(--gold-bright);letter-spacing:3px;text-shadow:0 0 20px rgba(255,215,0,.5);text-transform:uppercase;text-align:center;}
+.lobby-sub{font-size:11px;color:var(--text);opacity:.6;letter-spacing:3px;text-transform:uppercase;margin-top:-8px;}
+.lobby-divider{width:260px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.lobby-section{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;max-width:300px;}
+.lobby-label{font-size:9px;letter-spacing:2px;color:#9a7b3a;text-transform:uppercase;font-weight:bold;}
+.lobby-input{background:rgba(10,5,2,.9);border:2px solid #3c1e0b;color:var(--text);font-family:inherit;font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:5px;text-align:center;padding:8px 16px;border-radius:6px;width:100%;outline:none;transition:border-color .2s;}
+.lobby-input:focus{border-color:var(--gold);}
+.lobby-input::placeholder{opacity:.25;font-size:12px;letter-spacing:2px;}
+.room-code-big{font-size:34px;font-weight:900;color:var(--gold-bright);letter-spacing:7px;text-shadow:0 0 15px rgba(255,215,0,.6);cursor:pointer;background:rgba(20,10,2,.8);border:2px solid var(--gold);padding:10px 24px;border-radius:8px;transition:text-shadow .2s;}
+.room-code-big:hover{text-shadow:0 0 28px rgba(255,215,0,.95);}
+.lobby-status{font-size:11px;color:var(--text);text-align:center;min-height:18px;}
+.lobby-status.err{color:#ff5555;}
+.lobby-status.wait{color:var(--gold-bright);animation:lbPulse 1.4s ease-in-out infinite;}
+@keyframes lbPulse{0%,100%{opacity:.6;}50%{opacity:1;}}
+.copy-hint{font-size:9px;color:#9a7b3a;letter-spacing:1px;cursor:pointer;text-transform:uppercase;}
+.copy-hint:hover{color:var(--gold-bright);}
+/* WAITING */
+#waiting-overlay{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.5);backdrop-filter:blur(1px);}
+.waiting-box{background:rgba(8,3,0,.97);border:2px solid var(--gold);border-radius:12px;padding:22px 40px;text-align:center;box-shadow:0 0 30px rgba(212,160,23,.25);}
+.waiting-title{font-size:16px;font-weight:900;color:var(--gold-bright);letter-spacing:2px;text-transform:uppercase;}
+.waiting-sub{font-size:10px;color:var(--text);opacity:.55;margin-top:4px;letter-spacing:1px;}
+.waiting-dots{display:flex;gap:6px;justify-content:center;margin-top:12px;}
+.waiting-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);animation:wdot 1.2s ease-in-out infinite;}
+.waiting-dot:nth-child(2){animation-delay:.2s;}.waiting-dot:nth-child(3){animation-delay:.4s;}
+@keyframes wdot{0%,80%,100%{transform:scale(.6);opacity:.25;}40%{transform:scale(1.1);opacity:1;}}
+#conn-badge{position:fixed;top:10px;right:14px;z-index:126;font-size:8px;font-weight:900;letter-spacing:1px;text-transform:uppercase;padding:4px 9px;border-radius:4px;background:rgba(10,3,0,.88);border:1px solid #3c1e0b;}
+/* BOTTOM BAR */
+#bottom-bar{position:fixed;bottom:0;left:0;right:0;z-index:30;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(6,1,0,.9);border-top:1.5px solid #2d180f;padding:4px 12px;height:38px;}
+#bottom-bar.hidden{display:none;}
+.bb-btn{background:rgba(20,8,2,.9);border:1.5px solid #3c1e0b;color:var(--gold);font-family:inherit;font-size:9px;font-weight:900;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:5px;cursor:pointer;transition:background .2s,border-color .2s;}
+.bb-btn:hover{background:#200802;border-color:var(--gold);}
+#mute-bb{min-width:80px;}
+/* IMPROVED LOG */
+.log-entry{display:flex;align-items:flex-start;gap:5px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.log-ic-box{width:18px;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-top:1px;}
+.log-body{flex:1;font-size:10px;line-height:1.3;color:var(--text);}
+.log-result{font-size:10px;font-weight:900;flex-shrink:0;white-space:nowrap;}
+.log-hp{font-size:8px;color:#888;flex-shrink:0;white-space:nowrap;align-self:flex-end;}
+.log-res-dmg{color:var(--red-bright);}
+.log-res-heal{color:#5eff8b;}
+.log-res-base{color:#ffaa00;}
+.log-res-coin{color:var(--gold-bright);}
+.log-res-shield{color:var(--neon-blue);}
+.log-res-draw{color:#3ae4d0;}
+.log-res-sys{color:var(--gold);}
+/* LOCAL MODE btn */
+.btn-local{background:linear-gradient(135deg,#2d4a1e,#1a6b35) !important;color:#5eff8b !important;box-shadow:0 4px 15px rgba(68,255,0,.2) !important;}
+.btn-local:hover{box-shadow:0 6px 20px rgba(68,255,0,.45) !important;}
+/* MOBILE */
+@media(max-width:640px){
+  body{overflow-y:auto;height:auto;}
+  #game{grid-template-rows:auto auto auto;height:auto;min-height:100dvh;}
+  .card-container{width:68px;height:96px;}
+  .card-container:hover{transform:scale(1.25) translateY(-14px) !important;}
+  .card-name{font-size:5.5px;}
+  .card-ico{font-size:13px;}
+  .card-effect{font-size:5.5px;}
+  .card-stat .card-num{font-size:12px;}
+  .abil-card-container{width:90px;height:58px;}
+  .abil-card-header{font-size:8px;}
+  .abil-card-desc{font-size:7px;}
+  #mid{grid-template-columns:1fr auto 1fr;padding:2px 6px;}
+  .arena-side{gap:8px;}
+  .played{width:68px;height:96px;}
+  .player-area{padding:4px 8px;}
+  .base-wrap{width:130px;}
+  .info-row{gap:6px;flex-wrap:wrap;}
+  .pname{font-size:9px;}
+  #log-panel{width:100vw;}
+  #log-panel.open ~ #log-toggle,body:has(#log-panel.open) #log-toggle{right:100vw;}
+  .lobby-title{font-size:22px;}
+  .room-code-big{font-size:26px;letter-spacing:4px;}
+}
+</style>
+</head>
+<body>
+
+<canvas id="sparks" style="position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.8"></canvas>
+<div class="banner banner-l"></div>
+<div class="banner banner-r"></div>
+<div id="conn-badge" style="color:#888">⚡ P2P</div>
+
+<!-- ЛОББИ -->
+<div id="lobby">
+  <div class="lobby-title">⚔ ГОЙДА ME ON THE DRON ⚔</div>
+  <div class="lobby-sub">карточная битва · два бойца · одна Гойда</div>
+  <div class="lobby-divider"></div>
+
+  <div class="lobby-section">
+    <div class="lobby-label">⚡ Быстрый старт — одно устройство</div>
+    <button class="btn btn-local" id="btn-local">👥 ЛОКАЛЬНАЯ СХВАТКА</button>
+    <div style="font-size:8px;color:#5eff8b;opacity:.55;text-align:center;letter-spacing:1px;margin-top:-2px">передавай телефон по очереди — гойда!</div>
+  </div>
+
+  <div class="lobby-divider"></div>
+  <div style="font-size:9px;color:#9a7b3a;letter-spacing:2px;text-transform:uppercase;font-weight:bold;text-align:center">🌐 Онлайн — разные устройства</div>
+
+  <div id="lb-create-section" class="lobby-section">
+    <div class="lobby-label">Создать комнату</div>
+    <button class="btn" id="btn-create">⚔ СОЗДАТЬ КОМНАТУ</button>
+  </div>
+  <div class="lobby-divider" style="width:180px;opacity:.5"></div>
+  <div id="lb-join-section" class="lobby-section">
+    <div class="lobby-label">Войти по коду</div>
+    <input id="room-input" class="lobby-input" maxlength="6" placeholder="КОД" autocomplete="off" spellcheck="false">
+    <button class="btn" id="btn-join">🚪 ВОЙТИ</button>
+  </div>
+  <div id="lobby-status" class="lobby-status"></div>
+  <div id="lb-waiting" style="display:none" class="lobby-section">
+    <div class="lobby-label">Твой код — скинь другу:</div>
+    <div class="room-code-big" id="code-display" onclick="copyCode()">------</div>
+    <div class="copy-hint" onclick="copyCode()">📋 нажми чтобы скопировать</div>
+    <div class="lobby-status wait" style="margin-top:4px">⏳ Ждём второго бойца... гойда...</div>
+  </div>
+</div>
+
+<!-- ИГРА -->
+<div id="game">
+  <div class="player-area" id="p2-area">
+    <div id="p2-turn-badge" class="turn-badge hidden">🛡️ ХОДИТ СЕЙЧАС</div>
+    <div class="info-row">
+      <div class="flex items-center gap-3">
+        <span class="pname text-xs font-bold" id="pname2">⚔ ВОИН II</span>
+        <div class="hp-wrap w-[160px] bg-black border border-orange-950 rounded relative overflow-hidden" style="height:14px">
+          <div class="hp-fill h-full transition-all duration-300" id="p2-hp"></div>
+        </div>
+        <span class="hp-txt font-bold" style="font-size:11px" id="p2-hptxt">100/100</span>
+      </div>
+      <div class="flex gap-3">
+        <div class="flex flex-col items-center">
+          <span class="text-[7px] text-[#00ccff] font-bold uppercase mb-0.5 tracking-wider">Броня (Макс 2)</span>
+          <div class="flex gap-1" id="p2-shields-list"></div>
+        </div>
+        <div class="flex flex-col items-center">
+          <span class="text-[7px] text-[#cc99ff] font-bold uppercase mb-0.5 tracking-wider">Отражение (Макс 2)</span>
+          <div class="flex gap-1" id="p2-reflects-list"></div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="base-wrap" id="p2-base-wrap">
+          <div class="base-segment" style="left:33%"></div>
+          <div class="base-segment" style="left:66%"></div>
+          <div class="base-fill" id="p2-base-fill"></div>
+          <div class="base-txt"><span id="p2-stage-txt">ЭТАП I</span>: <span id="p2-base-num">0</span>%</div>
+        </div>
+        <span class="coins-el text-xs" id="p2-co">💰 0</span>
+      </div>
+    </div>
+    <div class="scroller-abil mt-1" id="p2-abils"></div>
+    <div class="hand" id="p2-hand"></div>
+  </div>
+
+  <div id="mid">
+    <div class="arena-side">
+      <div class="pslot" id="sl-p2"></div>
+      <div class="discard" id="disc-p2">
+        <div class="disc-label">СБРОС <span id="disc-p2-n">0</span></div>
+        <div class="disc-stack" id="disc-p2-stack"></div>
+      </div>
+    </div>
+    <div class="mid-center" style="text-align:center">
+      <div class="deck-row" style="margin-bottom:4px">
+        <span style="font-size:11px;color:#ffd700;font-weight:900" id="deck-pile">📜 КИБЕР-СВИТКИ <span id="deck-count">56</span></span>
+      </div>
+      <div id="combo"></div>
+    </div>
+    <div class="arena-side">
+      <div class="pslot" id="sl-p1"></div>
+      <div class="discard" id="disc-p1">
+        <div class="disc-label">СБРОС <span id="disc-p1-n">0</span></div>
+        <div class="disc-stack" id="disc-p1-stack"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="player-area" id="p1-area">
+    <div id="p1-turn-badge" class="turn-badge hidden">🛡️ ХОДИТ СЕЙЧАС</div>
+    <div class="hand" id="p1-hand"></div>
+    <div class="scroller-abil mb-1" id="p1-abils"></div>
+    <div class="info-row">
+      <div class="flex items-center gap-3">
+        <span class="pname text-xs font-bold" id="pname1">⚔ ВОИН I</span>
+        <div class="hp-wrap w-[160px] bg-black border border-orange-950 rounded relative overflow-hidden" style="height:14px">
+          <div class="hp-fill h-full transition-all duration-300" id="p1-hp"></div>
+        </div>
+        <span class="hp-txt font-bold" style="font-size:11px" id="p1-hptxt">100/100</span>
+      </div>
+      <div class="flex gap-3">
+        <div class="flex flex-col items-center">
+          <span class="text-[7px] text-[#00ccff] font-bold uppercase mb-0.5 tracking-wider">Броня (Макс 2)</span>
+          <div class="flex gap-1" id="p1-shields-list"></div>
+        </div>
+        <div class="flex flex-col items-center">
+          <span class="text-[7px] text-[#cc99ff] font-bold uppercase mb-0.5 tracking-wider">Отражение (Макс 2)</span>
+          <div class="flex gap-1" id="p1-reflects-list"></div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="base-wrap" id="p1-base-wrap">
+          <div class="base-segment" style="left:33%"></div>
+          <div class="base-segment" style="left:66%"></div>
+          <div class="base-fill" id="p1-base-fill"></div>
+          <div class="base-txt"><span id="p1-stage-txt">ЭТАП I</span>: <span id="p1-base-num">0</span>%</div>
+        </div>
+        <span class="coins-el text-xs" id="p1-co">💰 0</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ХОД СОПЕРНИКА -->
+<div id="waiting-overlay">
+  <div class="waiting-box">
+    <div class="waiting-title">⏳ Ход соперника</div>
+    <div class="waiting-sub">Ожидаем следующего хода</div>
+    <div class="waiting-dots">
+      <div class="waiting-dot"></div><div class="waiting-dot"></div><div class="waiting-dot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- КОМПЕНДИУМ -->
+<div id="compendium-modal">
+  <div class="compendium-container">
+    <div class="compendium-header">
+      <h3 class="text-xl font-black text-[#ffd700] tracking-wider font-mono">📜 СВЯЩЕННАЯ КНИГА ГОЙДЫ</h3>
+      <button class="btn" style="padding:4px 12px;font-size:11px" onclick="toggleCompendium(false)">✖ ЗАКРЫТЬ</button>
+    </div>
+    <div class="compendium-grid grid" id="compendium-grid-inner"></div>
+  </div>
+</div>
+
+<!-- КОНЕЦ -->
+<div id="over">
+  <div id="over-txt"></div>
+  <button class="btn" onclick="resetGame()">⚔ Новая Схватка!</button>
+</div>
+
+<!-- ЛОГ ПАНЕЛЬ -->
+<div id="log-panel">
+  <div id="log-panel-header">
+    <span>⚔ Летопись битвы</span>
+    <span style="cursor:pointer;font-size:14px;opacity:.6" onclick="toggleLog()">✖</span>
+  </div>
+  <div id="log"></div>
+</div>
+<button id="log-toggle" onclick="toggleLog()">📜 ЛОГ</button>
+
+<!-- НИЖНИЙ БАР -->
+<div id="bottom-bar" class="hidden">
+  <button class="bb-btn" id="mute-bb" onclick="toggleMute()">🔇 ЗВУК ВЫКЛ</button>
+  <button class="bb-btn" onclick="toggleCompendium(true)">📜 КНИГА ГОЙДЫ</button>
+  <button class="bb-btn" id="bb-lobby" onclick="backToLobby()" style="display:none">🏠 МЕНЮ</button>
+</div>
+
+<script>
+// catch any global JS error and show it in the lobby
+window.onerror=function(msg,src,line){
+  let el=document.getElementById('lobby-status');
+  if(el)el.textContent='❌ JS ERR: '+msg+' (line '+line+')';
+  return false;
+};
+window.addEventListener('unhandledrejection',function(e){
+  let el=document.getElementById('lobby-status');
+  if(el)el.textContent='❌ Promise: '+(e.reason&&e.reason.message||e.reason);
+});
+
+const DEFS={GOYDA:{n:'ГОЙДА',ic:'⚔️',bg:'#5c0808',bc:'#e74c3c',cnt:8,role:'atk',num:'9',unit:'УРОН',kind:'dmg',base:10,eff:'Базовый натиск. Каждый ход комбо ГОЙДА подряд: +2 к урону.'},GOYDUSHKA:{n:'ГОЙДУШКА',ic:'🧚‍♀️',bg:'#4a0e4e',bc:'#9b59b6',cnt:4,role:'sup',num:'16',unit:'ОЗ',kind:'heal',base:12,eff:'Ласковая Гойдушка лечит раны. Наполняет Базометр на +12%.'},GOYDO_SHIELD:{n:'ГОЙДО-ЩИТ',ic:'🛡️',bg:'#092c4c',bc:'#00ccff',cnt:6,role:'def',num:'+1',unit:'БРОНЯ',kind:'shield',base:8,eff:'Активирует 1 слот брони. Предельный лимит брони: 2 значка.'},GOYDO_FONK:{n:'ГОЙДО-ФОНК',ic:'🎛️',bg:'#4d2c00',bc:'#ffbd15',cnt:5,role:'atk',num:'14',unit:'УРОН',kind:'dmg',base:15,eff:'Оглушительный бас Гойдо-Фонка раскачивает Базометр на +15%.'},PEREGOYDA:{n:'ПЕРЕГОЙДА',ic:'🪬',bg:'#1b072e',bc:'#b366ff',cnt:4,role:'def',num:'+1',unit:'ОТРАЖ',kind:'shield',base:6,eff:'Включает 1 слот зеркального отражения. Максимальный лимит: 2.'},GOYDO_DILER:{n:'ГОЙДО-ДИЛЕР',ic:'🃏',bg:'#05322b',bc:'#00ffcc',cnt:4,role:'sup',num:'+2',unit:'КАРТЫ',kind:'draw',base:10,eff:'Вытягивает 2 новых свитка из колоды для комбо.'},GOYDO_HAMSTER:{n:'ГОЙДО-ХОМЯК',ic:'🐹',bg:'#152238',bc:'#00a2ff',cnt:4,role:'sup',num:'+2',unit:'МОНЕТЫ',kind:'coin',base:8,eff:'Добывает 2 монеты для вызова тактических вечевых способностей.'},NAGOYDATEL:{n:'НАГОЙДАТЕЛЬ',ic:'🔥',bg:'#5c2c00',bc:'#ff6600',cnt:4,role:'sup',num:'+20',unit:'БАЗА',kind:'base',base:20,eff:'Резко нагнетает Базометр (+20%). Не наносит прямого урона.'},CRINGE_GOYDA:{n:'КРИНЖО-ГОЙДА',ic:'🤮',bg:'#1a2e1c',bc:'#2ecc71',cnt:4,role:'atk',num:'10',unit:'УРОН',kind:'dmg',base:5,eff:'Сбивает Базометр противника на −15%. Наносит 10 урона.'},KRIO_GOYDA:{n:'КРИО-ГОЙДА',ic:'❄️',bg:'#023440',bc:'#3aebff',cnt:3,role:'def',num:'12',unit:'УРОН',kind:'dmg',base:5,eff:'Замораживает прирост Базометра врага на следующий ход.'},OPLICH_GOYDA:{n:'ОПРИЧ-ГОЙДА',ic:'💥',bg:'#6f0505',bc:'#ff1111',cnt:3,role:'atk',num:'25',unit:'УРОН',kind:'dmg',base:25,eff:'Тяжелый удар. Можно разыграть только на ЭТАПЕ II и выше.'},GOYDO_OBEREG:{n:'ГОЙДО-ОБЕРЕГ',ic:'🧿',bg:'#02223a',bc:'#00ffff',cnt:3,role:'def',num:'+1',unit:'ЗАЩИТЫ',kind:'shield',base:10,eff:'Дарует 1 Броню и 1 Отражение. Требуется ЭТАП II и выше.'},GIPER_GOYD:{n:'ГИПЕР-ГОЙД',ic:'⚡',bg:'#3d0558',bc:'#d8a8ff',cnt:2,role:'atk',num:'32',unit:'УРОН',kind:'dmg',base:30,eff:'Божественный разряд Гипербореи. Требует ЭТАП III. Ломает броню.'},ABSOLUT_GOYDA:{n:'АБСОЛЮТ-ГОЙДА',ic:'🌟',bg:'#1c1c1c',bc:'#ffffff',cnt:2,role:'sup',num:'+35',unit:'БАЗА',kind:'base',base:35,eff:'Окончательное слово. Дарует +35% Базы и лечит 20 ОЗ.'}};
+const TAP=[
+  {n:'Зажим',ic:'🥚',d:'12 чистого урона',cost:2,bg:'#5a1c0f',bc:'#e74c3c',run:(pi,me,foe)=>{doAtk(pi,12,true,me,foe);}},
+  {n:'Оплот',ic:'🛡️',d:'+1 броня и +10 ОЗ',cost:2,bg:'#092440',bc:'#00ccff',run:(pi,me,foe)=>{me.sh=Math.min(me.sh+1,2);healRaw(pi,10);}},
+  {n:'Яд Кринжа',ic:'🧪',d:'8 урона, врагу база −10%',cost:2,bg:'#1a2e1c',bc:'#2ecc71',run:(pi,me,foe)=>{doAtk(pi,8,false,me,foe);foe.base=Math.max(0,foe.base-10);}},
+  {n:'Инъекция',ic:'💉',d:'Дарует +18% Базометра',cost:1,bg:'#4d2c00',bc:'#ffbd15',run:(pi,me,foe)=>{changeBase(pi,me,18);}},
+  {n:'Зеркало',ic:'🪬',d:'Дарует +1 Отражение',cost:2,bg:'#1b072e',bc:'#b366ff',run:(pi,me,foe)=>{me.re=Math.min(me.re+1,2);}},
+  {n:'Вечевой Оброк',ic:'💰',d:'Враг теряет 2 💰, ты +1',cost:1,bg:'#05322b',bc:'#00ffcc',run:(pi,me,foe)=>{foe.coins=Math.max(0,foe.coins-2);me.coins++;}},
+  {n:'Милость',ic:'🍺',d:'Лечит 25 ОЗ, но база −12%',cost:2,bg:'#2d1d1d',bc:'#ff5500',run:(pi,me,foe)=>{healRaw(pi,25);changeBase(pi,me,-12);}},
+  {n:'Кара Перуна',ic:'⚡',d:'Наносит 24 урона обоим',cost:3,bg:'#3a2a00',bc:'#ffd700',run:(pi,me,foe)=>{dealRaw(pi,24);dealRaw(1-pi,24);}}
+];
+
+let myIndex=-1,isOnline=false,isRemoteUpdate=false,isLocal=false;
+let G={},actx,master,sndMuted=true,lockShield=false;
+
+function mkP(){return{hp:100,sh:0,re:0,combo:0,coins:0,hand:[],base:0,superMode:false,superTurns:0,freezeNext:false,abilities:[],abilIdx:[]};}
+function buildDeck(){let d=[];for(let k in DEFS){let df=DEFS[k];for(let i=0;i<df.cnt;i++)d.push({...df,id:k,uid:k+'_'+Math.random()});}for(let i=d.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}return d;}
+function draw(p,n){for(let i=0;i<n;i++){if(!G.deck.length){G.deck=buildDeck();addLog('📜 Колода свитков перетасована! Ратный дух крепок.','#ffbd15');}if(p.hand.length<7)p.hand.push(G.deck.pop());}triggerDeckJiggle();}
+function rollAbilities(p){let t=TAP.map((_,i)=>i),idx=[];for(let i=0;i<3;i++){let r=Math.floor(Math.random()*t.length);idx.push(t.splice(r,1)[0]);}p.abilIdx=idx;p.abilities=idx.map(i=>TAP[i]);}
+function initGame(){G={deck:buildDeck(),turn:0,over:false,last:[null,null],disc:[[],[]],logLines:[],players:[mkP(),mkP()]};draw(G.players[0],5);draw(G.players[1],5);G.players[0].coins=1;rollAbilities(G.players[0]);rollAbilities(G.players[1]);document.getElementById('log').innerHTML='';document.getElementById('sl-p1').innerHTML='';document.getElementById('sl-p2').innerHTML='';document.getElementById('disc-p1-stack').innerHTML='';document.getElementById('disc-p2-stack').innerHTML='';document.getElementById('over').style.display='none';document.body.classList.remove('super-mode-active');addLog('⚔️ Бойцы вышли на ратное поле! ГОЙДА!','#ffbd15');}
+
+// ═══ MQTT NETWORKING (HiveMQ public broker) ═══
+let mqttClient=null,roomCode=null,syncCounter=0,gameStarted=false;
+const MQTT_URL='wss://broker.hivemq.com:8884/mqtt';
+
+function genCode(){const ch='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let c='';for(let i=0;i<6;i++)c+=ch[Math.floor(Math.random()*ch.length)];return c;}
+function setLobbyStatus(msg,cls){let el=document.getElementById('lobby-status');el.textContent=msg;el.className='lobby-status'+(cls?' '+cls:'');}
+
+function mqttConnect(cb){
+  let cid='goyda_'+Math.random().toString(36).substr(2,9);
+  let cl=mqtt.connect(MQTT_URL,{clientId:cid,clean:true,connectTimeout:8000,reconnectPeriod:0});
+  let done=false;
+  cl.on('connect',()=>{done=true;cb(null,cl);});
+  cl.on('error',(e)=>{if(!done){done=true;cb(e,null);}});
+  setTimeout(()=>{if(!done){done=true;cb(new Error('Таймаут соединения'),null);}},10000);
+}
+
+function createRoom(){
+  if(typeof mqtt==='undefined'){setLobbyStatus('❌ Библиотека не загружена — проверь интернет и перезагрузи страницу','err');return;}
+  initSound();
+  setLobbyStatus('Подключение...','wait');
+  document.getElementById('btn-create').disabled=true;document.getElementById('btn-join').disabled=true;
+  mqttConnect((err,cl)=>{
+    if(err){setLobbyStatus('❌ '+err.message,'err');document.getElementById('btn-create').disabled=false;document.getElementById('btn-join').disabled=false;return;}
+    mqttClient=cl;
+    roomCode=genCode();myIndex=0;isOnline=true;gameStarted=false;
+    initGame();
+    let topic='goyda25/'+roomCode;
+    cl.subscribe(topic);
+    cl.on('message',(_,msg)=>onMsg(msg));
+    cl.on('close',onDisconnect);
+    _mqttPub('init');
+    document.getElementById('lb-create-section').style.display='none';
+    document.getElementById('lb-join-section').style.display='none';
+    document.getElementById('lb-waiting').style.display='flex';
+    document.getElementById('code-display').textContent=roomCode;
+    document.getElementById('conn-badge').textContent='⏳ ЖДЁМ';
+    document.getElementById('conn-badge').style.color='#ffd700';
+    setLobbyStatus('');
+  });
+}
+
+function joinRoomBtn(){
+  if(typeof mqtt==='undefined'){setLobbyStatus('❌ Библиотека не загружена — проверь интернет и перезагрузи страницу','err');return;}
+  initSound();
+  let code=document.getElementById('room-input').value.trim().toUpperCase();
+  if(code.length<4){setLobbyStatus('Введи код комнаты','err');return;}
+  setLobbyStatus('Подключение...','wait');
+  document.getElementById('btn-create').disabled=true;document.getElementById('btn-join').disabled=true;
+  mqttConnect((err,cl)=>{
+    if(err){setLobbyStatus('❌ '+err.message,'err');document.getElementById('btn-create').disabled=false;document.getElementById('btn-join').disabled=false;return;}
+    mqttClient=cl;roomCode=code;
+    let topic='goyda25/'+code;
+    cl.subscribe(topic);
+    cl.on('message',(_,msg)=>onMsg(msg));
+    cl.on('close',onDisconnect);
+    let timer=setTimeout(()=>{if(myIndex===-1){setLobbyStatus('❌ Комната не найдена','err');document.getElementById('btn-create').disabled=false;document.getElementById('btn-join').disabled=false;cl.end(true);isOnline=false;}},7000);
+    // retained message from host arrives automatically
+    // onMsg handles it and sets myIndex=1
+    window._joinTimer=timer;
+  });
+}
+
+function onMsg(msgBuf){
+  let d;try{d=JSON.parse(msgBuf.toString());}catch(e){return;}
+  // Guest receives host's state for the first time
+  if(myIndex===-1&&d._p===0&&(d._t==='init'||d._t==='state')){
+    clearTimeout(window._joinTimer);
+    myIndex=1;isOnline=true;gameStarted=false;
+    isRemoteUpdate=true;applyRemoteState(d);isRemoteUpdate=false;
+    _mqttPub('join');
+    startOnlineGame();
+    return;
+  }
+  // Host receives join signal
+  if(myIndex===0&&!gameStarted&&d._p===1&&d._t==='join'){
+    startOnlineGame();return;
+  }
+  // In-game moves
+  if(!gameStarted||d._p===myIndex)return;
+  if(d._t!=='state'&&d._t!=='reset')return;
+  let isReset=d._t==='reset';
+  isRemoteUpdate=true;applyRemoteState(d);
+  if(isReset)document.getElementById('log').innerHTML='';
+  renderLogFromState();render();renderDiscard(0);renderDiscard(1);
+  isRemoteUpdate=false;updateWaitingOverlay();
+  if(G.over)showOnlineOver();
+  if(isReset){document.getElementById('over').style.display='none';addLog('⚔️ Новая битва начата!','#39ff14');}
+}
+
+function onDisconnect(){
+  document.getElementById('conn-badge').textContent='❌ РАЗРЫВ';
+  document.getElementById('conn-badge').style.color='#ff5555';
+  if(gameStarted)addLog('❌ Соединение разорвано.','#ff5555');
+}
+
+function startOnlineGame(){
+  gameStarted=true;
+  document.getElementById('lobby').style.display='none';
+  document.getElementById('bottom-bar').classList.remove('hidden');
+  document.getElementById('log-toggle').style.display='block';
+  document.getElementById('bb-lobby').style.display='inline-block';
+  document.getElementById('conn-badge').textContent='⚡ В СЕТИ';
+  document.getElementById('conn-badge').style.color='#39ff14';
+  document.getElementById('pname'+(myIndex+1)).textContent='⚔ ВЫ (ВОИН '+(myIndex===0?'I':'II')+')';
+  document.getElementById('pname'+(2-myIndex)).textContent='⚔ СОПЕРНИК';
+  render();renderDiscard(0);renderDiscard(1);updateWaitingOverlay();
+  if(myIndex===0)syncState('state');
+  addLog('🌐 Соперник подключился! Бой начат.','#39ff14');
+}
+
+function _mqttPub(t,state){
+  if(!mqttClient||!roomCode)return;
+  let s=state||serializeState();
+  s._p=myIndex;s._t=t||'state';s._c=++syncCounter;
+  let retain=(t==='init'||t==='state');
+  mqttClient.publish('goyda25/'+roomCode,JSON.stringify(s),{retain,qos:1});
+}
+function syncState(type){if(isRemoteUpdate||!isOnline)return;_mqttPub(type||'state');}
+function serializeState(){return{deck:G.deck,turn:G.turn,over:G.over,last:G.last,disc:G.disc,logLines:G.logLines||[],players:G.players.map(p=>({hp:p.hp,sh:p.sh,re:p.re,combo:p.combo,coins:p.coins,hand:p.hand,base:p.base,superMode:p.superMode,superTurns:p.superTurns,freezeNext:p.freezeNext,abilIdx:p.abilIdx||[]}))};}
+function applyRemoteState(s){G={deck:s.deck||[],turn:s.turn,over:s.over||false,last:s.last||[null,null],disc:s.disc||[[],[]],logLines:s.logLines||[],players:(s.players||[]).map(p=>({...p,abilities:(p.abilIdx||[]).map(i=>TAP[i])}))};}
+function updateWaitingOverlay(){document.getElementById('waiting-overlay').style.display=(isOnline&&G.turn!==myIndex&&!G.over)?'flex':'none';}
+function copyCode(){navigator.clipboard.writeText(document.getElementById('code-display').textContent).then(()=>{let el=document.getElementById('code-display');let t=el.textContent;el.textContent='СКОПИРОВАНО!';setTimeout(()=>el.textContent=t,1200);}).catch(()=>prompt('Скопируй код:',document.getElementById('code-display').textContent));}
+function showOnlineOver(){let me=G.players[myIndex],foe=G.players[1-myIndex];if(me.hp<=0&&foe.hp<=0)showOver('⚔️ СОВМЕСТНАЯ СМЕРТЬ!<br><span class="text-sm font-normal">Оба воина пали во славу рока!</span>');else if(me.hp<=0)showOver('💀 ВЫ ПАЛИ!<br><span class="text-sm font-normal">Соперник оказался базированнее.</span>');else showOver('🏆 ВЫ ТРИУМФОВАЛИ!<br><span class="text-sm font-normal">Ваша Гойда признана абсолютной!</span>');}
+
+// GAME
+function playCard(pi,card){if(G.over||G.turn!==pi)return;if(isOnline&&pi!==myIndex)return;let me=G.players[pi],foe=G.players[1-pi];if(card.id==='OPLICH_GOYDA'&&getStage(me.base)<2&&!me.superMode){spawnFl(pi,'Требует ЭТАП II!','baseloss');return;}if(card.id==='GOYDO_OBEREG'&&getStage(me.base)<2&&!me.superMode){spawnFl(pi,'Требует ЭТАП II!','baseloss');return;}if(card.id==='GIPER_GOYD'&&getStage(me.base)<3&&!me.superMode){spawnFl(pi,'Требует ЭТАП III!','baseloss');return;}let i=me.hand.findIndex(c=>c.uid===card.uid);if(i!==-1)me.hand.splice(i,1);G.last[pi]=card;pushDiscard(pi,card);if(card.id!=='GOYDA')me.combo=0;applyCard(pi,card,me,foe);if(card.base)changeBase(pi,me,card.base);if(!G.over){draw(me,1);endTurn(pi);}render();}
+function applyCard(pi,card,me,foe){
+  let msg='',col='#f4d58d',type=card.role,sm=me.superMode?1.4:1.0;
+  let foePre=foe.hp,mePre=me.hp;
+  let extra={ic:card.ic,bg:card.bg};
+  switch(card.id){
+    case'GOYDA':{me.combo=Math.min(me.combo+1,4);let dmg=Math.floor((9+(me.combo-1)*2)*sm);let r=doAtk(pi,dmg,false,me,foe);msg=`${pn(pi)} · ГОЙДА! (серия ${me.combo}/4) ➔ ${r.msg}`;col='#ff473a';extra.result=r.hit?`-${dmg}`:r.msg.slice(0,8);extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
+    case'GOYDUSHKA':{let h=healRaw(pi,16);msg=`${pn(pi)} · Гойдушка лечит ➔ +${h} ОЗ`;col='#2ecc71';extra.result=`+${h} ОЗ`;extra.resType='heal';extra.hp=`${mePre}→${me.hp}`;break;}
+    case'GOYDO_SHIELD':{me.sh=Math.min(me.sh+1,2);flashA(pi,'blu');spawnFl(pi,'🛡️ Броня +1','block');sfx('shield');msg=`${pn(pi)} · Гойдо-Щит воздвигнут (${me.sh}/2)`;col='#00eeff';extra.result=`+1 🛡️`;extra.resType='shield';break;}
+    case'GOYDO_FONK':{let dmg=Math.floor(14*sm);let r=doAtk(pi,dmg,false,me,foe);msg=`${pn(pi)} · Гойдо-Фонк врубил ➔ ${r.msg}`;col='#ffd700';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
+    case'PEREGOYDA':{me.re=Math.min(me.re+1,2);flashA(pi,'gld');spawnFl(pi,'🪬 Отражение +1','ref');sfx('shield');msg=`${pn(pi)} · Перегойда активна (${me.re}/2)`;col='#cc44ff';extra.result=`+1 🪬`;extra.resType='shield';break;}
+    case'GOYDO_DILER':{draw(me,2);msg=`${pn(pi)} · Гойдо-Дилер раздал ➔ +2 карты`;col='#3ae4d0';extra.result=`+2 🃏`;extra.resType='draw';break;}
+    case'GOYDO_HAMSTER':{me.coins+=2;bumpCoins(pi);spawnFl(pi,'+2 💰','coin');sfx('coin');msg=`${pn(pi)} · Гойдо-Хомяк нафармил ➔ +2 💰`;col='#ffd700';extra.result=`+2 💰`;extra.resType='coin';break;}
+    case'NAGOYDATEL':{msg=`${pn(pi)} · Нагойдатель накачал Базометр!`;col='#ff6600';extra.result=`+20%`;extra.resType='base';break;}
+    case'CRINGE_GOYDA':{let dmg=Math.floor(10*sm);let r=doAtk(pi,dmg,false,me,foe);changeBase(1-pi,foe,-15);msg=`${pn(pi)} · Кринжо-Гойда кринжует врага ➔ ${r.msg}`;col='#44ff00';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
+    case'KRIO_GOYDA':{let dmg=Math.floor(12*sm);let r=doAtk(pi,dmg,false,me,foe);foe.freezeNext=true;msg=`${pn(pi)} · Крио-Гойда заморозила! ➔ ${r.msg}`;col='#3aebff';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
+    case'OPLICH_GOYDA':{let dmg=Math.floor(25*sm);let r=doAtk(pi,dmg,false,me,foe);msg=`${pn(pi)} · Оприч-Гойда ГОЙДА!!! ➔ ${r.msg}`;col='#ff1111';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
+    case'GOYDO_OBEREG':{me.sh=Math.min(me.sh+1,2);me.re=Math.min(me.re+1,2);flashA(pi,'blu');flashA(pi,'gld');spawnFl(pi,'🛡️ Оберег!','block');sfx('shield');msg=`${pn(pi)} · Гойдо-Оберег: +1🛡️ +1🪬`;col='#00ffff';extra.result=`+1🛡️+1🪬`;extra.resType='shield';break;}
+    case'GIPER_GOYD':{foe.sh=0;let dmg=Math.floor(32*sm);let r=doAtk(pi,dmg,false,me,foe);msg=`${pn(pi)} · ГИПЕР-ГОЙДА ПОГНАЛИ! ➔ ${r.msg}`;col='#cc44ff';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
+    case'ABSOLUT_GOYDA':{let h=healRaw(pi,20);msg=`${pn(pi)} · Абсолют-Гойда — ФИНАЛ ГОЙДЫ`;col='#ffffff';extra.result=`+${h} ОЗ`;extra.resType='heal';extra.hp=`${mePre}→${me.hp}`;break;}
+  }
+  addLog(msg,col,card.id==='GOYDO_FONK'?'goyda':type,extra);
+  checkWin(me,foe,pi);
+}
+function useAbil(pi,idx){if(G.over||G.turn!==pi)return;if(isOnline&&pi!==myIndex)return;let me=G.players[pi],foe=G.players[1-pi],ab=me.abilities[idx];if(me.coins<ab.cost)return;me.coins-=ab.cost;addLog(`💫 ${pn(pi)} применил тактику [${ab.n}] за ${ab.cost} 💰`,'#ffd700');ab.run(pi,me,foe);checkWin(me,foe,pi);if(!G.over)endTurn(pi);render();}
+function doAtk(pi,dmg,pierce,me,foe){if(foe.superMode){flashA(1-pi,'grn');spawnFl(1-pi,'🛡️ НЕУЯЗВИМ','block');sfx('shield');return{msg:'отскочило от ауры СВЕРХ-ГОЙДЫ',hit:false};}if(foe.re>0){foe.re--;me.hp=Math.max(0,me.hp-dmg);flashA(pi,'red');shakeA(pi);hpHit(pi);spawnFl(pi,'-'+dmg,'dmg');spawnFl(1-pi,'↩️ Отражено!','ref');quake(dmg);sfx('hit');return{msg:`${dmg} урона вернулось зеркалом назад!`,hit:false};}if(!lockShield&&!pierce&&foe.sh>0){foe.sh--;flashA(1-pi,'blu');spawnFl(1-pi,'🛡️ броня','block');sfx('shield');return{msg:'принято на прочную броню',hit:false};}foe.hp=Math.max(0,foe.hp-dmg);flashA(1-pi,'red');shakeA(1-pi);hpHit(1-pi);spawnFl(1-pi,'-'+dmg,'dmg');quake(dmg);sfx('hit');return{msg:`${dmg} чистого урона`,hit:true};}
+function dealRaw(tpi,amount){let t=G.players[tpi];if(t.superMode){spawnFl(tpi,'🛡️ НЕУЯЗВИМ','block');return;}t.hp=Math.max(0,t.hp-amount);flashA(tpi,'red');shakeA(tpi);hpHit(tpi);spawnFl(tpi,'-'+amount,'dmg');quake(amount);sfx('hit');}
+function healRaw(pi,amount){let p=G.players[pi],h=Math.min(amount,100-p.hp);p.hp=Math.min(100,p.hp+amount);flashA(pi,'grn');spawnFl(pi,'+'+h,'heal');sfx('heal');return h;}
+function changeBase(pi,p,amount){if(amount>0&&p.freezeNext){p.freezeNext=false;spawnFl(pi,'❄️ ЗАМОРОЖЕНО!','baseloss');addLog(`❄️ Прирост Базометра ${pn(pi)} заморожен!`,'#3aebff');return;}if(p.superMode){p.base=Math.max(0,Math.min(100,p.base+amount));spawnFl(pi,(amount>0?'+':'')+amount+'% БАЗЫ','base');return;}p.base=Math.max(0,Math.min(100,p.base+amount));if(amount>0)spawnFl(pi,'+'+amount+'% БАЗЫ','base');else if(amount<0)spawnFl(pi,amount+'% БАЗЫ','baseloss');if(p.base>=100)triggerSuperGoyda(pi,p);}
+function triggerSuperGoyda(pi,p){p.superMode=true;p.superTurns=3;p.base=0;spawnSuperOverlay(pi);addLog(`🔥 СВЕРХ-ГОЙДА у ${pn(pi)}! Базометр сброшен. Ярость на 3 хода!`,'#39ff14');sfx('super');}
+function endTurn(pi){let me=G.players[pi];if(me.superMode)changeBase(pi,me,10);G.turn=1-pi;let next=G.players[G.turn];next.coins++;bumpCoins(G.turn);if(next.superMode){next.superTurns--;if(next.superTurns<0){next.superMode=false;addLog(`⚠️ Режим СВЕРХ-ГОЙДЫ у ${pn(G.turn)} угас!`,'#ffd700');}}rollAbilities(next);render();if(isOnline){syncState('state');updateWaitingOverlay();}else{setTimeout(()=>showPass(G.turn),60);}}
+function checkWin(me,foe,pi){if(me.hp<=0&&foe.hp<=0){G.over=true;if(!isOnline)showOver('⚔️ СОВМЕСТНАЯ СМЕРТЬ!');}else if(foe.hp<=0){G.over=true;if(!isOnline)showOver(`🏆 ${pn(pi)} ТРИУМФОВАЛ!`);}else if(me.hp<=0){G.over=true;if(!isOnline)showOver(`🏆 ${pn(1-pi)} ТРИУМФОВАЛ!`);}}
+function showOver(html){document.getElementById('over-txt').innerHTML=html;document.getElementById('over').style.display='flex';}
+function getStage(v){return v>=66?3:v>=33?2:1;}
+function showPass(pi){if(isOnline)return;document.getElementById('pass-h').textContent='ПЕРЕДАЧА ХОДА: '+pn(pi);document.getElementById('pass-p').textContent='Передайте устройство следующему опричнику!';document.getElementById('pass-leg').innerHTML='';document.getElementById('pass').style.display='flex';render();}
+function confirmPass(){document.getElementById('pass').style.display='none';render();}
+function resetGame(){if(isOnline){if(myIndex===0){initGame();_mqttPub('reset');render();renderDiscard(0);renderDiscard(1);updateWaitingOverlay();}else{addLog('⏳ Ожидаем хоста...','#ffd700');}document.getElementById('over').style.display='none';return;}initGame();render();renderDiscard(0);renderDiscard(1);showPass(0);}
+function pn(pi){if(isOnline)return pi===myIndex?'ВЫ':'СОПЕРНИК';return pi===0?'ВОИН I':'ВОИН II';}
+
+// RENDER
+function render(){let[p1,p2]=G.players;renderHP(0,p1);renderHP(1,p2);updateShieldAndReflectIcons(0,p1.sh,p1.re);updateShieldAndReflectIcons(1,p2.sh,p2.re);renderBase(0,p1);renderBase(1,p2);document.getElementById('p1-co').textContent='💰 '+p1.coins;document.getElementById('p2-co').textContent='💰 '+p2.coins;let passOpen=document.getElementById('pass')&&document.getElementById('pass').style.display!=='none';let a0=(G.turn===0)&&!G.over&&(isOnline?myIndex===0:!passOpen);let a1=(G.turn===1)&&!G.over&&(isOnline?myIndex===1:!passOpen);let area1=document.getElementById('p1-area'),area2=document.getElementById('p2-area'),badge1=document.getElementById('p1-turn-badge'),badge2=document.getElementById('p2-turn-badge');if(G.turn===0&&!G.over){area1.classList.add('active-turn');area1.classList.remove('inactive-turn');badge1.classList.remove('hidden');area2.classList.add('inactive-turn');area2.classList.remove('active-turn');badge2.classList.add('hidden');}else if(G.turn===1&&!G.over){area2.classList.add('active-turn');area2.classList.remove('inactive-turn');badge2.classList.remove('hidden');area1.classList.add('inactive-turn');area1.classList.remove('active-turn');badge1.classList.add('hidden');}else{area1.classList.remove('active-turn','inactive-turn');badge1.classList.add('hidden');area2.classList.remove('active-turn','inactive-turn');badge2.classList.add('hidden');}renderHand(0,p1,'p1-hand',a0);renderHand(1,p2,'p2-hand',a1);renderAbils(0,a0,p1);renderAbils(1,a1,p2);renderPlayed('sl-p1',G.last[0]);renderPlayed('sl-p2',G.last[1]);let dc=document.getElementById('deck-count');if(dc)dc.textContent=G.deck.length;document.body.classList.toggle('super-mode-active',p1.superMode||p2.superMode);}
+function renderHP(i,p){let f=document.getElementById('p'+(i+1)+'-hp'),t=document.getElementById('p'+(i+1)+'-hptxt'),pct=Math.max(0,p.hp);f.style.width=pct+'%';f.style.background=pct>60?'linear-gradient(90deg,#27ae60,#2ecc71)':pct>30?'linear-gradient(90deg,#c9620a,#e67e22)':'linear-gradient(90deg,#7b241c,#c0392b)';t.textContent=p.hp+'/100';}
+function renderBase(i,p){let wrap=document.getElementById('p'+(i+1)+'-base-wrap'),fill=document.getElementById('p'+(i+1)+'-base-fill'),num=document.getElementById('p'+(i+1)+'-base-num'),stxt=document.getElementById('p'+(i+1)+'-stage-txt');if(p.superMode){fill.style.width='100%';fill.classList.add('super-mode');wrap.classList.add('super-glow');num.textContent='ЯРОСТЬ';stxt.textContent=`СВЕРХ-ГОЙДА (${p.superTurns+1} Х)`;}else{fill.style.width=p.base+'%';fill.classList.remove('super-mode');wrap.classList.remove('super-glow');num.textContent=p.base;let st=getStage(p.base);stxt.textContent=st===3?'ЭТАП III':st===2?'ЭТАП II':'ЭТАП I';}}
+function renderHand(pi,player,cid,faceUp){let c=document.getElementById(cid);c.innerHTML='';if(!faceUp){player.hand.forEach(()=>{let d=document.createElement('div');d.className='card-container';d.innerHTML='<div class="card back"><div class="back-rune">⚔️</div></div>';c.appendChild(d);});return;}player.hand.forEach(card=>{let container=document.createElement('div');container.className='card-container';let isLocked=false,lockTxt='';if(card.id==='OPLICH_GOYDA'&&getStage(player.base)<2&&!player.superMode){isLocked=true;lockTxt='ЭТАП II';}if(card.id==='GOYDO_OBEREG'&&getStage(player.base)<2&&!player.superMode){isLocked=true;lockTxt='ЭТАП II';}if(card.id==='GIPER_GOYD'&&getStage(player.base)<3&&!player.superMode){isLocked=true;lockTxt='ЭТАП III';}let d=document.createElement('div');d.className='card click';d.style.setProperty('--cbg',isLocked?'#151515':card.bg);d.style.setProperty('--cbc',isLocked?'#3c3c3c':card.bc);d.innerHTML=`<div class="card-shine"></div><div class="card-role-tab"><span>✦</span><span>${card.role}</span></div><div class="card-emblem"><span class="card-ico">${card.ic}</span></div><div class="card-name">${card.n}</div><div class="card-stat kind-${card.kind}"><span class="card-num">${card.num}</span><span class="card-unit">${card.unit}</span></div><div class="card-effect">${card.eff}</div><div class="card-tag" style="${isLocked?'background:#500;border-color:#f33;color:#f88;':''}">${isLocked?lockTxt:'Свиток Гойды'}</div>`;d.onclick=()=>playCard(pi,card);container.appendChild(d);c.appendChild(container);applyCardParallax(container);});setupHandHover(c);}
+function renderAbils(pi,active,player){let c=document.getElementById(`p${pi+1}-abils`);c.innerHTML='';player.abilities.forEach((ab,idx)=>{let canUse=active&&player.coins>=ab.cost;let container=document.createElement('div');container.className='abil-card-container';let btn=document.createElement('div');btn.className='abil-card'+(canUse?' ready':'');if(canUse){btn.style.setProperty('--bbg',ab.bg);btn.style.setProperty('--bc',ab.bc);btn.onclick=()=>useAbil(pi,idx);}btn.innerHTML=`<div class="abil-card-header"><span>${ab.ic} ${ab.n}</span><span style="font-size:7px;color:#888">Тактика</span></div><div class="abil-card-desc" title="${ab.d}">${ab.d}</div><div class="abil-card-cost">💰 ${ab.cost} ВЕЧЕВЫХ</div>`;container.appendChild(btn);c.appendChild(container);});}
+function renderPlayed(sid,card){let s=document.getElementById(sid);if(!card){s.innerHTML='<div class="empty-slot">ᚦ</div>';return;}s.innerHTML=`<div class="played" style="background:${card.bg};border-color:${card.bc}"><div class="text-2xl">${card.ic}</div><div class="font-black text-[9px] mt-1">${card.n}</div></div>`;}
+function updateShieldAndReflectIcons(pi,sh,re){let sl=document.getElementById(`p${pi+1}-shields-list`);sl.innerHTML='';for(let i=1;i<=2;i++){let d=document.createElement('div');d.className=`shield-slot ${i<=sh?'active':''}`;d.innerHTML=i<=sh?'🛡️':'';sl.appendChild(d);}let rl=document.getElementById(`p${pi+1}-reflects-list`);rl.innerHTML='';for(let i=1;i<=2;i++){let d=document.createElement('div');d.className=`reflect-slot ${i<=re?'active':''}`;d.innerHTML=i<=re?'🪬':'';rl.appendChild(d);}}
+
+// LOG
+function addLog(msg,color,type,extra){
+  if(!G.logLines)G.logLines=[];
+  let entry={msg,color,type,extra};
+  G.logLines.push(entry);
+  if(G.logLines.length>60)G.logLines.shift();
+  appendLogLine(entry);
+}
+function appendLogLine({msg,color,type,extra}){
+  let el=document.getElementById('log');
+  let d=document.createElement('div');
+  if(extra&&extra.ic){
+    d.className='log-entry';
+    let ic=document.createElement('div');
+    ic.className='log-ic-box';
+    ic.style.background=extra.bg||'rgba(255,255,255,.08)';
+    ic.textContent=extra.ic;
+    let body=document.createElement('div');
+    body.className='log-body';
+    body.style.color=color||'#ffeacc';
+    body.textContent=msg;
+    d.appendChild(ic);
+    d.appendChild(body);
+    if(extra.result!=null){
+      let res=document.createElement('div');
+      res.className='log-result log-res-'+(extra.resType||'sys');
+      res.textContent=extra.result;
+      d.appendChild(res);
+    }
+    if(extra.hp!=null){
+      let hp=document.createElement('div');
+      hp.className='log-hp';
+      hp.textContent=extra.hp;
+      d.appendChild(hp);
+    }
+  } else {
+    d.className='log-line'+(type?' lg-'+type:'');
+    d.style.color=color||'#ffeacc';
+    d.innerHTML=`⚡ ${msg}`;
+  }
+  el.appendChild(d);
+  el.scrollTop=el.scrollHeight;
+  while(el.children.length>60)el.removeChild(el.firstChild);
+}
+function renderLogFromState(){document.getElementById('log').innerHTML='';(G.logLines||[]).forEach(appendLogLine);}
+
+// DISCARD
+function pushDiscard(pi,card){G.disc[pi].push({ic:card.ic,bc:card.bc});renderDiscard(pi);}
+function renderDiscard(pi){let arr=G.disc[pi];document.getElementById('disc-p'+(pi+1)+'-n').textContent=arr.length;let stack=document.getElementById('disc-p'+(pi+1)+'-stack'),vis=arr.slice(-5);stack.innerHTML=vis.map((c,k)=>{let isTop=k===vis.length-1;return`<div class="disc-card${isTop?' top':''}" style="--dc:${c.bc};--i:${k}"><span class="disc-ic">${c.ic}</span></div>`;}).join('');}
+
+// COMPENDIUM
+function toggleCompendium(show){let modal=document.getElementById('compendium-modal');if(show){let grid=document.getElementById('compendium-grid-inner');grid.innerHTML='';for(let k in DEFS){let d=DEFS[k];let item=document.createElement('div');item.className='border border-orange-900 bg-[#160a04] p-3 rounded-lg flex flex-col items-center text-center';item.innerHTML=`<div class="text-3xl mb-1">${d.ic}</div><div class="text-xs font-black text-[#ffe8b5]">${d.n}</div><div class="text-[9px] text-[#ff6600] font-bold uppercase mt-0.5">${d.role} | ${d.num} ${d.unit}</div><div class="text-[8px] text-gray-300 mt-2 leading-tight">${d.eff}</div><div class="text-[7px] text-[#ffd700] border border-[#d4a017]/30 px-1 rounded mt-2 uppercase">База: +${d.base}%</div>`;grid.appendChild(item);}modal.style.display='flex';}else{modal.style.display='none';}}
+
+// SOUND
+function initSound(){if(actx)return;try{actx=new(window.AudioContext||window.webkitAudioContext)();master=actx.createGain();master.gain.value=sndMuted?0:.15;master.connect(actx.destination);}catch(e){actx=null;}}
+function tone(freq,dur,type,vol,slideTo){if(!actx||sndMuted)return;let o=actx.createOscillator(),g=actx.createGain(),t0=actx.currentTime;o.type=type||'sine';o.frequency.setValueAtTime(freq,t0);if(slideTo)o.frequency.exponentialRampToValueAtTime(slideTo,t0+dur);g.gain.setValueAtTime(vol||.25,t0);g.gain.exponentialRampToValueAtTime(.001,t0+dur);o.connect(g);g.connect(master);o.start(t0);o.stop(t0+dur);}
+function noiseBurst(dur,vol,ff){if(!actx||sndMuted)return;let len=Math.floor(actx.sampleRate*dur),b=actx.createBuffer(1,len,actx.sampleRate),da=b.getChannelData(0);for(let i=0;i<len;i++)da[i]=(Math.random()*2-1)*(1-i/len);let s=actx.createBufferSource();s.buffer=b;let f=actx.createBiquadFilter();f.type='lowpass';f.frequency.value=ff||800;let gn=actx.createGain();gn.gain.value=vol||.3;s.connect(f);f.connect(gn);gn.connect(master);s.start();}
+function sfx(name){if(!actx||sndMuted)return;if(actx.state==='suspended')actx.resume();switch(name){case'hit':tone(120,.2,'sawtooth',.3,40);noiseBurst(.15,.2,500);break;case'heal':tone(350,.15,'sine',.2,500);setTimeout(()=>tone(500,.2,'sine',.15,750),60);break;case'shield':tone(800,.1,'triangle',.2,1100);break;case'coin':tone(950,.08,'sine',.2);setTimeout(()=>tone(1400,.1,'sine',.15),65);break;case'super':[0,100,200,300].forEach((t,i)=>setTimeout(()=>tone(220+i*110,.4,'sawtooth',.25),t));break;}}
+function toggleMute(){initSound();sndMuted=!sndMuted;if(master)master.gain.value=sndMuted?0:.15;let btn=document.getElementById('mute-bb');if(btn)btn.textContent=sndMuted?'🔇 ЗВУК ВЫКЛ':'🔊 ЗВУК ВКЛ';}
+function startLocalGame(){isOnline=false;isLocal=true;document.getElementById('lobby').style.display='none';document.getElementById('bottom-bar').classList.remove('hidden');document.getElementById('log-toggle').style.display='block';document.getElementById('bb-lobby').style.display='inline-block';initGame();render();renderDiscard(0);renderDiscard(1);showPass(0);}
+function backToLobby(){if(!confirm('Вернуться в меню? Текущая схватка будет завершена. ГОЙДА?'))return;isOnline=false;isLocal=false;myIndex=-1;gameStarted=false;if(mqttClient){mqttClient.end(true);mqttClient=null;}document.getElementById('lobby').style.display='flex';document.getElementById('over').style.display='none';document.getElementById('bottom-bar').classList.add('hidden');document.getElementById('log-toggle').style.display='none';document.getElementById('bb-lobby').style.display='none';}
+
+// FX
+(function(){const cv=document.getElementById('sparks'),ctx=cv.getContext('2d');let W,H;function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;}window.addEventListener('resize',resize);resize();const COLORS=['#ff5500','#ff8800','#ffd700','#ff2200','#ffee88'],particles=[],MAX=25;function P(){this.reset(true);}P.prototype.reset=function(init){this.x=Math.random()*W;this.y=init?Math.random()*H:H+10;this.vy=-(Math.random()*.9+.3);this.vx=(Math.random()-.5)*.4;this.life=Math.random()*.6+.4;this.decay=Math.random()*.003+.0015;this.r=Math.random()*2+.5;this.color=COLORS[Math.floor(Math.random()*COLORS.length)];};for(let i=0;i<MAX;i++)particles.push(new P());function tick(){ctx.clearRect(0,0,W,H);for(let p of particles){p.x+=p.vx+(Math.random()-.5)*.1;p.y+=p.vy;p.life-=p.decay;if(p.life<=0||p.y<-10)p.reset(false);ctx.save();ctx.globalAlpha=p.life*.7;ctx.fillStyle=p.color;ctx.shadowBlur=6;ctx.shadowColor=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();ctx.restore();}requestAnimationFrame(tick);}tick();})();
+function flashA(pi,type){let el=document.getElementById('p'+(pi+1)+'-area');el.classList.remove('border-red-500','border-green-500','border-blue-500','border-yellow-500');void el.offsetWidth;el.classList.add('border-'+(type==='red'?'red-500':type==='grn'?'green-500':type==='blu'?'blue-500':'yellow-500'));}
+function shakeA(pi){let el=document.getElementById('p'+(pi+1)+'-area');el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');}
+function hpHit(pi){let el=document.getElementById('p'+(pi+1)+'-hit');if(!el)return;el.classList.remove('go');void el.offsetWidth;el.classList.add('go');}
+function bumpCoins(pi){let el=document.getElementById('p'+(pi+1)+'-co');if(!el)return;el.classList.add('scale-125');setTimeout(()=>el.classList.remove('scale-125'),200);}
+function spawnFl(pi,txt,type){let area=document.getElementById('p'+(pi+1)+'-area');let rect=area.getBoundingClientRect();let el=document.createElement('div');el.className='float-num fn-'+type;el.textContent=txt;el.style.left=(rect.left+rect.width/2-28+(Math.random()*40-20))+'px';el.style.top=(rect.top+rect.height/2-20)+'px';document.body.appendChild(el);setTimeout(()=>el.remove(),1100);}
+function spawnSuperOverlay(pi){let b=document.createElement('div');b.className='super-overlay';b.innerHTML=`✦ СВЕРХ-ГОЙДА ✦<br><span style="font-size:14px">У ${pn(pi)}!</span>`;document.body.appendChild(b);setTimeout(()=>b.remove(),1800);quake(28);}
+function quake(){const g=document.getElementById('game');g.classList.add('shake');setTimeout(()=>g.classList.remove('shake'),400);}
+function triggerDeckJiggle(){let pile=document.getElementById('deck-pile');if(!pile)return;pile.classList.add('scale-110');setTimeout(()=>pile.classList.remove('scale-110'),200);}
+function applyCardParallax(cc){const card=cc.querySelector('.card');cc.addEventListener('mousemove',e=>{const r=cc.getBoundingClientRect();const x=e.clientX-r.left,y=e.clientY-r.top;card.style.transform=`rotateX(${-((y-r.height/2)/r.height/2)*20}deg) rotateY(${((x-r.width/2)/r.width/2)*20}deg)`;card.style.setProperty('--shine-x',(x/r.width*100)+'%');card.style.setProperty('--shine-y',(y/r.height*100)+'%');});cc.addEventListener('mouseleave',()=>card.style.transform='rotateX(0) rotateY(0)');}
+function setupHandHover(handEl){handEl.addEventListener('mouseover',e=>{const hov=e.target.closest('.card-container');const cards=[...handEl.querySelectorAll('.card-container')];if(!hov)return;const idx=cards.indexOf(hov);cards.forEach((c,i)=>{if(i===idx){c.style.zIndex='120';return;}const diff=i-idx,dist=Math.abs(diff),sign=diff>0?1:-1;c.style.transform=dist===1?`translateX(${sign*24}px) rotate(${sign*6}deg)`:dist===2?`translateX(${sign*14}px) rotate(${sign*3}deg)`:'';c.style.zIndex='10';});});handEl.addEventListener('mouseleave',()=>handEl.querySelectorAll('.card-container').forEach(c=>{c.style.transform='';c.style.zIndex='';}));}
+
+// PASS (offline)
+(function(){const p=document.createElement('div');p.id='pass';p.style.cssText='position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,#150601 0%,#000000 100%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:130;padding:20px;overflow-y:auto;';p.innerHTML=`<h2 id="pass-h" style="font-size:24px;color:#ffd700;letter-spacing:2.5px;margin-bottom:4px;text-shadow:0 0 15px rgba(212,160,23,.5);text-transform:uppercase;"></h2><p id="pass-p" style="font-size:12px;color:#f4d58d;opacity:.8;margin-bottom:12px;text-align:center;max-width:580px;"></p><div id="pass-leg"></div><button class="btn" onclick="confirmPass()">ГОЙДА! — Начать Сечу!</button>`;document.body.appendChild(p);})();
+
+function toggleLog(){let p=document.getElementById('log-panel'),t=document.getElementById('log-toggle');p.classList.toggle('open');t.style.right=p.classList.contains('open')?'260px':'0';}
+document.getElementById('log-toggle').style.display='none';
+
+// wire up buttons via addEventListener (avoids onclick global-scope issues)
+document.getElementById('btn-create').addEventListener('click',createRoom);
+document.getElementById('btn-local').addEventListener('click',startLocalGame);
+document.getElementById('btn-join').addEventListener('click',joinRoomBtn);
+document.getElementById('room-input').addEventListener('keydown',function(e){if(e.key==='Enter')joinRoomBtn();});
+
+initGame();render();renderDiscard(0);renderDiscard(1);
+// Show library load status in lobby
+setTimeout(()=>{
+  let el=document.getElementById('lobby-status');
+  if(!el)return;
+  if(typeof mqtt==='undefined'){
+    el.textContent='⚠ mqtt не загружен — обнови страницу (Ctrl+F5)';
+    el.className='lobby-status err';
+  } else {
+    el.textContent='✓ Готово к подключению';
+    el.style.color='#39ff14';
+    el.style.fontSize='9px';
+  }
+},600);
+</script>
+</body>
+</html>
