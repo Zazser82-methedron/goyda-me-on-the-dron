@@ -352,6 +352,13 @@ body.super-mode-active::after{opacity:.85;}
   </div>
 </div>
 
+<!-- БАННЕР ОТКЛЮЧЕНИЯ -->
+<div id="disconnect-banner" style="display:none;position:fixed;top:54px;left:50%;transform:translateX(-50%);z-index:55;background:rgba(18,0,0,.97);border:2px solid #ff3333;border-radius:10px;padding:10px 22px;text-align:center;box-shadow:0 0 20px rgba(255,50,50,.35);">
+  <div style="color:#ff4444;font-weight:900;font-size:13px;letter-spacing:1.5px;">📡 СОПЕРНИК ОФЛАЙН</div>
+  <div style="color:#aaa;font-size:9px;margin-top:3px;letter-spacing:1px;">игра на паузе — ждём возвращения...</div>
+  <div style="color:#555;font-size:8px;margin-top:2px;">он может вернуться введя тот же код</div>
+</div>
+
 <!-- КОМПЕНДИУМ -->
 <div id="compendium-modal">
   <div class="compendium-container">
@@ -446,6 +453,39 @@ function mqttConnect(cb){
   tryNext();
 }
 
+// ── Heartbeat / disconnect detection ──
+let _hbInterval=null,_hbTimer=null,_oppOffline=false;
+const HB_SEND=8000,HB_TIMEOUT=15000;
+
+function _sendPing(){
+  if(mqttClient&&roomCode)
+    mqttClient.publish('goyda25/'+roomCode,JSON.stringify({_p:myIndex,_t:'ping'}),{retain:false,qos:0});
+}
+function _resetOppTimer(){
+  clearTimeout(_hbTimer);
+  if(_oppOffline){
+    _oppOffline=false;
+    document.getElementById('disconnect-banner').style.display='none';
+    addLog('🟢 Соперник вернулся в сеть!','#44ff00');
+  }
+  _hbTimer=setTimeout(()=>{
+    _oppOffline=true;
+    document.getElementById('disconnect-banner').style.display='block';
+    addLog('📡 Соперник офлайн — ждём возвращения...','#ff5555');
+  },HB_TIMEOUT);
+}
+function startHeartbeat(){
+  stopHeartbeat();
+  _sendPing();
+  _hbInterval=setInterval(_sendPing,HB_SEND);
+  _resetOppTimer();
+}
+function stopHeartbeat(){
+  clearInterval(_hbInterval);clearTimeout(_hbTimer);
+  _hbInterval=null;_hbTimer=null;_oppOffline=false;
+  document.getElementById('disconnect-banner').style.display='none';
+}
+
 function createRoom(){
   if(typeof mqtt==='undefined'){setLobbyStatus('❌ Библиотека не загружена — проверь интернет и перезагрузи страницу','err');return;}
   initSound();
@@ -494,7 +534,9 @@ function joinRoomBtn(){
 
 function onMsg(msgBuf){
   let d;try{d=JSON.parse(msgBuf.toString());}catch(e){return;}
-  // Guest receives host's state for the first time
+  // Heartbeat ping from opponent
+  if(d._t==='ping'){if(d._p!==myIndex&&gameStarted)_resetOppTimer();return;}
+  // Guest receives host's state for the first time (initial join OR reconnect)
   if(myIndex===-1&&d._p===0&&(d._t==='init'||d._t==='state')){
     clearTimeout(window._joinTimer);
     myIndex=1;isOnline=true;gameStarted=false;
@@ -504,11 +546,19 @@ function onMsg(msgBuf){
     return;
   }
   // Host receives join signal
-  if(myIndex===0&&!gameStarted&&d._p===1&&d._t==='join'){
-    startOnlineGame();return;
+  if(myIndex===0&&d._p===1&&d._t==='join'){
+    if(!gameStarted){startOnlineGame();}
+    else{
+      // Reconnection: re-sync guest with current state
+      addLog('🟢 Соперник переподключился!','#44ff00');
+      _resetOppTimer();
+      syncState('state');
+    }
+    return;
   }
   // In-game moves
   if(!gameStarted||d._p===myIndex)return;
+  if(d._t==='ping')return;
   if(d._t!=='state'&&d._t!=='reset')return;
   let isReset=d._t==='reset';
   isRemoteUpdate=true;applyRemoteState(d);
@@ -522,6 +572,7 @@ function onMsg(msgBuf){
 function onDisconnect(){
   document.getElementById('conn-badge').textContent='❌ РАЗРЫВ';
   document.getElementById('conn-badge').style.color='#ff5555';
+  stopHeartbeat();
   if(gameStarted)addLog('❌ Соединение разорвано.','#ff5555');
 }
 
@@ -538,6 +589,7 @@ function startOnlineGame(){
   render();renderDiscard(0);renderDiscard(1);updateWaitingOverlay();
   if(myIndex===0)syncState('state');
   addLog('🌐 Соперник подключился! Бой начат.','#39ff14');
+  startHeartbeat();
 }
 
 function _mqttPub(t,state){
