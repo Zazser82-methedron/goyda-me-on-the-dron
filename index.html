@@ -34,7 +34,7 @@ body.super-mode-active::after{opacity:.85;}
 @keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1.4);}80%{opacity:.9;}100%{opacity:0;transform:translateY(-130px) scale(.8);}}
 @keyframes cardIn{from{transform:scale(.2) rotateY(60deg) translateY(150px);opacity:0;}to{transform:scale(1) rotateY(0deg) translateY(0);opacity:1;}}
 .shake{animation:shake .4s ease-out;}
-.info-row{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;}
+.info-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;width:100%;}
 .banner{position:fixed;top:8%;width:40px;height:42%;pointer-events:none;z-index:2;background:linear-gradient(180deg,#4a0a0a,#1a0202 70%,#000000);border:1.5px solid rgba(212,160,23,.3);box-shadow:0 12px 28px rgba(0,0,0,.8);transform-origin:top center;animation:bannerSway 6s ease-in-out infinite;opacity:.6;}
 .banner::after{content:'ᚠ';position:absolute;top:20px;left:50%;transform:translateX(-50%);color:var(--gold);font-size:22px;}
 .banner-l{left:16px;}.banner-r{right:16px;animation-delay:3s;}.banner-r::after{content:'ᛟ';}
@@ -188,33 +188,53 @@ body.flip-view #p1-area{grid-area:slot-top;}
 .btn-local{background:linear-gradient(135deg,#2d4a1e,#1a6b35) !important;color:#5eff8b !important;box-shadow:0 4px 15px rgba(68,255,0,.2) !important;}
 .btn-local:hover{box-shadow:0 6px 20px rgba(68,255,0,.45) !important;}
 /* MOBILE */
+/* Side panels */
+#side-left,#side-right{position:fixed;top:50%;transform:translateY(-50%);z-index:20;width:76px;display:none;flex-direction:column;align-items:center;gap:8px;}
+#side-left{left:2px;}
+#side-right{right:2px;}
+.side-panel{background:rgba(6,2,0,.9);border:1px solid rgba(212,160,23,.22);border-radius:10px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;width:100%;box-shadow:0 4px 12px rgba(0,0,0,.6);}
+.side-drum-ico{font-size:30px;transition:transform .08s ease;cursor:pointer;display:block;line-height:1;}
+.side-drum-ico:active{transform:scale(.72) rotate(-12deg) !important;}
+.side-panel-lbl{font-size:6.5px;color:#9a7b3a;letter-spacing:1px;text-transform:uppercase;font-weight:bold;}
+.side-panel-num{font-size:16px;font-weight:900;color:var(--gold-bright);line-height:1;}
+.side-cry{font-size:9px;font-weight:900;color:var(--neon-pink);min-height:28px;line-height:1.25;transition:opacity .4s ease;text-shadow:0 0 8px var(--neon-pink);}
+.side-wisdom{font-size:7.5px;color:#ffeacc;line-height:1.35;min-height:72px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
 @media(max-width:640px){
   body{overflow-y:auto;height:auto;}
   #game{grid-template-rows:auto auto auto;height:auto;min-height:100dvh;}
-  .card-container{width:82px;height:115px;}
-  .card-container:hover{transform:scale(1.18) translateY(-12px) !important;}
-  .card-name{font-size:7.5px;}
-  .card-ico{font-size:16px;}
-  .card-effect{font-size:6.5px;}
-  .card-stat .card-num{font-size:14px;}
-  .card-unit{font-size:6px;}
-  .card-role-tab{font-size:6px;}
-  .card-emblem{width:28px;height:28px;}
-  .abil-card-container{width:118px;height:68px;}
+  #side-left,#side-right{display:none !important;}
+  .arena-col{display:none;}
+  .area-main{width:100%;}
+  .card-container{width:76px;height:108px;}
+  .card-container:hover{transform:scale(1.15) translateY(-10px) !important;}
+  .card-name{font-size:7px;}
+  .card-ico{font-size:15px;}
+  .card-effect{font-size:6px;}
+  .card-stat .card-num{font-size:13px;}
+  .card-unit{font-size:5.5px;}
+  .card-role-tab{font-size:5.5px;}
+  .card-emblem{width:26px;height:26px;}
+  .abil-card-container{width:108px;height:65px;}
   .abil-card-header{font-size:9px;}
-  .abil-card-desc{font-size:8px;}
-  .abil-card-cost{font-size:8.5px;}
-  #mid{grid-template-columns:1fr auto 1fr;padding:2px 6px;}
-  .arena-side{gap:8px;}
-  .played{width:82px;height:115px;}
-  .player-area{padding:4px 8px;}
-  .base-wrap{width:130px;}
-  .info-row{gap:6px;flex-wrap:wrap;}
-  .pname{font-size:9px;}
+  .abil-card-desc{font-size:7.5px;}
+  .abil-card-cost{font-size:8px;}
+  .hand{min-height:130px;gap:4px;}
+  .scroller-abil{gap:4px;}
+  #mid{padding:2px 6px;min-height:48px;}
+  .played{width:72px;height:100px;}
+  .player-area{padding:4px 6px;}
+  .base-wrap{width:120px;}
+  .info-row{gap:6px;grid-template-columns:auto 1fr auto;}
+  #bottom-bar{height:50px;gap:10px;}
+  .bb-btn{padding:8px 12px;font-size:10px;min-height:38px;}
+  #log-toggle{font-size:10px;padding:8px 4px;}
   #log-panel{width:100vw;}
   #log-panel.open ~ #log-toggle,body:has(#log-panel.open) #log-toggle{right:100vw;}
   .lobby-title{font-size:22px;}
   .room-code-big{font-size:26px;letter-spacing:4px;}
+  .btn{padding:12px 24px;font-size:14px;}
+  #waiting-overlay{top:56px;}
+  .waiting-box{padding:6px 16px 8px;}
 }
 </style>
 </head>
@@ -224,6 +244,24 @@ body.flip-view #p1-area{grid-area:slot-top;}
 <div class="banner banner-l"></div>
 <div class="banner banner-r"></div>
 <div id="conn-badge" style="color:#888">⚡ P2P</div>
+
+<!-- БОКОВЫЕ ПАНЕЛИ -->
+<div id="side-left">
+  <div class="side-panel">
+    <span class="side-panel-lbl">БАРАБАНЬ!</span>
+    <span class="side-drum-ico" id="drum-ico" onclick="beatDrum()">🥁</span>
+    <div class="side-cry" id="drum-cry"></div>
+    <span class="side-panel-lbl" style="margin-top:4px">УДАРОВ</span>
+    <span class="side-panel-num" id="drum-cnt">0</span>
+  </div>
+</div>
+<div id="side-right">
+  <div class="side-panel" onclick="nextWisdom()" title="нажми для следующего совета">
+    <span class="side-panel-lbl">ГОЙДА ГОВОРИТ</span>
+    <div class="side-wisdom" id="wisdom-text"></div>
+    <span class="side-panel-lbl" style="color:#555">тап = след.</span>
+  </div>
+</div>
 
 <!-- ЛОББИ -->
 <div id="lobby">
@@ -278,7 +316,7 @@ body.flip-view #p1-area{grid-area:slot-top;}
             <div class="hp-wrap w-[200px] bg-black border border-orange-950 rounded relative overflow-hidden" style="height:22px">
               <div class="hp-fill h-full transition-all duration-300" id="p2-hp"></div>
             </div>
-            <span class="hp-txt font-bold" style="font-size:13px" id="p2-hptxt">80/80</span>
+            <span class="hp-txt font-bold" style="font-size:13px" id="p2-hptxt">100/100</span>
           </div>
           <div class="flex gap-3">
             <div class="flex flex-col items-center">
@@ -334,7 +372,7 @@ body.flip-view #p1-area{grid-area:slot-top;}
             <div class="hp-wrap w-[200px] bg-black border border-orange-950 rounded relative overflow-hidden" style="height:22px">
               <div class="hp-fill h-full transition-all duration-300" id="p1-hp"></div>
             </div>
-            <span class="hp-txt font-bold" style="font-size:13px" id="p1-hptxt">80/80</span>
+            <span class="hp-txt font-bold" style="font-size:13px" id="p1-hptxt">100/100</span>
           </div>
           <div class="flex gap-3">
             <div class="flex flex-col items-center">
@@ -440,7 +478,7 @@ const TAP=[
 let myIndex=-1,isOnline=false,isRemoteUpdate=false,isLocal=false;
 let G={},actx,master,sndMuted=true,lockShield=false;
 
-function mkP(){return{hp:80,sh:0,re:0,combo:0,coins:0,hand:[],base:0,superMode:false,superTurns:0,freezeNext:false,abilities:[],abilIdx:[]};}
+function mkP(){return{hp:100,sh:0,re:0,combo:0,coins:0,hand:[],base:0,superMode:false,superTurns:0,freezeNext:false,abilities:[],abilIdx:[]};}
 function buildDeck(){let d=[];for(let k in DEFS){let df=DEFS[k];for(let i=0;i<df.cnt;i++)d.push({...df,id:k,uid:k+'_'+Math.random()});}for(let i=d.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}return d;}
 function draw(p,n){for(let i=0;i<n;i++){if(!G.deck.length){G.deck=buildDeck();addLog('📜 Колода свитков перетасована! Ратный дух крепок.','#ffbd15');}if(p.hand.length<7)p.hand.push(G.deck.pop());}triggerDeckJiggle();}
 function rollAbilities(p){let t=TAP.map((_,i)=>i),idx=[];for(let i=0;i<3;i++){let r=Math.floor(Math.random()*t.length);idx.push(t.splice(r,1)[0]);}p.abilIdx=idx;p.abilities=idx.map(i=>TAP[i]);}
@@ -633,6 +671,7 @@ function startOnlineGame(){
   if(myIndex===0)syncState('state');
   addLog('🌐 Соперник подключился! Бой начат.','#39ff14');
   sfx('start');
+  showSidePanels();
   startHeartbeat();
 }
 
@@ -678,7 +717,7 @@ function applyCard(pi,card,me,foe){
 function useAbil(pi,idx){if(G.over||G.turn!==pi)return;if(isOnline&&pi!==myIndex)return;let me=G.players[pi],foe=G.players[1-pi],ab=me.abilities[idx];if(me.coins<ab.cost)return;me.coins-=ab.cost;addLog(`💫 ${pn(pi)} применил тактику [${ab.n}] за ${ab.cost} 💰`,'#ffd700');ab.run(pi,me,foe);checkWin(me,foe,pi);if(!G.over)endTurn(pi);render();}
 function doAtk(pi,dmg,pierce,me,foe){if(foe.superMode){let thru=Math.floor(dmg*.35);foe.hp=Math.max(0,foe.hp-thru);flashA(1-pi,'grn');if(thru>0)spawnFl(1-pi,'-'+thru,'dmg');spawnFl(1-pi,'⚡СВЕРХ (−65%)','block');sfx('shield');return{msg:`СВЕРХ-ГОЙДА поглотила бо́льшую часть (${thru} прошло)`,hit:thru>0};}if(foe.re>0){foe.re--;let ref=Math.floor(dmg*.75);me.hp=Math.max(0,me.hp-ref);flashA(pi,'red');shakeA(pi);hpHit(pi);spawnFl(pi,'-'+ref,'dmg');spawnFl(1-pi,'↩️ 75% назад!','ref');quake(ref);sfx('hit');return{msg:`${ref} (75%) отражено назад!`,hit:false};}if(!lockShield&&!pierce&&foe.sh>0){foe.sh--;flashA(1-pi,'blu');spawnFl(1-pi,'🛡️ броня','block');sfx('shield');return{msg:'принято на прочную броню',hit:false};}foe.hp=Math.max(0,foe.hp-dmg);flashA(1-pi,'red');shakeA(1-pi);hpHit(1-pi);spawnFl(1-pi,'-'+dmg,'dmg');quake(dmg);sfx('hit');return{msg:`${dmg} чистого урона`,hit:true};}
 function dealRaw(tpi,amount){let t=G.players[tpi];if(t.superMode){spawnFl(tpi,'🛡️ НЕУЯЗВИМ','block');return;}t.hp=Math.max(0,t.hp-amount);flashA(tpi,'red');shakeA(tpi);hpHit(tpi);spawnFl(tpi,'-'+amount,'dmg');quake(amount);sfx('hit');}
-function healRaw(pi,amount){let p=G.players[pi],h=Math.min(amount,80-p.hp);p.hp=Math.min(80,p.hp+amount);flashA(pi,'grn');spawnFl(pi,'+'+h,'heal');sfx('heal');return h;}
+function healRaw(pi,amount){let p=G.players[pi],h=Math.min(amount,100-p.hp);p.hp=Math.min(100,p.hp+amount);flashA(pi,'grn');spawnFl(pi,'+'+h,'heal');sfx('heal');return h;}
 function changeBase(pi,p,amount){if(amount>0&&p.freezeNext){p.freezeNext=false;spawnFl(pi,'❄️ ЗАМОРОЖЕНО!','baseloss');addLog(`❄️ Прирост Базометра ${pn(pi)} заморожен!`,'#3aebff');return;}if(p.superMode){p.base=Math.max(0,Math.min(100,p.base+amount));spawnFl(pi,(amount>0?'+':'')+amount+'% БАЗЫ','base');return;}p.base=Math.max(0,Math.min(100,p.base+amount));if(amount>0)spawnFl(pi,'+'+amount+'% БАЗЫ','base');else if(amount<0)spawnFl(pi,amount+'% БАЗЫ','baseloss');if(p.base>=100)triggerSuperGoyda(pi,p);}
 function triggerSuperGoyda(pi,p){p.superMode=true;p.superTurns=2;p.base=0;spawnSuperOverlay(pi);addLog(`🔥 СВЕРХ-ГОЙДА у ${pn(pi)}! Базометр сброшен. Ярость на 2 хода!`,'#39ff14');sfx('super');}
 function endTurn(pi){let me=G.players[pi];if(me.superMode)changeBase(pi,me,10);G.turn=1-pi;let next=G.players[G.turn];next.coins++;bumpCoins(G.turn);if(next.superMode){next.superTurns--;if(next.superTurns<0){next.superMode=false;addLog(`⚠️ Режим СВЕРХ-ГОЙДЫ у ${pn(G.turn)} угас!`,'#ffd700');}}rollAbilities(next);render();if(isOnline){syncState('state');updateWaitingOverlay();if(G.turn===myIndex)sfx('turn');}else{setTimeout(()=>showPass(G.turn),60);}}
@@ -692,7 +731,7 @@ function pn(pi){if(isOnline)return pi===myIndex?'ВЫ':'СОПЕРНИК';return
 
 // RENDER
 function render(){let[p1,p2]=G.players;renderHP(0,p1);renderHP(1,p2);updateShieldAndReflectIcons(0,p1.sh,p1.re);updateShieldAndReflectIcons(1,p2.sh,p2.re);renderBase(0,p1);renderBase(1,p2);document.getElementById('p1-co').textContent='💰 '+p1.coins;document.getElementById('p2-co').textContent='💰 '+p2.coins;let passOpen=document.getElementById('pass')&&document.getElementById('pass').style.display!=='none';let a0=(G.turn===0)&&!G.over&&(isOnline?myIndex===0:!passOpen);let a1=(G.turn===1)&&!G.over&&(isOnline?myIndex===1:!passOpen);let area1=document.getElementById('p1-area'),area2=document.getElementById('p2-area'),badge1=document.getElementById('p1-turn-badge'),badge2=document.getElementById('p2-turn-badge');if(G.turn===0&&!G.over){area1.classList.add('active-turn');area1.classList.remove('inactive-turn');badge1.classList.remove('hidden');area2.classList.add('inactive-turn');area2.classList.remove('active-turn');badge2.classList.add('hidden');}else if(G.turn===1&&!G.over){area2.classList.add('active-turn');area2.classList.remove('inactive-turn');badge2.classList.remove('hidden');area1.classList.add('inactive-turn');area1.classList.remove('active-turn');badge1.classList.add('hidden');}else{area1.classList.remove('active-turn','inactive-turn');badge1.classList.add('hidden');area2.classList.remove('active-turn','inactive-turn');badge2.classList.add('hidden');}renderHand(0,p1,'p1-hand',a0);renderHand(1,p2,'p2-hand',a1);renderAbils(0,a0,p1);renderAbils(1,a1,p2);renderPlayed('sl-p1',G.last[0]);renderPlayed('sl-p2',G.last[1]);let dc=document.getElementById('deck-count');if(dc)dc.textContent=G.deck.length;document.body.classList.toggle('super-mode-active',p1.superMode||p2.superMode);}
-function renderHP(i,p){let f=document.getElementById('p'+(i+1)+'-hp'),t=document.getElementById('p'+(i+1)+'-hptxt'),pct=Math.max(0,Math.round(p.hp/80*100));f.style.width=pct+'%';f.style.background=pct>60?'linear-gradient(90deg,#27ae60,#2ecc71)':pct>30?'linear-gradient(90deg,#c9620a,#e67e22)':'linear-gradient(90deg,#7b241c,#c0392b)';t.textContent=p.hp+'/80';}
+function renderHP(i,p){let f=document.getElementById('p'+(i+1)+'-hp'),t=document.getElementById('p'+(i+1)+'-hptxt'),pct=Math.max(0,Math.round(p.hp/100*100));f.style.width=pct+'%';f.style.background=pct>60?'linear-gradient(90deg,#27ae60,#2ecc71)':pct>30?'linear-gradient(90deg,#c9620a,#e67e22)':'linear-gradient(90deg,#7b241c,#c0392b)';t.textContent=p.hp+'/100';}
 function renderBase(i,p){let wrap=document.getElementById('p'+(i+1)+'-base-wrap'),fill=document.getElementById('p'+(i+1)+'-base-fill'),num=document.getElementById('p'+(i+1)+'-base-num'),stxt=document.getElementById('p'+(i+1)+'-stage-txt');if(p.superMode){fill.style.width='100%';fill.classList.add('super-mode');wrap.classList.add('super-glow');num.textContent='ЯРОСТЬ';stxt.textContent=`СВЕРХ-ГОЙДА (${p.superTurns+1} Х)`;}else{fill.style.width=p.base+'%';fill.classList.remove('super-mode');wrap.classList.remove('super-glow');num.textContent=p.base;let st=getStage(p.base);stxt.textContent=st===3?'ЭТАП III':st===2?'ЭТАП II':'ЭТАП I';}}
 function renderHand(pi,player,cid,faceUp){let c=document.getElementById(cid);c.innerHTML='';if(!faceUp){player.hand.forEach(()=>{let d=document.createElement('div');d.className='card-container';d.innerHTML='<div class="card back"><div class="back-rune">⚔️</div></div>';c.appendChild(d);});return;}player.hand.forEach(card=>{let container=document.createElement('div');container.className='card-container';let isLocked=false,lockTxt='';if(card.id==='OPLICH_GOYDA'&&getStage(player.base)<2&&!player.superMode){isLocked=true;lockTxt='ЭТАП II';}if(card.id==='GOYDO_OBEREG'&&getStage(player.base)<2&&!player.superMode){isLocked=true;lockTxt='ЭТАП II';}if(card.id==='GIPER_GOYD'&&getStage(player.base)<3&&!player.superMode){isLocked=true;lockTxt='ЭТАП III';}let d=document.createElement('div');d.className='card click';d.style.setProperty('--cbg',isLocked?'#151515':card.bg);d.style.setProperty('--cbc',isLocked?'#3c3c3c':card.bc);d.innerHTML=`<div class="card-shine"></div><div class="card-role-tab"><span>✦</span><span>${card.role}</span></div><div class="card-emblem"><span class="card-ico">${card.ic}</span></div><div class="card-name">${card.n}</div><div class="card-stat kind-${card.kind}"><span class="card-num">${card.num}</span><span class="card-unit">${card.unit}</span></div><div class="card-effect">${card.eff}</div><div class="card-tag" style="${isLocked?'background:#500;border-color:#f33;color:#f88;':''}">${isLocked?lockTxt:'Свиток Гойды'}</div>`;d.onclick=()=>playCard(pi,card);container.appendChild(d);c.appendChild(container);applyCardParallax(container);});setupHandHover(c);}
 function renderAbils(pi,active,player){let c=document.getElementById(`p${pi+1}-abils`);c.innerHTML='';player.abilities.forEach((ab,idx)=>{let canUse=active&&player.coins>=ab.cost;let container=document.createElement('div');container.className='abil-card-container';let btn=document.createElement('div');btn.className='abil-card'+(canUse?' ready':'');if(canUse){btn.style.setProperty('--bbg',ab.bg);btn.style.setProperty('--bc',ab.bc);btn.onclick=()=>useAbil(pi,idx);}btn.innerHTML=`<div class="abil-card-header"><span>${ab.ic} ${ab.n}</span><span style="font-size:7px;color:#888">Тактика</span></div><div class="abil-card-desc" title="${ab.d}">${ab.d}</div><div class="abil-card-cost">💰 ${ab.cost} ВЕЧЕВЫХ</div>`;container.appendChild(btn);c.appendChild(container);});}
@@ -769,8 +808,45 @@ function sfx(name){if(!actx||sndMuted)return;if(actx.state==='suspended')actx.re
   case'click':tone(900,.05,'sine',.08);break;
 }}
 function toggleMute(){initSound();sndMuted=!sndMuted;if(master)master.gain.value=sndMuted?0:.15;let btn=document.getElementById('mute-bb');if(btn)btn.textContent=sndMuted?'🔇 ЗВУК ВЫКЛ':'🔊 ЗВУК ВКЛ';}
-function startLocalGame(){isOnline=false;isLocal=true;document.getElementById('lobby').style.display='none';document.getElementById('bottom-bar').classList.remove('hidden');document.getElementById('log-toggle').style.display='block';document.getElementById('bb-lobby').style.display='inline-block';initGame();render();renderDiscard(0);renderDiscard(1);sfx('start');showPass(0);}
-function backToLobby(){if(!confirm('Вернуться в меню? Текущая схватка будет завершена. ГОЙДА?'))return;isOnline=false;isLocal=false;myIndex=-1;gameStarted=false;document.body.classList.remove('flip-view');if(mqttClient){mqttClient.end(true);mqttClient=null;}document.getElementById('lobby').style.display='flex';document.getElementById('over').style.display='none';document.getElementById('bottom-bar').classList.add('hidden');document.getElementById('log-toggle').style.display='none';document.getElementById('bb-lobby').style.display='none';}
+function startLocalGame(){isOnline=false;isLocal=true;document.getElementById('lobby').style.display='none';document.getElementById('bottom-bar').classList.remove('hidden');document.getElementById('log-toggle').style.display='block';document.getElementById('bb-lobby').style.display='inline-block';initGame();render();renderDiscard(0);renderDiscard(1);sfx('start');showSidePanels();showPass(0);}
+function backToLobby(){if(!confirm('Вернуться в меню? Текущая схватка будет завершена. ГОЙДА?'))return;isOnline=false;isLocal=false;myIndex=-1;gameStarted=false;document.body.classList.remove('flip-view');if(mqttClient){mqttClient.end(true);mqttClient=null;}document.getElementById('lobby').style.display='flex';document.getElementById('over').style.display='none';document.getElementById('bottom-bar').classList.add('hidden');document.getElementById('log-toggle').style.display='none';document.getElementById('bb-lobby').style.display='none';hideSidePanels();}
+
+// === SIDE PANELS ===
+const BATTLE_CRIES=['ГОЙДА!!!','СЛАВА!','В АТАКУ!','СТОЯТЬ!','ДЕРЖИСЬ!','ЗА ДРОН!','СИЛА!','УДАЧА!','ВПЕРЁД!','НЕ СДАВАЙ!','ОГОНЬ!','ГОЙДА-МАТ!','ЯРОСТЬ!','ПОБЕДА!'];
+const WISDOMS=['Карта ЩИТА поглощает урон — играй заранее, пока враг не напал.','ГОЙДА! активирует СуперГойду — 2 хода неуязвимости (65% блок).','ОТРАЖЕНИЕ возвращает 75% входящего урона назад врагу.','ДРОН наносит урон по базе противника, а не по HP.','ЗАМОРОЗКА пропускает следующий ход врага — идеально перед финальным ударом.','Следи за монетами — дорогие способности решают исход битвы.','ГИПЕР-ГОЙДА сносит и щит, и отражение — незаменим против защитника.','Комбо накапливается каждую карту — чем больше, тем мощнее удар.','Способности стоят монеты. Копи с первых ходов!','Базу можно восстановить картой РЕМОНТ — не жди, пока её разрушат.','Смотри на иконки в середине: слева — щит, справа — отражение.','КАТЮША бьёт AOE — отлично когда у врага накоплено комбо.'];
+let drumCnt=0,wisdomIdx=0,wisdomTimer=null;
+function beatDrum(){
+  initSound();
+  drumCnt++;
+  document.getElementById('drum-cnt').textContent=drumCnt;
+  const ico=document.getElementById('drum-ico');
+  ico.style.transform='scale(.65) rotate(-15deg)';
+  setTimeout(()=>ico.style.transform='',130);
+  const cry=BATTLE_CRIES[Math.floor(Math.random()*BATTLE_CRIES.length)];
+  const el=document.getElementById('drum-cry');
+  el.textContent=cry;
+  el.style.opacity='1';
+  clearTimeout(el._t);el._t=setTimeout(()=>el.style.opacity='0',1600);
+  // drum sound
+  if(audioCtx){const o=audioCtx.createOscillator(),g=audioCtx.createGain(),d=audioCtx.createOscillator(),dg=audioCtx.createGain();o.type='sine';o.frequency.setValueAtTime(160,audioCtx.currentTime);o.frequency.exponentialRampToValueAtTime(60,audioCtx.currentTime+.12);g.gain.setValueAtTime(.5,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.25);d.type='sawtooth';d.frequency.setValueAtTime(240,audioCtx.currentTime);dg.gain.setValueAtTime(.18,audioCtx.currentTime);dg.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.07);o.connect(g);g.connect(master);d.connect(dg);dg.connect(master);o.start();o.stop(audioCtx.currentTime+.25);d.start();d.stop(audioCtx.currentTime+.08);}
+}
+function showWisdom(){const el=document.getElementById('wisdom-text');if(el)el.textContent=WISDOMS[wisdomIdx];}
+function nextWisdom(){wisdomIdx=(wisdomIdx+1)%WISDOMS.length;showWisdom();clearInterval(wisdomTimer);wisdomTimer=setInterval(nextWisdom,7000);}
+function showSidePanels(){
+  drumCnt=0;
+  document.getElementById('drum-cnt').textContent='0';
+  document.getElementById('drum-cry').textContent='';
+  wisdomIdx=Math.floor(Math.random()*WISDOMS.length);
+  showWisdom();
+  clearInterval(wisdomTimer);wisdomTimer=setInterval(nextWisdom,7000);
+  document.getElementById('side-left').style.display='flex';
+  document.getElementById('side-right').style.display='flex';
+}
+function hideSidePanels(){
+  clearInterval(wisdomTimer);
+  document.getElementById('side-left').style.display='none';
+  document.getElementById('side-right').style.display='none';
+}
 
 // FX
 (function(){const cv=document.getElementById('sparks'),ctx=cv.getContext('2d');let W,H;function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;}window.addEventListener('resize',resize);resize();const COLORS=['#ff5500','#ff8800','#ffd700','#ff2200','#ffee88'],particles=[],MAX=25;function P(){this.reset(true);}P.prototype.reset=function(init){this.x=Math.random()*W;this.y=init?Math.random()*H:H+10;this.vy=-(Math.random()*.9+.3);this.vx=(Math.random()-.5)*.4;this.life=Math.random()*.6+.4;this.decay=Math.random()*.003+.0015;this.r=Math.random()*2+.5;this.color=COLORS[Math.floor(Math.random()*COLORS.length)];};for(let i=0;i<MAX;i++)particles.push(new P());function tick(){ctx.clearRect(0,0,W,H);for(let p of particles){p.x+=p.vx+(Math.random()-.5)*.1;p.y+=p.vy;p.life-=p.decay;if(p.life<=0||p.y<-10)p.reset(false);ctx.save();ctx.globalAlpha=p.life*.7;ctx.fillStyle=p.color;ctx.shadowBlur=6;ctx.shadowColor=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();ctx.restore();}requestAnimationFrame(tick);}tick();})();
