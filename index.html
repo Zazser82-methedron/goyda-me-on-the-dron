@@ -419,20 +419,31 @@ function draw(p,n){for(let i=0;i<n;i++){if(!G.deck.length){G.deck=buildDeck();ad
 function rollAbilities(p){let t=TAP.map((_,i)=>i),idx=[];for(let i=0;i<3;i++){let r=Math.floor(Math.random()*t.length);idx.push(t.splice(r,1)[0]);}p.abilIdx=idx;p.abilities=idx.map(i=>TAP[i]);}
 function initGame(){G={deck:buildDeck(),turn:0,over:false,last:[null,null],disc:[[],[]],logLines:[],players:[mkP(),mkP()]};draw(G.players[0],5);draw(G.players[1],5);G.players[0].coins=1;rollAbilities(G.players[0]);rollAbilities(G.players[1]);document.getElementById('log').innerHTML='';document.getElementById('sl-p1').innerHTML='';document.getElementById('sl-p2').innerHTML='';document.getElementById('disc-p1-stack').innerHTML='';document.getElementById('disc-p2-stack').innerHTML='';document.getElementById('over').style.display='none';document.body.classList.remove('super-mode-active');addLog('⚔️ Бойцы вышли на ратное поле! ГОЙДА!','#ffbd15');}
 
-// ═══ MQTT NETWORKING (HiveMQ public broker) ═══
+// ═══ MQTT NETWORKING (multi-broker fallback) ═══
 let mqttClient=null,roomCode=null,syncCounter=0,gameStarted=false;
-const MQTT_URL='wss://broker.hivemq.com:8884/mqtt';
+const MQTT_BROKERS=[
+  'wss://broker.hivemq.com:8884/mqtt',
+  'wss://broker.emqx.io:8084/mqtt',
+  'wss://test.mosquitto.org:8081/mqtt'
+];
 
 function genCode(){const ch='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let c='';for(let i=0;i<6;i++)c+=ch[Math.floor(Math.random()*ch.length)];return c;}
 function setLobbyStatus(msg,cls){let el=document.getElementById('lobby-status');el.textContent=msg;el.className='lobby-status'+(cls?' '+cls:'');}
 
 function mqttConnect(cb){
   let cid='goyda_'+Math.random().toString(36).substr(2,9);
-  let cl=mqtt.connect(MQTT_URL,{clientId:cid,clean:true,connectTimeout:8000,reconnectPeriod:0});
-  let done=false;
-  cl.on('connect',()=>{done=true;cb(null,cl);});
-  cl.on('error',(e)=>{if(!done){done=true;cb(e,null);}});
-  setTimeout(()=>{if(!done){done=true;cb(new Error('Таймаут соединения'),null);}},10000);
+  let idx=0;
+  function tryNext(){
+    if(idx>=MQTT_BROKERS.length){cb(new Error('Все серверы недоступны — проверь интернет'),null);return;}
+    let url=MQTT_BROKERS[idx];
+    setLobbyStatus('Подключение... ('+(idx+1)+'/'+MQTT_BROKERS.length+')','wait');
+    let cl=mqtt.connect(url,{clientId:cid,clean:true,connectTimeout:5000,reconnectPeriod:0});
+    let done=false;
+    cl.on('connect',()=>{if(!done){done=true;cb(null,cl);}});
+    cl.on('error',()=>{if(!done){done=true;try{cl.end(true);}catch(e){}idx++;tryNext();}});
+    setTimeout(()=>{if(!done){done=true;try{cl.end(true);}catch(e){}idx++;tryNext();}},6000);
+  }
+  tryNext();
 }
 
 function createRoom(){
