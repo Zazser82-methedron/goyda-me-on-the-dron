@@ -516,20 +516,40 @@ function joinRoomBtn(){
   initSound();
   let code=document.getElementById('room-input').value.trim().toUpperCase();
   if(code.length<4){setLobbyStatus('Введи код комнаты','err');return;}
-  setLobbyStatus('Подключение...','wait');
   document.getElementById('btn-create').disabled=true;document.getElementById('btn-join').disabled=true;
-  mqttConnect((err,cl)=>{
-    if(err){setLobbyStatus('❌ '+err.message,'err');document.getElementById('btn-create').disabled=false;document.getElementById('btn-join').disabled=false;return;}
-    mqttClient=cl;roomCode=code;
-    let topic='goyda25/'+code;
-    cl.subscribe(topic);
-    cl.on('message',(_,msg)=>onMsg(msg));
-    cl.on('close',onDisconnect);
-    let timer=setTimeout(()=>{if(myIndex===-1){setLobbyStatus('❌ Комната не найдена','err');document.getElementById('btn-create').disabled=false;document.getElementById('btn-join').disabled=false;cl.end(true);isOnline=false;}},7000);
-    // retained message from host arrives automatically
-    // onMsg handles it and sets myIndex=1
-    window._joinTimer=timer;
+  setLobbyStatus('🔍 Поиск комнаты...','wait');
+  // Try all brokers in parallel — host may be on any of them
+  let found=false,conns=[];
+  MQTT_BROKERS.forEach((url)=>{
+    let cid='goyda_'+Math.random().toString(36).substr(2,9);
+    let cl=mqtt.connect(url,{clientId:cid,clean:true,connectTimeout:5000,reconnectPeriod:0});
+    conns.push(cl);
+    cl.on('connect',()=>{if(found){try{cl.end(true);}catch(e){}return;}cl.subscribe('goyda25/'+code);});
+    cl.on('message',(_,msgBuf)=>{
+      if(found)return;
+      let d;try{d=JSON.parse(msgBuf.toString());}catch(e){return;}
+      if(d._p===0&&(d._t==='init'||d._t==='state')){
+        found=true;
+        conns.forEach(c=>{if(c!==cl)try{c.end(true);}catch(e){};});
+        mqttClient=cl;roomCode=code;
+        cl.removeAllListeners('message');
+        cl.on('message',(_,m)=>onMsg(m));
+        cl.on('close',onDisconnect);
+        myIndex=1;isOnline=true;gameStarted=false;
+        isRemoteUpdate=true;applyRemoteState(d);isRemoteUpdate=false;
+        _mqttPub('join');startOnlineGame();
+      }
+    });
+    cl.on('error',()=>{});
   });
+  setTimeout(()=>{
+    if(!found){
+      found=true;
+      conns.forEach(c=>{try{c.end(true);}catch(e){}});
+      setLobbyStatus('❌ Комната не найдена — проверь код или создай новую','err');
+      document.getElementById('btn-create').disabled=false;document.getElementById('btn-join').disabled=false;
+    }
+  },9000);
 }
 
 function onMsg(msgBuf){
