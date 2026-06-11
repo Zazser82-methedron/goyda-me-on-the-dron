@@ -658,6 +658,7 @@ body.fire-wind::after{opacity:.5!important;background:radial-gradient(ellipse at
 <div id="bottom-bar" class="hidden">
   <button class="bb-btn" id="mute-bb" onclick="toggleMute()">🔇 ЗВУК ВЫКЛ</button>
   <button class="bb-btn" id="music-bb" onclick="toggleMusic()">🎵 МУЗЫКА ВЫКЛ</button>
+  <button class="bb-btn" id="gemini-bb" onclick="setGeminiKey()" title="ИИ-озвучка бота и боссов по твоему ключу">🤖 GEMINI</button>
   <button class="bb-btn" onclick="toggleCompendium(true)">📜 КНИГА ГОЙДЫ</button>
   <button class="bb-btn" id="bb-lobby" onclick="backToLobby()" style="display:none">🏠 МЕНЮ</button>
 </div>
@@ -1075,7 +1076,7 @@ function copyCode(){navigator.clipboard.writeText(document.getElementById('code-
 function showOnlineOver(){let me=G.players[myIndex],foe=G.players[1-myIndex];let o=(me.hp<=0&&foe.hp<=0)?'draw':me.hp<=0?'loss':'win';let res=null;if(!_resultRecorded){_resultRecorded=true;res=recordResult('online',o);renderLobbyStats();}let html=o==='draw'?'⚔️ СОВМЕСТНАЯ СМЕРТЬ!<br><span class="text-sm font-normal">Оба воина пали во славу рока!</span>':o==='loss'?'💀 ВЫ ПАЛИ!<br><span class="text-sm font-normal">Соперник оказался базированнее.</span>':'🏆 ВЫ ТРИУМФОВАЛИ!<br><span class="text-sm font-normal">Ваша Гойда признана абсолютной!</span>';showOver(html,res,res?o:null);}
 
 // GAME
-function playCard(pi,card){if(G.over||G.turn!==pi)return;if(isOnline&&pi!==myIndex)return;sfx('cardplay');let me=G.players[pi],foe=G.players[1-pi];if(card.id==='OPLICH_GOYDA'&&getStage(me.base)<2&&!me.superMode){spawnFl(pi,'Требует ЭТАП II!','baseloss');return;}if(card.id==='GOYDO_OBEREG'&&getStage(me.base)<2&&!me.superMode){spawnFl(pi,'Требует ЭТАП II!','baseloss');return;}if(card.id==='GIPER_GOYD'&&getStage(me.base)<3&&!me.superMode){spawnFl(pi,'Требует ЭТАП III!','baseloss');return;}let i=me.hand.findIndex(c=>c.uid===card.uid);if(i!==-1)me.hand.splice(i,1);G.last[pi]=card;pushDiscard(pi,card);flyCardToCenter(pi,card);if(card.id!=='GOYDA')me.combo=0;applyCard(pi,card,me,foe);if(card.base)changeBase(pi,me,card.base);if(!G.over){draw(me,1);endTurn(pi);}render();resetIdle();}
+function playCard(pi,card){if(G.over||G.turn!==pi)return;if(isOnline&&pi!==myIndex)return;sfx('cardplay');let me=G.players[pi],foe=G.players[1-pi];if(card.id==='OPLICH_GOYDA'&&getStage(me.base)<2&&!me.superMode){spawnFl(pi,'Требует ЭТАП II!','baseloss');return;}if(card.id==='GOYDO_OBEREG'&&getStage(me.base)<2&&!me.superMode){spawnFl(pi,'Требует ЭТАП II!','baseloss');return;}if(card.id==='GIPER_GOYD'&&getStage(me.base)<3&&!me.superMode){spawnFl(pi,'Требует ЭТАП III!','baseloss');return;}let i=me.hand.findIndex(c=>c.uid===card.uid);if(i!==-1)me.hand.splice(i,1);G.last[pi]=card;pushDiscard(pi,card);flyCardToCenter(pi,card);if(card.id!=='GOYDA')me.combo=0;applyCard(pi,card,me,foe);if(card.base)changeBase(pi,me,card.base);if(!G.over){draw(me,1);endTurn(pi);}else if(isOnline){syncState('state');showOnlineOver();}render();resetIdle();}
 function applyCard(pi,card,me,foe){
   castFX(pi,card);
   let msg='',col='#f4d58d',type=card.role,sm=me.superMode?1.4:1.0;
@@ -1104,13 +1105,13 @@ function applyCard(pi,card,me,foe){
   addLog(msg,col,card.id==='GOYDO_FONK'?'goyda':type,extra);
   checkWin(me,foe,pi);
 }
-function useAbil(pi,idx){if(G.over||G.turn!==pi)return;if(isOnline&&pi!==myIndex)return;let me=G.players[pi],foe=G.players[1-pi],ab=me.abilities[idx];if(me.coins<ab.cost)return;me.coins-=ab.cost;addLog(`💫 ${pn(pi)} применил тактику [${ab.n}] за ${ab.cost} 💰`,'#ffd700');ab.run(pi,me,foe);checkWin(me,foe,pi);if(!G.over)endTurn(pi);render();resetIdle();}
+function useAbil(pi,idx){if(G.over||G.turn!==pi)return;if(isOnline&&pi!==myIndex)return;let me=G.players[pi],foe=G.players[1-pi],ab=me.abilities[idx];if(me.coins<ab.cost)return;me.coins-=ab.cost;addLog(`💫 ${pn(pi)} применил тактику [${ab.n}] за ${ab.cost} 💰`,'#ffd700');ab.run(pi,me,foe);checkWin(me,foe,pi);if(!G.over)endTurn(pi);else if(isOnline){syncState('state');showOnlineOver();}render();resetIdle();}
 function doAtk(pi,dmg,pierce,me,foe,vfx){let ic=vfx||'⚔️';if(foe.superMode){let thru=Math.floor(dmg*.35);foe.hp=Math.max(0,foe.hp-thru);spawnProjectile(pi,1-pi,ic,'fwd');flashA(1-pi,'grn');if(thru>0)spawnFl(1-pi,'-'+thru,'dmg');spawnFl(1-pi,'⚡СВЕРХ (−65%)','block');sfx('shield');return{msg:`СВЕРХ-ГОЙДА поглотила бо́льшую часть (${thru} прошло)`,hit:thru>0};}if(foe.re>0){foe.re--;let ref=Math.floor(dmg*.75);me.hp=Math.max(0,me.hp-ref);spawnProjectile(pi,1-pi,ic,'reflect');flashA(pi,'red');shakeA(pi);hpHit(pi);spawnFl(pi,'-'+ref,'dmg');spawnFl(1-pi,'↩️ 75% назад!','ref');quake(ref);sfx('hit');if(Math.random()<.6)totemSay('ЗЕРКАЛО!!!');return{msg:`${ref} (75%) отражено назад!`,hit:false};}if(!lockShield&&!pierce&&foe.sh>0){foe.sh--;spawnProjectile(pi,1-pi,ic,'block');flashA(1-pi,'blu');spawnFl(1-pi,'🛡️ броня','block');sfx('shield');if(Math.random()<.45)totemSay('БРОНЯ ДЕРЖИТ!');return{msg:'принято на прочную броню',hit:false};}foe.hp=Math.max(0,foe.hp-dmg);spawnProjectile(pi,1-pi,ic,'fwd');flashA(1-pi,'red');shakeA(1-pi);hpHit(1-pi);spawnFl(1-pi,'-'+dmg,'dmg');quake(dmg);sfx('hit');if(foe.thorns>0&&foe.hp>0){foe.thorns--;let tn=8;me.hp=Math.max(0,me.hp-tn);flashA(pi,'red');spawnFl(pi,'🌵 -'+tn,'dmg');addLog(`🌵 Шипы ${pn(1-pi)} ужалили ${pn(pi)} на ${tn}!`,'#7cff5a');}if(foe.hp<=0)totemSay('ДОБИЛ! ГОЙДА!',true);else if(dmg>=28)totemSay('ОГО-ГОЙДА!!!',true);else if(dmg>=15&&Math.random()<.7)totemSay(['В МЯСО!','БЕЙ!','КРЕПКО!','ОЙ-ГОЙ!'][Math.floor(Math.random()*4)]);if(isBot&&pi===BOT&&dmg>=20&&foe.hp>0)botReact('taunt');return{msg:`${dmg} чистого урона`,hit:true};}
 function dealRaw(tpi,amount){let t=G.players[tpi];if(t.superMode){spawnFl(tpi,'🛡️ НЕУЯЗВИМ','block');return;}t.hp=Math.max(0,t.hp-amount);flashA(tpi,'red');shakeA(tpi);hpHit(tpi);spawnFl(tpi,'-'+amount,'dmg');spawnShards(tpi,'#ffd700');quake(amount);sfx('hit');}
 function healRaw(pi,amount){let p=G.players[pi],h=Math.min(amount,100-p.hp);p.hp=Math.min(100,p.hp+amount);flashA(pi,'grn');spawnFl(pi,'+'+h,'heal');sfx('heal');if(h>=20&&Math.random()<.5)totemSay('ЖИВУЧИЙ!');return h;}
 function changeBase(pi,p,amount){if(amount>0&&p.freezeNext){p.freezeNext=false;spawnFl(pi,'❄️ ЗАМОРОЖЕНО!','baseloss');addLog(`❄️ Прирост Базометра ${pn(pi)} заморожен!`,'#3aebff');return;}if(p.superMode){p.base=Math.max(0,Math.min(100,p.base+amount));spawnFl(pi,(amount>0?'+':'')+amount+'% БАЗЫ','base');return;}p.base=Math.max(0,Math.min(100,p.base+amount));if(amount>0)spawnFl(pi,'+'+amount+'% БАЗЫ','base');else if(amount<0)spawnFl(pi,amount+'% БАЗЫ','baseloss');if(p.base>=100)triggerSuperGoyda(pi,p);}
 function triggerSuperGoyda(pi,p){p.superMode=true;p.superTurns=2;p.base=0;spawnSuperOverlay(pi);addLog(`🔥 СВЕРХ-ГОЙДА у ${pn(pi)}! Базометр сброшен. Ярость на 2 хода!`,'#39ff14');sfx('super');totemSay('СВЕРХ!!!',true);totemDance();if(isBot&&pi===BOT)botReact('super',true);}
-function endTurn(pi){let me=G.players[pi];if(me.superMode)changeBase(pi,me,10);G.turn=1-pi;let next=G.players[G.turn];next.coins++;bumpCoins(G.turn);if(next.superMode){next.superTurns--;if(next.superTurns<0){next.superMode=false;addLog(`⚠️ Режим СВЕРХ-ГОЙДЫ у ${pn(G.turn)} угас!`,'#ffd700');}}
+function endTurn(pi){let me=G.players[pi];if(me.superMode)changeBase(pi,me,10);G.turn=1-pi;let next=G.players[G.turn];next.coins++;bumpCoins(G.turn);rollAbilities(next);if(next.superMode){next.superTurns--;if(next.superTurns<0){next.superMode=false;addLog(`⚠️ Режим СВЕРХ-ГОЙДЫ у ${pn(G.turn)} угас!`,'#ffd700');}}
   // ☠ poison ticks at the start of this player's turn
   if(next.poison>0){let d=next.poison;dealRaw(G.turn,d);addLog(`☠️ Яд жалит ${pn(G.turn)} на ${d}!`,'#7cff5a');next.poison--;}
   if(next.hp<=0){checkWin(G.players[pi],G.players[G.turn],pi);render();if(isOnline){syncState('state');showOnlineOver();}return;}
@@ -1206,7 +1207,7 @@ function checkWin(me,foe,pi){
   else if(me.hp<=0){G.over=true;ended=true;html=`🏆 ${pn(1-pi)} ТРИУМФОВАЛ!`;}
   if(!ended||isOnline)return; // online handled in showOnlineOver
   let res=null,o=null;
-  if(isBot){o=botOutcome();res=recordResult('bot',o);html=o==='win'?'🏆 ВЫ ТРИУМФОВАЛИ!<br><span class="text-sm font-normal">Бот повержен. Гойда абсолютна!</span>':o==='loss'?'💀 ВЫ ПАЛИ!<br><span class="text-sm font-normal">Бот оказался базированнее.</span>':'⚔️ СОВМЕСТНАЯ СМЕРТЬ!';showBotThinking(false);renderLobbyStats();setTimeout(()=>{_botReactLast=0;botReact('gg',true);},500);}
+  if(isBot){o=botOutcome();res=recordResult('bot',o);html=o==='win'?'🏆 ВЫ ТРИУМФОВАЛИ!<br><span class="text-sm font-normal">Бот повержен. Гойда абсолютна!</span>':o==='loss'?'💀 ВЫ ПАЛИ!<br><span class="text-sm font-normal">Бот оказался базированнее.</span>':'⚔️ СОВМЕСТНАЯ СМЕРТЬ!';showBotThinking(false);renderLobbyStats();setTimeout(()=>{_botReactLast=0;botReact('gg',true,{win:o==='win'});},500);}
   else if(!_resultRecorded){_resultRecorded=true;STATS.games++;saveStats();renderLobbyStats();o=(me.hp<=0&&foe.hp<=0)?'draw':'win';}
   showOver(html,res,o);
 }
@@ -1339,14 +1340,23 @@ const BOT_PHRASES={
   taunt:{easy:['ой, неплохо! 😄','ха, попал!','вот так вот'],warrior:['получай! 💥','вот это удар!','чувствуешь?'],oprichnik:['жалкое зрелище 😤','на колени!','и это всё?']},
   panic:{easy:['ай, больно! 😣','полегче...','ну ты чего'],warrior:['врёшь, не возьмёшь!','ещё держусь 💪','рано радуешься'],oprichnik:['это ничего... 😒','я не сдамся','тьфу']},
   super:{easy:['ого, сила! ✨'],warrior:['СВЕРХ-ГОЙДА!!! 🔥'],oprichnik:['теперь тебе конец 💀']},
-  gg:{easy:['хорошая игра! 🤝'],warrior:['достойный бой ⚔'],oprichnik:['слабак. 😎']}
+  gg:{easy:['хорошая игра! 🤝'],warrior:['достойный бой ⚔'],oprichnik:['слабак. 😎']},
+  reply:{easy:['ой, напугал 😄','и тебе того же','ха-ха, ну ты даёшь'],warrior:['громко кричишь!','слова-слова, покажи делом','ну-ну'],oprichnik:['пищит мышь 😏','кричи громче, труп','цыц! 🤫']}
 };
+function _presetPhrase(kind){let pool=(BOT_PHRASES[kind]||{})[botLevel]||(BOT_PHRASES[kind]||{}).warrior||['ГОЙДА!'];return pool[Math.floor(Math.random()*pool.length)];}
 let _botReactLast=0;
-function botReact(kind,force){if(!isBot)return;let now=Date.now();if(now-_botReactLast<3500)return;if(!force&&Math.random()>0.6)return;let pool=(BOT_PHRASES[kind]||{})[botLevel]||(BOT_PHRASES[kind]||{}).warrior||[];if(!pool.length)return;_botReactLast=now;spawnEmote(BOT,pool[Math.floor(Math.random()*pool.length)]);}
+function botReact(kind,force,ctx){if(!isBot)return;let now=Date.now();if(now-_botReactLast<3000)return;if(!force&&Math.random()>0.6)return;_botReactLast=now;ctx=ctx||{};if(window._campaignBoss)ctx.boss=window._campaignBoss;if(STATS.geminiKey){geminiSay(kind,ctx).then(t=>spawnEmote(BOT,t||_presetPhrase(kind)));}else{spawnEmote(BOT,_presetPhrase(kind));}}
+// ── H4: Gemini chat (player's own free key; opt-in, graceful fallback) ──
+const GEMINI_URL='https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=';
+let _geminiCD=0;
+function _geminiPrompt(kind,ctx){ctx=ctx||{};let who=ctx.boss?('Ты играешь босса по имени «'+ctx.boss+'». '):'Ты — бот-противник. ';switch(kind){case'greet':return who+'Поприветствуй игрока перед боем, с лёгким подколом.';case'taunt':return who+'Ты только что сильно ударил игрока. Подколи его.';case'panic':return who+'У тебя мало здоровья. Браво сквозь панику.';case'super':return who+'Ты вошёл в режим СВЕРХ-ГОЙДА. Пригрози.';case'gg':return who+(ctx.win?'Ты проиграл — признай поражение с достоинством.':'Ты победил — слегка позлорадствуй.');case'reply':return who+'Игрок крикнул тебе: "'+(ctx.myEmote||'ГОЙДА!')+'". Ответь дерзко и по теме.';case'intro':return who+'Грозная вступительная фраза босса перед боем.';default:return who+'Короткая боевая реплика.';}}
+async function geminiSay(kind,ctx){let key=STATS.geminiKey;if(!key)return null;let now=Date.now();if(now-_geminiCD<2500)return null;_geminiCD=now;try{let sys='Ты — дерзкий идол-комментатор в меме-карточной игре «ГОЙДА» (славяно-рейв стиль). Отвечай ОДНОЙ короткой репликой на русском, не более 8 слов, без кавычек и пояснений.';let ctrl=new AbortController();let to=setTimeout(()=>ctrl.abort(),4500);let r=await fetch(GEMINI_URL+encodeURIComponent(key),{method:'POST',headers:{'Content-Type':'application/json'},signal:ctrl.signal,body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:[{parts:[{text:_geminiPrompt(kind,ctx)}]}],generationConfig:{maxOutputTokens:32,temperature:1.15}})});clearTimeout(to);if(!r.ok)return null;let j=await r.json();let t=j&&j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts&&j.candidates[0].content.parts[0]&&j.candidates[0].content.parts[0].text;if(!t)return null;return String(t).trim().replace(/^["'«»\s]+|["'«»\s]+$/g,'').slice(0,44);}catch(e){return null;}}
+function setGeminiKey(){let cur=STATS.geminiKey||'';let k=prompt('Вставь свой бесплатный Gemini API-ключ (Google AI Studio).\nХранится только в этом браузере. Пусто = выключить.',cur);if(k===null)return;k=k.trim();STATS.geminiKey=k||'';saveStats();_updateGeminiBtn();alert(k?'🤖 Gemini подключён! Бот и боссы оживут.':'Gemini выключен — используются заготовки.');}
+function _updateGeminiBtn(){let b=document.getElementById('gemini-bb');if(b)b.textContent=STATS.geminiKey?'🤖 GEMINI ВКЛ':'🤖 GEMINI';}
 // ── Emote wheel ──
 const EMOTES=[{ic:'⚔️',txt:'ГОЙДА!!!'},{ic:'🔥',txt:'ОГОНЬ!'},{ic:'🛡',txt:'ДЕРЖИСЬ!'},{ic:'👑',txt:'СЛАВА!'},{ic:'❄️',txt:'СТОЯТЬ!'},{ic:'😤',txt:'ЯРОСТЬ!'},{ic:'🏆',txt:'ПОБЕДА!'},{ic:'💀',txt:'ТРЕПЕЩИ!'}];
 let _wheelOpen=false,_wheelPi=0;
-function sendEmote(pi,text,idx){spawnEmote(pi,text);sndCry();if(isOnline&&pi===myIndex){_mqttPub('emote',idx!=null?{e:idx}:{t:text});}}
+function sendEmote(pi,text,idx){spawnEmote(pi,text);sndCry();if(isOnline&&pi===myIndex){_mqttPub('emote',idx!=null?{e:idx}:{t:text});}if(isBot&&pi===HUMAN&&!G.over){setTimeout(()=>botReact('reply',true,{myEmote:text}),600+Math.random()*600);}}
 function emoteZone(pi){
   if(isOnline&&pi!==myIndex)return;
   if(isLocal&&G.turn!==pi)return;
@@ -1552,7 +1562,7 @@ document.getElementById('btn-join').addEventListener('click',joinRoomBtn);
 document.getElementById('room-input').addEventListener('keydown',function(e){if(e.key==='Enter')joinRoomBtn();});
 
 renderLobbyStats();applyCosmetics();
-(function(){let btn=document.getElementById('mute-bb');if(btn)btn.textContent=sndMuted?'🔇 ЗВУК ВЫКЛ':'🔊 ЗВУК ВКЛ';_updateMusicBtn();})();
+(function(){let btn=document.getElementById('mute-bb');if(btn)btn.textContent=sndMuted?'🔇 ЗВУК ВЫКЛ':'🔊 ЗВУК ВКЛ';_updateMusicBtn();_updateGeminiBtn();})();
 initGame();render();renderDiscard(0);renderDiscard(1);
 // Show library load status in lobby
 setTimeout(()=>{
