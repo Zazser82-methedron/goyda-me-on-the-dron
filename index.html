@@ -84,7 +84,7 @@ body.super-mode-active::after{opacity:.85;}
 #p1-area{grid-area:slot-bot;}
 body.flip-view #p2-area{grid-area:slot-bot;}
 body.flip-view #p1-area{grid-area:slot-top;}
-.area-inner{display:flex;align-items:center;gap:12px;width:100%;height:100%;}
+.area-inner{display:flex;align-items:center;gap:12px;width:100%;height:100%;position:relative;z-index:2;}
 .arena-col{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;flex-shrink:0;width:88px;}
 .area-main{flex:1;min-width:0;display:flex;flex-direction:column;}
 .player-area{padding:8px 16px;background:linear-gradient(180deg,rgba(0,0,0,.88) 0%,rgba(12,5,1,.7) 100%);border:2px solid #2d180f;transition:all .4s ease;position:relative;}
@@ -94,10 +94,27 @@ body.flip-view #p1-area{grid-area:slot-top;}
 .player-area.inactive-turn{opacity:.62;filter:grayscale(18%);}
 .turn-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,#b8860b,#ffe066,#b8860b);border:1px solid #fff;box-shadow:0 0 10px rgba(255,215,0,.6);border-radius:4px;color:#000;font-size:8px;font-weight:900;padding:2px 8px;letter-spacing:1px;z-index:50;text-transform:uppercase;animation:badgeBlink 1.5s infinite alternate;}
 @keyframes badgeBlink{0%{opacity:.85;transform:translateX(-50%) scale(.95);}100%{opacity:1;transform:translateX(-50%) scale(1.05);}}
-#mid{display:flex;align-items:center;justify-content:center;gap:24px;padding:4px 16px;}
-.arena-side{display:flex;align-items:center;justify-content:center;gap:16px;min-height:80px;}
+#mid{display:flex;align-items:center;justify-content:center;gap:14px;padding:4px 16px;position:relative;}
+.clash-slot{display:flex;justify-content:center;align-items:center;min-height:84px;width:74px;}
+.arena-totem{display:flex;flex-direction:column;align-items:center;gap:1px;position:relative;flex-shrink:0;}
+.totem-glow{position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:130px;height:130px;border-radius:50%;background:radial-gradient(circle,rgba(255,120,20,.22),transparent 65%);pointer-events:none;z-index:0;animation:cosmicPulse 5s ease-in-out infinite;}
+.totem-idol{font-size:40px;line-height:1;position:relative;z-index:2;filter:drop-shadow(0 0 10px rgba(255,150,40,.6));animation:totemPulse 3.2s ease-in-out infinite;}
+@keyframes totemPulse{0%,100%{transform:scale(1) translateY(0);}50%{transform:scale(1.07) translateY(-2px);}}
+.totem-deck{font-size:11px;color:#ffd700;font-weight:900;white-space:nowrap;position:relative;z-index:2;}
+body.super-mode-active .totem-idol{animation:totemRoar .5s ease-in-out infinite;filter:drop-shadow(0 0 22px rgba(57,255,20,.9));}
+@keyframes totemRoar{0%,100%{transform:scale(1.12) rotate(-4deg);}50%{transform:scale(1.3) rotate(4deg);}}
+.totem-runes{position:absolute;top:-3px;left:50%;transform:translateX(-50%);width:62px;height:62px;border-radius:50%;border:1.5px dashed rgba(255,180,60,.28);box-shadow:0 0 12px rgba(255,140,30,.15) inset;z-index:1;animation:runeSpin 16s linear infinite;}
+@keyframes runeSpin{to{transform:translateX(-50%) rotate(360deg);}}
+#mid::before,#mid::after{content:'🔥';position:absolute;top:50%;font-size:18px;opacity:.5;filter:drop-shadow(0 0 8px rgba(255,120,0,.8));animation:torchFlicker 1.2s ease-in-out infinite alternate;pointer-events:none;z-index:0;}
+#mid::before{left:8px;}#mid::after{right:8px;}
+@keyframes torchFlicker{0%{opacity:.32;transform:translateY(-52%) scale(.92);}100%{opacity:.7;transform:translateY(-48%) scale(1.1);}}
+/* optional generated arena bg layer (CSS fallback if no image) */
+#game{position:relative;}
+#game.has-arena-bg::after{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;background:var(--arena-bg) center/cover no-repeat;opacity:.18;mix-blend-mode:screen;}
+@media(max-width:640px){#mid::before,#mid::after{display:none;}}
 .pslot{display:flex;justify-content:center;align-items:center;min-height:80px;position:relative;}
-.played{width:86px;height:122px;border-radius:8px;border:2.5px solid var(--gold);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:6px;animation:cardIn .35s cubic-bezier(.19,1,.22,1) both;box-shadow:0 8px 20px rgba(0,0,0,.8);}
+.played{width:64px;height:90px;border-radius:8px;border:2.5px solid var(--gold);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4px;animation:cardIn .35s cubic-bezier(.19,1,.22,1) both;box-shadow:0 6px 16px rgba(0,0,0,.8);}
+.clash-slot .played .text-2xl{font-size:22px;}
 .empty-slot{font-size:32px;opacity:.12;color:var(--gold);animation:emptyRunePulse 4s ease-in-out infinite;}
 @keyframes emptyRunePulse{0%,100%{opacity:.08;}50%{opacity:.25;}}
 #log-panel{position:fixed;right:0;bottom:0;top:0;width:260px;background:rgba(6,2,0,.97);border-left:2px solid #2f190e;z-index:35;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s ease;box-shadow:-6px 0 20px rgba(0,0,0,.8);}
@@ -271,6 +288,18 @@ body.frame-star .player-area{border:1.5px solid rgba(180,120,255,.55);box-shadow
 .card.rarity-epic .card-role-tab::after{background:#cc88ff;box-shadow:0 0 4px #cc88ff;}
 .card.rarity-legendary .card-role-tab::after{background:#ffd700;box-shadow:0 0 5px #ffd700;}
 .card.rarity-legendary .card-tag{color:#ffe07a;background:linear-gradient(90deg,rgba(255,200,40,.28),rgba(180,60,5,.22));border-color:rgba(255,200,40,.55);}
+/* ── PROJECTILES & SHARDS ── */
+.projectile{position:fixed;z-index:60;font-size:30px;line-height:1;pointer-events:none;will-change:transform,opacity;filter:drop-shadow(0 0 9px rgba(255,150,50,.95));transform-origin:center;}
+.shard{position:fixed;z-index:59;width:6px;height:6px;border-radius:50%;pointer-events:none;will-change:transform,opacity;box-shadow:0 0 7px currentColor;}
+@media(max-width:640px){.projectile{font-size:22px;}}
+/* ── STATUS AURAS (on .player-area) ── */
+.player-area::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;opacity:0;transition:opacity .4s;}
+.player-area::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;opacity:0;border-radius:inherit;transition:opacity .4s;}
+.player-area.aura-frozen::before{opacity:1;background:linear-gradient(180deg,rgba(120,220,255,.16),rgba(60,160,255,.05));box-shadow:inset 0 0 30px rgba(120,220,255,.28);}
+.player-area.aura-super::before{opacity:1;background:radial-gradient(ellipse at 50% 100%,rgba(57,255,20,.16),transparent 60%),radial-gradient(ellipse at 50% 0%,rgba(255,120,0,.15),transparent 60%);animation:auraSuperPulse 1.6s ease-in-out infinite;}
+@keyframes auraSuperPulse{0%,100%{opacity:.65;}50%{opacity:1;}}
+.player-area.aura-shield::after{opacity:1;box-shadow:inset 0 0 0 2px rgba(0,200,255,.4),inset 0 0 22px rgba(0,200,255,.16);}
+.player-area.aura-reflect::after{opacity:1;box-shadow:inset 0 0 0 2px rgba(190,120,255,.55),inset 0 0 22px rgba(170,90,255,.2);background:linear-gradient(115deg,transparent 40%,rgba(220,200,255,.12) 50%,transparent 60%);background-size:250% 250%;animation:foilSweep 3.5s linear infinite;}
 /* MOBILE */
 /* Side panels */
 #side-left,#side-right{position:fixed;top:50%;transform:translateY(-50%);z-index:20;width:76px;display:none;flex-direction:column;align-items:center;gap:8px;}
@@ -304,8 +333,12 @@ body.frame-star .player-area{border:1.5px solid rgba(180,120,255,.55);box-shadow
   .abil-card-cost{font-size:8px;}
   .hand{min-height:130px;gap:4px;}
   .scroller-abil{gap:4px;}
-  #mid{padding:2px 6px;min-height:48px;}
-  .played{width:72px;height:100px;}
+  #mid{padding:2px 6px;min-height:84px;gap:8px;}
+  .clash-slot{width:60px;min-height:74px;}
+  .played{width:56px;height:78px;}
+  .totem-idol{font-size:32px;}
+  .totem-glow{width:96px;height:96px;}
+  .totem-deck{font-size:9px;}
   .player-area{padding:4px 6px;}
   .base-wrap{width:120px;}
   .info-row{gap:6px;grid-template-columns:auto 1fr auto;}
@@ -414,7 +447,6 @@ body.frame-star .player-area{border:1.5px solid rgba(180,120,255,.55);box-shadow
     <div id="p2-turn-badge" class="turn-badge hidden">🛡️ ХОДИТ СЕЙЧАС</div>
     <div class="area-inner">
       <div class="arena-col">
-        <div class="pslot" id="sl-p2"></div>
         <div class="discard" id="disc-p2">
           <div class="disc-label">СБРОС <span id="disc-p2-n">0</span></div>
           <div class="disc-stack" id="disc-p2-stack"></div>
@@ -456,19 +488,21 @@ body.frame-star .player-area{border:1.5px solid rgba(180,120,255,.55);box-shadow
   </div>
 
   <div id="mid">
-    <div class="mid-center" style="text-align:center">
-      <div class="deck-row">
-        <span style="font-size:13px;color:#ffd700;font-weight:900" id="deck-pile">📜 КИБЕР-СВИТКИ <span id="deck-count">56</span></span>
-      </div>
-      <div id="combo" style="margin-top:4px"></div>
+    <div class="clash-slot" id="clash-p2"></div>
+    <div class="arena-totem">
+      <div class="totem-glow"></div>
+      <div class="totem-runes"></div>
+      <div class="totem-idol" id="totem-idol">🗿</div>
+      <span class="totem-deck" id="deck-pile">📜 <span id="deck-count">56</span></span>
+      <div id="combo"></div>
     </div>
+    <div class="clash-slot" id="clash-p1"></div>
   </div>
 
   <div class="player-area" id="p1-area">
     <div id="p1-turn-badge" class="turn-badge hidden">🛡️ ХОДИТ СЕЙЧАС</div>
     <div class="area-inner">
       <div class="arena-col">
-        <div class="pslot" id="sl-p1"></div>
         <div class="discard" id="disc-p1">
           <div class="disc-label">СБРОС <span id="disc-p1-n">0</span></div>
           <div class="disc-stack" id="disc-p1-stack"></div>
@@ -700,7 +734,7 @@ function mkP(){return{hp:100,sh:0,re:0,combo:0,coins:0,hand:[],base:0,superMode:
 function buildDeck(){let d=[];for(let k in DEFS){let df=DEFS[k];for(let i=0;i<df.cnt;i++)d.push({...df,id:k,uid:k+'_'+Math.random()});}for(let i=d.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}return d;}
 function draw(p,n){for(let i=0;i<n;i++){if(!G.deck.length){G.deck=buildDeck();addLog('📜 Колода свитков перетасована! Ратный дух крепок.','#ffbd15');}if(p.hand.length<7)p.hand.push(G.deck.pop());}triggerDeckJiggle();}
 function rollAbilities(p){let t=TAP.map((_,i)=>i),idx=[];for(let i=0;i<3;i++){let r=Math.floor(Math.random()*t.length);idx.push(t.splice(r,1)[0]);}p.abilIdx=idx;p.abilities=idx.map(i=>TAP[i]);}
-function initGame(){_resultRecorded=false;_iWantRematch=false;_oppWantsRematch=false;G={deck:buildDeck(),turn:0,over:false,last:[null,null],disc:[[],[]],logLines:[],players:[mkP(),mkP()]};draw(G.players[0],5);draw(G.players[1],5);G.players[0].coins=1;rollAbilities(G.players[0]);rollAbilities(G.players[1]);document.getElementById('log').innerHTML='';document.getElementById('sl-p1').innerHTML='';document.getElementById('sl-p2').innerHTML='';document.getElementById('disc-p1-stack').innerHTML='';document.getElementById('disc-p2-stack').innerHTML='';document.getElementById('over').style.display='none';document.body.classList.remove('super-mode-active');addLog('⚔️ Бойцы вышли на ратное поле! ГОЙДА!','#ffbd15');}
+function initGame(){_resultRecorded=false;_iWantRematch=false;_oppWantsRematch=false;G={deck:buildDeck(),turn:0,over:false,last:[null,null],disc:[[],[]],logLines:[],players:[mkP(),mkP()]};draw(G.players[0],5);draw(G.players[1],5);G.players[0].coins=1;rollAbilities(G.players[0]);rollAbilities(G.players[1]);document.getElementById('log').innerHTML='';document.getElementById('clash-p1').innerHTML='';document.getElementById('clash-p2').innerHTML='';document.getElementById('disc-p1-stack').innerHTML='';document.getElementById('disc-p2-stack').innerHTML='';document.getElementById('over').style.display='none';document.body.classList.remove('super-mode-active');addLog('⚔️ Бойцы вышли на ратное поле! ГОЙДА!','#ffbd15');}
 
 // ═══ MQTT NETWORKING (multi-broker fallback) ═══
 let mqttClient=null,roomCode=null,syncCounter=0,gameStarted=false;
@@ -965,27 +999,27 @@ function applyCard(pi,card,me,foe){
   let foePre=foe.hp,mePre=me.hp;
   let extra={ic:card.ic,bg:card.bg};
   switch(card.id){
-    case'GOYDA':{me.combo=Math.min(me.combo+1,4);let dmg=Math.floor((12+(me.combo-1)*3)*sm);let r=doAtk(pi,dmg,false,me,foe);msg=`${pn(pi)} · ГОЙДА! (серия ${me.combo}/4) ➔ ${r.msg}`;col='#ff473a';extra.result=r.hit?`-${dmg}`:r.msg.slice(0,8);extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
+    case'GOYDA':{me.combo=Math.min(me.combo+1,4);let dmg=Math.floor((12+(me.combo-1)*3)*sm);let r=doAtk(pi,dmg,false,me,foe,card.ic);msg=`${pn(pi)} · ГОЙДА! (серия ${me.combo}/4) ➔ ${r.msg}`;col='#ff473a';extra.result=r.hit?`-${dmg}`:r.msg.slice(0,8);extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
     case'GOYDUSHKA':{let h=healRaw(pi,20);msg=`${pn(pi)} · Гойдушка лечит ➔ +${h} ОЗ`;col='#2ecc71';extra.result=`+${h} ОЗ`;extra.resType='heal';extra.hp=`${mePre}→${me.hp}`;break;}
     case'GOYDO_SHIELD':{me.sh=Math.min(me.sh+1,2);flashA(pi,'blu');spawnFl(pi,'🛡️ Броня +1','block');sfx('shield');msg=`${pn(pi)} · Гойдо-Щит воздвигнут (${me.sh}/2)`;col='#00eeff';extra.result=`+1 🛡️`;extra.resType='shield';break;}
-    case'GOYDO_FONK':{let dmg=Math.floor(18*sm);let r=doAtk(pi,dmg,false,me,foe);msg=`${pn(pi)} · Гойдо-Фонк врубил ➔ ${r.msg}`;col='#ffd700';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
+    case'GOYDO_FONK':{let dmg=Math.floor(18*sm);let r=doAtk(pi,dmg,false,me,foe,card.ic);msg=`${pn(pi)} · Гойдо-Фонк врубил ➔ ${r.msg}`;col='#ffd700';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
     case'PEREGOYDA':{me.re=Math.min(me.re+1,1);flashA(pi,'gld');spawnFl(pi,'🪬 Отражение','ref');sfx('shield');msg=`${pn(pi)} · Перегойда — зеркало поднято!`;col='#cc44ff';extra.result=`+1 🪬`;extra.resType='shield';break;}
     case'GOYDO_DILER':{draw(me,2);msg=`${pn(pi)} · Гойдо-Дилер раздал ➔ +2 карты`;col='#3ae4d0';extra.result=`+2 🃏`;extra.resType='draw';break;}
     case'GOYDO_HAMSTER':{me.coins+=2;bumpCoins(pi);spawnFl(pi,'+2 💰','coin');sfx('coin');msg=`${pn(pi)} · Гойдо-Хомяк нафармил ➔ +2 💰`;col='#ffd700';extra.result=`+2 💰`;extra.resType='coin';break;}
     case'NAGOYDATEL':{msg=`${pn(pi)} · Нагойдатель накачал Базометр!`;col='#ff6600';extra.result=`+20%`;extra.resType='base';break;}
-    case'CRINGE_GOYDA':{let dmg=Math.floor(14*sm);let r=doAtk(pi,dmg,false,me,foe);changeBase(1-pi,foe,-20);msg=`${pn(pi)} · Кринжо-Гойда кринжует врага ➔ ${r.msg}`;col='#44ff00';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
-    case'KRIO_GOYDA':{let dmg=Math.floor(15*sm);let r=doAtk(pi,dmg,false,me,foe);foe.freezeNext=true;msg=`${pn(pi)} · Крио-Гойда заморозила! ➔ ${r.msg}`;col='#3aebff';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
-    case'OPLICH_GOYDA':{let dmg=Math.floor(30*sm);let r=doAtk(pi,dmg,false,me,foe);msg=`${pn(pi)} · Оприч-Гойда ГОЙДА!!! ➔ ${r.msg}`;col='#ff1111';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
+    case'CRINGE_GOYDA':{let dmg=Math.floor(14*sm);let r=doAtk(pi,dmg,false,me,foe,card.ic);changeBase(1-pi,foe,-20);msg=`${pn(pi)} · Кринжо-Гойда кринжует врага ➔ ${r.msg}`;col='#44ff00';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
+    case'KRIO_GOYDA':{let dmg=Math.floor(15*sm);let r=doAtk(pi,dmg,false,me,foe,card.ic);foe.freezeNext=true;msg=`${pn(pi)} · Крио-Гойда заморозила! ➔ ${r.msg}`;col='#3aebff';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
+    case'OPLICH_GOYDA':{let dmg=Math.floor(30*sm);let r=doAtk(pi,dmg,false,me,foe,card.ic);msg=`${pn(pi)} · Оприч-Гойда ГОЙДА!!! ➔ ${r.msg}`;col='#ff1111';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
     case'GOYDO_OBEREG':{me.sh=Math.min(me.sh+1,2);me.re=Math.min(me.re+1,1);flashA(pi,'blu');flashA(pi,'gld');spawnFl(pi,'🛡️ Оберег!','block');sfx('shield');msg=`${pn(pi)} · Гойдо-Оберег: +1🛡️ +1🪬`;col='#00ffff';extra.result=`+1🛡️+1🪬`;extra.resType='shield';break;}
-    case'GIPER_GOYD':{foe.sh=0;foe.re=0;let dmg=Math.floor(42*sm);let r=doAtk(pi,dmg,false,me,foe);msg=`${pn(pi)} · ГИПЕР-ГОЙДА ПОГНАЛИ! ➔ ${r.msg}`;col='#cc44ff';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
+    case'GIPER_GOYD':{foe.sh=0;foe.re=0;let dmg=Math.floor(42*sm);let r=doAtk(pi,dmg,false,me,foe,card.ic);msg=`${pn(pi)} · ГИПЕР-ГОЙДА ПОГНАЛИ! ➔ ${r.msg}`;col='#cc44ff';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
     case'ABSOLUT_GOYDA':{let h=healRaw(pi,25);msg=`${pn(pi)} · Абсолют-Гойда — ФИНАЛ ГОЙДЫ`;col='#ffffff';extra.result=`+${h} ОЗ`;extra.resType='heal';extra.hp=`${mePre}→${me.hp}`;break;}
   }
   addLog(msg,col,card.id==='GOYDO_FONK'?'goyda':type,extra);
   checkWin(me,foe,pi);
 }
 function useAbil(pi,idx){if(G.over||G.turn!==pi)return;if(isOnline&&pi!==myIndex)return;let me=G.players[pi],foe=G.players[1-pi],ab=me.abilities[idx];if(me.coins<ab.cost)return;me.coins-=ab.cost;addLog(`💫 ${pn(pi)} применил тактику [${ab.n}] за ${ab.cost} 💰`,'#ffd700');ab.run(pi,me,foe);checkWin(me,foe,pi);if(!G.over)endTurn(pi);render();}
-function doAtk(pi,dmg,pierce,me,foe){if(foe.superMode){let thru=Math.floor(dmg*.35);foe.hp=Math.max(0,foe.hp-thru);flashA(1-pi,'grn');if(thru>0)spawnFl(1-pi,'-'+thru,'dmg');spawnFl(1-pi,'⚡СВЕРХ (−65%)','block');sfx('shield');return{msg:`СВЕРХ-ГОЙДА поглотила бо́льшую часть (${thru} прошло)`,hit:thru>0};}if(foe.re>0){foe.re--;let ref=Math.floor(dmg*.75);me.hp=Math.max(0,me.hp-ref);flashA(pi,'red');shakeA(pi);hpHit(pi);spawnFl(pi,'-'+ref,'dmg');spawnFl(1-pi,'↩️ 75% назад!','ref');quake(ref);sfx('hit');return{msg:`${ref} (75%) отражено назад!`,hit:false};}if(!lockShield&&!pierce&&foe.sh>0){foe.sh--;flashA(1-pi,'blu');spawnFl(1-pi,'🛡️ броня','block');sfx('shield');return{msg:'принято на прочную броню',hit:false};}foe.hp=Math.max(0,foe.hp-dmg);flashA(1-pi,'red');shakeA(1-pi);hpHit(1-pi);spawnFl(1-pi,'-'+dmg,'dmg');quake(dmg);sfx('hit');return{msg:`${dmg} чистого урона`,hit:true};}
-function dealRaw(tpi,amount){let t=G.players[tpi];if(t.superMode){spawnFl(tpi,'🛡️ НЕУЯЗВИМ','block');return;}t.hp=Math.max(0,t.hp-amount);flashA(tpi,'red');shakeA(tpi);hpHit(tpi);spawnFl(tpi,'-'+amount,'dmg');quake(amount);sfx('hit');}
+function doAtk(pi,dmg,pierce,me,foe,vfx){let ic=vfx||'⚔️';if(foe.superMode){let thru=Math.floor(dmg*.35);foe.hp=Math.max(0,foe.hp-thru);spawnProjectile(pi,1-pi,ic,'fwd');flashA(1-pi,'grn');if(thru>0)spawnFl(1-pi,'-'+thru,'dmg');spawnFl(1-pi,'⚡СВЕРХ (−65%)','block');sfx('shield');return{msg:`СВЕРХ-ГОЙДА поглотила бо́льшую часть (${thru} прошло)`,hit:thru>0};}if(foe.re>0){foe.re--;let ref=Math.floor(dmg*.75);me.hp=Math.max(0,me.hp-ref);spawnProjectile(pi,1-pi,ic,'reflect');flashA(pi,'red');shakeA(pi);hpHit(pi);spawnFl(pi,'-'+ref,'dmg');spawnFl(1-pi,'↩️ 75% назад!','ref');quake(ref);sfx('hit');return{msg:`${ref} (75%) отражено назад!`,hit:false};}if(!lockShield&&!pierce&&foe.sh>0){foe.sh--;spawnProjectile(pi,1-pi,ic,'block');flashA(1-pi,'blu');spawnFl(1-pi,'🛡️ броня','block');sfx('shield');return{msg:'принято на прочную броню',hit:false};}foe.hp=Math.max(0,foe.hp-dmg);spawnProjectile(pi,1-pi,ic,'fwd');flashA(1-pi,'red');shakeA(1-pi);hpHit(1-pi);spawnFl(1-pi,'-'+dmg,'dmg');quake(dmg);sfx('hit');return{msg:`${dmg} чистого урона`,hit:true};}
+function dealRaw(tpi,amount){let t=G.players[tpi];if(t.superMode){spawnFl(tpi,'🛡️ НЕУЯЗВИМ','block');return;}t.hp=Math.max(0,t.hp-amount);flashA(tpi,'red');shakeA(tpi);hpHit(tpi);spawnFl(tpi,'-'+amount,'dmg');spawnShards(tpi,'#ffd700');quake(amount);sfx('hit');}
 function healRaw(pi,amount){let p=G.players[pi],h=Math.min(amount,100-p.hp);p.hp=Math.min(100,p.hp+amount);flashA(pi,'grn');spawnFl(pi,'+'+h,'heal');sfx('heal');return h;}
 function changeBase(pi,p,amount){if(amount>0&&p.freezeNext){p.freezeNext=false;spawnFl(pi,'❄️ ЗАМОРОЖЕНО!','baseloss');addLog(`❄️ Прирост Базометра ${pn(pi)} заморожен!`,'#3aebff');return;}if(p.superMode){p.base=Math.max(0,Math.min(100,p.base+amount));spawnFl(pi,(amount>0?'+':'')+amount+'% БАЗЫ','base');return;}p.base=Math.max(0,Math.min(100,p.base+amount));if(amount>0)spawnFl(pi,'+'+amount+'% БАЗЫ','base');else if(amount<0)spawnFl(pi,amount+'% БАЗЫ','baseloss');if(p.base>=100)triggerSuperGoyda(pi,p);}
 function triggerSuperGoyda(pi,p){p.superMode=true;p.superTurns=2;p.base=0;spawnSuperOverlay(pi);addLog(`🔥 СВЕРХ-ГОЙДА у ${pn(pi)}! Базометр сброшен. Ярость на 2 хода!`,'#39ff14');sfx('super');}
@@ -1083,7 +1117,8 @@ function resetGame(){if(isOnline){requestRematch();return;}initGame();render();r
 function pn(pi){if(isOnline)return pi===myIndex?'ВЫ':'СОПЕРНИК';if(isBot)return pi===HUMAN?'ВЫ':'БОТ';return pi===0?'ВОИН I':'ВОИН II';}
 
 // RENDER
-function render(){let[p1,p2]=G.players;renderHP(0,p1);renderHP(1,p2);updateShieldAndReflectIcons(0,p1.sh,p1.re);updateShieldAndReflectIcons(1,p2.sh,p2.re);renderBase(0,p1);renderBase(1,p2);document.getElementById('p1-co').textContent='💰 '+p1.coins;document.getElementById('p2-co').textContent='💰 '+p2.coins;let passOpen=document.getElementById('pass')&&document.getElementById('pass').style.display!=='none';let a0=(G.turn===0)&&!G.over&&(isOnline?myIndex===0:!passOpen);let a1=(G.turn===1)&&!G.over&&(isOnline?myIndex===1:!passOpen);let area1=document.getElementById('p1-area'),area2=document.getElementById('p2-area'),badge1=document.getElementById('p1-turn-badge'),badge2=document.getElementById('p2-turn-badge');if(G.turn===0&&!G.over){area1.classList.add('active-turn');area1.classList.remove('inactive-turn');badge1.classList.remove('hidden');area2.classList.add('inactive-turn');area2.classList.remove('active-turn');badge2.classList.add('hidden');}else if(G.turn===1&&!G.over){area2.classList.add('active-turn');area2.classList.remove('inactive-turn');badge2.classList.remove('hidden');area1.classList.add('inactive-turn');area1.classList.remove('active-turn');badge1.classList.add('hidden');}else{area1.classList.remove('active-turn','inactive-turn');badge1.classList.add('hidden');area2.classList.remove('active-turn','inactive-turn');badge2.classList.add('hidden');}let fu0=a0,fu1=a1,ab0=a0,ab1=a1;if(isBot){fu0=!G.over;fu1=false;ab1=false;}renderHand(0,p1,'p1-hand',fu0);renderHand(1,p2,'p2-hand',fu1);renderAbils(0,ab0,p1);renderAbils(1,ab1,p2);renderPlayed('sl-p1',G.last[0]);renderPlayed('sl-p2',G.last[1]);let dc=document.getElementById('deck-count');if(dc)dc.textContent=G.deck.length;document.body.classList.toggle('super-mode-active',p1.superMode||p2.superMode);}
+function render(){let[p1,p2]=G.players;renderHP(0,p1);renderHP(1,p2);updateShieldAndReflectIcons(0,p1.sh,p1.re);updateShieldAndReflectIcons(1,p2.sh,p2.re);renderBase(0,p1);renderBase(1,p2);document.getElementById('p1-co').textContent='💰 '+p1.coins;document.getElementById('p2-co').textContent='💰 '+p2.coins;let passOpen=document.getElementById('pass')&&document.getElementById('pass').style.display!=='none';let a0=(G.turn===0)&&!G.over&&(isOnline?myIndex===0:!passOpen);let a1=(G.turn===1)&&!G.over&&(isOnline?myIndex===1:!passOpen);let area1=document.getElementById('p1-area'),area2=document.getElementById('p2-area'),badge1=document.getElementById('p1-turn-badge'),badge2=document.getElementById('p2-turn-badge');if(G.turn===0&&!G.over){area1.classList.add('active-turn');area1.classList.remove('inactive-turn');badge1.classList.remove('hidden');area2.classList.add('inactive-turn');area2.classList.remove('active-turn');badge2.classList.add('hidden');}else if(G.turn===1&&!G.over){area2.classList.add('active-turn');area2.classList.remove('inactive-turn');badge2.classList.remove('hidden');area1.classList.add('inactive-turn');area1.classList.remove('active-turn');badge1.classList.add('hidden');}else{area1.classList.remove('active-turn','inactive-turn');badge1.classList.add('hidden');area2.classList.remove('active-turn','inactive-turn');badge2.classList.add('hidden');}let fu0=a0,fu1=a1,ab0=a0,ab1=a1;if(isBot){fu0=!G.over;fu1=false;ab1=false;}renderHand(0,p1,'p1-hand',fu0);renderHand(1,p2,'p2-hand',fu1);renderAbils(0,ab0,p1);renderAbils(1,ab1,p2);renderPlayed('clash-p1',G.last[0]);renderPlayed('clash-p2',G.last[1]);let dc=document.getElementById('deck-count');if(dc)dc.textContent=G.deck.length;document.body.classList.toggle('super-mode-active',p1.superMode||p2.superMode);applyAuras(0,p1);applyAuras(1,p2);}
+function applyAuras(pi,p){let a=document.getElementById('p'+(pi+1)+'-area');if(!a)return;a.classList.toggle('aura-shield',p.sh>0);a.classList.toggle('aura-reflect',p.re>0);a.classList.toggle('aura-frozen',!!p.freezeNext);a.classList.toggle('aura-super',!!p.superMode);}
 function renderHP(i,p){let f=document.getElementById('p'+(i+1)+'-hp'),t=document.getElementById('p'+(i+1)+'-hptxt'),pct=Math.max(0,Math.round(p.hp/100*100));f.style.width=pct+'%';f.style.background=pct>60?'linear-gradient(90deg,#27ae60,#2ecc71)':pct>30?'linear-gradient(90deg,#c9620a,#e67e22)':'linear-gradient(90deg,#7b241c,#c0392b)';t.textContent=p.hp+'/100';}
 function renderBase(i,p){let wrap=document.getElementById('p'+(i+1)+'-base-wrap'),fill=document.getElementById('p'+(i+1)+'-base-fill'),num=document.getElementById('p'+(i+1)+'-base-num'),stxt=document.getElementById('p'+(i+1)+'-stage-txt');if(p.superMode){fill.style.width='100%';fill.classList.add('super-mode');wrap.classList.add('super-glow');num.textContent='ЯРОСТЬ';stxt.textContent=`СВЕРХ-ГОЙДА (${p.superTurns+1} Х)`;}else{fill.style.width=p.base+'%';fill.classList.remove('super-mode');wrap.classList.remove('super-glow');num.textContent=p.base;let st=getStage(p.base);stxt.textContent=st===3?'ЭТАП III':st===2?'ЭТАП II':'ЭТАП I';}}
 function renderHand(pi,player,cid,faceUp){let c=document.getElementById(cid);c.innerHTML='';if(!faceUp){let rune=currentBack().rune;player.hand.forEach(()=>{let d=document.createElement('div');d.className='card-container';d.innerHTML='<div class="card back"><div class="back-rune">'+rune+'</div></div>';c.appendChild(d);});return;}player.hand.forEach(card=>{let container=document.createElement('div');container.className='card-container';let isLocked=false,lockTxt='';if(card.id==='OPLICH_GOYDA'&&getStage(player.base)<2&&!player.superMode){isLocked=true;lockTxt='ЭТАП II';}if(card.id==='GOYDO_OBEREG'&&getStage(player.base)<2&&!player.superMode){isLocked=true;lockTxt='ЭТАП II';}if(card.id==='GIPER_GOYD'&&getStage(player.base)<3&&!player.superMode){isLocked=true;lockTxt='ЭТАП III';}let d=document.createElement('div');d.className='card click rarity-'+rarityOf(card);d.style.setProperty('--cbg',isLocked?'#151515':card.bg);d.style.setProperty('--cbc',isLocked?'#3c3c3c':card.bc);d.innerHTML=`<div class="card-shine"></div><div class="card-role-tab"><span>✦</span><span>${card.role}</span></div><div class="card-emblem"><span class="card-ico">${card.ic}</span></div><div class="card-name">${card.n}</div><div class="card-stat kind-${card.kind}"><span class="card-num">${card.num}</span><span class="card-unit">${card.unit}</span></div><div class="card-effect">${card.eff}</div><div class="card-tag" style="${isLocked?'background:#500;border-color:#f33;color:#f88;':''}">${isLocked?lockTxt:rarityLabel(card)}</div>`;d.onclick=()=>playCard(pi,card);container.appendChild(d);c.appendChild(container);applyCardParallax(container);});setupHandHover(c);}
@@ -1211,6 +1246,10 @@ function hpHit(pi){let el=document.getElementById('p'+(pi+1)+'-hit');if(!el)retu
 function bumpCoins(pi){let el=document.getElementById('p'+(pi+1)+'-co');if(!el)return;el.classList.add('scale-125');setTimeout(()=>el.classList.remove('scale-125'),200);}
 function spawnFl(pi,txt,type){let area=document.getElementById('p'+(pi+1)+'-area');let rect=area.getBoundingClientRect();let el=document.createElement('div');el.className='float-num fn-'+type;el.textContent=txt;el.style.left=(rect.left+rect.width/2-28+(Math.random()*40-20))+'px';el.style.top=(rect.top+rect.height/2-20)+'px';document.body.appendChild(el);setTimeout(()=>el.remove(),1100);}
 function spawnSuperOverlay(pi){let b=document.createElement('div');b.className='super-overlay';b.innerHTML=`✦ СВЕРХ-ГОЙДА ✦<br><span style="font-size:14px">У ${pn(pi)}!</span>`;document.body.appendChild(b);setTimeout(()=>b.remove(),1800);quake(28);}
+// ── Cross-board projectiles + impact shards ──
+function _areaCenter(pi){let a=document.getElementById('p'+(pi+1)+'-area');if(!a)return{x:window.innerWidth/2,y:window.innerHeight/2};let r=a.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2};}
+function spawnShards(pi,color,n){let mob=window.innerWidth<=640;n=n||(mob?4:9);if(mob)n=Math.min(n,5);let c=_areaCenter(pi);for(let i=0;i<n;i++){let sh=document.createElement('div');sh.className='shard';sh.style.background=color||'#ff6a2a';sh.style.color=color||'#ff6a2a';sh.style.left=c.x+'px';sh.style.top=c.y+'px';document.body.appendChild(sh);let ang=Math.random()*Math.PI*2,dist=28+Math.random()*55;sh.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${Math.cos(ang)*dist}px,${Math.sin(ang)*dist}px) scale(.2)`,opacity:0}],{duration:420+Math.random()*260,easing:'cubic-bezier(.2,.6,.3,1)',fill:'forwards'}).onfinish=()=>sh.remove();}}
+function spawnProjectile(fromPi,toPi,icon,mode){if(document.hidden)return;let s=_areaCenter(fromPi),e=_areaCenter(toPi);let dx=e.x-s.x,dy=e.y-s.y,ang=Math.atan2(dy,dx)*180/Math.PI;let mob=window.innerWidth<=640,dur=mob?250:330;let mid=(mode==='block')?.6:1,kx=dx*mid,ky=dy*mid;let el=document.createElement('div');el.className='projectile';el.textContent=icon||'⚔️';el.style.left=s.x+'px';el.style.top=s.y+'px';document.body.appendChild(el);let a=el.animate([{transform:`translate(0,0) rotate(${ang}deg) scale(.5)`,opacity:0},{transform:`translate(${dx*.14}px,${dy*.14}px) rotate(${ang}deg) scale(1.15)`,opacity:1,offset:.16},{transform:`translate(${kx}px,${ky}px) rotate(${ang}deg) scale(1)`,opacity:1}],{duration:dur,easing:'cubic-bezier(.45,.05,.55,.95)',fill:'forwards'});a.onfinish=()=>{if(mode==='block'){el.animate([{opacity:1,transform:`translate(${kx}px,${ky}px) rotate(${ang}deg) scale(1)`},{opacity:0,transform:`translate(${kx}px,${ky}px) rotate(${ang}deg) scale(1.7)`}],{duration:200,fill:'forwards'}).onfinish=()=>el.remove();spawnShards(toPi,'#5eb5ff',5);}else if(mode==='reflect'){el.animate([{transform:`translate(${dx}px,${dy}px) rotate(${ang}deg) scale(1)`},{transform:`translate(0,0) rotate(${ang+200}deg) scale(1)`}],{duration:dur,easing:'cubic-bezier(.45,.05,.55,.95)',fill:'forwards'}).onfinish=()=>{spawnShards(fromPi,'#cc88ff');el.remove();};}else{spawnShards(toPi,'#ff6a2a');el.remove();}};}
 function quake(){const g=document.getElementById('game');g.classList.add('shake');setTimeout(()=>g.classList.remove('shake'),400);}
 function triggerDeckJiggle(){let pile=document.getElementById('deck-pile');if(!pile)return;pile.classList.add('scale-110');setTimeout(()=>pile.classList.remove('scale-110'),200);}
 function applyCardParallax(cc){const card=cc.querySelector('.card');cc.addEventListener('mousemove',e=>{const r=cc.getBoundingClientRect();const x=e.clientX-r.left,y=e.clientY-r.top;card.style.transform=`rotateX(${-((y-r.height/2)/r.height/2)*20}deg) rotateY(${((x-r.width/2)/r.width/2)*20}deg)`;card.style.setProperty('--shine-x',(x/r.width*100)+'%');card.style.setProperty('--shine-y',(y/r.height*100)+'%');});cc.addEventListener('mouseleave',()=>card.style.transform='rotateX(0) rotateY(0)');}
