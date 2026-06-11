@@ -207,6 +207,43 @@ body.flip-view #p1-area{grid-area:slot-top;}
 @keyframes rankPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
 /* BOT thinking dots reuse waiting-box */
 .waiting-box.bot-think{border-color:#ff6688;box-shadow:0 0 14px rgba(255,40,90,.35);}
+.unlock-toast{font-size:11px;color:#7fffd4;font-weight:900;margin-top:6px;letter-spacing:.5px;text-shadow:0 0 8px rgba(127,255,212,.5);}
+/* WARDROBE */
+.btn-wardrobe{background:linear-gradient(135deg,#3a2a5a,#6a3a8a) !important;color:#e0c8ff !important;box-shadow:0 4px 15px rgba(150,80,255,.2) !important;font-size:11px !important;padding:9px 22px !important;}
+.btn-wardrobe:hover{box-shadow:0 6px 20px rgba(150,80,255,.45) !important;}
+#wardrobe{position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,#0e0518 0%,#000 100%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:140;padding:16px;}
+.wd-panel{width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;background:rgba(8,3,14,.96);border:1.5px solid rgba(180,120,255,.35);border-radius:16px;box-shadow:0 0 30px rgba(140,60,255,.25);overflow:hidden;}
+.wd-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(180,120,255,.2);}
+.wd-title{font-size:16px;font-weight:900;color:#d8b4ff;letter-spacing:1.5px;text-shadow:0 0 10px rgba(180,120,255,.4);}
+.wd-scroll{overflow-y:auto;padding:12px 16px;}
+.wd-slava{text-align:center;font-size:12px;color:#ffd700;font-weight:900;margin-bottom:10px;letter-spacing:1px;}
+.wd-cat-title{font-size:11px;color:#9a7bba;letter-spacing:2px;text-transform:uppercase;font-weight:bold;margin:10px 0 6px;}
+.wd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;}
+.wd-item{background:rgba(30,15,45,.8);border:1.5px solid rgba(180,120,255,.25);border-radius:10px;padding:8px 4px;text-align:center;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.wd-item:hover:not(.locked){border-color:#cc88ff;transform:translateY(-2px);box-shadow:0 4px 12px rgba(150,60,255,.3);}
+.wd-item.sel{border-color:#ffd700;background:rgba(60,40,10,.7);box-shadow:0 0 12px rgba(255,200,40,.3);}
+.wd-item.locked{opacity:.5;cursor:not-allowed;filter:grayscale(60%);}
+.wd-ic{font-size:26px;line-height:1;}
+.wd-name{font-size:8.5px;color:#fff;font-weight:bold;line-height:1.1;}
+.wd-tag{font-size:7px;color:#9a7bba;letter-spacing:.5px;text-transform:uppercase;}
+.wd-tag.sel{color:#ffd700;}
+.wd-tag.lock{color:#ff8a8a;}
+.wd-foot{padding:8px 16px;font-size:8.5px;color:#6a5a7a;text-align:center;letter-spacing:1px;border-top:1px solid rgba(180,120,255,.15);}
+/* COSMETIC: card backs (override .card.back !important from base) */
+body.back-fire .card.back{background:linear-gradient(135deg,#3a1500,#ff5500 70%,#5c1500) !important;}
+body.back-obereg .card.back{background:linear-gradient(135deg,#021a2a,#00a2ff 75%,#012038) !important;}
+body.back-frost .card.back{background:linear-gradient(135deg,#012a30,#3aebff 75%,#01323a) !important;}
+body.back-star .card.back{background:linear-gradient(135deg,#1a1a2e,#b366ff 70%,#0e0e1c) !important;}
+body.back-crown .card.back{background:linear-gradient(135deg,#3a2a00,#ffd700 70%,#5a4200) !important;}
+body.back-fire .back-rune,body.back-crown .back-rune{filter:drop-shadow(0 0 6px rgba(255,180,40,.7));}
+/* COSMETIC: board themes (override vars) */
+body.theme-neon{--gold:#00eeff;--gold-bright:#7dffff;--neon-pink:#ff2bd6;background-image:radial-gradient(ellipse at 50% 40%,#04121a 0%,#02060a 70%,#000 100%);}
+body.theme-frost{--gold:#9fe8ff;--gold-bright:#d8f6ff;--neon-pink:#5ad1ff;background-image:radial-gradient(ellipse at 50% 40%,#06121a 0%,#020a10 70%,#000 100%);}
+body.theme-gold{--gold:#ffd700;--gold-bright:#fff0a0;background-image:radial-gradient(ellipse at 50% 40%,#1e1505 0%,#0a0700 70%,#000 100%);}
+/* COSMETIC: player frames */
+body.frame-gold .player-area{border:1.5px solid rgba(255,200,40,.45);box-shadow:inset 0 0 18px rgba(255,180,20,.12);}
+body.frame-neon .player-area{border:1.5px solid rgba(0,238,255,.5);box-shadow:inset 0 0 18px rgba(0,200,255,.14);}
+body.frame-star .player-area{border:1.5px solid rgba(180,120,255,.55);box-shadow:inset 0 0 20px rgba(150,80,255,.16);}
 /* MOBILE */
 /* Side panels */
 #side-left,#side-right{position:fixed;top:50%;transform:translateY(-50%);z-index:20;width:76px;display:none;flex-direction:column;align-items:center;gap:8px;}
@@ -265,6 +302,18 @@ body.flip-view #p1-area{grid-area:slot-top;}
 <div class="banner banner-r"></div>
 <div id="conn-badge" style="color:#888">⚡ P2P</div>
 
+<!-- ГАРДЕРОБ -->
+<div id="wardrobe">
+  <div class="wd-panel">
+    <div class="wd-header">
+      <span class="wd-title">🎴 ГАРДЕРОБ ГОЙДЫ</span>
+      <button class="btn" style="padding:4px 12px;font-size:11px" onclick="closeWardrobe()">✖ ЗАКРЫТЬ</button>
+    </div>
+    <div id="wardrobe-body" class="wd-scroll"></div>
+    <div class="wd-foot">Косметика открывается по рангу — побеждай и набирай славу!</div>
+  </div>
+</div>
+
 <!-- БОКОВЫЕ ПАНЕЛИ -->
 <div id="side-left">
   <div class="side-panel">
@@ -290,6 +339,7 @@ body.flip-view #p1-area{grid-area:slot-top;}
   <div class="lobby-divider"></div>
 
   <div id="lobby-stats" class="lobby-stats" style="display:none"></div>
+  <button class="btn btn-wardrobe" onclick="openWardrobe()">🎴 ГАРДЕРОБ</button>
 
   <div class="lobby-section">
     <div class="lobby-label">🤖 Биться в одиночку — против бота</div>
@@ -450,6 +500,11 @@ body.flip-view #p1-area{grid-area:slot-top;}
   <div style="color:#aaa;font-size:9px;margin-top:3px;letter-spacing:1px;">игра на паузе — ждём возвращения...</div>
   <div style="color:#555;font-size:8px;margin-top:2px;">он может вернуться введя тот же код</div>
 </div>
+<div id="reconnect-banner" style="display:none;position:fixed;top:54px;left:50%;transform:translateX(-50%);z-index:56;background:rgba(20,12,0,.97);border:2px solid #ffbd15;border-radius:10px;padding:10px 22px;text-align:center;box-shadow:0 0 20px rgba(255,189,21,.35);">
+  <div id="rcb-text" style="color:#ffd700;font-weight:900;font-size:13px;letter-spacing:1.5px;">🔄 Переподключение…</div>
+  <div style="color:#aaa;font-size:9px;margin-top:3px;letter-spacing:1px;">восстанавливаем связь — бой сохранён</div>
+  <button id="rcb-menu" onclick="backToLobby(true)" style="display:none;margin-top:8px;background:#3a1010;color:#ff9e9e;border:1px solid #ff5555;border-radius:6px;padding:6px 14px;font-family:inherit;font-size:10px;font-weight:900;letter-spacing:1px;cursor:pointer;">🏠 В МЕНЮ</button>
+</div>
 
 <!-- КОМПЕНДИУМ -->
 <div id="compendium-modal">
@@ -465,7 +520,7 @@ body.flip-view #p1-area{grid-area:slot-top;}
 <!-- КОНЕЦ -->
 <div id="over">
   <div id="over-txt"></div>
-  <button class="btn" onclick="resetGame()">⚔ Новая Схватка!</button>
+  <button class="btn" id="over-btn" onclick="resetGame()">⚔ Новая Схватка!</button>
 </div>
 
 <!-- ЛОГ ПАНЕЛЬ -->
@@ -515,7 +570,7 @@ let G={},actx,master,sndMuted=true,lockShield=false,_resultRecorded=false;
 // ── PROGRESS / STATS ──
 const STATS_KEY='goyda_stats_v1';
 const RANKS=[{min:0,name:'ХОЛОП',ic:'🌾'},{min:60,name:'РАТНИК',ic:'🗡️'},{min:160,name:'ОПРИЧНИК I',ic:'⚔️'},{min:320,name:'ОПРИЧНИК II',ic:'⚔️'},{min:540,name:'ОПРИЧНИК III',ic:'⚔️'},{min:820,name:'ВОЕВОДА',ic:'🛡️'},{min:1200,name:'КНЯЗЬ ГОЙДЫ',ic:'👑'},{min:1800,name:'АБСОЛЮТ ГОЙДЫ',ic:'🌟'}];
-function defaultStats(){return{games:0,wins:0,losses:0,draws:0,streak:0,bestStreak:0,slava:0,vsBot:{w:0,l:0},online:{w:0,l:0},muted:true};}
+function defaultStats(){return{games:0,wins:0,losses:0,draws:0,streak:0,bestStreak:0,slava:0,vsBot:{w:0,l:0},online:{w:0,l:0},muted:true,cosmetics:{back:'default',theme:'default',frame:'default'}};}
 function loadStats(){try{let s=JSON.parse(localStorage.getItem(STATS_KEY));return s?Object.assign(defaultStats(),s):defaultStats();}catch(e){return defaultStats();}}
 function saveStats(){try{localStorage.setItem(STATS_KEY,JSON.stringify(STATS));}catch(e){}}
 function rankFor(slava){let r=RANKS[0];for(let x of RANKS)if(slava>=x.min)r=x;return r;}
@@ -526,10 +581,10 @@ function recordResult(mode,outcome){
   if(outcome==='win'){STATS.wins++;STATS.streak++;if(STATS.streak>STATS.bestStreak)STATS.bestStreak=STATS.streak;let base=mode==='online'?40:({easy:15,warrior:28,oprichnik:45}[botLevel]||25);gain=base+Math.min(STATS.streak-1,5)*5;if(mode==='bot')STATS.vsBot.w++;else STATS.online.w++;}
   else if(outcome==='loss'){STATS.losses++;STATS.streak=0;gain=mode==='online'?8:5;if(mode==='bot')STATS.vsBot.l++;else STATS.online.l++;}
   else{STATS.draws++;STATS.streak=0;gain=6;}
-  STATS.slava+=gain;let after=rankFor(STATS.slava);saveStats();
-  return{gain,rankUp:after.name!==before.name,newRank:after,streak:STATS.streak,outcome};
+  let oldSlava=STATS.slava;STATS.slava+=gain;let after=rankFor(STATS.slava);saveStats();
+  return{gain,rankUp:after.name!==before.name,newRank:after,streak:STATS.streak,outcome,unlocked:listNewlyUnlocked(oldSlava,STATS.slava)};
 }
-function rewardHtml(res){if(!res)return'';let h='<div class="over-reward">+'+res.gain+' славы ⚜</div>';if(res.outcome==='win'&&res.streak>1)h+='<div class="over-streak">🔥 Серия побед: '+res.streak+'</div>';if(res.rankUp)h+='<div class="rank-up-toast">⬆ НОВЫЙ РАНГ: '+res.newRank.ic+' '+res.newRank.name+'</div>';return h;}
+function rewardHtml(res){if(!res)return'';let h='<div class="over-reward">+'+res.gain+' славы ⚜</div>';if(res.outcome==='win'&&res.streak>1)h+='<div class="over-streak">🔥 Серия побед: '+res.streak+'</div>';if(res.rankUp)h+='<div class="rank-up-toast">⬆ НОВЫЙ РАНГ: '+res.newRank.ic+' '+res.newRank.name+'</div>';if(res.unlocked&&res.unlocked.length)h+='<div class="unlock-toast">🎁 Открыто в Гардеробе: '+res.unlocked.map(c=>c.ic+' '+c.name).join(', ')+'</div>';return h;}
 function renderLobbyStats(){
   let el=document.getElementById('lobby-stats');if(!el)return;
   if(STATS.games===0){el.style.display='none';return;}
@@ -544,12 +599,79 @@ function renderLobbyStats(){
   el.style.display='flex';
 }
 function botOutcome(){let h=G.players[HUMAN].hp,b=G.players[BOT].hp;if(h<=0&&b<=0)return'draw';if(b<=0)return'win';return'loss';}
+// ── COSMETICS (unlock by rank/slava) ──
+const COSMETICS={
+  back:[
+    {id:'default',name:'Боевая руна',ic:'⚔️',minSlava:0,rune:'⚔️'},
+    {id:'fire',name:'Огненная',ic:'🔥',minSlava:60,rune:'🔥'},
+    {id:'obereg',name:'Оберег',ic:'🧿',minSlava:160,rune:'🧿'},
+    {id:'frost',name:'Ледяная',ic:'❄️',minSlava:320,rune:'❄️'},
+    {id:'star',name:'Звёздная',ic:'🌟',minSlava:540,rune:'🌟'},
+    {id:'crown',name:'Княжья',ic:'👑',minSlava:1200,rune:'👑'}
+  ],
+  theme:[
+    {id:'default',name:'Багровая Гойда',ic:'🩸',minSlava:0},
+    {id:'neon',name:'Неон-Гойда',ic:'🎨',minSlava:160},
+    {id:'frost',name:'Ледяной Чертог',ic:'❄️',minSlava:320},
+    {id:'gold',name:'Златой Престол',ic:'👑',minSlava:820}
+  ],
+  frame:[
+    {id:'default',name:'Простая',ic:'▫️',minSlava:0},
+    {id:'gold',name:'Златая кайма',ic:'🟡',minSlava:60},
+    {id:'neon',name:'Неоновая',ic:'🟣',minSlava:320},
+    {id:'star',name:'Звёздная',ic:'✨',minSlava:1200}
+  ]
+};
+function cosmeticUnlocked(c){return STATS.slava>=c.minSlava;}
+function currentBack(){let id=(STATS.cosmetics&&STATS.cosmetics.back)||'default';return COSMETICS.back.find(b=>b.id===id)||COSMETICS.back[0];}
+function applyCosmetics(){
+  let c=STATS.cosmetics||{};
+  let body=document.body;
+  COSMETICS.theme.forEach(t=>body.classList.remove('theme-'+t.id));
+  COSMETICS.frame.forEach(f=>body.classList.remove('frame-'+f.id));
+  COSMETICS.back.forEach(b=>body.classList.remove('back-'+b.id));
+  body.classList.add('theme-'+(c.theme||'default'));
+  body.classList.add('frame-'+(c.frame||'default'));
+  body.classList.add('back-'+(c.back||'default'));
+}
+function listNewlyUnlocked(oldSlava,newSlava){
+  let out=[];
+  for(let cat in COSMETICS)for(let c of COSMETICS[cat])if(c.minSlava>oldSlava&&c.minSlava<=newSlava)out.push(c);
+  return out;
+}
+function selectCosmetic(cat,id){
+  let c=COSMETICS[cat].find(x=>x.id===id);if(!c||!cosmeticUnlocked(c))return;
+  if(!STATS.cosmetics)STATS.cosmetics={};
+  STATS.cosmetics[cat]=id;saveStats();applyCosmetics();renderWardrobe();
+  if(gameStarted)render();
+  sfx('coin');
+}
+function openWardrobe(){renderWardrobe();document.getElementById('wardrobe').style.display='flex';}
+function closeWardrobe(){document.getElementById('wardrobe').style.display='none';}
+const COSMETIC_CATS=[{key:'back',title:'🎴 Рубашки карт'},{key:'theme',title:'🎨 Темы поля'},{key:'frame',title:'🖼️ Рамки бойца'}];
+function renderWardrobe(){
+  let host=document.getElementById('wardrobe-body');if(!host)return;
+  let cur=STATS.cosmetics||{};
+  let html='<div class="wd-slava">⚜ Слава: '+STATS.slava+' · '+rankFor(STATS.slava).ic+' '+rankFor(STATS.slava).name+'</div>';
+  for(let cat of COSMETIC_CATS){
+    html+='<div class="wd-cat-title">'+cat.title+'</div><div class="wd-grid">';
+    for(let c of COSMETICS[cat.key]){
+      let unl=cosmeticUnlocked(c),sel=(cur[cat.key]||'default')===c.id;
+      html+='<div class="wd-item'+(unl?'':' locked')+(sel?' sel':'')+'" '+(unl?'onclick="selectCosmetic(\''+cat.key+'\',\''+c.id+'\')"':'')+'>'+
+        '<div class="wd-ic">'+c.ic+'</div><div class="wd-name">'+c.name+'</div>'+
+        (unl?(sel?'<div class="wd-tag sel">✓ выбрано</div>':'<div class="wd-tag">нажми</div>'):'<div class="wd-tag lock">🔒 '+c.minSlava+' славы</div>')+
+        '</div>';
+    }
+    html+='</div>';
+  }
+  host.innerHTML=html;
+}
 
 function mkP(){return{hp:100,sh:0,re:0,combo:0,coins:0,hand:[],base:0,superMode:false,superTurns:0,freezeNext:false,abilities:[],abilIdx:[]};}
 function buildDeck(){let d=[];for(let k in DEFS){let df=DEFS[k];for(let i=0;i<df.cnt;i++)d.push({...df,id:k,uid:k+'_'+Math.random()});}for(let i=d.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}return d;}
 function draw(p,n){for(let i=0;i<n;i++){if(!G.deck.length){G.deck=buildDeck();addLog('📜 Колода свитков перетасована! Ратный дух крепок.','#ffbd15');}if(p.hand.length<7)p.hand.push(G.deck.pop());}triggerDeckJiggle();}
 function rollAbilities(p){let t=TAP.map((_,i)=>i),idx=[];for(let i=0;i<3;i++){let r=Math.floor(Math.random()*t.length);idx.push(t.splice(r,1)[0]);}p.abilIdx=idx;p.abilities=idx.map(i=>TAP[i]);}
-function initGame(){_resultRecorded=false;G={deck:buildDeck(),turn:0,over:false,last:[null,null],disc:[[],[]],logLines:[],players:[mkP(),mkP()]};draw(G.players[0],5);draw(G.players[1],5);G.players[0].coins=1;rollAbilities(G.players[0]);rollAbilities(G.players[1]);document.getElementById('log').innerHTML='';document.getElementById('sl-p1').innerHTML='';document.getElementById('sl-p2').innerHTML='';document.getElementById('disc-p1-stack').innerHTML='';document.getElementById('disc-p2-stack').innerHTML='';document.getElementById('over').style.display='none';document.body.classList.remove('super-mode-active');addLog('⚔️ Бойцы вышли на ратное поле! ГОЙДА!','#ffbd15');}
+function initGame(){_resultRecorded=false;_iWantRematch=false;_oppWantsRematch=false;G={deck:buildDeck(),turn:0,over:false,last:[null,null],disc:[[],[]],logLines:[],players:[mkP(),mkP()]};draw(G.players[0],5);draw(G.players[1],5);G.players[0].coins=1;rollAbilities(G.players[0]);rollAbilities(G.players[1]);document.getElementById('log').innerHTML='';document.getElementById('sl-p1').innerHTML='';document.getElementById('sl-p2').innerHTML='';document.getElementById('disc-p1-stack').innerHTML='';document.getElementById('disc-p2-stack').innerHTML='';document.getElementById('over').style.display='none';document.body.classList.remove('super-mode-active');addLog('⚔️ Бойцы вышли на ратное поле! ГОЙДА!','#ffbd15');}
 
 // ═══ MQTT NETWORKING (multi-broker fallback) ═══
 let mqttClient=null,roomCode=null,syncCounter=0,gameStarted=false;
@@ -581,6 +703,46 @@ function mqttConnect(cb){
 // ── Heartbeat / disconnect detection ──
 let _hbInterval=null,_hbTimer=null,_oppOffline=false;
 const HB_SEND=8000,HB_TIMEOUT=15000;
+// ── Reconnect ──
+let _intentionalClose=false,_reconnecting=false,_reconnectAttempts=0,_reconnectTimer=null;
+const RECONNECT_MAX=6;
+// ── Rematch ──
+let _iWantRematch=false,_oppWantsRematch=false;
+function requestRematch(){if(!isOnline)return;_iWantRematch=true;_mqttPub('rematch');updateRematchUI();maybeStartRematch();}
+function maybeStartRematch(){if(myIndex===0&&_iWantRematch&&_oppWantsRematch){_iWantRematch=false;_oppWantsRematch=false;initGame();_mqttPub('reset');render();renderDiscard(0);renderDiscard(1);updateWaitingOverlay();document.getElementById('over').style.display='none';addLog('⚔️ Реванш! Новая битва началась.','#39ff14');}}
+function updateRematchUI(){let b=document.getElementById('over-btn');if(!b||!isOnline)return;if(_iWantRematch){b.textContent='✅ Готов — ждём соперника…';b.disabled=true;}else if(_oppWantsRematch){b.textContent='🔄 РЕВАНШ — соперник готов!';b.disabled=false;}else{b.textContent='🔄 РЕВАНШ';b.disabled=false;}}
+function showReconnectBanner(on){let b=document.getElementById('reconnect-banner');if(!b)return;document.getElementById('rcb-menu').style.display='none';document.getElementById('rcb-text').textContent='🔄 Переподключение…';b.style.display=on?'block':'none';}
+function setReconnectBannerText(t){let e=document.getElementById('rcb-text');if(e)e.textContent=t;}
+function setReconnectFailedUI(){let b=document.getElementById('reconnect-banner');if(!b)return;document.getElementById('rcb-text').textContent='❌ Соединение потеряно';document.getElementById('rcb-menu').style.display='inline-block';b.style.display='block';let cb=document.getElementById('conn-badge');cb.textContent='❌ ОБРЫВ';cb.style.color='#ff5555';}
+function attemptReconnect(){if(_reconnecting||_intentionalClose)return;_reconnecting=true;_reconnectAttempts=0;showReconnectBanner(true);_tryReconnectOnce();}
+function _tryReconnectOnce(){
+  if(_intentionalClose){_reconnecting=false;return;}
+  _reconnectAttempts++;
+  if(_reconnectAttempts>RECONNECT_MAX){_reconnecting=false;setReconnectFailedUI();return;}
+  setReconnectBannerText('🔄 Переподключение… ('+_reconnectAttempts+'/'+RECONNECT_MAX+')');
+  try{if(mqttClient){mqttClient.removeAllListeners();mqttClient.end(true);}}catch(e){}
+  let found=false,conns=[];
+  MQTT_BROKERS.forEach(url=>{
+    let cl;try{cl=mqtt.connect(url,{clientId:'goyda_'+Math.random().toString(36).substr(2,9),clean:true,connectTimeout:5000,reconnectPeriod:0});}catch(e){return;}
+    conns.push(cl);
+    cl.on('connect',()=>{if(found||_intentionalClose){try{cl.end(true);}catch(e){}return;}found=true;conns.forEach(c=>{if(c!==cl)try{c.end(true);}catch(e){}});_onReconnected(cl);});
+    cl.on('error',()=>{});
+  });
+  _reconnectTimer=setTimeout(()=>{if(!found){conns.forEach(c=>{try{c.end(true);}catch(e){}});setTimeout(_tryReconnectOnce,800);}},4000);
+}
+function _onReconnected(cl){
+  if(!_reconnecting||_intentionalClose){try{cl.end(true);}catch(e){}return;}
+  clearTimeout(_reconnectTimer);
+  mqttClient=cl;
+  cl.subscribe('goyda25/'+roomCode);
+  cl.on('message',(_,m)=>onMsg(m));
+  cl.on('close',onDisconnect);
+  _reconnecting=false;_reconnectAttempts=0;showReconnectBanner(false);
+  let cb=document.getElementById('conn-badge');cb.textContent='⚡ В СЕТИ';cb.style.color='#39ff14';
+  addLog('🟢 Связь восстановлена!','#44ff00');
+  startHeartbeat();
+  if(myIndex===1)_mqttPub('join');else{syncState('state');_sendPing();}
+}
 
 function _sendPing(){
   if(mqttClient&&roomCode)
@@ -620,6 +782,7 @@ function createRoom(){
     if(err){setLobbyStatus('❌ '+err.message,'err');document.getElementById('btn-create').disabled=false;document.getElementById('btn-join').disabled=false;return;}
     mqttClient=cl;
     roomCode=genCode();myIndex=0;isOnline=true;gameStarted=false;
+    _intentionalClose=false;_reconnecting=false;
     initGame();
     let topic='goyda25/'+roomCode;
     cl.subscribe(topic);
@@ -657,6 +820,7 @@ function joinRoomBtn(){
         found=true;
         conns.forEach(c=>{if(c!==cl)try{c.end(true);}catch(e){};});
         mqttClient=cl;roomCode=code;
+        _intentionalClose=false;_reconnecting=false;
         cl.removeAllListeners('message');
         cl.on('message',(_,m)=>onMsg(m));
         cl.on('close',onDisconnect);
@@ -682,6 +846,8 @@ function onMsg(msgBuf){
   let d;try{d=JSON.parse(msgBuf.toString());}catch(e){return;}
   // Heartbeat ping from opponent
   if(d._t==='ping'){if(d._p!==myIndex&&gameStarted)_resetOppTimer();return;}
+  // Opponent requests a rematch
+  if(d._t==='rematch'){if(d._p!==myIndex&&gameStarted){_oppWantsRematch=true;updateRematchUI();maybeStartRematch();}return;}
   // Guest receives host's state for the first time (initial join OR reconnect)
   if(myIndex===-1&&d._p===0&&(d._t==='init'||d._t==='state')){
     clearTimeout(window._joinTimer);
@@ -712,14 +878,21 @@ function onMsg(msgBuf){
   renderLogFromState();render();renderDiscard(0);renderDiscard(1);
   isRemoteUpdate=false;updateWaitingOverlay();
   if(G.over)showOnlineOver();
-  if(isReset){document.getElementById('over').style.display='none';addLog('⚔️ Новая битва начата!','#39ff14');}
+  if(isReset){_iWantRematch=false;_oppWantsRematch=false;updateRematchUI();document.getElementById('over').style.display='none';addLog('⚔️ Новая битва начата!','#39ff14');}
 }
 
 function onDisconnect(){
-  document.getElementById('conn-badge').textContent='❌ РАЗРЫВ';
-  document.getElementById('conn-badge').style.color='#ff5555';
+  if(_intentionalClose)return;
   stopHeartbeat();
-  if(gameStarted)addLog('❌ Соединение разорвано.','#ff5555');
+  if(gameStarted&&!_reconnecting){
+    document.getElementById('conn-badge').textContent='🔄 СВЯЗЬ...';
+    document.getElementById('conn-badge').style.color='#ffd700';
+    addLog('❌ Связь прервалась — переподключаемся...','#ff5555');
+    attemptReconnect();
+  }else if(!gameStarted){
+    document.getElementById('conn-badge').textContent='❌ РАЗРЫВ';
+    document.getElementById('conn-badge').style.color='#ff5555';
+  }
 }
 
 function startOnlineGame(){
@@ -873,18 +1046,18 @@ function checkWin(me,foe,pi){
   else if(!_resultRecorded){_resultRecorded=true;STATS.games++;saveStats();renderLobbyStats();}
   showOver(html,res);
 }
-function showOver(html,res){document.getElementById('over-txt').innerHTML=html+rewardHtml(res);document.getElementById('over').style.display='flex';}
+function showOver(html,res){document.getElementById('over-txt').innerHTML=html+rewardHtml(res);let ob=document.getElementById('over-btn');if(ob){ob.disabled=false;ob.textContent=isOnline?(_oppWantsRematch?'🔄 РЕВАНШ — соперник готов!':'🔄 РЕВАНШ'):'⚔ Новая Схватка!';}document.getElementById('over').style.display='flex';}
 function getStage(v){return v>=66?3:v>=33?2:1;}
 function showPass(pi){if(isOnline)return;document.getElementById('pass-h').textContent='ПЕРЕДАЧА ХОДА: '+pn(pi);document.getElementById('pass-p').textContent='Передайте устройство следующему опричнику!';document.getElementById('pass-leg').innerHTML='';document.getElementById('pass').style.display='flex';render();}
 function confirmPass(){document.getElementById('pass').style.display='none';render();}
-function resetGame(){if(isOnline){if(myIndex===0){initGame();_mqttPub('reset');render();renderDiscard(0);renderDiscard(1);updateWaitingOverlay();}else{addLog('⏳ Ожидаем хоста...','#ffd700');}document.getElementById('over').style.display='none';return;}initGame();render();renderDiscard(0);renderDiscard(1);if(isBot){offerMulligan(HUMAN);}else{showPass(0);}}
+function resetGame(){if(isOnline){requestRematch();return;}initGame();render();renderDiscard(0);renderDiscard(1);if(isBot){offerMulligan(HUMAN);}else{showPass(0);}}
 function pn(pi){if(isOnline)return pi===myIndex?'ВЫ':'СОПЕРНИК';if(isBot)return pi===HUMAN?'ВЫ':'БОТ';return pi===0?'ВОИН I':'ВОИН II';}
 
 // RENDER
 function render(){let[p1,p2]=G.players;renderHP(0,p1);renderHP(1,p2);updateShieldAndReflectIcons(0,p1.sh,p1.re);updateShieldAndReflectIcons(1,p2.sh,p2.re);renderBase(0,p1);renderBase(1,p2);document.getElementById('p1-co').textContent='💰 '+p1.coins;document.getElementById('p2-co').textContent='💰 '+p2.coins;let passOpen=document.getElementById('pass')&&document.getElementById('pass').style.display!=='none';let a0=(G.turn===0)&&!G.over&&(isOnline?myIndex===0:!passOpen);let a1=(G.turn===1)&&!G.over&&(isOnline?myIndex===1:!passOpen);let area1=document.getElementById('p1-area'),area2=document.getElementById('p2-area'),badge1=document.getElementById('p1-turn-badge'),badge2=document.getElementById('p2-turn-badge');if(G.turn===0&&!G.over){area1.classList.add('active-turn');area1.classList.remove('inactive-turn');badge1.classList.remove('hidden');area2.classList.add('inactive-turn');area2.classList.remove('active-turn');badge2.classList.add('hidden');}else if(G.turn===1&&!G.over){area2.classList.add('active-turn');area2.classList.remove('inactive-turn');badge2.classList.remove('hidden');area1.classList.add('inactive-turn');area1.classList.remove('active-turn');badge1.classList.add('hidden');}else{area1.classList.remove('active-turn','inactive-turn');badge1.classList.add('hidden');area2.classList.remove('active-turn','inactive-turn');badge2.classList.add('hidden');}let fu0=a0,fu1=a1,ab0=a0,ab1=a1;if(isBot){fu0=!G.over;fu1=false;ab1=false;}renderHand(0,p1,'p1-hand',fu0);renderHand(1,p2,'p2-hand',fu1);renderAbils(0,ab0,p1);renderAbils(1,ab1,p2);renderPlayed('sl-p1',G.last[0]);renderPlayed('sl-p2',G.last[1]);let dc=document.getElementById('deck-count');if(dc)dc.textContent=G.deck.length;document.body.classList.toggle('super-mode-active',p1.superMode||p2.superMode);}
 function renderHP(i,p){let f=document.getElementById('p'+(i+1)+'-hp'),t=document.getElementById('p'+(i+1)+'-hptxt'),pct=Math.max(0,Math.round(p.hp/100*100));f.style.width=pct+'%';f.style.background=pct>60?'linear-gradient(90deg,#27ae60,#2ecc71)':pct>30?'linear-gradient(90deg,#c9620a,#e67e22)':'linear-gradient(90deg,#7b241c,#c0392b)';t.textContent=p.hp+'/100';}
 function renderBase(i,p){let wrap=document.getElementById('p'+(i+1)+'-base-wrap'),fill=document.getElementById('p'+(i+1)+'-base-fill'),num=document.getElementById('p'+(i+1)+'-base-num'),stxt=document.getElementById('p'+(i+1)+'-stage-txt');if(p.superMode){fill.style.width='100%';fill.classList.add('super-mode');wrap.classList.add('super-glow');num.textContent='ЯРОСТЬ';stxt.textContent=`СВЕРХ-ГОЙДА (${p.superTurns+1} Х)`;}else{fill.style.width=p.base+'%';fill.classList.remove('super-mode');wrap.classList.remove('super-glow');num.textContent=p.base;let st=getStage(p.base);stxt.textContent=st===3?'ЭТАП III':st===2?'ЭТАП II':'ЭТАП I';}}
-function renderHand(pi,player,cid,faceUp){let c=document.getElementById(cid);c.innerHTML='';if(!faceUp){player.hand.forEach(()=>{let d=document.createElement('div');d.className='card-container';d.innerHTML='<div class="card back"><div class="back-rune">⚔️</div></div>';c.appendChild(d);});return;}player.hand.forEach(card=>{let container=document.createElement('div');container.className='card-container';let isLocked=false,lockTxt='';if(card.id==='OPLICH_GOYDA'&&getStage(player.base)<2&&!player.superMode){isLocked=true;lockTxt='ЭТАП II';}if(card.id==='GOYDO_OBEREG'&&getStage(player.base)<2&&!player.superMode){isLocked=true;lockTxt='ЭТАП II';}if(card.id==='GIPER_GOYD'&&getStage(player.base)<3&&!player.superMode){isLocked=true;lockTxt='ЭТАП III';}let d=document.createElement('div');d.className='card click';d.style.setProperty('--cbg',isLocked?'#151515':card.bg);d.style.setProperty('--cbc',isLocked?'#3c3c3c':card.bc);d.innerHTML=`<div class="card-shine"></div><div class="card-role-tab"><span>✦</span><span>${card.role}</span></div><div class="card-emblem"><span class="card-ico">${card.ic}</span></div><div class="card-name">${card.n}</div><div class="card-stat kind-${card.kind}"><span class="card-num">${card.num}</span><span class="card-unit">${card.unit}</span></div><div class="card-effect">${card.eff}</div><div class="card-tag" style="${isLocked?'background:#500;border-color:#f33;color:#f88;':''}">${isLocked?lockTxt:'Свиток Гойды'}</div>`;d.onclick=()=>playCard(pi,card);container.appendChild(d);c.appendChild(container);applyCardParallax(container);});setupHandHover(c);}
+function renderHand(pi,player,cid,faceUp){let c=document.getElementById(cid);c.innerHTML='';if(!faceUp){let rune=currentBack().rune;player.hand.forEach(()=>{let d=document.createElement('div');d.className='card-container';d.innerHTML='<div class="card back"><div class="back-rune">'+rune+'</div></div>';c.appendChild(d);});return;}player.hand.forEach(card=>{let container=document.createElement('div');container.className='card-container';let isLocked=false,lockTxt='';if(card.id==='OPLICH_GOYDA'&&getStage(player.base)<2&&!player.superMode){isLocked=true;lockTxt='ЭТАП II';}if(card.id==='GOYDO_OBEREG'&&getStage(player.base)<2&&!player.superMode){isLocked=true;lockTxt='ЭТАП II';}if(card.id==='GIPER_GOYD'&&getStage(player.base)<3&&!player.superMode){isLocked=true;lockTxt='ЭТАП III';}let d=document.createElement('div');d.className='card click';d.style.setProperty('--cbg',isLocked?'#151515':card.bg);d.style.setProperty('--cbc',isLocked?'#3c3c3c':card.bc);d.innerHTML=`<div class="card-shine"></div><div class="card-role-tab"><span>✦</span><span>${card.role}</span></div><div class="card-emblem"><span class="card-ico">${card.ic}</span></div><div class="card-name">${card.n}</div><div class="card-stat kind-${card.kind}"><span class="card-num">${card.num}</span><span class="card-unit">${card.unit}</span></div><div class="card-effect">${card.eff}</div><div class="card-tag" style="${isLocked?'background:#500;border-color:#f33;color:#f88;':''}">${isLocked?lockTxt:'Свиток Гойды'}</div>`;d.onclick=()=>playCard(pi,card);container.appendChild(d);c.appendChild(container);applyCardParallax(container);});setupHandHover(c);}
 function renderAbils(pi,active,player){let c=document.getElementById(`p${pi+1}-abils`);c.innerHTML='';player.abilities.forEach((ab,idx)=>{let canUse=active&&player.coins>=ab.cost;let container=document.createElement('div');container.className='abil-card-container';let btn=document.createElement('div');btn.className='abil-card'+(canUse?' ready':'');if(canUse){btn.style.setProperty('--bbg',ab.bg);btn.style.setProperty('--bc',ab.bc);btn.onclick=()=>useAbil(pi,idx);}btn.innerHTML=`<div class="abil-card-header"><span>${ab.ic} ${ab.n}</span><span style="font-size:7px;color:#888">Тактика</span></div><div class="abil-card-desc" title="${ab.d}">${ab.d}</div><div class="abil-card-cost">💰 ${ab.cost} ВЕЧЕВЫХ</div>`;container.appendChild(btn);c.appendChild(container);});}
 function renderPlayed(sid,card){let s=document.getElementById(sid);if(!card){s.innerHTML='<div class="empty-slot">ᚦ</div>';return;}s.innerHTML=`<div class="played" style="background:${card.bg};border-color:${card.bc}"><div class="text-2xl">${card.ic}</div><div class="font-black text-[9px] mt-1">${card.n}</div></div>`;}
 function updateShieldAndReflectIcons(pi,sh,re){let sl=document.getElementById(`p${pi+1}-shields-list`);sl.innerHTML='';for(let i=1;i<=2;i++){let d=document.createElement('div');d.className=`shield-slot ${i<=sh?'active':''}`;d.innerHTML=i<=sh?'🛡️':'';sl.appendChild(d);}let rl=document.getElementById(`p${pi+1}-reflects-list`);rl.innerHTML='';let d=document.createElement('div');d.className=`reflect-slot ${re>0?'active':''}`;d.innerHTML=re>0?'🪬':'';rl.appendChild(d);}
@@ -962,7 +1135,7 @@ function toggleMute(){initSound();sndMuted=!sndMuted;STATS.muted=sndMuted;saveSt
 function startLocalGame(){isOnline=false;isLocal=true;isBot=false;document.getElementById('lobby').style.display='none';document.getElementById('bottom-bar').classList.remove('hidden');document.getElementById('log-toggle').style.display='block';document.getElementById('bb-lobby').style.display='inline-block';initGame();render();renderDiscard(0);renderDiscard(1);sfx('start');showSidePanels();showPass(0);}
 const BOT_NAMES={easy:'БОТ-НОВОБРАНЕЦ',warrior:'БОТ-ВОИН',oprichnik:'БОТ-ОПРИЧНИК'};
 function startBotGame(level){isOnline=false;isLocal=false;isBot=true;botLevel=level||'warrior';myIndex=HUMAN;document.getElementById('lobby').style.display='none';document.getElementById('bottom-bar').classList.remove('hidden');document.getElementById('log-toggle').style.display='block';document.getElementById('bb-lobby').style.display='inline-block';initGame();addLog('🤖 Бой против '+BOT_NAMES[botLevel]+'! Ты ходишь первым. ГОЙДА!','#ff9eb5');render();renderDiscard(0);renderDiscard(1);sfx('start');showSidePanels();offerMulligan(HUMAN);}
-function backToLobby(){if(!confirm('Вернуться в меню? Текущая схватка будет завершена. ГОЙДА?'))return;isOnline=false;isLocal=false;isBot=false;myIndex=-1;gameStarted=false;showBotThinking(false);document.body.classList.remove('flip-view');if(mqttClient){mqttClient.end(true);mqttClient=null;}document.getElementById('lobby').style.display='flex';document.getElementById('over').style.display='none';document.getElementById('bottom-bar').classList.add('hidden');document.getElementById('log-toggle').style.display='none';document.getElementById('bb-lobby').style.display='none';hideSidePanels();renderLobbyStats();}
+function backToLobby(force){if(!force&&!confirm('Вернуться в меню? Текущая схватка будет завершена. ГОЙДА?'))return;_intentionalClose=true;_reconnecting=false;clearTimeout(_reconnectTimer);showReconnectBanner(false);_iWantRematch=false;_oppWantsRematch=false;isOnline=false;isLocal=false;isBot=false;myIndex=-1;gameStarted=false;showBotThinking(false);document.body.classList.remove('flip-view');if(mqttClient){try{mqttClient.end(true);}catch(e){}mqttClient=null;}document.getElementById('lobby').style.display='flex';document.getElementById('over').style.display='none';document.getElementById('bottom-bar').classList.add('hidden');document.getElementById('log-toggle').style.display='none';document.getElementById('bb-lobby').style.display='none';hideSidePanels();renderLobbyStats();}
 
 // === SIDE PANELS ===
 const BATTLE_CRIES=['ГОЙДА!!!','СЛАВА!','В АТАКУ!','СТОЯТЬ!','ДЕРЖИСЬ!','ЗА ДРОН!','СИЛА!','УДАЧА!','ВПЕРЁД!','НЕ СДАВАЙ!','ОГОНЬ!','ГОЙДА-МАТ!','ЯРОСТЬ!','ПОБЕДА!'];
@@ -1034,7 +1207,7 @@ document.getElementById('btn-local').addEventListener('click',startLocalGame);
 document.getElementById('btn-join').addEventListener('click',joinRoomBtn);
 document.getElementById('room-input').addEventListener('keydown',function(e){if(e.key==='Enter')joinRoomBtn();});
 
-renderLobbyStats();
+renderLobbyStats();applyCosmetics();
 (function(){let btn=document.getElementById('mute-bb');if(btn)btn.textContent=sndMuted?'🔇 ЗВУК ВЫКЛ':'🔊 ЗВУК ВКЛ';})();
 initGame();render();renderDiscard(0);renderDiscard(1);
 // Show library load status in lobby
