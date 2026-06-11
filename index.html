@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>ГОЙДА ME ON THE DRON</title>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@4.3.7/dist/mqtt.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
@@ -25,6 +25,7 @@
   --cur: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='44' viewBox='0 0 40 44'%3E%3Cdefs%3E%3ClinearGradient id='br' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23ffe9a8'/%3E%3Cstop offset='.4' stop-color='%23d4a017'/%3E%3Cstop offset='.75' stop-color='%238a5a12'/%3E%3Cstop offset='1' stop-color='%233a2400'/%3E%3C/linearGradient%3E%3CradialGradient id='gem' cx='42%25' cy='38%25' r='62%25'%3E%3Cstop offset='0' stop-color='%23ffffff'/%3E%3Cstop offset='.35' stop-color='%23ff5a4a'/%3E%3Cstop offset='1' stop-color='%237a0000'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cpath d='M12 29 L15 38 L11 36 L9 43 L8 33 Z' fill='%23ff7a1a' opacity='.9'/%3E%3Cg stroke='%231a0d00' stroke-width='1.1' stroke-linejoin='round'%3E%3Cpath d='M6 5 L20 2 L19 24 L13 31 Z' fill='url(%23br)'/%3E%3Cpath d='M20 2 L19 24 L13 31 L20 26 Z' fill='%23a87214' stroke='none' opacity='.7'/%3E%3Cpath d='M9 8 L17 6.5 L16.5 21 L13 25 Z' fill='%23fff4cf' stroke='none' opacity='.35'/%3E%3Ccircle cx='12.5' cy='14' r='3.4' fill='url(%23gem)'/%3E%3Ccircle cx='11.4' cy='12.7' r='1' fill='%23ffffff' stroke='none' opacity='.85'/%3E%3C/g%3E%3C/svg%3E") 6 4, pointer;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
+.btn,.bb-btn,.torch,.totem-idol,.banner,.emote-hot,.card,.abil-card,.wd-item,.btn-bot,.card-container,button{touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
 body{cursor:var(--cur);background:var(--bg);background-image:radial-gradient(ellipse at 50% 40%,#170701 0%,#050100 70%,#000000 100%);font-family:'Ysabeau SC','Georgia',serif;color:var(--text);height:100vh;overflow:hidden;user-select:none;perspective:1200px;}
 body::before{content:'';position:fixed;inset:-10%;z-index:0;pointer-events:none;background:radial-gradient(ellipse at 50% 42%,rgba(130,20,0,.4),rgba(40,8,0,.2) 45%,transparent 75%);animation:cosmicPulse 10s ease-in-out infinite;}
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:4;opacity:0;transition:opacity .8s ease;background:radial-gradient(circle,transparent 40%,rgba(0,0,0,.5) 70%,rgba(180,15,0,.7) 100%);}
@@ -73,7 +74,7 @@ body.super-mode-active::after{opacity:.85;}
 .card-stat{display:flex;align-items:baseline;justify-content:center;gap:1px;margin:1px 0;transform:translateZ(15px);}
 .card-num{font-size:18px;font-weight:900;text-shadow:0 1.5px 3px rgba(0,0,0,.9);}
 .card-unit{font-size:7.5px;font-weight:bold;opacity:.85;text-transform:uppercase;}
-.kind-dmg .card-num{color:#ff5e3a;}.kind-heal .card-num{color:#5eff8b;}.kind-shield .card-num{color:#5eb5ff;}.kind-draw .card-num{color:#3ae4d0;}.kind-coin .card-num{color:#ffd700;}.kind-base .card-num{color:#ffa000;}
+.kind-dmg .card-num{color:#ff5e3a;}.kind-heal .card-num{color:#5eff8b;}.kind-shield .card-num{color:#5eb5ff;}.kind-draw .card-num{color:#3ae4d0;}.kind-coin .card-num{color:#ffd700;}.kind-base .card-num{color:#ffa000;}.kind-poison .card-num{color:#7cff5a;}.kind-thorn .card-num{color:#aadd33;}.kind-steal .card-num{color:#cc66ff;}
 .card-effect{font-size:8px;line-height:1.25;color:#f1ebd9;flex:1;display:flex;align-items:center;justify-content:center;padding:0 2px;transform:translateZ(5px);}
 .card-tag{margin-top:2px;align-self:stretch;font-size:6.5px;font-weight:bold;letter-spacing:.3px;text-transform:uppercase;color:#ffe8b5;background:linear-gradient(90deg,rgba(212,160,23,.22),rgba(120,10,5,.2));border:.5px solid rgba(212,160,23,.4);border-radius:3px;padding:1px;transform:translateZ(6px);}
 .card.back{background:linear-gradient(135deg,#1a0802 0%,#2d1005 50%,#1a0802 100%) !important;border-color:#6b3010 !important;border-left-width:2px;border-width:2px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
@@ -359,14 +360,33 @@ body.cine-draw #game{filter:saturate(.8) brightness(.85);transition:filter .6s;}
 @keyframes totemSleep{0%,100%{transform:rotate(0);}30%{transform:rotate(-9deg) translateY(3px);}70%{transform:rotate(-7deg) translateY(3px);}}
 .totem-idol.totem-dead{filter:grayscale(1) brightness(.5) !important;animation:none !important;transform:rotate(12deg) translateY(5px);transition:all .8s;}
 /* ── WEATHER ── */
-.lightning-flash{position:fixed;inset:0;z-index:3;pointer-events:none;background:linear-gradient(180deg,rgba(225,235,255,.55),rgba(180,200,255,.18) 60%,transparent);animation:lightFlash .24s ease-out forwards;}
-@keyframes lightFlash{0%{opacity:0;}12%{opacity:1;}30%{opacity:.25;}45%{opacity:.85;}100%{opacity:0;}}
+.lightning-flash{position:fixed;inset:0;z-index:6;pointer-events:none;background:linear-gradient(180deg,rgba(235,242,255,.92),rgba(190,210,255,.45) 55%,transparent);animation:lightFlash .26s ease-out forwards;}
+@keyframes lightFlash{0%{opacity:0;}10%{opacity:1;}28%{opacity:.2;}44%{opacity:.95;}100%{opacity:0;}}
 .snow-flake{position:fixed;top:-20px;z-index:56;pointer-events:none;color:#cfeeff;text-shadow:0 0 6px rgba(160,220,255,.8);will-change:transform,opacity;opacity:0;}
+/* storm darkens the sky; fire-wind warms it (visible weather) */
+body.storm-sky::before{background:radial-gradient(ellipse at 50% 30%,rgba(40,50,90,.5),rgba(10,12,30,.55) 60%,rgba(2,2,8,.5))!important;animation:none!important;opacity:1!important;}
+.totem-say{position:fixed;transform:translate(-50%,-100%);pointer-events:none;z-index:62;font-size:17px;font-weight:900;color:#fff;background:linear-gradient(135deg,#3a1d05,#6b1a10);border:2px solid var(--gold);border-radius:12px;padding:4px 12px;white-space:nowrap;text-shadow:0 1px 3px #000;box-shadow:0 5px 16px rgba(0,0,0,.7),0 0 14px rgba(255,170,40,.5);animation:totemSayAnim 1.7s cubic-bezier(.2,1.5,.4,1) forwards;}
+@keyframes totemSayAnim{0%{transform:translate(-50%,-70%) scale(.3);opacity:0;}12%{transform:translate(-50%,-100%) scale(1.12);opacity:1;}24%{transform:translate(-50%,-100%) scale(1);}82%{opacity:1;transform:translate(-50%,-115%) scale(1);}100%{opacity:0;transform:translate(-50%,-150%) scale(.9);}}
+body.fire-wind::after{opacity:.5!important;background:radial-gradient(ellipse at 50% 60%,rgba(255,90,0,.18),rgba(150,20,0,.12) 55%,transparent 80%)!important;animation:fireWindPulse 1.1s ease-in-out infinite!important;}
+@keyframes fireWindPulse{0%,100%{opacity:.32;}50%{opacity:.6;}}
+@media(max-width:640px){body.fire-wind::after{animation:none!important;}}
 /* ── E4: card flight, draw ghost, turn sweep ── */
 .fly-card{position:fixed;width:46px;height:62px;border-radius:7px;border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:24px;z-index:58;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.7);will-change:transform,opacity;}
 .draw-ghost{position:fixed;z-index:57;font-size:18px;pointer-events:none;filter:drop-shadow(0 0 6px rgba(255,210,90,.8));will-change:transform,opacity;}
 .turn-sweep{position:absolute;inset:0;pointer-events:none;z-index:1;background:linear-gradient(100deg,transparent 35%,rgba(255,224,80,.18) 50%,transparent 65%);background-size:300% 100%;animation:turnSweepAnim .75s ease-out forwards;}
 @keyframes turnSweepAnim{0%{background-position:140% 0;}100%{background-position:-60% 0;}}
+/* ── G3: signature ability FX ── */
+.screen-fx{position:fixed;inset:0;z-index:59;pointer-events:none;animation:screenFxFade .45s ease-out forwards;}
+@keyframes screenFxFade{0%{opacity:0;}15%{opacity:1;}100%{opacity:0;}}
+.screen-fx.fx-boom{background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.85),rgba(216,168,255,.4) 35%,transparent 70%);}
+.screen-fx.fx-frost{background:radial-gradient(circle at 50% 50%,rgba(180,240,255,.55),rgba(90,180,255,.2) 50%,transparent 75%);}
+.screen-fx.fx-rage{background:radial-gradient(circle at 50% 50%,rgba(255,40,20,.5),rgba(120,0,0,.25) 45%,transparent 72%);}
+.screen-fx.fx-bass{background:repeating-radial-gradient(circle at 50% 50%,rgba(255,189,21,.16) 0,rgba(255,189,21,.16) 10px,transparent 10px,transparent 24px);}
+.screen-fx.fx-holy{background:radial-gradient(circle at 50% 50%,rgba(255,250,210,.7),rgba(255,220,120,.3) 45%,transparent 75%);}
+.ice-spike{position:fixed;transform:translate(-50%,-50%);z-index:60;pointer-events:none;font-size:22px;color:#bdeeff;text-shadow:0 0 8px rgba(120,220,255,.9);will-change:transform,opacity;}
+.light-pillar{position:fixed;bottom:0;top:0;width:60px;z-index:57;pointer-events:none;background:linear-gradient(180deg,transparent,var(--pc,#ffd700) 40%,var(--pc,#ffd700) 60%,transparent);filter:blur(2px);transform-origin:center bottom;mix-blend-mode:screen;}
+.sky-bolt{position:fixed;top:6%;transform:translate(-50%,0);z-index:60;pointer-events:none;font-size:54px;color:#fff7c0;text-shadow:0 0 18px rgba(255,240,120,1),0 0 6px #fff;will-change:transform,opacity;}
+@media(max-width:640px){.sky-bolt{font-size:40px;}.light-pillar{width:42px;}}
 /* MOBILE */
 @media(max-width:640px){
   body{overflow-y:auto;height:auto;}
@@ -654,7 +674,7 @@ window.addEventListener('unhandledrejection',function(e){
   if(el)el.textContent='❌ Promise: '+(e.reason&&e.reason.message||e.reason);
 });
 
-const DEFS={GOYDA:{n:'ГОЙДА',ic:'⚔️',bg:'#5c0808',bc:'#e74c3c',cnt:8,role:'atk',num:'12',unit:'УРОН',kind:'dmg',base:12,eff:'Натиск! Комбо ГОЙДА подряд: +3 к урону (до 4 раз).'},GOYDUSHKA:{n:'ГОЙДУШКА',ic:'🧚‍♀️',bg:'#4a0e4e',bc:'#9b59b6',cnt:4,role:'sup',num:'20',unit:'ОЗ',kind:'heal',base:14,eff:'Лечит 20 ОЗ. Наполняет Базометр на +14%.'},GOYDO_SHIELD:{n:'ГОЙДО-ЩИТ',ic:'🛡️',bg:'#092c4c',bc:'#00ccff',cnt:5,role:'def',num:'+1',unit:'БРОНЯ',kind:'shield',base:9,eff:'Активирует 1 слот брони. Лимит брони: 2 значка.'},GOYDO_FONK:{n:'ГОЙДО-ФОНК',ic:'🎛️',bg:'#4d2c00',bc:'#ffbd15',cnt:5,role:'atk',num:'18',unit:'УРОН',kind:'dmg',base:18,eff:'Оглушительный бас наносит 18 урона и качает Базометр +18%.'},PEREGOYDA:{n:'ПЕРЕГОЙДА',ic:'🪬',bg:'#1b072e',bc:'#b366ff',cnt:3,role:'def',num:'+1',unit:'ОТРАЖ',kind:'shield',base:7,eff:'Зеркало отражает 75% урона. Лимит: 1 заряд.'},GOYDO_DILER:{n:'ГОЙДО-ДИЛЕР',ic:'🃏',bg:'#05322b',bc:'#00ffcc',cnt:4,role:'sup',num:'+2',unit:'КАРТЫ',kind:'draw',base:10,eff:'Вытягивает 2 свитка из колоды.'},GOYDO_HAMSTER:{n:'ГОЙДО-ХОМЯК',ic:'🐹',bg:'#152238',bc:'#00a2ff',cnt:4,role:'sup',num:'+2',unit:'МОНЕТЫ',kind:'coin',base:8,eff:'Добывает 2 монеты для вечевых способностей.'},NAGOYDATEL:{n:'НАГОЙДАТЕЛЬ',ic:'🔥',bg:'#5c2c00',bc:'#ff6600',cnt:4,role:'sup',num:'+25',unit:'БАЗА',kind:'base',base:25,eff:'Нагнетает Базометр +25%. Не наносит урона.'},CRINGE_GOYDA:{n:'КРИНЖО-ГОЙДА',ic:'🤮',bg:'#1a2e1c',bc:'#2ecc71',cnt:4,role:'atk',num:'14',unit:'УРОН',kind:'dmg',base:6,eff:'14 урона. Сбивает Базометр врага на −20%.'},KRIO_GOYDA:{n:'КРИО-ГОЙДА',ic:'❄️',bg:'#023440',bc:'#3aebff',cnt:3,role:'def',num:'15',unit:'УРОН',kind:'dmg',base:8,eff:'15 урона. Замораживает Базометр врага на 1 ход.'},OPLICH_GOYDA:{n:'ОПРИЧ-ГОЙДА',ic:'💥',bg:'#6f0505',bc:'#ff1111',cnt:3,role:'atk',num:'30',unit:'УРОН',kind:'dmg',base:28,eff:'Тяжёлый удар 30. Только ЭТАП II+.'},GOYDO_OBEREG:{n:'ГОЙДО-ОБЕРЕГ',ic:'🧿',bg:'#02223a',bc:'#00ffff',cnt:3,role:'def',num:'+1+1',unit:'ЩИТ+ЗЕР',kind:'shield',base:12,eff:'Дарует 1 Броню и 1 Отражение. Требуется ЭТАП II+.'},GIPER_GOYD:{n:'ГИПЕР-ГОЙД',ic:'⚡',bg:'#3d0558',bc:'#d8a8ff',cnt:2,role:'atk',num:'42',unit:'УРОН',kind:'dmg',base:35,eff:'42 урона. Ломает ВСЮ защиту врага. Требует ЭТАП III.'},ABSOLUT_GOYDA:{n:'АБСОЛЮТ-ГОЙДА',ic:'🌟',bg:'#1c1c1c',bc:'#ffffff',cnt:2,role:'sup',num:'+38',unit:'БАЗА',kind:'base',base:38,eff:'Финал! +38% Базы, лечит 25 ОЗ. Путь к Сверх-Гойде!'}};
+const DEFS={GOYDA:{n:'ГОЙДА',ic:'⚔️',bg:'#5c0808',bc:'#e74c3c',cnt:8,role:'atk',num:'12',unit:'УРОН',kind:'dmg',base:12,eff:'Натиск! Комбо ГОЙДА подряд: +3 к урону (до 4 раз).'},GOYDUSHKA:{n:'ГОЙДУШКА',ic:'🧚‍♀️',bg:'#4a0e4e',bc:'#9b59b6',cnt:4,role:'sup',num:'20',unit:'ОЗ',kind:'heal',base:14,eff:'Лечит 20 ОЗ. Наполняет Базометр на +14%.'},GOYDO_SHIELD:{n:'ГОЙДО-ЩИТ',ic:'🛡️',bg:'#092c4c',bc:'#00ccff',cnt:5,role:'def',num:'+1',unit:'БРОНЯ',kind:'shield',base:9,eff:'Активирует 1 слот брони. Лимит брони: 2 значка.'},GOYDO_FONK:{n:'ГОЙДО-ФОНК',ic:'🎛️',bg:'#4d2c00',bc:'#ffbd15',cnt:5,role:'atk',num:'18',unit:'УРОН',kind:'dmg',base:18,eff:'Оглушительный бас наносит 18 урона и качает Базометр +18%.'},PEREGOYDA:{n:'ПЕРЕГОЙДА',ic:'🪬',bg:'#1b072e',bc:'#b366ff',cnt:3,role:'def',num:'+1',unit:'ОТРАЖ',kind:'shield',base:7,eff:'Зеркало отражает 75% урона. Лимит: 1 заряд.'},GOYDO_DILER:{n:'ГОЙДО-ДИЛЕР',ic:'🃏',bg:'#05322b',bc:'#00ffcc',cnt:4,role:'sup',num:'+2',unit:'КАРТЫ',kind:'draw',base:10,eff:'Вытягивает 2 свитка из колоды.'},GOYDO_HAMSTER:{n:'ГОЙДО-ХОМЯК',ic:'🐹',bg:'#152238',bc:'#00a2ff',cnt:4,role:'sup',num:'+2',unit:'МОНЕТЫ',kind:'coin',base:8,eff:'Добывает 2 монеты для вечевых способностей.'},NAGOYDATEL:{n:'НАГОЙДАТЕЛЬ',ic:'🔥',bg:'#5c2c00',bc:'#ff6600',cnt:4,role:'sup',num:'+25',unit:'БАЗА',kind:'base',base:25,eff:'Нагнетает Базометр +25%. Не наносит урона.'},CRINGE_GOYDA:{n:'КРИНЖО-ГОЙДА',ic:'🤮',bg:'#1a2e1c',bc:'#2ecc71',cnt:4,role:'atk',num:'14',unit:'УРОН',kind:'dmg',base:6,eff:'14 урона. Сбивает Базометр врага на −20%.'},KRIO_GOYDA:{n:'КРИО-ГОЙДА',ic:'❄️',bg:'#023440',bc:'#3aebff',cnt:3,role:'def',num:'15',unit:'УРОН',kind:'dmg',base:8,eff:'15 урона. Замораживает Базометр врага на 1 ход.'},OPLICH_GOYDA:{n:'ОПРИЧ-ГОЙДА',ic:'💥',bg:'#6f0505',bc:'#ff1111',cnt:3,role:'atk',num:'30',unit:'УРОН',kind:'dmg',base:28,eff:'Тяжёлый удар 30. Только ЭТАП II+.'},GOYDO_OBEREG:{n:'ГОЙДО-ОБЕРЕГ',ic:'🧿',bg:'#02223a',bc:'#00ffff',cnt:3,role:'def',num:'+1+1',unit:'ЩИТ+ЗЕР',kind:'shield',base:12,eff:'Дарует 1 Броню и 1 Отражение. Требуется ЭТАП II+.'},GIPER_GOYD:{n:'ГИПЕР-ГОЙД',ic:'⚡',bg:'#3d0558',bc:'#d8a8ff',cnt:2,role:'atk',num:'42',unit:'УРОН',kind:'dmg',base:35,eff:'42 урона. Ломает ВСЮ защиту врага. Требует ЭТАП III.'},ABSOLUT_GOYDA:{n:'АБСОЛЮТ-ГОЙДА',ic:'🌟',bg:'#1c1c1c',bc:'#ffffff',cnt:2,role:'sup',num:'+38',unit:'БАЗА',kind:'base',base:38,eff:'Финал! +38% Базы, лечит 25 ОЗ. Путь к Сверх-Гойде!'},GOYDO_YAD:{n:'ГОЙДО-ЯД',ic:'🤢',bg:'#16331a',bc:'#7cff5a',cnt:3,role:'sup',num:'☠3',unit:'ЯД',kind:'poison',base:6,eff:'Травит врага: 3 заряда яда — урон в начале его ходов.'},SHIPOGOYDA:{n:'ШИПОГОЙДА',ic:'🌵',bg:'#243309',bc:'#aadd33',cnt:3,role:'def',num:'+2',unit:'ШИПЫ',kind:'thorn',base:8,eff:'Шипы (2): враг ловит 8 урона за каждый удар по тебе.'},GLUSHILKA:{n:'ГЛУШИЛКА',ic:'😵',bg:'#3a2a05',bc:'#ffcc33',cnt:3,role:'atk',num:'10',unit:'УРОН',kind:'dmg',base:7,eff:'10 урона + ОГЛУШЕНИЕ: враг пропускает следующий ход.'},KARMANNIK:{n:'КАРМАННИК',ic:'🫳',bg:'#2a1230',bc:'#cc66ff',cnt:2,role:'sup',num:'+1',unit:'КРАЖА',kind:'steal',base:6,eff:'Крадёт случайную карту из руки врага себе.'}};
 const TAP=[
   {n:'Зажим',ic:'🥚',d:'16 пробивающего урона',cost:2,bg:'#5a1c0f',bc:'#e74c3c',run:(pi,me,foe)=>{doAtk(pi,16,true,me,foe);}},
   {n:'Оплот',ic:'🛡️',d:'+1 броня и +12 ОЗ',cost:2,bg:'#092440',bc:'#00ccff',run:(pi,me,foe)=>{me.sh=Math.min(me.sh+1,2);healRaw(pi,12);}},
@@ -663,30 +683,45 @@ const TAP=[
   {n:'Зеркало',ic:'🪬',d:'+1 Отражение (75% урона)',cost:2,bg:'#1b072e',bc:'#b366ff',run:(pi,me,foe)=>{me.re=Math.min(me.re+1,1);}},
   {n:'Вечевой Оброк',ic:'💰',d:'Враг теряет 2 💰, ты +1',cost:1,bg:'#05322b',bc:'#00ffcc',run:(pi,me,foe)=>{foe.coins=Math.max(0,foe.coins-2);me.coins++;}},
   {n:'Милость',ic:'🍺',d:'Лечит 30 ОЗ, но база −10%',cost:2,bg:'#2d1d1d',bc:'#ff5500',run:(pi,me,foe)=>{healRaw(pi,30);changeBase(pi,me,-10);}},
-  {n:'Кара Перуна',ic:'⚡',d:'28 урона обоим бойцам',cost:3,bg:'#3a2a00',bc:'#ffd700',run:(pi,me,foe)=>{dealRaw(pi,28);dealRaw(1-pi,28);}}
+  {n:'Кара Перуна',ic:'⚡',d:'28 урона обоим бойцам',cost:3,bg:'#3a2a00',bc:'#ffd700',run:(pi,me,foe)=>{screenFlash('fx-boom',520);skyLightning(pi);skyLightning(1-pi);dealRaw(pi,28);dealRaw(1-pi,28);}}
 ];
 
 let myIndex=-1,isOnline=false,isRemoteUpdate=false,isLocal=false;
 let isBot=false,botLevel='warrior';const BOT=1,HUMAN=0;
-let G={},actx,master,sndMuted=true,lockShield=false,_resultRecorded=false;
+let G={},actx,master,sndComp=null,sndMuted=true,lockShield=false,_resultRecorded=false;
+let LOW_FX=false;try{LOW_FX=window.matchMedia('(max-width:640px)').matches||window.matchMedia('(prefers-reduced-motion: reduce)').matches;window.addEventListener('resize',()=>{LOW_FX=window.matchMedia('(max-width:640px)').matches||window.matchMedia('(prefers-reduced-motion: reduce)').matches;});}catch(e){}
+function fxCount(base){return LOW_FX?Math.max(2,Math.round(base*0.45)):base;}
 // ── PROGRESS / STATS ──
 const STATS_KEY='goyda_stats_v1';
 const RANKS=[{min:0,name:'ХОЛОП',ic:'🌾'},{min:60,name:'РАТНИК',ic:'🗡️'},{min:160,name:'ОПРИЧНИК I',ic:'⚔️'},{min:320,name:'ОПРИЧНИК II',ic:'⚔️'},{min:540,name:'ОПРИЧНИК III',ic:'⚔️'},{min:820,name:'ВОЕВОДА',ic:'🛡️'},{min:1200,name:'КНЯЗЬ ГОЙДЫ',ic:'👑'},{min:1800,name:'АБСОЛЮТ ГОЙДЫ',ic:'🌟'}];
-function defaultStats(){return{games:0,wins:0,losses:0,draws:0,streak:0,bestStreak:0,slava:0,vsBot:{w:0,l:0},online:{w:0,l:0},muted:true,cosmetics:{back:'default',theme:'default',frame:'default'}};}
+function defaultStats(){return{games:0,wins:0,losses:0,draws:0,streak:0,bestStreak:0,slava:0,vsBot:{w:0,l:0},online:{w:0,l:0},muted:false,music:true,cosmetics:{back:'default',theme:'default',frame:'default'}};}
 function loadStats(){try{let s=JSON.parse(localStorage.getItem(STATS_KEY));return s?Object.assign(defaultStats(),s):defaultStats();}catch(e){return defaultStats();}}
 function saveStats(){try{localStorage.setItem(STATS_KEY,JSON.stringify(STATS));}catch(e){}}
 function rankFor(slava){let r=RANKS[0];for(let x of RANKS)if(slava>=x.min)r=x;return r;}
 function nextRank(slava){for(let x of RANKS)if(x.min>slava)return x;return null;}
-let STATS=loadStats();sndMuted=STATS.muted!==false;
+let STATS=loadStats();if(STATS.music===undefined)STATS.music=true;sndMuted=STATS.muted===true;
 function recordResult(mode,outcome){
   let before=rankFor(STATS.slava);STATS.games++;let gain=0;
   if(outcome==='win'){STATS.wins++;STATS.streak++;if(STATS.streak>STATS.bestStreak)STATS.bestStreak=STATS.streak;let base=mode==='online'?40:({easy:15,warrior:28,oprichnik:45}[botLevel]||25);gain=base+Math.min(STATS.streak-1,5)*5;if(mode==='bot')STATS.vsBot.w++;else STATS.online.w++;}
   else if(outcome==='loss'){STATS.losses++;STATS.streak=0;gain=mode==='online'?8:5;if(mode==='bot')STATS.vsBot.l++;else STATS.online.l++;}
   else{STATS.draws++;STATS.streak=0;gain=6;}
-  let oldSlava=STATS.slava;STATS.slava+=gain;let after=rankFor(STATS.slava);saveStats();
-  return{gain,rankUp:after.name!==before.name,newRank:after,streak:STATS.streak,outcome,unlocked:listNewlyUnlocked(oldSlava,STATS.slava)};
+  let slava0=STATS.slava;let daily=checkDaily();STATS.slava+=gain;let after=rankFor(STATS.slava);let ach=checkAchievements();saveStats();
+  return{gain,daily,rankUp:after.name!==before.name,newRank:after,streak:STATS.streak,outcome,unlocked:listNewlyUnlocked(slava0,STATS.slava),ach};
 }
-function rewardHtml(res){if(!res)return'';let h='<div class="over-reward">+'+res.gain+' славы ⚜</div>';if(res.outcome==='win'&&res.streak>1)h+='<div class="over-streak">🔥 Серия побед: '+res.streak+'</div>';if(res.rankUp)h+='<div class="rank-up-toast">⬆ НОВЫЙ РАНГ: '+res.newRank.ic+' '+res.newRank.name+'</div>';if(res.unlocked&&res.unlocked.length)h+='<div class="unlock-toast">🎁 Открыто в Гардеробе: '+res.unlocked.map(c=>c.ic+' '+c.name).join(', ')+'</div>';return h;}
+// ── G4: achievements + daily ──
+const ACHIEVEMENTS=[
+  {id:'first_blood',name:'Первая кровь',ic:'🩸',desc:'1-я победа',test:s=>s.wins>=1},
+  {id:'veteran',name:'Ветеран',ic:'⚔️',desc:'10 побед',test:s=>s.wins>=10},
+  {id:'warlord',name:'Полководец',ic:'🛡️',desc:'50 побед',test:s=>s.wins>=50},
+  {id:'streak5',name:'В ударе',ic:'🔥',desc:'5 побед подряд',test:s=>s.bestStreak>=5},
+  {id:'streak10',name:'Несокрушимый',ic:'💀',desc:'10 побед подряд',test:s=>s.bestStreak>=10},
+  {id:'rich',name:'Славный',ic:'⚜️',desc:'500 славы',test:s=>s.slava>=500},
+  {id:'legend',name:'Легенда Гойды',ic:'🌟',desc:'1500 славы',test:s=>s.slava>=1500},
+  {id:'grinder',name:'Закалённый',ic:'🎯',desc:'25 боёв',test:s=>s.games>=25}
+];
+function checkAchievements(){if(!STATS.ach)STATS.ach={};let out=[];for(let a of ACHIEVEMENTS){if(!STATS.ach[a.id]&&a.test(STATS)){STATS.ach[a.id]=1;out.push(a);}}return out;}
+function checkDaily(){let today;try{today=new Date().toDateString();}catch(e){return 0;}if(STATS.lastDaily===today)return 0;STATS.lastDaily=today;let bonus=20;STATS.slava+=bonus;return bonus;}
+function rewardHtml(res){if(!res)return'';let h='<div class="over-reward">+'+res.gain+' славы ⚜</div>';if(res.daily)h+='<div class="unlock-toast">🎁 Дейли-бонус: +'+res.daily+' славы</div>';if(res.outcome==='win'&&res.streak>1)h+='<div class="over-streak">🔥 Серия побед: '+res.streak+'</div>';if(res.rankUp)h+='<div class="rank-up-toast">⬆ НОВЫЙ РАНГ: '+res.newRank.ic+' '+res.newRank.name+'</div>';if(res.ach&&res.ach.length)h+='<div class="rank-up-toast" style="color:#ffd24a;text-shadow:0 0 10px rgba(255,200,40,.6)">🏅 Достижение: '+res.ach.map(a=>a.ic+' '+a.name).join(', ')+'</div>';if(res.unlocked&&res.unlocked.length)h+='<div class="unlock-toast">🎁 Открыто в Гардеробе: '+res.unlocked.map(c=>c.ic+' '+c.name).join(', ')+'</div>';return h;}
 function renderLobbyStats(){
   let el=document.getElementById('lobby-stats');if(!el)return;
   if(STATS.games===0){el.style.display='none';return;}
@@ -768,10 +803,14 @@ function renderWardrobe(){
     }
     html+='</div>';
   }
+  let ach=STATS.ach||{},got=ACHIEVEMENTS.filter(a=>ach[a.id]).length;
+  html+='<div class="wd-cat-title">🏅 Достижения ('+got+'/'+ACHIEVEMENTS.length+')</div><div class="wd-grid">';
+  for(let a of ACHIEVEMENTS){let unl=!!ach[a.id];html+='<div class="wd-item'+(unl?' sel':' locked')+'"><div class="wd-ic">'+a.ic+'</div><div class="wd-name">'+a.name+'</div><div class="wd-tag'+(unl?' sel':' lock')+'">'+(unl?'✓ '+a.desc:'🔒 '+a.desc)+'</div></div>';}
+  html+='</div>';
   host.innerHTML=html;
 }
 
-function mkP(){return{hp:100,sh:0,re:0,combo:0,coins:0,hand:[],base:0,superMode:false,superTurns:0,freezeNext:false,abilities:[],abilIdx:[]};}
+function mkP(){return{hp:100,sh:0,re:0,combo:0,coins:0,hand:[],base:0,superMode:false,superTurns:0,freezeNext:false,poison:0,thorns:0,stunNext:false,abilities:[],abilIdx:[]};}
 function buildDeck(){let d=[];for(let k in DEFS){let df=DEFS[k];for(let i=0;i<df.cnt;i++)d.push({...df,id:k,uid:k+'_'+Math.random()});}for(let i=d.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}return d;}
 function draw(p,n){for(let i=0;i<n;i++){if(!G.deck.length){G.deck=buildDeck();addLog('📜 Колода свитков перетасована! Ратный дух крепок.','#ffbd15');}if(p.hand.length<7)p.hand.push(G.deck.pop());}triggerDeckJiggle();}
 function rollAbilities(p){let t=TAP.map((_,i)=>i),idx=[];for(let i=0;i<3;i++){let r=Math.floor(Math.random()*t.length);idx.push(t.splice(r,1)[0]);}p.abilIdx=idx;p.abilities=idx.map(i=>TAP[i]);}
@@ -1029,7 +1068,7 @@ function _mqttPub(t,state){
   mqttClient.publish('goyda25/'+roomCode,JSON.stringify(s),{retain,qos:1});
 }
 function syncState(type){if(isRemoteUpdate||!isOnline)return;_mqttPub(type||'state');}
-function serializeState(){return{deck:G.deck,turn:G.turn,over:G.over,last:G.last,disc:G.disc,logLines:G.logLines||[],players:G.players.map(p=>({hp:p.hp,sh:p.sh,re:p.re,combo:p.combo,coins:p.coins,hand:p.hand,base:p.base,superMode:p.superMode,superTurns:p.superTurns,freezeNext:p.freezeNext,abilIdx:p.abilIdx||[]}))};}
+function serializeState(){return{deck:G.deck,turn:G.turn,over:G.over,last:G.last,disc:G.disc,logLines:G.logLines||[],players:G.players.map(p=>({hp:p.hp,sh:p.sh,re:p.re,combo:p.combo,coins:p.coins,hand:p.hand,base:p.base,superMode:p.superMode,superTurns:p.superTurns,freezeNext:p.freezeNext,poison:p.poison||0,thorns:p.thorns||0,stunNext:!!p.stunNext,abilIdx:p.abilIdx||[]}))};}
 function applyRemoteState(s){if(!s.over)_resultRecorded=false;G={deck:s.deck||[],turn:s.turn,over:s.over||false,last:s.last||[null,null],disc:s.disc||[[],[]],logLines:s.logLines||[],players:(s.players||[]).map(p=>({...p,abilities:(p.abilIdx||[]).map(i=>TAP[i])}))};}
 function updateWaitingOverlay(){document.getElementById('waiting-overlay').style.display=(isOnline&&G.turn!==myIndex&&!G.over)?'flex':'none';}
 function copyCode(){navigator.clipboard.writeText(document.getElementById('code-display').textContent).then(()=>{let el=document.getElementById('code-display');let t=el.textContent;el.textContent='СКОПИРОВАНО!';setTimeout(()=>el.textContent=t,1200);}).catch(()=>prompt('Скопируй код:',document.getElementById('code-display').textContent));}
@@ -1038,6 +1077,7 @@ function showOnlineOver(){let me=G.players[myIndex],foe=G.players[1-myIndex];let
 // GAME
 function playCard(pi,card){if(G.over||G.turn!==pi)return;if(isOnline&&pi!==myIndex)return;sfx('cardplay');let me=G.players[pi],foe=G.players[1-pi];if(card.id==='OPLICH_GOYDA'&&getStage(me.base)<2&&!me.superMode){spawnFl(pi,'Требует ЭТАП II!','baseloss');return;}if(card.id==='GOYDO_OBEREG'&&getStage(me.base)<2&&!me.superMode){spawnFl(pi,'Требует ЭТАП II!','baseloss');return;}if(card.id==='GIPER_GOYD'&&getStage(me.base)<3&&!me.superMode){spawnFl(pi,'Требует ЭТАП III!','baseloss');return;}let i=me.hand.findIndex(c=>c.uid===card.uid);if(i!==-1)me.hand.splice(i,1);G.last[pi]=card;pushDiscard(pi,card);flyCardToCenter(pi,card);if(card.id!=='GOYDA')me.combo=0;applyCard(pi,card,me,foe);if(card.base)changeBase(pi,me,card.base);if(!G.over){draw(me,1);endTurn(pi);}render();resetIdle();}
 function applyCard(pi,card,me,foe){
+  castFX(pi,card);
   let msg='',col='#f4d58d',type=card.role,sm=me.superMode?1.4:1.0;
   let foePre=foe.hp,mePre=me.hp;
   let extra={ic:card.ic,bg:card.bg};
@@ -1056,21 +1096,31 @@ function applyCard(pi,card,me,foe){
     case'GOYDO_OBEREG':{me.sh=Math.min(me.sh+1,2);me.re=Math.min(me.re+1,1);flashA(pi,'blu');flashA(pi,'gld');spawnFl(pi,'🛡️ Оберег!','block');sfx('shield');msg=`${pn(pi)} · Гойдо-Оберег: +1🛡️ +1🪬`;col='#00ffff';extra.result=`+1🛡️+1🪬`;extra.resType='shield';break;}
     case'GIPER_GOYD':{foe.sh=0;foe.re=0;let dmg=Math.floor(42*sm);let r=doAtk(pi,dmg,false,me,foe,card.ic);msg=`${pn(pi)} · ГИПЕР-ГОЙДА ПОГНАЛИ! ➔ ${r.msg}`;col='#cc44ff';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
     case'ABSOLUT_GOYDA':{let h=healRaw(pi,25);msg=`${pn(pi)} · Абсолют-Гойда — ФИНАЛ ГОЙДЫ`;col='#ffffff';extra.result=`+${h} ОЗ`;extra.resType='heal';extra.hp=`${mePre}→${me.hp}`;break;}
+    case'GOYDO_YAD':{foe.poison=Math.min((foe.poison||0)+3,9);flashA(1-pi,'grn');spawnFl(1-pi,'☠️ ЯД +3','baseloss');sfx('shield');msg=`${pn(pi)} · Гойдо-Яд травит врага (☠${foe.poison})`;col='#7cff5a';extra.result='☠+3';extra.resType='dmg';break;}
+    case'SHIPOGOYDA':{me.thorns=Math.min((me.thorns||0)+2,6);flashA(pi,'grn');spawnFl(pi,'🌵 ШИПЫ +2','block');sfx('shield');msg=`${pn(pi)} · Шипогойда: шипы (${me.thorns})`;col='#aadd33';extra.result='🌵+2';extra.resType='shield';break;}
+    case'GLUSHILKA':{let dmg=Math.floor(10*sm);let r=doAtk(pi,dmg,false,me,foe,card.ic);foe.stunNext=true;spawnFl(1-pi,'⚡ ОГЛУШЁН','baseloss');msg=`${pn(pi)} · Глушилка оглушила! ➔ ${r.msg}`;col='#ffcc33';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
+    case'KARMANNIK':{if(foe.hand&&foe.hand.length){let idx=Math.floor(Math.random()*foe.hand.length);let stolen=foe.hand.splice(idx,1)[0];if(me.hand.length<7)me.hand.push(stolen);spawnFl(pi,'🫳 КРАЖА','coin');sfx('coin');msg=`${pn(pi)} · Карманник стащил [${stolen.n}]!`;}else{msg=`${pn(pi)} · Карманник: у врага пусто`;}col='#cc66ff';extra.result='🫳';extra.resType='draw';break;}
   }
   addLog(msg,col,card.id==='GOYDO_FONK'?'goyda':type,extra);
   checkWin(me,foe,pi);
 }
 function useAbil(pi,idx){if(G.over||G.turn!==pi)return;if(isOnline&&pi!==myIndex)return;let me=G.players[pi],foe=G.players[1-pi],ab=me.abilities[idx];if(me.coins<ab.cost)return;me.coins-=ab.cost;addLog(`💫 ${pn(pi)} применил тактику [${ab.n}] за ${ab.cost} 💰`,'#ffd700');ab.run(pi,me,foe);checkWin(me,foe,pi);if(!G.over)endTurn(pi);render();resetIdle();}
-function doAtk(pi,dmg,pierce,me,foe,vfx){let ic=vfx||'⚔️';if(foe.superMode){let thru=Math.floor(dmg*.35);foe.hp=Math.max(0,foe.hp-thru);spawnProjectile(pi,1-pi,ic,'fwd');flashA(1-pi,'grn');if(thru>0)spawnFl(1-pi,'-'+thru,'dmg');spawnFl(1-pi,'⚡СВЕРХ (−65%)','block');sfx('shield');return{msg:`СВЕРХ-ГОЙДА поглотила бо́льшую часть (${thru} прошло)`,hit:thru>0};}if(foe.re>0){foe.re--;let ref=Math.floor(dmg*.75);me.hp=Math.max(0,me.hp-ref);spawnProjectile(pi,1-pi,ic,'reflect');flashA(pi,'red');shakeA(pi);hpHit(pi);spawnFl(pi,'-'+ref,'dmg');spawnFl(1-pi,'↩️ 75% назад!','ref');quake(ref);sfx('hit');if(Math.random()<.6)totemSay('ЗЕРКАЛО!!!');return{msg:`${ref} (75%) отражено назад!`,hit:false};}if(!lockShield&&!pierce&&foe.sh>0){foe.sh--;spawnProjectile(pi,1-pi,ic,'block');flashA(1-pi,'blu');spawnFl(1-pi,'🛡️ броня','block');sfx('shield');if(Math.random()<.45)totemSay('БРОНЯ ДЕРЖИТ!');return{msg:'принято на прочную броню',hit:false};}foe.hp=Math.max(0,foe.hp-dmg);spawnProjectile(pi,1-pi,ic,'fwd');flashA(1-pi,'red');shakeA(1-pi);hpHit(1-pi);spawnFl(1-pi,'-'+dmg,'dmg');quake(dmg);sfx('hit');if(dmg>=25&&Math.random()<.65)totemSay('ОГО-ГОЙДА!');return{msg:`${dmg} чистого урона`,hit:true};}
+function doAtk(pi,dmg,pierce,me,foe,vfx){let ic=vfx||'⚔️';if(foe.superMode){let thru=Math.floor(dmg*.35);foe.hp=Math.max(0,foe.hp-thru);spawnProjectile(pi,1-pi,ic,'fwd');flashA(1-pi,'grn');if(thru>0)spawnFl(1-pi,'-'+thru,'dmg');spawnFl(1-pi,'⚡СВЕРХ (−65%)','block');sfx('shield');return{msg:`СВЕРХ-ГОЙДА поглотила бо́льшую часть (${thru} прошло)`,hit:thru>0};}if(foe.re>0){foe.re--;let ref=Math.floor(dmg*.75);me.hp=Math.max(0,me.hp-ref);spawnProjectile(pi,1-pi,ic,'reflect');flashA(pi,'red');shakeA(pi);hpHit(pi);spawnFl(pi,'-'+ref,'dmg');spawnFl(1-pi,'↩️ 75% назад!','ref');quake(ref);sfx('hit');if(Math.random()<.6)totemSay('ЗЕРКАЛО!!!');return{msg:`${ref} (75%) отражено назад!`,hit:false};}if(!lockShield&&!pierce&&foe.sh>0){foe.sh--;spawnProjectile(pi,1-pi,ic,'block');flashA(1-pi,'blu');spawnFl(1-pi,'🛡️ броня','block');sfx('shield');if(Math.random()<.45)totemSay('БРОНЯ ДЕРЖИТ!');return{msg:'принято на прочную броню',hit:false};}foe.hp=Math.max(0,foe.hp-dmg);spawnProjectile(pi,1-pi,ic,'fwd');flashA(1-pi,'red');shakeA(1-pi);hpHit(1-pi);spawnFl(1-pi,'-'+dmg,'dmg');quake(dmg);sfx('hit');if(foe.thorns>0&&foe.hp>0){foe.thorns--;let tn=8;me.hp=Math.max(0,me.hp-tn);flashA(pi,'red');spawnFl(pi,'🌵 -'+tn,'dmg');addLog(`🌵 Шипы ${pn(1-pi)} ужалили ${pn(pi)} на ${tn}!`,'#7cff5a');}if(foe.hp<=0)totemSay('ДОБИЛ! ГОЙДА!',true);else if(dmg>=28)totemSay('ОГО-ГОЙДА!!!',true);else if(dmg>=15&&Math.random()<.7)totemSay(['В МЯСО!','БЕЙ!','КРЕПКО!','ОЙ-ГОЙ!'][Math.floor(Math.random()*4)]);if(isBot&&pi===BOT&&dmg>=20&&foe.hp>0)botReact('taunt');return{msg:`${dmg} чистого урона`,hit:true};}
 function dealRaw(tpi,amount){let t=G.players[tpi];if(t.superMode){spawnFl(tpi,'🛡️ НЕУЯЗВИМ','block');return;}t.hp=Math.max(0,t.hp-amount);flashA(tpi,'red');shakeA(tpi);hpHit(tpi);spawnFl(tpi,'-'+amount,'dmg');spawnShards(tpi,'#ffd700');quake(amount);sfx('hit');}
 function healRaw(pi,amount){let p=G.players[pi],h=Math.min(amount,100-p.hp);p.hp=Math.min(100,p.hp+amount);flashA(pi,'grn');spawnFl(pi,'+'+h,'heal');sfx('heal');if(h>=20&&Math.random()<.5)totemSay('ЖИВУЧИЙ!');return h;}
 function changeBase(pi,p,amount){if(amount>0&&p.freezeNext){p.freezeNext=false;spawnFl(pi,'❄️ ЗАМОРОЖЕНО!','baseloss');addLog(`❄️ Прирост Базометра ${pn(pi)} заморожен!`,'#3aebff');return;}if(p.superMode){p.base=Math.max(0,Math.min(100,p.base+amount));spawnFl(pi,(amount>0?'+':'')+amount+'% БАЗЫ','base');return;}p.base=Math.max(0,Math.min(100,p.base+amount));if(amount>0)spawnFl(pi,'+'+amount+'% БАЗЫ','base');else if(amount<0)spawnFl(pi,amount+'% БАЗЫ','baseloss');if(p.base>=100)triggerSuperGoyda(pi,p);}
-function triggerSuperGoyda(pi,p){p.superMode=true;p.superTurns=2;p.base=0;spawnSuperOverlay(pi);addLog(`🔥 СВЕРХ-ГОЙДА у ${pn(pi)}! Базометр сброшен. Ярость на 2 хода!`,'#39ff14');sfx('super');totemSay('СВЕРХ!!!',true);totemDance();}
-function endTurn(pi){let me=G.players[pi];if(me.superMode)changeBase(pi,me,10);G.turn=1-pi;let next=G.players[G.turn];next.coins++;bumpCoins(G.turn);if(next.superMode){next.superTurns--;if(next.superTurns<0){next.superMode=false;addLog(`⚠️ Режим СВЕРХ-ГОЙДЫ у ${pn(G.turn)} угас!`,'#ffd700');}}render();if(isOnline){syncState('state');updateWaitingOverlay();if(G.turn===myIndex){sfx('turn');turnSweep(myIndex);}}else if(isBot){if(G.turn===BOT&&!G.over)scheduleBotTurn();else if(G.turn===HUMAN&&!G.over){sfx('turn');turnSweep(HUMAN);}}else{setTimeout(()=>showPass(G.turn),60);}}
+function triggerSuperGoyda(pi,p){p.superMode=true;p.superTurns=2;p.base=0;spawnSuperOverlay(pi);addLog(`🔥 СВЕРХ-ГОЙДА у ${pn(pi)}! Базометр сброшен. Ярость на 2 хода!`,'#39ff14');sfx('super');totemSay('СВЕРХ!!!',true);totemDance();if(isBot&&pi===BOT)botReact('super',true);}
+function endTurn(pi){let me=G.players[pi];if(me.superMode)changeBase(pi,me,10);G.turn=1-pi;let next=G.players[G.turn];next.coins++;bumpCoins(G.turn);if(next.superMode){next.superTurns--;if(next.superTurns<0){next.superMode=false;addLog(`⚠️ Режим СВЕРХ-ГОЙДЫ у ${pn(G.turn)} угас!`,'#ffd700');}}
+  // ☠ poison ticks at the start of this player's turn
+  if(next.poison>0){let d=next.poison;dealRaw(G.turn,d);addLog(`☠️ Яд жалит ${pn(G.turn)} на ${d}!`,'#7cff5a');next.poison--;}
+  if(next.hp<=0){checkWin(G.players[pi],G.players[G.turn],pi);render();if(isOnline){syncState('state');showOnlineOver();}return;}
+  // ⚡ stun: this player skips the turn (flag cleared, hand back)
+  if(next.stunNext){next.stunNext=false;addLog(`⚡ ${pn(G.turn)} оглушён и пропускает ход!`,'#ffd700');spawnFl(G.turn,'⚡ ОГЛУШЁН','baseloss');render();return endTurn(G.turn);}
+  render();if(isOnline){syncState('state');updateWaitingOverlay();if(G.turn===myIndex){sfx('turn');turnSweep(myIndex);}}else if(isBot){if(G.turn===BOT&&!G.over)scheduleBotTurn();else if(G.turn===HUMAN&&!G.over){sfx('turn');turnSweep(HUMAN);}}else{setTimeout(()=>showPass(G.turn),60);}}
 // ── BOT turn driver ──
 function showBotThinking(on){let ov=document.getElementById('waiting-overlay');if(!ov)return;let box=ov.querySelector('.waiting-box'),title=ov.querySelector('.waiting-title'),sub=ov.querySelector('.waiting-sub');if(on){box.classList.add('bot-think');title.textContent='🤖 '+BOT_NAMES[botLevel];sub.textContent='обдумывает ход...';ov.style.display='flex';}else{box.classList.remove('bot-think');ov.style.display='none';}}
 function scheduleBotTurn(){showBotThinking(true);setTimeout(()=>{showBotThinking(false);botAct();},760+Math.floor(Math.random()*420));}
-function botAct(){if(!isBot||G.over||G.turn!==BOT)return;let me=G.players[BOT];let action=chooseBotAction();if(action&&action.type==='abil'){useAbil(BOT,action.idx);}else if(action&&action.type==='card'){playCard(BOT,action.card);}else if(me.hand.length){playCard(BOT,me.hand[0]);}else{endTurn(BOT);}}
+function botAct(){if(!isBot||G.over||G.turn!==BOT)return;let me=G.players[BOT];if(me.hp<30)botReact('panic');let action=chooseBotAction();if(action&&action.type==='abil'){useAbil(BOT,action.idx);}else if(action&&action.type==='card'){playCard(BOT,action.card);}else if(me.hand.length){playCard(BOT,me.hand[0]);}else{endTurn(BOT);}}
 // ── BOT brain (read-only evaluation) ──
 function predictAttack(dmg,pierce,me,foe){
   if(foe.superMode)return{foeDmg:Math.floor(dmg*.35),selfDmg:0,blocked:false,reflected:false};
@@ -1096,6 +1146,10 @@ function botCardEffect(card,me){
     case'GOYDO_OBEREG':e.shGain=1;e.reGain=1;break;
     case'GIPER_GOYD':e.atk=Math.floor(42*sm);e.stripsDef=true;break;
     case'ABSOLUT_GOYDA':e.heal=25;break;
+    case'GOYDO_YAD':e.poisonApply=3;break;
+    case'SHIPOGOYDA':e.thornsGain=2;break;
+    case'GLUSHILKA':e.atk=Math.floor(10*sm);e.stun=true;break;
+    case'KARMANNIK':e.steal=true;break;
   }
   return e;
 }
@@ -1115,6 +1169,10 @@ function scoreCard(card,me,foe){
   if(e.foeBaseDelta<0)s+=Math.min(foe.base,-e.foeBaseDelta)*0.5*(foe.base/100+0.3);
   if(e.draw>0)s+=me.hand.length<4?14:5;
   if(e.coins>0)s+=me.coins<3?12:5;
+  if(e.poisonApply>0)s+=e.poisonApply*4*(foe.superMode?0.2:1)+(foe.hp<35?12:0);
+  if(e.thornsGain>0)s+=me.thorns>=6?-12:16+(1-me.hp/100)*12;
+  if(e.stun)s+=foe.stunNext?6:24;
+  if(e.steal)s+=foe.hand&&foe.hand.length?16:1;
   return s;
 }
 function scoreAbil(ab,me,foe){
@@ -1148,7 +1206,7 @@ function checkWin(me,foe,pi){
   else if(me.hp<=0){G.over=true;ended=true;html=`🏆 ${pn(1-pi)} ТРИУМФОВАЛ!`;}
   if(!ended||isOnline)return; // online handled in showOnlineOver
   let res=null,o=null;
-  if(isBot){o=botOutcome();res=recordResult('bot',o);html=o==='win'?'🏆 ВЫ ТРИУМФОВАЛИ!<br><span class="text-sm font-normal">Бот повержен. Гойда абсолютна!</span>':o==='loss'?'💀 ВЫ ПАЛИ!<br><span class="text-sm font-normal">Бот оказался базированнее.</span>':'⚔️ СОВМЕСТНАЯ СМЕРТЬ!';showBotThinking(false);renderLobbyStats();}
+  if(isBot){o=botOutcome();res=recordResult('bot',o);html=o==='win'?'🏆 ВЫ ТРИУМФОВАЛИ!<br><span class="text-sm font-normal">Бот повержен. Гойда абсолютна!</span>':o==='loss'?'💀 ВЫ ПАЛИ!<br><span class="text-sm font-normal">Бот оказался базированнее.</span>':'⚔️ СОВМЕСТНАЯ СМЕРТЬ!';showBotThinking(false);renderLobbyStats();setTimeout(()=>{_botReactLast=0;botReact('gg',true);},500);}
   else if(!_resultRecorded){_resultRecorded=true;STATS.games++;saveStats();renderLobbyStats();o=(me.hp<=0&&foe.hp<=0)?'draw':'win';}
   showOver(html,res,o);
 }
@@ -1160,7 +1218,8 @@ function resetGame(){if(isOnline){requestRematch();return;}initGame();render();r
 function pn(pi){if(isOnline)return pi===myIndex?'ВЫ':'СОПЕРНИК';if(isBot)return pi===HUMAN?'ВЫ':'БОТ';return pi===0?'ВОИН I':'ВОИН II';}
 
 // RENDER
-function render(){let[p1,p2]=G.players;renderHP(0,p1);renderHP(1,p2);updateShieldAndReflectIcons(0,p1.sh,p1.re);updateShieldAndReflectIcons(1,p2.sh,p2.re);renderBase(0,p1);renderBase(1,p2);document.getElementById('p1-co').textContent='💰 '+p1.coins;document.getElementById('p2-co').textContent='💰 '+p2.coins;let passOpen=document.getElementById('pass')&&document.getElementById('pass').style.display!=='none';let a0=(G.turn===0)&&!G.over&&(isOnline?myIndex===0:!passOpen);let a1=(G.turn===1)&&!G.over&&(isOnline?myIndex===1:!passOpen);let area1=document.getElementById('p1-area'),area2=document.getElementById('p2-area'),badge1=document.getElementById('p1-turn-badge'),badge2=document.getElementById('p2-turn-badge');if(G.turn===0&&!G.over){area1.classList.add('active-turn');area1.classList.remove('inactive-turn');badge1.classList.remove('hidden');area2.classList.add('inactive-turn');area2.classList.remove('active-turn');badge2.classList.add('hidden');}else if(G.turn===1&&!G.over){area2.classList.add('active-turn');area2.classList.remove('inactive-turn');badge2.classList.remove('hidden');area1.classList.add('inactive-turn');area1.classList.remove('active-turn');badge1.classList.add('hidden');}else{area1.classList.remove('active-turn','inactive-turn');badge1.classList.add('hidden');area2.classList.remove('active-turn','inactive-turn');badge2.classList.add('hidden');}let fu0=a0,fu1=a1,ab0=a0,ab1=a1;if(isBot){fu0=!G.over;fu1=false;ab1=false;}renderHand(0,p1,'p1-hand',fu0);renderHand(1,p2,'p2-hand',fu1);renderAbils(0,ab0,p1);renderAbils(1,ab1,p2);renderPlayed('clash-p1',G.last[0]);renderPlayed('clash-p2',G.last[1]);let dc=document.getElementById('deck-count');if(dc)dc.textContent=G.deck.length;document.body.classList.toggle('super-mode-active',p1.superMode||p2.superMode);applyAuras(0,p1);applyAuras(1,p2);updateWeather();}
+function statusStr(p){return (p.poison?' ☠'+p.poison:'')+(p.thorns?' 🌵'+p.thorns:'')+(p.stunNext?' ⚡':'');}
+function render(){let[p1,p2]=G.players;renderHP(0,p1);renderHP(1,p2);updateShieldAndReflectIcons(0,p1.sh,p1.re);updateShieldAndReflectIcons(1,p2.sh,p2.re);renderBase(0,p1);renderBase(1,p2);document.getElementById('p1-co').textContent='💰 '+p1.coins+statusStr(p1);document.getElementById('p2-co').textContent='💰 '+p2.coins+statusStr(p2);let passOpen=document.getElementById('pass')&&document.getElementById('pass').style.display!=='none';let a0=(G.turn===0)&&!G.over&&(isOnline?myIndex===0:!passOpen);let a1=(G.turn===1)&&!G.over&&(isOnline?myIndex===1:!passOpen);let area1=document.getElementById('p1-area'),area2=document.getElementById('p2-area'),badge1=document.getElementById('p1-turn-badge'),badge2=document.getElementById('p2-turn-badge');if(G.turn===0&&!G.over){area1.classList.add('active-turn');area1.classList.remove('inactive-turn');badge1.classList.remove('hidden');area2.classList.add('inactive-turn');area2.classList.remove('active-turn');badge2.classList.add('hidden');}else if(G.turn===1&&!G.over){area2.classList.add('active-turn');area2.classList.remove('inactive-turn');badge2.classList.remove('hidden');area1.classList.add('inactive-turn');area1.classList.remove('active-turn');badge1.classList.add('hidden');}else{area1.classList.remove('active-turn','inactive-turn');badge1.classList.add('hidden');area2.classList.remove('active-turn','inactive-turn');badge2.classList.add('hidden');}let fu0=a0,fu1=a1,ab0=a0,ab1=a1;if(isBot){fu0=!G.over;fu1=false;ab1=false;}renderHand(0,p1,'p1-hand',fu0);renderHand(1,p2,'p2-hand',fu1);renderAbils(0,ab0,p1);renderAbils(1,ab1,p2);renderPlayed('clash-p1',G.last[0]);renderPlayed('clash-p2',G.last[1]);let dc=document.getElementById('deck-count');if(dc)dc.textContent=G.deck.length;document.body.classList.toggle('super-mode-active',p1.superMode||p2.superMode);applyAuras(0,p1);applyAuras(1,p2);updateWeather();}
 function applyAuras(pi,p){let a=document.getElementById('p'+(pi+1)+'-area');if(!a)return;a.classList.toggle('aura-shield',p.sh>0);a.classList.toggle('aura-reflect',p.re>0);a.classList.toggle('aura-frozen',!!p.freezeNext);a.classList.toggle('aura-super',!!p.superMode);}
 function renderHP(i,p){let f=document.getElementById('p'+(i+1)+'-hp'),t=document.getElementById('p'+(i+1)+'-hptxt'),pct=Math.max(0,Math.round(p.hp/100*100));f.style.width=pct+'%';f.style.background=pct>60?'linear-gradient(90deg,#27ae60,#2ecc71)':pct>30?'linear-gradient(90deg,#c9620a,#e67e22)':'linear-gradient(90deg,#7b241c,#c0392b)';t.textContent=p.hp+'/100';}
 function renderBase(i,p){let wrap=document.getElementById('p'+(i+1)+'-base-wrap'),fill=document.getElementById('p'+(i+1)+'-base-fill'),num=document.getElementById('p'+(i+1)+'-base-num'),stxt=document.getElementById('p'+(i+1)+'-stage-txt');if(p.superMode){fill.style.width='100%';fill.classList.add('super-mode');wrap.classList.add('super-glow');num.textContent='ЯРОСТЬ';stxt.textContent=`СВЕРХ-ГОЙДА (${p.superTurns+1} Х)`;}else{fill.style.width=p.base+'%';fill.classList.remove('super-mode');wrap.classList.remove('super-glow');num.textContent=p.base;let st=getStage(p.base);stxt.textContent=st===3?'ЭТАП III':st===2?'ЭТАП II':'ЭТАП I';}}
@@ -1223,7 +1282,7 @@ function renderDiscard(pi){let arr=G.disc[pi];document.getElementById('disc-p'+(
 function toggleCompendium(show){let modal=document.getElementById('compendium-modal');if(show){let grid=document.getElementById('compendium-grid-inner');grid.innerHTML='';for(let k in DEFS){let d=DEFS[k];let item=document.createElement('div');item.className='border border-orange-900 bg-[#160a04] p-3 rounded-lg flex flex-col items-center text-center';item.innerHTML=`<div class="text-3xl mb-1">${d.ic}</div><div class="text-xs font-black text-[#ffe8b5]">${d.n}</div><div class="text-[9px] text-[#ff6600] font-bold uppercase mt-0.5">${d.role} | ${d.num} ${d.unit}</div><div class="text-[8px] text-gray-300 mt-2 leading-tight">${d.eff}</div><div class="text-[7px] text-[#ffd700] border border-[#d4a017]/30 px-1 rounded mt-2 uppercase">База: +${d.base}%</div>`;grid.appendChild(item);}modal.style.display='flex';}else{modal.style.display='none';}}
 
 // SOUND
-function initSound(){if(actx)return;try{actx=new(window.AudioContext||window.webkitAudioContext)();master=actx.createGain();master.gain.value=sndMuted?0:.15;master.connect(actx.destination);}catch(e){actx=null;}}
+function initSound(){if(actx)return;try{actx=new(window.AudioContext||window.webkitAudioContext)();master=actx.createGain();master.gain.value=sndMuted?0:.7;sndComp=actx.createDynamicsCompressor();sndComp.threshold.value=-20;sndComp.knee.value=24;sndComp.ratio.value=4;sndComp.attack.value=.003;sndComp.release.value=.25;master.connect(sndComp);sndComp.connect(actx.destination);}catch(e){actx=null;}}
 function tone(freq,dur,type,vol,slideTo){if(!actx||sndMuted)return;let o=actx.createOscillator(),g=actx.createGain(),t0=actx.currentTime;o.type=type||'sine';o.frequency.setValueAtTime(freq,t0);if(slideTo)o.frequency.exponentialRampToValueAtTime(slideTo,t0+dur);g.gain.setValueAtTime(vol||.25,t0);g.gain.exponentialRampToValueAtTime(.001,t0+dur);o.connect(g);g.connect(master);o.start(t0);o.stop(t0+dur);}
 function noiseBurst(dur,vol,ff){if(!actx||sndMuted)return;let len=Math.floor(actx.sampleRate*dur),b=actx.createBuffer(1,len,actx.sampleRate),da=b.getChannelData(0);for(let i=0;i<len;i++)da[i]=(Math.random()*2-1)*(1-i/len);let s=actx.createBufferSource();s.buffer=b;let f=actx.createBiquadFilter();f.type='lowpass';f.frequency.value=ff||800;let gn=actx.createGain();gn.gain.value=vol||.3;s.connect(f);f.connect(gn);gn.connect(master);s.start();}
 function sfx(name){if(!actx||sndMuted)return;if(actx.state==='suspended')actx.resume();switch(name){
@@ -1238,10 +1297,10 @@ function sfx(name){if(!actx||sndMuted)return;if(actx.state==='suspended')actx.re
   case'start':[0,120,260].forEach((t,i)=>setTimeout(()=>tone(330+i*165,.35,'triangle',.2),t));setTimeout(()=>noiseBurst(.25,.2,1500),300);break;
   case'click':tone(900,.05,'sine',.08);break;
 }}
-function toggleMute(){initSound();sndMuted=!sndMuted;STATS.muted=sndMuted;saveStats();if(master)master.gain.value=sndMuted?0:.15;let btn=document.getElementById('mute-bb');if(btn)btn.textContent=sndMuted?'🔇 ЗВУК ВЫКЛ':'🔊 ЗВУК ВКЛ';}
+function toggleMute(){initSound();sndMuted=!sndMuted;STATS.muted=sndMuted;saveStats();if(master)master.gain.value=sndMuted?0:.7;let btn=document.getElementById('mute-bb');if(btn)btn.textContent=sndMuted?'🔇 ЗВУК ВЫКЛ':'🔊 ЗВУК ВКЛ';}
 function startLocalGame(){isOnline=false;isLocal=true;isBot=false;document.getElementById('lobby').style.display='none';document.getElementById('bottom-bar').classList.remove('hidden');document.getElementById('log-toggle').style.display='block';document.getElementById('bb-lobby').style.display='inline-block';initGame();render();renderDiscard(0);renderDiscard(1);sfx('start');startMusicIfEnabled();resetIdle();showPass(0);}
 const BOT_NAMES={easy:'БОТ-НОВОБРАНЕЦ',warrior:'БОТ-ВОИН',oprichnik:'БОТ-ОПРИЧНИК'};
-function startBotGame(level){isOnline=false;isLocal=false;isBot=true;botLevel=level||'warrior';myIndex=HUMAN;document.getElementById('lobby').style.display='none';document.getElementById('bottom-bar').classList.remove('hidden');document.getElementById('log-toggle').style.display='block';document.getElementById('bb-lobby').style.display='inline-block';initGame();addLog('🤖 Бой против '+BOT_NAMES[botLevel]+'! Ты ходишь первым. ГОЙДА!','#ff9eb5');render();renderDiscard(0);renderDiscard(1);sfx('start');startMusicIfEnabled();resetIdle();offerMulligan(HUMAN);}
+function startBotGame(level){isOnline=false;isLocal=false;isBot=true;botLevel=level||'warrior';myIndex=HUMAN;document.getElementById('lobby').style.display='none';document.getElementById('bottom-bar').classList.remove('hidden');document.getElementById('log-toggle').style.display='block';document.getElementById('bb-lobby').style.display='inline-block';initGame();addLog('🤖 Бой против '+BOT_NAMES[botLevel]+'! Ты ходишь первым. ГОЙДА!','#ff9eb5');render();renderDiscard(0);renderDiscard(1);sfx('start');startMusicIfEnabled();resetIdle();setTimeout(()=>botReact('greet',true),700);offerMulligan(HUMAN);}
 function backToLobby(force){if(!force&&!confirm('Вернуться в меню? Текущая схватка будет завершена. ГОЙДА?'))return;_intentionalClose=true;_reconnecting=false;clearTimeout(_reconnectTimer);showReconnectBanner(false);_iWantRematch=false;_oppWantsRematch=false;isOnline=false;isLocal=false;isBot=false;myIndex=-1;gameStarted=false;showBotThinking(false);closeEmoteWheel(true);stopMusic();clearTimeout(_idleTimer);clearTimeout(_stormTimer);_stormTimer=null;document.body.classList.remove('flip-view');if(mqttClient){try{mqttClient.end(true);}catch(e){}mqttClient=null;}document.getElementById('lobby').style.display='flex';document.getElementById('over').style.display='none';document.getElementById('bottom-bar').classList.add('hidden');document.getElementById('log-toggle').style.display='none';document.getElementById('bb-lobby').style.display='none';renderLobbyStats();}
 
 // === SIDE PANELS ===
@@ -1274,6 +1333,16 @@ function hitBanner(el){doodadHit(el.classList.contains('banner-l')?'banL':'banR'
 function hitTotem(){doodadHit('totem',document.getElementById('totem-idol'),{anim:'totem-bang',sound:sndThud,shards:true,shardColor:'#ff6a2a',shardN:11,cry:true,ring:true,cd:420});}
 // ── Fighter emotes (tap your own zone) ──
 function spawnEmote(pi,text){let c=_areaCenter(pi);let b=document.createElement('div');b.className='emote-bubble';b.textContent=text;b.style.left=c.x+'px';b.style.top=(c.y-12)+'px';document.body.appendChild(b);let a=document.getElementById('p'+(pi+1)+'-area');if(a){a.classList.remove('emote-wobble');void a.offsetWidth;a.classList.add('emote-wobble');}setTimeout(()=>b.remove(),1600);}
+// ── G5: livelier bot — typed reactions by event & difficulty ──
+const BOT_PHRASES={
+  greet:{easy:['привет, воин! 🙂','давай по-честному','ну, поехали'],warrior:['готовься к сече ⚔','ГОЙДА за мной!','покажи, что умеешь'],oprichnik:['ты уже проиграл 😏','помолись Дрону','я тут хозяин']},
+  taunt:{easy:['ой, неплохо! 😄','ха, попал!','вот так вот'],warrior:['получай! 💥','вот это удар!','чувствуешь?'],oprichnik:['жалкое зрелище 😤','на колени!','и это всё?']},
+  panic:{easy:['ай, больно! 😣','полегче...','ну ты чего'],warrior:['врёшь, не возьмёшь!','ещё держусь 💪','рано радуешься'],oprichnik:['это ничего... 😒','я не сдамся','тьфу']},
+  super:{easy:['ого, сила! ✨'],warrior:['СВЕРХ-ГОЙДА!!! 🔥'],oprichnik:['теперь тебе конец 💀']},
+  gg:{easy:['хорошая игра! 🤝'],warrior:['достойный бой ⚔'],oprichnik:['слабак. 😎']}
+};
+let _botReactLast=0;
+function botReact(kind,force){if(!isBot)return;let now=Date.now();if(now-_botReactLast<3500)return;if(!force&&Math.random()>0.6)return;let pool=(BOT_PHRASES[kind]||{})[botLevel]||(BOT_PHRASES[kind]||{}).warrior||[];if(!pool.length)return;_botReactLast=now;spawnEmote(BOT,pool[Math.floor(Math.random()*pool.length)]);}
 // ── Emote wheel ──
 const EMOTES=[{ic:'⚔️',txt:'ГОЙДА!!!'},{ic:'🔥',txt:'ОГОНЬ!'},{ic:'🛡',txt:'ДЕРЖИСЬ!'},{ic:'👑',txt:'СЛАВА!'},{ic:'❄️',txt:'СТОЯТЬ!'},{ic:'😤',txt:'ЯРОСТЬ!'},{ic:'🏆',txt:'ПОБЕДА!'},{ic:'💀',txt:'ТРЕПЕЩИ!'}];
 let _wheelOpen=false,_wheelPi=0;
@@ -1364,7 +1433,7 @@ function playCutscene(outcome,cb){
 
 // ── F4: GENERATIVE MUSIC ──
 let musicGain=null,_musicPlaying=false,_musicTimer=null,_musicStep=0;
-function initMusic(){initSound();if(!actx)return;if(!musicGain){musicGain=actx.createGain();musicGain.gain.value=.09;musicGain.connect(actx.destination);}}
+function initMusic(){initSound();if(!actx)return;if(!musicGain){musicGain=actx.createGain();musicGain.gain.value=.22;musicGain.connect(sndComp||actx.destination);}}
 function _mNote(freq,dur,type,vol,when){if(!actx)return;let o=actx.createOscillator(),g=actx.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(vol,when);g.gain.exponentialRampToValueAtTime(.001,when+dur);o.connect(g);g.connect(musicGain);o.start(when);o.stop(when+dur+.02);}
 function _mHat(when,vol){if(!actx)return;let len=Math.floor(actx.sampleRate*.05),b=actx.createBuffer(1,len,actx.sampleRate),da=b.getChannelData(0);for(let i=0;i<len;i++)da[i]=(Math.random()*2-1)*(1-i/len);let s=actx.createBufferSource();s.buffer=b;let fl=actx.createBiquadFilter();fl.type='highpass';fl.frequency.value=6000;let g=actx.createGain();g.gain.value=vol;s.connect(fl);fl.connect(g);g.connect(musicGain);s.start(when);}
 const _M_BASS=[55,0,110,55,82.4,0,55,65.4,55,0,110,55,98,82.4,65.4,0];
@@ -1389,7 +1458,7 @@ function startMusicIfEnabled(){if(STATS.music)startMusic();}
 
 // ── F5: LIVING TOTEM ──
 let _totemSayLast=0,_idleTimer=null;
-function totemSay(text,force){let now=Date.now();if(!force&&now-_totemSayLast<4000)return;_totemSayLast=now;let t=document.getElementById('totem-idol');if(!t)return;let r=t.getBoundingClientRect();spawnCryAt(r.left+r.width/2,r.top-14,text);}
+function totemSay(text,force){let now=Date.now();if(!force&&now-_totemSayLast<2200)return;_totemSayLast=now;let t=document.getElementById('totem-idol');if(!t)return;let r=t.getBoundingClientRect();let b=document.createElement('div');b.className='totem-say';b.textContent=text;b.style.left=(r.left+r.width/2)+'px';b.style.top=(r.top-20)+'px';document.body.appendChild(b);t.classList.remove('totem-bang');void t.offsetWidth;t.classList.add('totem-bang');setTimeout(()=>b.remove(),1700);}
 function totemDance(){let t=document.getElementById('totem-idol');if(!t)return;t.classList.add('totem-dance');setTimeout(()=>t.classList.remove('totem-dance'),2100);}
 function resetIdle(){
   clearTimeout(_idleTimer);
@@ -1407,23 +1476,27 @@ function resetIdle(){
 // ── F6: ARENA WEATHER ──
 let _stormTimer=null,_snowCD=0;
 function _lightning(){if(document.hidden)return;let f=document.createElement('div');f.className='lightning-flash';document.body.appendChild(f);setTimeout(()=>f.remove(),240);if(actx&&!sndMuted)noiseBurst(.45,.1,170);}
-function _stormLoop(){_stormTimer=setTimeout(()=>{_lightning();_stormLoop();},5200+Math.random()*4200);}
+function _stormLoop(){_stormTimer=setTimeout(()=>{_lightning();_stormLoop();},2800+Math.random()*2600);}
 function spawnSnow(){if(document.hidden)return;let n=window.innerWidth<=640?5:12;for(let i=0;i<n;i++){let s=document.createElement('div');s.className='snow-flake';s.textContent='❄';s.style.left=(Math.random()*100)+'vw';s.style.fontSize=(8+Math.random()*8)+'px';document.body.appendChild(s);s.animate([{transform:'translateY(-20px)',opacity:0},{opacity:.85,offset:.12},{transform:`translateY(${window.innerHeight*.6+Math.random()*window.innerHeight*.4}px) translateX(${(Math.random()-.5)*90}px)`,opacity:0}],{duration:2600+Math.random()*1400,delay:i*90,easing:'linear',fill:'forwards'}).onfinish=()=>s.remove();}}
 function updateWeather(){
   let inGame=(isBot||isLocal||isOnline)&&G&&G.players&&G.players.length===2&&!G.over;
-  let storm=inGame&&G.players[0].hp<40&&G.players[1].hp<40;
-  if(storm&&!_stormTimer)_stormLoop();
+  let storm=inGame&&(G.players[0].hp<45||G.players[1].hp<45);
+  if(storm&&!_stormTimer){_lightning();_stormLoop();if(!_stormAnnounced){_stormAnnounced=true;addLog('⛈️ Над ратным полем сгущается гроза!','#aab4ff');}}
   if(!storm&&_stormTimer){clearTimeout(_stormTimer);_stormTimer=null;}
+  if(!storm)_stormAnnounced=false;
+  document.body.classList.toggle('storm-sky',!!storm);
   let frozen=inGame&&(G.players[0].freezeNext||G.players[1].freezeNext);
   let now=Date.now();
-  if(frozen&&now-_snowCD>6000){_snowCD=now;spawnSnow();}
+  if(frozen&&now-_snowCD>5000){_snowCD=now;spawnSnow();}
   let superM=document.body.classList.contains('super-mode-active');
-  window._fxWind=superM?1.3:0;
-  window._fxBoost=superM?1.55:1;
+  document.body.classList.toggle('fire-wind',!!superM);
+  window._fxWind=superM?2.2:(storm?1.1:0);
+  window._fxBoost=superM?1.7:1;
 }
+let _stormAnnounced=false;
 
 // FX
-(function(){const cv=document.getElementById('sparks'),ctx=cv.getContext('2d');let W,H;function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;}window.addEventListener('resize',resize);resize();const COLORS=['#ff5500','#ff8800','#ffd700','#ff2200','#ffee88'],particles=[],MAX=25;function P(){this.reset(true);}P.prototype.reset=function(init){this.x=Math.random()*W;this.y=init?Math.random()*H:H+10;this.vy=-(Math.random()*.9+.3);this.vx=(Math.random()-.5)*.4;this.life=Math.random()*.6+.4;this.decay=Math.random()*.003+.0015;this.r=Math.random()*2+.5;this.color=COLORS[Math.floor(Math.random()*COLORS.length)];};for(let i=0;i<MAX;i++)particles.push(new P());function tick(){ctx.clearRect(0,0,W,H);for(let p of particles){p.x+=p.vx+(Math.random()-.5)*.1+(window._fxWind||0);p.y+=p.vy*(window._fxBoost||1);p.life-=p.decay;if(p.life<=0||p.y<-10)p.reset(false);ctx.save();ctx.globalAlpha=p.life*.7;ctx.fillStyle=p.color;ctx.shadowBlur=6;ctx.shadowColor=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();ctx.restore();}requestAnimationFrame(tick);}tick();})();
+(function(){const cv=document.getElementById('sparks'),ctx=cv.getContext('2d');let W,H;function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;}window.addEventListener('resize',resize);resize();const COLORS=['#ff5500','#ff8800','#ffd700','#ff2200','#ffee88'],particles=[],MAX=LOW_FX?12:25;function P(){this.reset(true);}P.prototype.reset=function(init){this.x=Math.random()*W;this.y=init?Math.random()*H:H+10;this.vy=-(Math.random()*.9+.3);this.vx=(Math.random()-.5)*.4;this.life=Math.random()*.6+.4;this.decay=Math.random()*.003+.0015;this.r=Math.random()*2+.5;this.color=COLORS[Math.floor(Math.random()*COLORS.length)];};for(let i=0;i<MAX;i++)particles.push(new P());function tick(){if(document.hidden){requestAnimationFrame(tick);return;}ctx.clearRect(0,0,W,H);for(let p of particles){p.x+=p.vx+(Math.random()-.5)*.1+(window._fxWind||0);p.y+=p.vy*(window._fxBoost||1);p.life-=p.decay;if(p.life<=0||p.y<-10)p.reset(false);ctx.save();ctx.globalAlpha=p.life*.7;ctx.fillStyle=p.color;ctx.shadowBlur=6;ctx.shadowColor=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();ctx.restore();}requestAnimationFrame(tick);}tick();})();
 function flashA(pi,type){let el=document.getElementById('p'+(pi+1)+'-area');el.classList.remove('border-red-500','border-green-500','border-blue-500','border-yellow-500');void el.offsetWidth;el.classList.add('border-'+(type==='red'?'red-500':type==='grn'?'green-500':type==='blu'?'blue-500':'yellow-500'));}
 function shakeA(pi){let el=document.getElementById('p'+(pi+1)+'-area');el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');}
 function hpHit(pi){let el=document.getElementById('p'+(pi+1)+'-hit');if(!el)return;el.classList.remove('go');void el.offsetWidth;el.classList.add('go');}
@@ -1439,6 +1512,22 @@ function triggerDeckJiggle(){let pile=document.getElementById('deck-pile');if(!p
 // ── E4: card-play flight + turn-start sweep ──
 function flyCardToCenter(pi,card){if(document.hidden)return;let from=_areaCenter(pi);let slot=document.getElementById(pi===0?'clash-p1':'clash-p2');let to=from;if(slot){let r=slot.getBoundingClientRect();if(r.width)to={x:r.left+r.width/2,y:r.top+r.height/2};}let dx=to.x-from.x,dy=to.y-from.y,W=46,H=62;let el=document.createElement('div');el.className='fly-card';el.textContent=card.ic;el.style.background=card.bg;el.style.borderColor=card.bc;el.style.left=(from.x-W/2)+'px';el.style.top=(from.y-H/2)+'px';document.body.appendChild(el);el.animate([{transform:'translate(0,0) scale(.8) rotate(-8deg)',opacity:.25},{transform:`translate(${dx}px,${dy}px) scale(1.12) rotate(3deg)`,opacity:1,offset:.7},{transform:`translate(${dx}px,${dy}px) scale(1) rotate(0)`,opacity:0}],{duration:400,easing:'cubic-bezier(.3,.7,.3,1)',fill:'forwards'}).onfinish=()=>{el.remove();spawnRing(to.x,to.y);};}
 function turnSweep(pi){if(document.hidden)return;let a=document.getElementById('p'+(pi+1)+'-area');if(!a)return;let s=document.createElement('div');s.className='turn-sweep';a.appendChild(s);setTimeout(()=>s.remove(),750);}
+// ── G3: signature ability/card animations ──
+function screenFlash(cls,ms){let f=document.createElement('div');f.className='screen-fx '+cls;document.body.appendChild(f);setTimeout(()=>f.remove(),ms||450);}
+function iceSpikes(pi){let c=_areaCenter(pi),n=fxCount(7);for(let i=0;i<n;i++){let s=document.createElement('div');s.className='ice-spike';s.textContent='❄';s.style.left=(c.x-50+Math.random()*100)+'px';s.style.top=c.y+'px';document.body.appendChild(s);s.animate([{transform:'translateY(20px) scale(.3)',opacity:0},{transform:'translateY(-10px) scale(1.2)',opacity:1,offset:.4},{transform:'translateY(-4px) scale(1)',opacity:0}],{duration:700,delay:i*30,easing:'ease-out',fill:'forwards'}).onfinish=()=>s.remove();}}
+function lightPillar(pi,color){let c=_areaCenter(pi);let p=document.createElement('div');p.className='light-pillar';p.style.left=c.x+'px';p.style.setProperty('--pc',color||'#ffd700');document.body.appendChild(p);p.animate([{transform:'translateX(-50%) scaleY(0)',opacity:0},{transform:'translateX(-50%) scaleY(1)',opacity:.9,offset:.3},{transform:'translateX(-50%) scaleY(1)',opacity:0}],{duration:650,easing:'ease-out',fill:'forwards'}).onfinish=()=>p.remove();}
+function skyLightning(pi){let c=_areaCenter(pi);let b=document.createElement('div');b.className='sky-bolt';b.textContent='⚡';b.style.left=c.x+'px';document.body.appendChild(b);b.animate([{transform:'translate(-50%,-60px) scale(.6)',opacity:0},{transform:'translate(-50%,0) scale(1.3)',opacity:1,offset:.25},{transform:'translate(-50%,0) scale(1)',opacity:0}],{duration:480,easing:'ease-out',fill:'forwards'}).onfinish=()=>b.remove();spawnShards(pi,'#fff7c0',fxCount(8));}
+function castFX(pi,card){
+  switch(card.id){
+    case'GIPER_GOYD':screenFlash('fx-boom',520);quake(40);spawnRing(_areaCenter(1-pi).x,_areaCenter(1-pi).y);skyLightning(1-pi);break;
+    case'KRIO_GOYDA':screenFlash('fx-frost',520);iceSpikes(1-pi);break;
+    case'OPLICH_GOYDA':screenFlash('fx-rage',420);quake(26);break;
+    case'GOYDO_FONK':screenFlash('fx-bass',360);break;
+    case'ABSOLUT_GOYDA':lightPillar(pi,'#ffffff');screenFlash('fx-holy',600);break;
+    case'NAGOYDATEL':lightPillar(pi,'#ff8a00');break;
+    case'GOYDUSHKA':lightPillar(pi,'#5eff8b');break;
+  }
+}
 function applyCardParallax(cc){const card=cc.querySelector('.card');cc.addEventListener('mousemove',e=>{const r=cc.getBoundingClientRect();const x=e.clientX-r.left,y=e.clientY-r.top;card.style.transform=`rotateX(${-((y-r.height/2)/r.height/2)*20}deg) rotateY(${((x-r.width/2)/r.width/2)*20}deg)`;card.style.setProperty('--shine-x',(x/r.width*100)+'%');card.style.setProperty('--shine-y',(y/r.height*100)+'%');});cc.addEventListener('mouseleave',()=>card.style.transform='rotateX(0) rotateY(0)');}
 function setupHandHover(handEl){handEl.addEventListener('mouseover',e=>{const hov=e.target.closest('.card-container');const cards=[...handEl.querySelectorAll('.card-container')];if(!hov)return;const idx=cards.indexOf(hov);cards.forEach((c,i)=>{if(i===idx){c.style.zIndex='120';return;}const diff=i-idx,dist=Math.abs(diff),sign=diff>0?1:-1;c.style.transform=dist===1?`translateX(${sign*24}px) rotate(${sign*6}deg)`:dist===2?`translateX(${sign*14}px) rotate(${sign*3}deg)`:'';c.style.zIndex='10';});});handEl.addEventListener('mouseleave',()=>handEl.querySelectorAll('.card-container').forEach(c=>{c.style.transform='';c.style.zIndex='';}));}
 
