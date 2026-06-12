@@ -45,7 +45,30 @@ body.theme-gold #arena-scene{background:linear-gradient(180deg,transparent 50%,r
 /* generated battlefield image as backdrop (with readability overlay); falls back to CSS scene if absent */
 body.has-arena-bg #arena-scene{background:linear-gradient(180deg,rgba(8,3,2,.55),rgba(8,3,2,.40) 45%,rgba(10,4,2,.66)),url('art/arena-bg.png') center/cover no-repeat;}
 body.has-arena-bg .arena-floor,body.has-arena-bg .arena-pillar,body.has-arena-bg .arena-fog{display:none;}
-body.has-arena-bg.theme-frost #arena-scene,body.has-arena-bg.theme-gold #arena-scene,body.has-arena-bg.theme-neon #arena-scene{background:linear-gradient(180deg,rgba(8,3,2,.55),rgba(8,3,2,.40) 45%,rgba(10,4,2,.66)),url('art/arena-bg.png') center/cover no-repeat;}
+/* per-theme arena art — only override when that themed image actually loaded (else default arena-bg.png stays) */
+body.has-arena-frost.theme-frost #arena-scene{background:linear-gradient(180deg,rgba(6,12,20,.55),rgba(6,12,20,.40) 45%,rgba(4,10,18,.66)),url('art/arena-frost.png') center/cover no-repeat;}
+body.has-arena-gold.theme-gold #arena-scene{background:linear-gradient(180deg,rgba(20,14,2,.55),rgba(20,14,2,.40) 45%,rgba(14,9,1,.66)),url('art/arena-gold.png') center/cover no-repeat;}
+body.has-arena-neon.theme-neon #arena-scene{background:linear-gradient(180deg,rgba(2,12,20,.55),rgba(2,12,20,.40) 45%,rgba(1,8,14,.66)),url('art/arena-neon.png') center/cover no-repeat;}
+body.has-arena3d #arena-scene{filter:brightness(.82) saturate(1.05);}
+/* ── VS / boss intro screen ── */
+#vs-screen{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;pointer-events:none;background:radial-gradient(ellipse at center,rgba(40,6,2,.62),rgba(0,0,0,.9) 78%);opacity:0;transition:opacity .35s ease;}
+#vs-screen.show{display:flex;opacity:1;pointer-events:auto;cursor:pointer;}
+#vs-screen.flash{animation:vsFlash .5s ease-out;}
+@keyframes vsFlash{0%{background-color:rgba(255,230,160,.0);}18%{background-color:rgba(255,235,170,.5);}100%{background-color:rgba(0,0,0,0);}}
+.vs-inner{display:flex;align-items:center;justify-content:center;gap:18px;width:100%;max-width:760px;padding:0 14px;}
+.vs-side{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;opacity:0;}
+#vs-screen.show .vs-l{animation:vsInL .55s cubic-bezier(.2,1.3,.4,1) .05s forwards;}
+#vs-screen.show .vs-r{animation:vsInR .55s cubic-bezier(.2,1.3,.4,1) .05s forwards;}
+@keyframes vsInL{from{opacity:0;transform:translateX(-120px) scale(.7);}to{opacity:1;transform:none;}}
+@keyframes vsInR{from{opacity:0;transform:translateX(120px) scale(.7);}to{opacity:1;transform:none;}}
+.vs-portrait{width:118px;height:118px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:62px;background:radial-gradient(circle at 50% 35%,rgba(60,28,8,.95),rgba(8,3,1,.95));border:3px solid var(--gold,#d4a017);box-shadow:0 0 26px rgba(255,160,50,.5),inset 0 0 18px rgba(0,0,0,.7);overflow:hidden;background-size:cover;background-position:center;}
+.vs-portrait.vs-you{border-color:#39ff14;box-shadow:0 0 26px rgba(57,255,20,.45),inset 0 0 18px rgba(0,0,0,.7);}
+.vs-name{font-weight:900;font-size:16px;letter-spacing:.5px;color:#ffe8b5;text-shadow:0 2px 4px #000;text-align:center;}
+.vs-sub{font-size:10px;color:#caa;text-transform:uppercase;letter-spacing:1px;text-align:center;max-width:150px;line-height:1.25;}
+.vs-rune{font-weight:900;font-size:46px;color:#fff;text-shadow:0 0 18px rgba(255,90,30,.9),0 2px 6px #000;flex:0 0 auto;opacity:0;}
+#vs-screen.show .vs-rune{animation:vsRune .5s ease-out .32s forwards;}
+@keyframes vsRune{from{opacity:0;transform:scale(2.4) rotate(-14deg);}to{opacity:1;transform:none;}}
+@media(max-width:640px){.vs-portrait{width:84px;height:84px;font-size:44px;}.vs-rune{font-size:34px;}.vs-inner{gap:8px;}}
 @keyframes cosmicPulse{0%,100%{opacity:.5;transform:scale(1);}50%{opacity:.85;transform:scale(1.06);}}
 @keyframes shake{0%,100%{transform:translateX(0);}10%,90%{transform:translateX(-12px) translateY(2px);}30%,70%{transform:translateX(10px) translateY(-2px);}50%{transform:translateX(-6px) translateY(3px);}}
 @keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1.4);}80%{opacity:.9;}100%{opacity:0;transform:translateY(-130px) scale(.8);}}
@@ -515,7 +538,13 @@ body.fire-wind::after{opacity:.5!important;background:radial-gradient(ellipse at
   <div class="arena-pillar r"></div>
   <div class="arena-fog"></div>
 </div>
-<canvas id="sparks" style="position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.8"></canvas>
+<canvas id="arena3d" style="position:fixed;inset:0;pointer-events:none;z-index:2;opacity:0;transition:opacity 1.2s ease"></canvas>
+<canvas id="sparks" style="position:fixed;inset:0;pointer-events:none;z-index:3;opacity:.8"></canvas>
+<div id="vs-screen" aria-hidden="true"><div class="vs-inner">
+  <div class="vs-side vs-l"><div class="vs-portrait vs-you">⚔</div><div class="vs-name">ГОЙДА</div><div class="vs-sub">это ты</div></div>
+  <div class="vs-rune">VS</div>
+  <div class="vs-side vs-r"><div class="vs-portrait vs-foe" id="vs-foe-art">👑</div><div class="vs-name" id="vs-foe-name">Босс</div><div class="vs-sub" id="vs-foe-sub">враг</div></div>
+</div></div>
 <div class="banner banner-l" onclick="hitBanner(this)" title="взмахни знаменем"></div>
 <div class="banner banner-r" onclick="hitBanner(this)" title="взмахни знаменем"></div>
 <div id="conn-badge" style="color:#888">⚡ P2P</div>
@@ -903,6 +932,7 @@ function applyCosmetics(){
   body.classList.add('theme-'+(c.theme||'default'));
   body.classList.add('frame-'+(c.frame||'default'));
   body.classList.add('back-'+(c.back||'default'));
+  if(window.setArena3DTheme)window.setArena3DTheme(c.theme||'default');
 }
 function listNewlyUnlocked(oldSlava,newSlava){
   let out=[];
@@ -936,18 +966,34 @@ function renderTut(){let s=TUT_SLIDES[_tutIdx];document.getElementById('tut-ic')
 function maybeOfferTutorial(){if(STATS.games===0&&!STATS.tutSeen){setTimeout(()=>{if(STATS.tutSeen)return;if(confirm('Новичок в ГОЙДЕ? Пройти быстрое обучение (1 минута)?'))openTutorial();else{STATS.tutSeen=true;saveStats();}},700);}}
 // ── H3: campaign «Путь Гойды» ──
 const CAMPAIGN=[
-  {name:'Холоп-Лежебока',ic:'😴',level:'easy',persona:'ленивый добродушный ворчун, зевает',intro:'Эх, опять биться... ну давай, только по-быстрому.'},
-  {name:'Ратник Фёдор',ic:'⚔️',level:'easy',persona:'простой бравый ратник, кричит за Дрон',intro:'За Дрон и Гойду! Покажу тебе сечу!'},
-  {name:'Воевода Скуф',ic:'🛡️',level:'warrior',persona:'снисходительный бывалый воевода',intro:'Молод ты ещё против воеводы.'},
-  {name:'Опричник-Душнила',ic:'👹',level:'warrior',persona:'занудный придирчивый опричник, поучает',intro:'Сейчас занудно и больно объясню, кто тут главный.'},
-  {name:'Волхв Криовед',ic:'❄️',level:'oprichnik',persona:'холодный загадочный волхв-ледяной',intro:'Заморожу твою Гойду в лёд, дитя.'},
-  {name:'Сам Гойда-Батя',ic:'👑',level:'oprichnik',persona:'величественный грозный князь Гойды',intro:'Ты дошёл до меня? Что ж... ГОЙДА РЕШАЕТ.'}
+  {id:'holop',name:'Холоп-Лежебока',ic:'😴',level:'easy',persona:'ленивый добродушный ворчун, зевает',intro:'Эх, опять биться... ну давай, только по-быстрому.'},
+  {id:'ratnik',name:'Ратник Фёдор',ic:'⚔️',level:'easy',persona:'простой бравый ратник, кричит за Дрон',intro:'За Дрон и Гойду! Покажу тебе сечу!'},
+  {id:'voevoda',name:'Воевода Скуф',ic:'🛡️',level:'warrior',persona:'снисходительный бывалый воевода',intro:'Молод ты ещё против воеводы.'},
+  {id:'oprichnik',name:'Опричник-Душнила',ic:'👹',level:'warrior',persona:'занудный придирчивый опричник, поучает',intro:'Сейчас занудно и больно объясню, кто тут главный.'},
+  {id:'volhv',name:'Волхв Криовед',ic:'❄️',level:'oprichnik',persona:'холодный загадочный волхв-ледяной',intro:'Заморожу твою Гойду в лёд, дитя.'},
+  {id:'batya',name:'Сам Гойда-Батя',ic:'👑',level:'oprichnik',persona:'величественный грозный князь Гойды',intro:'Ты дошёл до меня? Что ж... ГОЙДА РЕШАЕТ.'}
 ];
 let _campaignIdx=-1;
 function openCampaign(){renderCampaign();document.getElementById('campaign').style.display='flex';}
 function closeCampaign(){document.getElementById('campaign').style.display='none';}
 function renderCampaign(){let host=document.getElementById('campaign-body');if(!host)return;let prog=STATS.campaign||0,done=Math.min(prog,CAMPAIGN.length);let lvl={easy:'Лёгкий',warrior:'Воин',oprichnik:'Опричник'};let html='<div class="cmp-prog">Пройдено боссов: '+done+'/'+CAMPAIGN.length+(done>=CAMPAIGN.length?' — ПУТЬ ЗАВЕРШЁН! 👑':'')+'</div>';CAMPAIGN.forEach((b,i)=>{let st=i<prog?'done':i===prog?'cur':'lock';html+='<div class="cmp-boss '+st+'" '+(st==='cur'?'onclick="startCampaignBattle('+i+')"':'')+'><div class="cmp-ic">'+b.ic+'</div><div class="cmp-info"><div class="cmp-name">'+(i+1)+'. '+b.name+'</div><div class="cmp-sub">'+(st==='done'?'✅ повержен':st==='cur'?'◄ ТВОЙ БОЙ · '+lvl[b.level]:'🔒 закрыто')+'</div></div></div>';});host.innerHTML=html;}
-function startCampaignBattle(idx){let b=CAMPAIGN[idx];if(!b)return;_campaignIdx=idx;window._campaignBoss=b.name;window._campaignPersona=b.persona||'';closeCampaign();startBotGame(b.level,true);let nm=document.getElementById('pname2');if(nm)nm.textContent='⚔ '+b.ic+' '+b.name;setTimeout(()=>{if(STATS.geminiKey){geminiSay('intro',{boss:b.name,persona:b.persona}).then(t=>spawnEmote(BOT,t||b.intro,b.name));}else spawnEmote(BOT,b.intro,b.name);},900);}
+function hideVS(){let vs=document.getElementById('vs-screen');if(!vs)return;clearTimeout(window._vsTimer);vs.classList.remove('show');vs.setAttribute('aria-hidden','true');}
+function showVS(b){
+  if(!b)return;let vs=document.getElementById('vs-screen');if(!vs)return;
+  let foe=document.getElementById('vs-foe-art'),nm=document.getElementById('vs-foe-name'),sub=document.getElementById('vs-foe-sub');
+  let lvl={easy:'Лёгкий',warrior:'Воин',oprichnik:'Опричник'}[b.level]||'';
+  foe.textContent=b.ic||'👹';foe.style.backgroundImage='';
+  nm.textContent=b.name||'Босс';
+  sub.textContent=((b.persona||'враг').split(',')[0])+(lvl?(' · '+lvl):'');
+  if(b.id){var im=new Image();im.onload=function(){foe.style.backgroundImage="url('art/boss-"+b.id+".png')";foe.textContent='';};im.src='art/boss-'+b.id+'.png';}
+  vs.onclick=hideVS;
+  vs.classList.remove('show','flash');void vs.offsetWidth;vs.classList.add('show','flash');
+  vs.setAttribute('aria-hidden','false');
+  try{sfx('start');}catch(e){}
+  clearTimeout(window._vsTimer);
+  window._vsTimer=setTimeout(hideVS,2400);
+}
+function startCampaignBattle(idx){let b=CAMPAIGN[idx];if(!b)return;_campaignIdx=idx;window._campaignBoss=b.name;window._campaignPersona=b.persona||'';closeCampaign();showVS(b);startBotGame(b.level,true);let nm=document.getElementById('pname2');if(nm)nm.textContent='⚔ '+b.ic+' '+b.name;setTimeout(()=>{if(STATS.geminiKey){geminiSay('intro',{boss:b.name,persona:b.persona}).then(t=>spawnEmote(BOT,t||b.intro,b.name));}else spawnEmote(BOT,b.intro,b.name);},900);}
 function closeWardrobe(){document.getElementById('wardrobe').style.display='none';}
 const COSMETIC_CATS=[{key:'back',title:'🎴 Рубашки карт'},{key:'theme',title:'🎨 Темы поля'},{key:'frame',title:'🖼️ Рамки бойца'}];
 function renderWardrobe(){
@@ -1794,7 +1840,7 @@ document.getElementById('btn-join').addEventListener('click',joinRoomBtn);
 document.getElementById('room-input').addEventListener('keydown',function(e){if(e.key==='Enter')joinRoomBtn();});
 
 renderLobbyStats();applyCosmetics();maybeOfferTutorial();
-(function(){var im=new Image();im.onload=function(){document.body.classList.add('has-arena-bg');};im.src='art/arena-bg.png';})();
+(function(){['bg','frost','gold','neon'].forEach(function(t){var im=new Image();im.onload=function(){document.body.classList.add('has-arena-'+t);};im.src='art/arena-'+t+'.png';});})();
 (function(){let btn=document.getElementById('mute-bb');if(btn)btn.textContent=sndMuted?'🔇 ЗВУК ВЫКЛ':'🔊 ЗВУК ВКЛ';_updateMusicBtn();_updateGeminiBtn();})();
 initGame();render();renderDiscard(0);renderDiscard(1);
 // Show library load status in lobby
@@ -1810,6 +1856,111 @@ setTimeout(()=>{
     el.style.fontSize='9px';
   }
 },600);
+</script>
+<!-- ── 3D arena layer (Three.js): parallax camera, floating embers, runic ring, pillars. Graceful: CSS scene stays if this fails. ── -->
+<script type="module">
+(async function(){
+  const cv=document.getElementById('arena3d'); if(!cv) return;
+  const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const small=Math.min(window.innerWidth,window.innerHeight)<=640;
+  if(reduce||small) return; // keep lightweight CSS scene on mobile / reduced-motion
+  // WebGL support probe
+  try{const t=document.createElement('canvas');if(!(t.getContext('webgl2')||t.getContext('webgl'))) return;}catch(e){return;}
+  let THREE;
+  try{ THREE=await import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js'); }
+  catch(e){ return; } // CDN blocked/offline → CSS arena stays
+  if(!THREE||!THREE.WebGLRenderer) return;
+
+  const PAL={
+    default:{ember:0xff7a2a,ring:0xd4a017,pillar:0x2a1408,fog:0x130602,dust:0xff9a4a},
+    neon:   {ember:0x00e5ff,ring:0xff2bd6,pillar:0x07202a,fog:0x02101a,dust:0x4ad6ff},
+    frost:  {ember:0xbfe9ff,ring:0x9fe8ff,pillar:0x0c1c2a,fog:0x06121c,dust:0xd8f6ff},
+    gold:   {ember:0xffd24a,ring:0xffd700,pillar:0x2a2008,fog:0x141002,dust:0xffe9a8}
+  };
+  let pal=PAL.default;
+
+  const renderer=new THREE.WebGLRenderer({canvas:cv,alpha:true,antialias:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
+  renderer.setSize(window.innerWidth,window.innerHeight,false);
+  const scene=new THREE.Scene();
+  scene.fog=new THREE.FogExp2(pal.fog,0.052);
+  const camera=new THREE.PerspectiveCamera(55,window.innerWidth/window.innerHeight,0.1,100);
+  camera.position.set(0,0.6,9);
+
+  // runic ring (glowing torus, lies low and rotates)
+  const ringMat=new THREE.MeshBasicMaterial({color:pal.ring,transparent:true,opacity:0.55,blending:THREE.AdditiveBlending,depthWrite:false});
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(3.0,0.055,8,90),ringMat);
+  ring.rotation.x=Math.PI*0.46; ring.position.set(0,-2.6,-1); scene.add(ring);
+  const ring2=new THREE.Mesh(new THREE.TorusGeometry(2.1,0.035,8,70),ringMat.clone());
+  ring2.rotation.x=Math.PI*0.46; ring2.position.set(0,-2.55,-1); scene.add(ring2);
+
+  // flanking pillars (depth)
+  const pillarMat=new THREE.MeshBasicMaterial({color:pal.pillar});
+  const pillars=[];
+  [[-5.4,-4],[5.4,-4],[-7,-9],[7,-9]].forEach(([x,z])=>{
+    const p=new THREE.Mesh(new THREE.BoxGeometry(0.9,11,0.9),pillarMat);
+    p.position.set(x,-1,z); scene.add(p); pillars.push(p);
+  });
+
+  // floating embers (rise + recycle)
+  function makePoints(count,spreadX,spreadZ,yMin,yMax,size,color,opacity){
+    const g=new THREE.BufferGeometry(); const pos=new Float32Array(count*3); const vel=new Float32Array(count);
+    for(let i=0;i<count;i++){pos[i*3]=(Math.random()-0.5)*spreadX;pos[i*3+1]=yMin+Math.random()*(yMax-yMin);pos[i*3+2]=(Math.random()-0.5)*spreadZ-2;vel[i]=0.006+Math.random()*0.02;}
+    g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+    const m=new THREE.PointsMaterial({color:color,size:size,transparent:true,opacity:opacity,blending:THREE.AdditiveBlending,depthWrite:false});
+    const pts=new THREE.Points(g,m); scene.add(pts);
+    return {pts,pos,vel,count,spreadX,spreadZ,yMin,yMax};
+  }
+  const embers=makePoints(130,16,12,-5,7,0.10,pal.ember,0.85);
+  const dust  =makePoints(90,22,16,-7,9,0.045,pal.dust,0.4);
+
+  function step(layer,phase){
+    const {pos,vel,count,spreadX,yMin,yMax}=layer;
+    for(let i=0;i<count;i++){
+      pos[i*3+1]+=vel[i];
+      pos[i*3]+=Math.sin((pos[i*3+1]+i)*0.5)*0.0015;
+      if(pos[i*3+1]>yMax){pos[i*3+1]=yMin;pos[i*3]=(Math.random()-0.5)*spreadX;}
+    }
+    layer.pts.geometry.attributes.position.needsUpdate=true;
+  }
+
+  // parallax target from pointer / device tilt
+  let tx=0,ty=0,cx=0,cy=0;
+  window.addEventListener('mousemove',e=>{tx=(e.clientX/window.innerWidth-0.5);ty=(e.clientY/window.innerHeight-0.5);},{passive:true});
+  window.addEventListener('deviceorientation',e=>{if(e.gamma!=null){tx=Math.max(-0.5,Math.min(0.5,e.gamma/45));ty=Math.max(-0.5,Math.min(0.5,(e.beta-40)/45));}},{passive:true});
+
+  function resize(){renderer.setSize(window.innerWidth,window.innerHeight,false);camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();}
+  window.addEventListener('resize',resize);
+
+  let raf=0,running=false;
+  function loop(){
+    cx+=(tx-cx)*0.05; cy+=(ty-cy)*0.05;
+    camera.position.x=cx*2.6; camera.position.y=0.6-cy*1.6; camera.lookAt(0,-0.3,-2);
+    ring.rotation.z+=0.0016; ring2.rotation.z-=0.0024;
+    step(embers); step(dust);
+    renderer.render(scene,camera);
+    raf=requestAnimationFrame(loop);
+  }
+  function start(){if(running)return;running=true;loop();}
+  function stop(){running=false;cancelAnimationFrame(raf);}
+  document.addEventListener('visibilitychange',()=>{document.hidden?stop():start();});
+
+  // theme palette switch (called from applyCosmetics)
+  window.setArena3DTheme=function(theme){
+    pal=PAL[theme]||PAL.default;
+    scene.fog.color.setHex(pal.fog);
+    ringMat.color.setHex(pal.ring); ring2.material.color.setHex(pal.ring);
+    pillarMat.color.setHex(pal.pillar);
+    embers.pts.material.color.setHex(pal.ember); dust.pts.material.color.setHex(pal.dust);
+  };
+  // apply whatever theme is currently active
+  const tcls=['neon','frost','gold'].find(t=>document.body.classList.contains('theme-'+t))||'default';
+  window.setArena3DTheme(tcls);
+
+  document.body.classList.add('has-arena3d');
+  cv.style.opacity='1';
+  start();
+})();
 </script>
 </body>
 </html>
