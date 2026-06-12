@@ -196,7 +196,7 @@ body.super-mode-active .totem-idol{animation:totemRoar .5s ease-in-out infinite;
 @keyframes wdot{0%,80%,100%{transform:scale(.6);opacity:.25;}40%{transform:scale(1.1);opacity:1;}}
 #conn-badge{position:fixed;top:10px;right:14px;z-index:126;font-size:8px;font-weight:900;letter-spacing:1px;text-transform:uppercase;padding:4px 9px;border-radius:4px;background:rgba(10,3,0,.88);border:1px solid #3c1e0b;}
 /* BOTTOM BAR */
-#bottom-bar{position:fixed;bottom:0;left:0;right:0;z-index:30;display:flex;align-items:center;justify-content:center;gap:18px;background:rgba(6,1,0,.9);border-top:1.5px solid #2d180f;padding:4px 16px;height:42px;}
+#bottom-bar{position:fixed;bottom:0;left:0;right:0;z-index:30;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;background:rgba(6,1,0,.9);border-top:1.5px solid #2d180f;padding:4px 12px;min-height:42px;}
 #bottom-bar.hidden{display:none;}
 .bb-btn{background:rgba(20,8,2,.9);border:1.5px solid #3c1e0b;color:var(--gold);font-family:inherit;font-size:9px;font-weight:900;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:5px;cursor:pointer;transition:background .2s,border-color .2s;}
 .bb-btn:hover{background:#200802;border-color:var(--gold);}
@@ -238,6 +238,7 @@ body.super-mode-active .totem-idol{animation:totemRoar .5s ease-in-out infinite;
 /* BOT thinking dots reuse waiting-box */
 .waiting-box.bot-think{border-color:#ff6688;box-shadow:0 0 14px rgba(255,40,90,.35);}
 .unlock-toast{font-size:11px;color:#7fffd4;font-weight:900;margin-top:6px;letter-spacing:.5px;text-shadow:0 0 8px rgba(127,255,212,.5);}
+.over-recap{font-size:12px;color:#e0c8ff;font-style:italic;margin-top:10px;line-height:1.4;max-width:340px;border-top:1px solid rgba(180,120,255,.2);padding-top:8px;animation:emoteWobble .5s;}
 /* WARDROBE */
 .btn-wardrobe{background:linear-gradient(135deg,#3a2a5a,#6a3a8a) !important;color:#e0c8ff !important;box-shadow:0 4px 15px rgba(150,80,255,.2) !important;font-size:11px !important;padding:9px 22px !important;}
 .btn-wardrobe:hover{box-shadow:0 6px 20px rgba(150,80,255,.45) !important;}
@@ -259,6 +260,13 @@ body.super-mode-active .totem-idol{animation:totemRoar .5s ease-in-out infinite;
 .cmp-info{text-align:left;}
 .cmp-name{font-size:13px;font-weight:900;color:#fff;}
 .cmp-sub{font-size:10px;color:#caa;letter-spacing:.5px;margin-top:2px;}
+/* CHATLOG */
+#chatlog{position:fixed;inset:0;background:rgba(0,0,0,.82);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:144;padding:16px;}
+.cl-panel{width:100%;max-width:440px;max-height:80vh;display:flex;flex-direction:column;background:rgba(8,4,2,.98);border:1.5px solid rgba(212,160,23,.35);border-radius:14px;overflow:hidden;box-shadow:0 0 26px rgba(0,0,0,.7);}
+.cl-scroll{overflow-y:auto;padding:10px 14px;}
+.cl-line{font-size:12px;line-height:1.45;color:#f1ebd9;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.cl-line b{color:var(--gold-bright);}
+.cl-empty{font-size:11px;color:#7a6a5a;text-align:center;padding:20px;}
 /* TUTORIAL */
 #tutorial{position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,#0a0518 0%,#000 100%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:150;padding:18px;}
 .tut-panel{position:relative;width:100%;max-width:440px;background:rgba(8,3,14,.97);border:1.5px solid rgba(120,200,255,.35);border-radius:18px;box-shadow:0 0 34px rgba(60,160,255,.25);padding:26px 22px 18px;text-align:center;}
@@ -371,7 +379,7 @@ body.frame-star .player-area{border:1.5px solid rgba(180,120,255,.55);box-shadow
 /* ── EMOTES ── */
 .emote-hot{cursor:pointer;transition:text-shadow .15s;}
 .emote-hot:hover{text-shadow:0 0 8px var(--gold-bright);}
-.emote-bubble{position:fixed;transform:translate(-50%,-50%);pointer-events:none;z-index:62;background:rgba(8,3,0,.95);border:2px solid var(--gold);border-radius:14px;padding:5px 14px;font-size:14px;font-weight:900;color:#ffe8b5;text-shadow:0 1px 2px #000;box-shadow:0 4px 14px rgba(0,0,0,.7),0 0 12px rgba(212,160,23,.4);white-space:nowrap;animation:emotePop 1.6s cubic-bezier(.2,1.5,.4,1) forwards;}
+.emote-bubble{position:fixed;transform:translate(-50%,-50%);pointer-events:none;z-index:62;background:rgba(8,3,0,.95);border:2px solid var(--gold);border-radius:14px;padding:6px 14px;font-size:14px;font-weight:900;color:#ffe8b5;text-shadow:0 1px 2px #000;box-shadow:0 4px 14px rgba(0,0,0,.7),0 0 12px rgba(212,160,23,.4);white-space:normal;max-width:min(280px,72vw);line-height:1.25;text-align:center;animation:emotePop 1.6s cubic-bezier(.2,1.5,.4,1) forwards;}
 @keyframes emotePop{0%{transform:translate(-50%,-30%) scale(.3);opacity:0;}12%{transform:translate(-50%,-50%) scale(1.1);opacity:1;}25%{transform:translate(-50%,-50%) scale(1);}80%{opacity:1;transform:translate(-50%,-60%) scale(1);}100%{opacity:0;transform:translate(-50%,-90%) scale(.9);}}
 .player-area.emote-wobble{animation:emoteWobble .5s ease-out;}
 @keyframes emoteWobble{0%,100%{transform:rotate(0);}25%{transform:rotate(-1deg) scale(1.01);}60%{transform:rotate(1deg);}}
@@ -411,7 +419,7 @@ body.cine-draw #game{filter:saturate(.8) brightness(.85);transition:filter .6s;}
 .snow-flake{position:fixed;top:-20px;z-index:56;pointer-events:none;color:#cfeeff;text-shadow:0 0 6px rgba(160,220,255,.8);will-change:transform,opacity;opacity:0;}
 /* storm darkens the sky; fire-wind warms it (visible weather) */
 body.storm-sky::before{background:radial-gradient(ellipse at 50% 30%,rgba(40,50,90,.5),rgba(10,12,30,.55) 60%,rgba(2,2,8,.5))!important;animation:none!important;opacity:1!important;}
-.totem-say{position:fixed;transform:translate(-50%,-100%);pointer-events:none;z-index:62;font-size:17px;font-weight:900;color:#fff;background:linear-gradient(135deg,#3a1d05,#6b1a10);border:2px solid var(--gold);border-radius:12px;padding:4px 12px;white-space:nowrap;text-shadow:0 1px 3px #000;box-shadow:0 5px 16px rgba(0,0,0,.7),0 0 14px rgba(255,170,40,.5);animation:totemSayAnim 1.7s cubic-bezier(.2,1.5,.4,1) forwards;}
+.totem-say{position:fixed;transform:translate(-50%,-100%);pointer-events:none;z-index:62;font-size:16px;font-weight:900;color:#fff;background:linear-gradient(135deg,#3a1d05,#6b1a10);border:2px solid var(--gold);border-radius:12px;padding:5px 12px;white-space:normal;max-width:min(260px,68vw);line-height:1.2;text-align:center;text-shadow:0 1px 3px #000;box-shadow:0 5px 16px rgba(0,0,0,.7),0 0 14px rgba(255,170,40,.5);animation:totemSayAnim 1.7s cubic-bezier(.2,1.5,.4,1) forwards;}
 @keyframes totemSayAnim{0%{transform:translate(-50%,-70%) scale(.3);opacity:0;}12%{transform:translate(-50%,-100%) scale(1.12);opacity:1;}24%{transform:translate(-50%,-100%) scale(1);}82%{opacity:1;transform:translate(-50%,-115%) scale(1);}100%{opacity:0;transform:translate(-50%,-150%) scale(.9);}}
 body.fire-wind::after{opacity:.5!important;background:radial-gradient(ellipse at 50% 60%,rgba(255,90,0,.18),rgba(150,20,0,.12) 55%,transparent 80%)!important;animation:fireWindPulse 1.1s ease-in-out infinite!important;}
 @keyframes fireWindPulse{0%,100%{opacity:.32;}50%{opacity:.6;}}
@@ -464,7 +472,8 @@ body.fire-wind::after{opacity:.5!important;background:radial-gradient(ellipse at
   .player-area{padding:4px 6px;}
   .base-wrap{width:120px;}
   .info-row{gap:6px;grid-template-columns:auto 1fr auto;}
-  #bottom-bar{height:50px;gap:10px;}
+  #bottom-bar{min-height:46px;gap:7px;padding:4px 8px;}
+  .bb-btn{padding:6px 9px;font-size:9px;}
   .bb-btn{padding:8px 12px;font-size:10px;min-height:38px;}
   #log-toggle{font-size:10px;padding:8px 4px;}
   #log-panel{width:100vw;}
@@ -493,6 +502,20 @@ body.fire-wind::after{opacity:.5!important;background:radial-gradient(ellipse at
     </div>
     <div id="wardrobe-body" class="wd-scroll"></div>
     <div class="wd-foot">Косметика открывается по рангу — побеждай и набирай славу!</div>
+  </div>
+</div>
+
+<!-- ЖУРНАЛ РЕПЛИК -->
+<div id="chatlog">
+  <div class="cl-panel">
+    <div class="wd-header">
+      <span class="wd-title">💬 РЕЧИ АРЕНЫ</span>
+      <div style="display:flex;gap:6px">
+        <button class="btn" style="padding:4px 10px;font-size:10px" onclick="clearChatlog()">🧹</button>
+        <button class="btn" style="padding:4px 12px;font-size:11px" onclick="closeChatlog()">✖</button>
+      </div>
+    </div>
+    <div id="chatlog-body" class="cl-scroll"></div>
   </div>
 </div>
 
@@ -736,6 +759,8 @@ body.fire-wind::after{opacity:.5!important;background:radial-gradient(ellipse at
   <button class="bb-btn" id="mute-bb" onclick="toggleMute()">🔇 ЗВУК ВЫКЛ</button>
   <button class="bb-btn" id="music-bb" onclick="toggleMusic()">🎵 МУЗЫКА ВЫКЛ</button>
   <button class="bb-btn" id="gemini-bb" onclick="setGeminiKey()" title="ИИ-озвучка бота и боссов по твоему ключу">🤖 GEMINI</button>
+  <button class="bb-btn" id="advice-bb" onclick="askAdvice()" title="совет Гойды">💡 СОВЕТ</button>
+  <button class="bb-btn" id="chat-bb" onclick="openChatlog()" title="журнал реплик">💬 РЕЧИ</button>
   <button class="bb-btn" onclick="toggleCompendium(true)">📜 КНИГА ГОЙДЫ</button>
   <button class="bb-btn" id="bb-lobby" onclick="backToLobby()" style="display:none">🏠 МЕНЮ</button>
 </div>
@@ -884,18 +909,18 @@ function renderTut(){let s=TUT_SLIDES[_tutIdx];document.getElementById('tut-ic')
 function maybeOfferTutorial(){if(STATS.games===0&&!STATS.tutSeen){setTimeout(()=>{if(STATS.tutSeen)return;if(confirm('Новичок в ГОЙДЕ? Пройти быстрое обучение (1 минута)?'))openTutorial();else{STATS.tutSeen=true;saveStats();}},700);}}
 // ── H3: campaign «Путь Гойды» ──
 const CAMPAIGN=[
-  {name:'Холоп-Лежебока',ic:'😴',level:'easy',intro:'Эх, опять биться... ну давай, только по-быстрому.'},
-  {name:'Ратник Фёдор',ic:'⚔️',level:'easy',intro:'За Дрон и Гойду! Покажу тебе сечу!'},
-  {name:'Воевода Скуф',ic:'🛡️',level:'warrior',intro:'Молод ты ещё против воеводы.'},
-  {name:'Опричник-Душнила',ic:'👹',level:'warrior',intro:'Сейчас занудно и больно объясню, кто тут главный.'},
-  {name:'Волхв Криовед',ic:'❄️',level:'oprichnik',intro:'Заморожу твою Гойду в лёд, дитя.'},
-  {name:'Сам Гойда-Батя',ic:'👑',level:'oprichnik',intro:'Ты дошёл до меня? Что ж... ГОЙДА РЕШАЕТ.'}
+  {name:'Холоп-Лежебока',ic:'😴',level:'easy',persona:'ленивый добродушный ворчун, зевает',intro:'Эх, опять биться... ну давай, только по-быстрому.'},
+  {name:'Ратник Фёдор',ic:'⚔️',level:'easy',persona:'простой бравый ратник, кричит за Дрон',intro:'За Дрон и Гойду! Покажу тебе сечу!'},
+  {name:'Воевода Скуф',ic:'🛡️',level:'warrior',persona:'снисходительный бывалый воевода',intro:'Молод ты ещё против воеводы.'},
+  {name:'Опричник-Душнила',ic:'👹',level:'warrior',persona:'занудный придирчивый опричник, поучает',intro:'Сейчас занудно и больно объясню, кто тут главный.'},
+  {name:'Волхв Криовед',ic:'❄️',level:'oprichnik',persona:'холодный загадочный волхв-ледяной',intro:'Заморожу твою Гойду в лёд, дитя.'},
+  {name:'Сам Гойда-Батя',ic:'👑',level:'oprichnik',persona:'величественный грозный князь Гойды',intro:'Ты дошёл до меня? Что ж... ГОЙДА РЕШАЕТ.'}
 ];
 let _campaignIdx=-1;
 function openCampaign(){renderCampaign();document.getElementById('campaign').style.display='flex';}
 function closeCampaign(){document.getElementById('campaign').style.display='none';}
 function renderCampaign(){let host=document.getElementById('campaign-body');if(!host)return;let prog=STATS.campaign||0,done=Math.min(prog,CAMPAIGN.length);let lvl={easy:'Лёгкий',warrior:'Воин',oprichnik:'Опричник'};let html='<div class="cmp-prog">Пройдено боссов: '+done+'/'+CAMPAIGN.length+(done>=CAMPAIGN.length?' — ПУТЬ ЗАВЕРШЁН! 👑':'')+'</div>';CAMPAIGN.forEach((b,i)=>{let st=i<prog?'done':i===prog?'cur':'lock';html+='<div class="cmp-boss '+st+'" '+(st==='cur'?'onclick="startCampaignBattle('+i+')"':'')+'><div class="cmp-ic">'+b.ic+'</div><div class="cmp-info"><div class="cmp-name">'+(i+1)+'. '+b.name+'</div><div class="cmp-sub">'+(st==='done'?'✅ повержен':st==='cur'?'◄ ТВОЙ БОЙ · '+lvl[b.level]:'🔒 закрыто')+'</div></div></div>';});host.innerHTML=html;}
-function startCampaignBattle(idx){let b=CAMPAIGN[idx];if(!b)return;_campaignIdx=idx;window._campaignBoss=b.name;closeCampaign();startBotGame(b.level,true);let nm=document.getElementById('pname2');if(nm)nm.textContent='⚔ '+b.ic+' '+b.name;setTimeout(()=>{if(STATS.geminiKey){geminiSay('intro',{boss:b.name}).then(t=>spawnEmote(BOT,t||b.intro));}else spawnEmote(BOT,b.intro);},900);}
+function startCampaignBattle(idx){let b=CAMPAIGN[idx];if(!b)return;_campaignIdx=idx;window._campaignBoss=b.name;window._campaignPersona=b.persona||'';closeCampaign();startBotGame(b.level,true);let nm=document.getElementById('pname2');if(nm)nm.textContent='⚔ '+b.ic+' '+b.name;setTimeout(()=>{if(STATS.geminiKey){geminiSay('intro',{boss:b.name,persona:b.persona}).then(t=>spawnEmote(BOT,t||b.intro,b.name));}else spawnEmote(BOT,b.intro,b.name);},900);}
 function closeWardrobe(){document.getElementById('wardrobe').style.display='none';}
 const COSMETIC_CATS=[{key:'back',title:'🎴 Рубашки карт'},{key:'theme',title:'🎨 Темы поля'},{key:'frame',title:'🖼️ Рамки бойца'}];
 function renderWardrobe(){
@@ -924,7 +949,7 @@ function mkP(){return{hp:100,sh:0,re:0,combo:0,coins:0,hand:[],base:0,superMode:
 function buildDeck(){let d=[];for(let k in DEFS){let df=DEFS[k];for(let i=0;i<df.cnt;i++)d.push({...df,id:k,uid:k+'_'+Math.random()});}for(let i=d.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}return d;}
 function draw(p,n){for(let i=0;i<n;i++){if(!G.deck.length){G.deck=buildDeck();addLog('📜 Колода свитков перетасована! Ратный дух крепок.','#ffbd15');}if(p.hand.length<7)p.hand.push(G.deck.pop());}triggerDeckJiggle();}
 function rollAbilities(p){let t=TAP.map((_,i)=>i),idx=[];for(let i=0;i<3;i++){let r=Math.floor(Math.random()*t.length);idx.push(t.splice(r,1)[0]);}p.abilIdx=idx;p.abilities=idx.map(i=>TAP[i]);}
-function initGame(){_resultRecorded=false;_iWantRematch=false;_oppWantsRematch=false;G={deck:buildDeck(),turn:0,over:false,last:[null,null],disc:[[],[]],logLines:[],players:[mkP(),mkP()]};draw(G.players[0],5);draw(G.players[1],5);G.players[0].coins=1;rollAbilities(G.players[0]);rollAbilities(G.players[1]);document.getElementById('log').innerHTML='';document.getElementById('clash-p1').innerHTML='';document.getElementById('clash-p2').innerHTML='';document.getElementById('disc-p1-stack').innerHTML='';document.getElementById('disc-p2-stack').innerHTML='';document.getElementById('over').style.display='none';document.body.classList.remove('super-mode-active');addLog('⚔️ Бойцы вышли на ратное поле! ГОЙДА!','#ffbd15');}
+function initGame(){_resultRecorded=false;_iWantRematch=false;_oppWantsRematch=false;_recent=[];G={deck:buildDeck(),turn:0,over:false,last:[null,null],disc:[[],[]],logLines:[],players:[mkP(),mkP()]};draw(G.players[0],5);draw(G.players[1],5);G.players[0].coins=1;rollAbilities(G.players[0]);rollAbilities(G.players[1]);document.getElementById('log').innerHTML='';document.getElementById('clash-p1').innerHTML='';document.getElementById('clash-p2').innerHTML='';document.getElementById('disc-p1-stack').innerHTML='';document.getElementById('disc-p2-stack').innerHTML='';document.getElementById('over').style.display='none';document.body.classList.remove('super-mode-active');addLog('⚔️ Бойцы вышли на ратное поле! ГОЙДА!','#ffbd15');}
 
 // ═══ MQTT NETWORKING (multi-broker fallback) ═══
 let mqttClient=null,roomCode=null,syncCounter=0,gameStarted=false;
@@ -1151,7 +1176,7 @@ function onDisconnect(){
 }
 
 function startOnlineGame(){
-  gameStarted=true;_campaignIdx=-1;window._campaignBoss='';
+  gameStarted=true;_campaignIdx=-1;window._campaignBoss='';window._campaignPersona='';
   document.getElementById('lobby').style.display='none';
   document.getElementById('bottom-bar').classList.remove('hidden');
   document.getElementById('log-toggle').style.display='block';
@@ -1182,17 +1207,17 @@ function serializeState(){return{deck:G.deck,turn:G.turn,over:G.over,last:G.last
 function applyRemoteState(s){if(!s.over)_resultRecorded=false;G={deck:s.deck||[],turn:s.turn,over:s.over||false,last:s.last||[null,null],disc:s.disc||[[],[]],logLines:s.logLines||[],players:(s.players||[]).map(p=>({...p,abilities:(p.abilIdx||[]).map(i=>TAP[i])}))};}
 function updateWaitingOverlay(){document.getElementById('waiting-overlay').style.display=(isOnline&&G.turn!==myIndex&&!G.over)?'flex':'none';}
 function copyCode(){navigator.clipboard.writeText(document.getElementById('code-display').textContent).then(()=>{let el=document.getElementById('code-display');let t=el.textContent;el.textContent='СКОПИРОВАНО!';setTimeout(()=>el.textContent=t,1200);}).catch(()=>prompt('Скопируй код:',document.getElementById('code-display').textContent));}
-function showOnlineOver(){let me=G.players[myIndex],foe=G.players[1-myIndex];let o=(me.hp<=0&&foe.hp<=0)?'draw':me.hp<=0?'loss':'win';let res=null;if(!_resultRecorded){_resultRecorded=true;res=recordResult('online',o);renderLobbyStats();}let html=o==='draw'?'⚔️ СОВМЕСТНАЯ СМЕРТЬ!<br><span class="text-sm font-normal">Оба воина пали во славу рока!</span>':o==='loss'?'💀 ВЫ ПАЛИ!<br><span class="text-sm font-normal">Соперник оказался базированнее.</span>':'🏆 ВЫ ТРИУМФОВАЛИ!<br><span class="text-sm font-normal">Ваша Гойда признана абсолютной!</span>';showOver(html,res,res?o:null);}
+function showOnlineOver(){let me=G.players[myIndex],foe=G.players[1-myIndex];let o=(me.hp<=0&&foe.hp<=0)?'draw':me.hp<=0?'loss':'win';let res=null;if(!_resultRecorded){_resultRecorded=true;res=recordResult('online',o);renderLobbyStats();}let html=o==='draw'?'⚔️ СОВМЕСТНАЯ СМЕРТЬ!<br><span class="text-sm font-normal">Оба воина пали во славу рока!</span>':o==='loss'?'💀 ВЫ ПАЛИ!<br><span class="text-sm font-normal">Соперник оказался базированнее.</span>':'🏆 ВЫ ТРИУМФОВАЛИ!<br><span class="text-sm font-normal">Ваша Гойда признана абсолютной!</span>';showOver(html,res,res?o:null);geminiRecap(o==='win');}
 
 // GAME
-function playCard(pi,card){if(G.over||G.turn!==pi)return;if(isOnline&&pi!==myIndex)return;sfx('cardplay');let me=G.players[pi],foe=G.players[1-pi];if(card.id==='OPLICH_GOYDA'&&getStage(me.base)<2&&!me.superMode){spawnFl(pi,'Требует ЭТАП II!','baseloss');return;}if(card.id==='GOYDO_OBEREG'&&getStage(me.base)<2&&!me.superMode){spawnFl(pi,'Требует ЭТАП II!','baseloss');return;}if(card.id==='GIPER_GOYD'&&getStage(me.base)<3&&!me.superMode){spawnFl(pi,'Требует ЭТАП III!','baseloss');return;}let i=me.hand.findIndex(c=>c.uid===card.uid);if(i!==-1)me.hand.splice(i,1);G.last[pi]=card;pushDiscard(pi,card);flyCardToCenter(pi,card);if(card.id!=='GOYDA')me.combo=0;applyCard(pi,card,me,foe);if(card.base)changeBase(pi,me,card.base);if(!G.over){draw(me,1);endTurn(pi);}else if(isOnline){syncState('state');showOnlineOver();}render();resetIdle();}
+function playCard(pi,card){if(G.over||G.turn!==pi)return;if(isOnline&&pi!==myIndex)return;sfx('cardplay');let me=G.players[pi],foe=G.players[1-pi];if(card.id==='OPLICH_GOYDA'&&getStage(me.base)<2&&!me.superMode){spawnFl(pi,'Требует ЭТАП II!','baseloss');return;}if(card.id==='GOYDO_OBEREG'&&getStage(me.base)<2&&!me.superMode){spawnFl(pi,'Требует ЭТАП II!','baseloss');return;}if(card.id==='GIPER_GOYD'&&getStage(me.base)<3&&!me.superMode){spawnFl(pi,'Требует ЭТАП III!','baseloss');return;}let i=me.hand.findIndex(c=>c.uid===card.uid);if(i!==-1)me.hand.splice(i,1);G.last[pi]=card;pushDiscard(pi,card);flyCardToCenter(pi,card);if(card.id!=='GOYDA')me.combo=0;applyCard(pi,card,me,foe);if(isBot&&pi===HUMAN)pushRecent('сыграл '+card.n);if(card.base)changeBase(pi,me,card.base);if(!G.over){draw(me,1);endTurn(pi);}else if(isOnline){syncState('state');showOnlineOver();}render();resetIdle();}
 function applyCard(pi,card,me,foe){
   castFX(pi,card);
   let msg='',col='#f4d58d',type=card.role,sm=me.superMode?1.4:1.0;
   let foePre=foe.hp,mePre=me.hp;
   let extra={ic:card.ic,bg:card.bg};
   switch(card.id){
-    case'GOYDA':{me.combo=Math.min(me.combo+1,4);let dmg=Math.floor((12+(me.combo-1)*3)*sm);let r=doAtk(pi,dmg,false,me,foe,card.ic);msg=`${pn(pi)} · ГОЙДА! (серия ${me.combo}/4) ➔ ${r.msg}`;col='#ff473a';extra.result=r.hit?`-${dmg}`:r.msg.slice(0,8);extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
+    case'GOYDA':{me.combo=Math.min(me.combo+1,4);let dmg=Math.floor((12+(me.combo-1)*3)*sm);let r=doAtk(pi,dmg,false,me,foe,card.ic);if(me.combo>=3){totemEvent('combo');if(isBot&&pi===BOT)botReact('combo');}msg=`${pn(pi)} · ГОЙДА! (серия ${me.combo}/4) ➔ ${r.msg}`;col='#ff473a';extra.result=r.hit?`-${dmg}`:r.msg.slice(0,8);extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
     case'GOYDUSHKA':{let h=healRaw(pi,20);msg=`${pn(pi)} · Гойдушка лечит ➔ +${h} ОЗ`;col='#2ecc71';extra.result=`+${h} ОЗ`;extra.resType='heal';extra.hp=`${mePre}→${me.hp}`;break;}
     case'GOYDO_SHIELD':{me.sh=Math.min(me.sh+1,2);flashA(pi,'blu');spawnFl(pi,'🛡️ Броня +1','block');sfx('shield');msg=`${pn(pi)} · Гойдо-Щит воздвигнут (${me.sh}/2)`;col='#00eeff';extra.result=`+1 🛡️`;extra.resType='shield';break;}
     case'GOYDO_FONK':{let dmg=Math.floor(18*sm);let r=doAtk(pi,dmg,false,me,foe,card.ic);msg=`${pn(pi)} · Гойдо-Фонк врубил ➔ ${r.msg}`;col='#ffd700';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
@@ -1206,20 +1231,20 @@ function applyCard(pi,card,me,foe){
     case'GOYDO_OBEREG':{me.sh=Math.min(me.sh+1,2);me.re=Math.min(me.re+1,1);flashA(pi,'blu');flashA(pi,'gld');spawnFl(pi,'🛡️ Оберег!','block');sfx('shield');msg=`${pn(pi)} · Гойдо-Оберег: +1🛡️ +1🪬`;col='#00ffff';extra.result=`+1🛡️+1🪬`;extra.resType='shield';break;}
     case'GIPER_GOYD':{foe.sh=0;foe.re=0;let dmg=Math.floor(42*sm);let r=doAtk(pi,dmg,false,me,foe,card.ic);msg=`${pn(pi)} · ГИПЕР-ГОЙДА ПОГНАЛИ! ➔ ${r.msg}`;col='#cc44ff';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
     case'ABSOLUT_GOYDA':{let h=healRaw(pi,25);msg=`${pn(pi)} · Абсолют-Гойда — ФИНАЛ ГОЙДЫ`;col='#ffffff';extra.result=`+${h} ОЗ`;extra.resType='heal';extra.hp=`${mePre}→${me.hp}`;break;}
-    case'GOYDO_YAD':{foe.poison=Math.min((foe.poison||0)+3,9);flashA(1-pi,'grn');spawnFl(1-pi,'☠️ ЯД +3','baseloss');sfx('shield');msg=`${pn(pi)} · Гойдо-Яд травит врага (☠${foe.poison})`;col='#7cff5a';extra.result='☠+3';extra.resType='dmg';break;}
+    case'GOYDO_YAD':{foe.poison=Math.min((foe.poison||0)+3,9);flashA(1-pi,'grn');spawnFl(1-pi,'☠️ ЯД +3','baseloss');sfx('shield');totemEvent('poison');if(isBot&&pi===BOT)botReact('poison');msg=`${pn(pi)} · Гойдо-Яд травит врага (☠${foe.poison})`;col='#7cff5a';extra.result='☠+3';extra.resType='dmg';break;}
     case'SHIPOGOYDA':{me.thorns=Math.min((me.thorns||0)+2,6);flashA(pi,'grn');spawnFl(pi,'🌵 ШИПЫ +2','block');sfx('shield');msg=`${pn(pi)} · Шипогойда: шипы (${me.thorns})`;col='#aadd33';extra.result='🌵+2';extra.resType='shield';break;}
-    case'GLUSHILKA':{let dmg=Math.floor(10*sm);let r=doAtk(pi,dmg,false,me,foe,card.ic);foe.stunNext=true;spawnFl(1-pi,'⚡ ОГЛУШЁН','baseloss');msg=`${pn(pi)} · Глушилка оглушила! ➔ ${r.msg}`;col='#ffcc33';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
-    case'KARMANNIK':{if(foe.hand&&foe.hand.length){let idx=Math.floor(Math.random()*foe.hand.length);let stolen=foe.hand.splice(idx,1)[0];if(me.hand.length<7)me.hand.push(stolen);spawnFl(pi,'🫳 КРАЖА','coin');sfx('coin');msg=`${pn(pi)} · Карманник стащил [${stolen.n}]!`;}else{msg=`${pn(pi)} · Карманник: у врага пусто`;}col='#cc66ff';extra.result='🫳';extra.resType='draw';break;}
+    case'GLUSHILKA':{let dmg=Math.floor(10*sm);let r=doAtk(pi,dmg,false,me,foe,card.ic);foe.stunNext=true;spawnFl(1-pi,'⚡ ОГЛУШЁН','baseloss');totemEvent('stun');if(isBot&&pi===BOT)botReact('stun');msg=`${pn(pi)} · Глушилка оглушила! ➔ ${r.msg}`;col='#ffcc33';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
+    case'KARMANNIK':{if(foe.hand&&foe.hand.length){let idx=Math.floor(Math.random()*foe.hand.length);let stolen=foe.hand.splice(idx,1)[0];if(me.hand.length<7)me.hand.push(stolen);spawnFl(pi,'🫳 КРАЖА','coin');sfx('coin');totemEvent('steal');msg=`${pn(pi)} · Карманник стащил [${stolen.n}]!`;}else{msg=`${pn(pi)} · Карманник: у врага пусто`;}col='#cc66ff';extra.result='🫳';extra.resType='draw';break;}
   }
   addLog(msg,col,card.id==='GOYDO_FONK'?'goyda':type,extra);
   checkWin(me,foe,pi);
 }
 function useAbil(pi,idx){if(G.over||G.turn!==pi)return;if(isOnline&&pi!==myIndex)return;let me=G.players[pi],foe=G.players[1-pi],ab=me.abilities[idx];if(me.coins<ab.cost)return;me.coins-=ab.cost;addLog(`💫 ${pn(pi)} применил тактику [${ab.n}] за ${ab.cost} 💰`,'#ffd700');ab.run(pi,me,foe);checkWin(me,foe,pi);if(!G.over)endTurn(pi);else if(isOnline){syncState('state');showOnlineOver();}render();resetIdle();}
-function doAtk(pi,dmg,pierce,me,foe,vfx){let ic=vfx||'⚔️';if(foe.superMode){let thru=Math.floor(dmg*.35);foe.hp=Math.max(0,foe.hp-thru);spawnProjectile(pi,1-pi,ic,'fwd');flashA(1-pi,'grn');if(thru>0)spawnFl(1-pi,'-'+thru,'dmg');spawnFl(1-pi,'⚡СВЕРХ (−65%)','block');sfx('shield');return{msg:`СВЕРХ-ГОЙДА поглотила бо́льшую часть (${thru} прошло)`,hit:thru>0};}if(foe.re>0){foe.re--;let ref=Math.floor(dmg*.75);me.hp=Math.max(0,me.hp-ref);spawnProjectile(pi,1-pi,ic,'reflect');flashA(pi,'red');shakeA(pi);hpHit(pi);spawnFl(pi,'-'+ref,'dmg');spawnFl(1-pi,'↩️ 75% назад!','ref');quake(ref);sfx('hit');if(Math.random()<.6)totemSay('ЗЕРКАЛО!!!');return{msg:`${ref} (75%) отражено назад!`,hit:false};}if(!lockShield&&!pierce&&foe.sh>0){foe.sh--;spawnProjectile(pi,1-pi,ic,'block');flashA(1-pi,'blu');spawnFl(1-pi,'🛡️ броня','block');sfx('shield');if(Math.random()<.45)totemSay('БРОНЯ ДЕРЖИТ!');return{msg:'принято на прочную броню',hit:false};}foe.hp=Math.max(0,foe.hp-dmg);spawnProjectile(pi,1-pi,ic,'fwd');flashA(1-pi,'red');shakeA(1-pi);hpHit(1-pi);spawnFl(1-pi,'-'+dmg,'dmg');quake(dmg);sfx('hit');if(foe.thorns>0&&foe.hp>0){foe.thorns--;let tn=8;me.hp=Math.max(0,me.hp-tn);flashA(pi,'red');spawnFl(pi,'🌵 -'+tn,'dmg');addLog(`🌵 Шипы ${pn(1-pi)} ужалили ${pn(pi)} на ${tn}!`,'#7cff5a');}if(foe.hp<=0)totemSay('ДОБИЛ! ГОЙДА!',true);else if(dmg>=28)totemSay('ОГО-ГОЙДА!!!',true);else if(dmg>=15&&Math.random()<.7)totemSay(['В МЯСО!','БЕЙ!','КРЕПКО!','ОЙ-ГОЙ!'][Math.floor(Math.random()*4)]);if(isBot&&pi===BOT&&dmg>=20&&foe.hp>0)botReact('taunt');return{msg:`${dmg} чистого урона`,hit:true};}
+function doAtk(pi,dmg,pierce,me,foe,vfx){let ic=vfx||'⚔️';if(foe.superMode){let thru=Math.floor(dmg*.35);foe.hp=Math.max(0,foe.hp-thru);spawnProjectile(pi,1-pi,ic,'fwd');flashA(1-pi,'grn');if(thru>0)spawnFl(1-pi,'-'+thru,'dmg');spawnFl(1-pi,'⚡СВЕРХ (−65%)','block');sfx('shield');return{msg:`СВЕРХ-ГОЙДА поглотила бо́льшую часть (${thru} прошло)`,hit:thru>0};}if(foe.re>0){foe.re--;let ref=Math.floor(dmg*.75);me.hp=Math.max(0,me.hp-ref);spawnProjectile(pi,1-pi,ic,'reflect');flashA(pi,'red');shakeA(pi);hpHit(pi);spawnFl(pi,'-'+ref,'dmg');spawnFl(1-pi,'↩️ 75% назад!','ref');quake(ref);sfx('hit');totemEvent('reflect');if(isBot&&(1-pi)===BOT)botReact('reflect');return{msg:`${ref} (75%) отражено назад!`,hit:false};}if(!lockShield&&!pierce&&foe.sh>0){foe.sh--;spawnProjectile(pi,1-pi,ic,'block');flashA(1-pi,'blu');spawnFl(1-pi,'🛡️ броня','block');sfx('shield');totemEvent('block');if(isBot&&(1-pi)===BOT)botReact('block');return{msg:'принято на прочную броню',hit:false};}foe.hp=Math.max(0,foe.hp-dmg);spawnProjectile(pi,1-pi,ic,'fwd');flashA(1-pi,'red');shakeA(1-pi);hpHit(1-pi);spawnFl(1-pi,'-'+dmg,'dmg');quake(dmg);sfx('hit');if(foe.thorns>0&&foe.hp>0){foe.thorns--;let tn=8;me.hp=Math.max(0,me.hp-tn);flashA(pi,'red');spawnFl(pi,'🌵 -'+tn,'dmg');addLog(`🌵 Шипы ${pn(1-pi)} ужалили ${pn(pi)} на ${tn}!`,'#7cff5a');}if(foe.hp<=0)totemSay('ДОБИЛ! ГОЙДА!',true);else if(dmg>=28)totemSay('ОГО-ГОЙДА!!!',true);else if(dmg>=15&&Math.random()<.7)totemSay(['В МЯСО!','БЕЙ!','КРЕПКО!','ОЙ-ГОЙ!'][Math.floor(Math.random()*4)]);if(isBot&&pi===BOT&&dmg>=20&&foe.hp>0)botReact('taunt');return{msg:`${dmg} чистого урона`,hit:true};}
 function dealRaw(tpi,amount){let t=G.players[tpi];if(t.superMode){spawnFl(tpi,'🛡️ НЕУЯЗВИМ','block');return;}t.hp=Math.max(0,t.hp-amount);flashA(tpi,'red');shakeA(tpi);hpHit(tpi);spawnFl(tpi,'-'+amount,'dmg');spawnShards(tpi,'#ffd700');quake(amount);sfx('hit');}
 function healRaw(pi,amount){let p=G.players[pi],h=Math.min(amount,100-p.hp);p.hp=Math.min(100,p.hp+amount);flashA(pi,'grn');spawnFl(pi,'+'+h,'heal');sfx('heal');if(h>=20&&Math.random()<.5)totemSay('ЖИВУЧИЙ!');return h;}
-function changeBase(pi,p,amount){if(amount>0&&p.freezeNext){p.freezeNext=false;spawnFl(pi,'❄️ ЗАМОРОЖЕНО!','baseloss');addLog(`❄️ Прирост Базометра ${pn(pi)} заморожен!`,'#3aebff');return;}if(p.superMode){p.base=Math.max(0,Math.min(100,p.base+amount));spawnFl(pi,(amount>0?'+':'')+amount+'% БАЗЫ','base');return;}p.base=Math.max(0,Math.min(100,p.base+amount));if(amount>0)spawnFl(pi,'+'+amount+'% БАЗЫ','base');else if(amount<0)spawnFl(pi,amount+'% БАЗЫ','baseloss');if(p.base>=100)triggerSuperGoyda(pi,p);}
-function triggerSuperGoyda(pi,p){p.superMode=true;p.superTurns=2;p.base=0;spawnSuperOverlay(pi);addLog(`🔥 СВЕРХ-ГОЙДА у ${pn(pi)}! Базометр сброшен. Ярость на 2 хода!`,'#39ff14');sfx('super');totemSay('СВЕРХ!!!',true);totemDance();if(isBot&&pi===BOT)botReact('super',true);}
+function changeBase(pi,p,amount){if(amount>0&&p.freezeNext){p.freezeNext=false;spawnFl(pi,'❄️ ЗАМОРОЖЕНО!','baseloss');addLog(`❄️ Прирост Базометра ${pn(pi)} заморожен!`,'#3aebff');return;}if(p.superMode){p.base=Math.max(0,Math.min(100,p.base+amount));spawnFl(pi,(amount>0?'+':'')+amount+'% БАЗЫ','base');return;}let _os=getStage(p.base);p.base=Math.max(0,Math.min(100,p.base+amount));if(amount>0)spawnFl(pi,'+'+amount+'% БАЗЫ','base');else if(amount<0)spawnFl(pi,amount+'% БАЗЫ','baseloss');if(amount>0&&getStage(p.base)>_os&&p.base<100)totemEvent('stage');if(p.base>=100)triggerSuperGoyda(pi,p);}
+function triggerSuperGoyda(pi,p){p.superMode=true;p.superTurns=2;p.base=0;spawnSuperOverlay(pi);addLog(`🔥 СВЕРХ-ГОЙДА у ${pn(pi)}! Базометр сброшен. Ярость на 2 хода!`,'#39ff14');sfx('super');totemSay('СВЕРХ!!!',true);totemDance();if(isBot&&pi===HUMAN)pushRecent('вошёл в Сверх-Гойду');if(isBot&&pi===BOT)botReact('super',true);}
 function endTurn(pi){let me=G.players[pi];if(me.superMode)changeBase(pi,me,10);G.turn=1-pi;let next=G.players[G.turn];next.coins++;bumpCoins(G.turn);rollAbilities(next);if(next.superMode){next.superTurns--;if(next.superTurns<0){next.superMode=false;addLog(`⚠️ Режим СВЕРХ-ГОЙДЫ у ${pn(G.turn)} угас!`,'#ffd700');}}
   // ☠ poison ticks at the start of this player's turn
   if(next.poison>0){let d=next.poison;dealRaw(G.turn,d);addLog(`☠️ Яд жалит ${pn(G.turn)} на ${d}!`,'#7cff5a');next.poison--;}
@@ -1316,7 +1341,7 @@ function checkWin(me,foe,pi){
   else if(me.hp<=0){G.over=true;ended=true;html=`🏆 ${pn(1-pi)} ТРИУМФОВАЛ!`;}
   if(!ended||isOnline)return; // online handled in showOnlineOver
   let res=null,o=null;
-  if(isBot){o=botOutcome();res=recordResult('bot',o);let cmpHtml='';if(_campaignIdx>=0){let bossName=(CAMPAIGN[_campaignIdx]||{}).name||'босс';if(o==='win'){if(_campaignIdx===(STATS.campaign||0)){STATS.campaign=(STATS.campaign||0)+1;saveStats();}let last=_campaignIdx>=CAMPAIGN.length-1;cmpHtml=last?'<div class="rank-up-toast" style="color:#ffd24a">👑 ПУТЬ ГОЙДЫ ПРОЙДЕН ДО КОНЦА!</div>':'<div class="rank-up-toast" style="color:#5eff8b">🎬 Босс «'+bossName+'» повержен! Открыт следующий.</div>';}else if(o==='loss'){cmpHtml='<div class="unlock-toast">🎬 «'+bossName+'» устоял. Попробуй снова!</div>';}}html=(o==='win'?'🏆 ВЫ ТРИУМФОВАЛИ!<br><span class="text-sm font-normal">Бот повержен. Гойда абсолютна!</span>':o==='loss'?'💀 ВЫ ПАЛИ!<br><span class="text-sm font-normal">Бот оказался базированнее.</span>':'⚔️ СОВМЕСТНАЯ СМЕРТЬ!')+cmpHtml;showBotThinking(false);renderLobbyStats();setTimeout(()=>{_botReactLast=0;botReact('gg',true,{win:o==='win'});},500);}
+  if(isBot){o=botOutcome();res=recordResult('bot',o);let cmpHtml='';if(_campaignIdx>=0){let bossName=(CAMPAIGN[_campaignIdx]||{}).name||'босс';if(o==='win'){if(_campaignIdx===(STATS.campaign||0)){STATS.campaign=(STATS.campaign||0)+1;saveStats();}let last=_campaignIdx>=CAMPAIGN.length-1;cmpHtml=last?'<div class="rank-up-toast" style="color:#ffd24a">👑 ПУТЬ ГОЙДЫ ПРОЙДЕН ДО КОНЦА!</div>':'<div class="rank-up-toast" style="color:#5eff8b">🎬 Босс «'+bossName+'» повержен! Открыт следующий.</div>';}else if(o==='loss'){cmpHtml='<div class="unlock-toast">🎬 «'+bossName+'» устоял. Попробуй снова!</div>';}}html=(o==='win'?'🏆 ВЫ ТРИУМФОВАЛИ!<br><span class="text-sm font-normal">Бот повержен. Гойда абсолютна!</span>':o==='loss'?'💀 ВЫ ПАЛИ!<br><span class="text-sm font-normal">Бот оказался базированнее.</span>':'⚔️ СОВМЕСТНАЯ СМЕРТЬ!')+cmpHtml;showBotThinking(false);renderLobbyStats();setTimeout(()=>{_botReactLast=0;botReact('gg',true,{win:o==='win'});},500);geminiRecap(o==='win');}
   else if(!_resultRecorded){_resultRecorded=true;STATS.games++;saveStats();renderLobbyStats();o=(me.hp<=0&&foe.hp<=0)?'draw':'win';}
   showOver(html,res,o);
 }
@@ -1408,10 +1433,10 @@ function sfx(name){if(!actx||sndMuted)return;if(actx.state==='suspended')actx.re
   case'click':tone(900,.05,'sine',.08);break;
 }}
 function toggleMute(){initSound();sndMuted=!sndMuted;STATS.muted=sndMuted;saveStats();if(master)master.gain.value=sndMuted?0:.7;let btn=document.getElementById('mute-bb');if(btn)btn.textContent=sndMuted?'🔇 ЗВУК ВЫКЛ':'🔊 ЗВУК ВКЛ';}
-function startLocalGame(){isOnline=false;isLocal=true;isBot=false;_campaignIdx=-1;window._campaignBoss='';document.getElementById('lobby').style.display='none';document.getElementById('bottom-bar').classList.remove('hidden');document.getElementById('log-toggle').style.display='block';document.getElementById('bb-lobby').style.display='inline-block';initGame();render();renderDiscard(0);renderDiscard(1);sfx('start');startMusicIfEnabled();resetIdle();showPass(0);}
+function startLocalGame(){isOnline=false;isLocal=true;isBot=false;_campaignIdx=-1;window._campaignBoss='';window._campaignPersona='';document.getElementById('lobby').style.display='none';document.getElementById('bottom-bar').classList.remove('hidden');document.getElementById('log-toggle').style.display='block';document.getElementById('bb-lobby').style.display='inline-block';initGame();render();renderDiscard(0);renderDiscard(1);sfx('start');startMusicIfEnabled();resetIdle();showPass(0);}
 const BOT_NAMES={easy:'БОТ-НОВОБРАНЕЦ',warrior:'БОТ-ВОИН',oprichnik:'БОТ-ОПРИЧНИК'};
-function startBotGame(level,isCampaign){isOnline=false;isLocal=false;isBot=true;botLevel=level||'warrior';myIndex=HUMAN;if(!isCampaign){_campaignIdx=-1;window._campaignBoss='';}document.getElementById('lobby').style.display='none';document.getElementById('bottom-bar').classList.remove('hidden');document.getElementById('log-toggle').style.display='block';document.getElementById('bb-lobby').style.display='inline-block';initGame();addLog(isCampaign?('🎬 ПУТЬ ГОЙДЫ: бой против «'+(window._campaignBoss||'босса')+'»!'):('🤖 Бой против '+BOT_NAMES[botLevel]+'! Ты ходишь первым. ГОЙДА!'),'#ff9eb5');render();renderDiscard(0);renderDiscard(1);sfx('start');startMusicIfEnabled();resetIdle();if(!isCampaign)setTimeout(()=>botReact('greet',true),700);offerMulligan(HUMAN);}
-function backToLobby(force){if(!force&&!confirm('Вернуться в меню? Текущая схватка будет завершена. ГОЙДА?'))return;_intentionalClose=true;_reconnecting=false;clearTimeout(_reconnectTimer);showReconnectBanner(false);_iWantRematch=false;_oppWantsRematch=false;_campaignIdx=-1;window._campaignBoss='';isOnline=false;isLocal=false;isBot=false;myIndex=-1;gameStarted=false;showBotThinking(false);closeEmoteWheel(true);stopMusic();clearTimeout(_idleTimer);clearTimeout(_stormTimer);_stormTimer=null;document.body.classList.remove('flip-view');if(mqttClient){try{mqttClient.end(true);}catch(e){}mqttClient=null;}document.getElementById('lobby').style.display='flex';document.getElementById('over').style.display='none';document.getElementById('bottom-bar').classList.add('hidden');document.getElementById('log-toggle').style.display='none';document.getElementById('bb-lobby').style.display='none';renderLobbyStats();}
+function startBotGame(level,isCampaign){isOnline=false;isLocal=false;isBot=true;botLevel=level||'warrior';myIndex=HUMAN;if(!isCampaign){_campaignIdx=-1;window._campaignBoss='';window._campaignPersona='';}document.getElementById('lobby').style.display='none';document.getElementById('bottom-bar').classList.remove('hidden');document.getElementById('log-toggle').style.display='block';document.getElementById('bb-lobby').style.display='inline-block';initGame();addLog(isCampaign?('🎬 ПУТЬ ГОЙДЫ: бой против «'+(window._campaignBoss||'босса')+'»!'):('🤖 Бой против '+BOT_NAMES[botLevel]+'! Ты ходишь первым. ГОЙДА!'),'#ff9eb5');render();renderDiscard(0);renderDiscard(1);sfx('start');startMusicIfEnabled();resetIdle();if(!isCampaign)setTimeout(()=>botReact('greet',true),700);offerMulligan(HUMAN);}
+function backToLobby(force){if(!force&&!confirm('Вернуться в меню? Текущая схватка будет завершена. ГОЙДА?'))return;_intentionalClose=true;_reconnecting=false;clearTimeout(_reconnectTimer);showReconnectBanner(false);_iWantRematch=false;_oppWantsRematch=false;_campaignIdx=-1;window._campaignBoss='';window._campaignPersona='';isOnline=false;isLocal=false;isBot=false;myIndex=-1;gameStarted=false;showBotThinking(false);closeEmoteWheel(true);stopMusic();clearTimeout(_idleTimer);clearTimeout(_stormTimer);_stormTimer=null;document.body.classList.remove('flip-view');if(mqttClient){try{mqttClient.end(true);}catch(e){}mqttClient=null;}document.getElementById('lobby').style.display='flex';document.getElementById('over').style.display='none';document.getElementById('bottom-bar').classList.add('hidden');document.getElementById('log-toggle').style.display='none';document.getElementById('bb-lobby').style.display='none';renderLobbyStats();}
 
 // === SIDE PANELS ===
 const BATTLE_CRIES=['ГОЙДА!!!','СЛАВА!','В АТАКУ!','СТОЯТЬ!','ДЕРЖИСЬ!','ЗА ДРОН!','СИЛА!','УДАЧА!','ВПЕРЁД!','НЕ СДАВАЙ!','ОГОНЬ!','ГОЙДА-МАТ!','ЯРОСТЬ!','ПОБЕДА!'];
@@ -1444,7 +1469,15 @@ let _stoneTaps=0,_stoneTapT=0;
 function hitTotem(){doodadHit('totem',document.getElementById('totem-idol'),{anim:'totem-bang',sound:sndThud,shards:true,shardColor:'#ff6a2a',shardN:11,cry:true,ring:true,cd:420});let now=Date.now();if(now-_stoneTapT<1400)_stoneTaps++;else _stoneTaps=1;_stoneTapT=now;if(_stoneTaps>=10){_stoneTaps=0;triggerEgg();}}
 function triggerEgg(){let t=document.getElementById('totem-idol');if(t){let r=t.getBoundingClientRect();let cols=['#ff4d4d','#ffd24a','#5eff8b','#5eb5ff','#cc66ff','#fff'];for(let k=0;k<6;k++)spawnShardsXY(r.left+r.width/2,r.top+r.height/2,cols[k%cols.length],fxCount(10));}totemSay('👁️ ОКО ГОЙДЫ ОТКРЫТО!',true);screenFlash('fx-holy',700);let was=!!STATS.eggFound;STATS.eggFound=true;saveStats();if(!was){addLog('🥚 ПАСХАЛКА! Открыта тайная рубашка «Око Гойды» — загляни в Гардероб!','#cc66ff');setTimeout(()=>{try{alert('🥚 Пасхалка найдена!\nТайная рубашка «👁️ Око Гойды» разблокирована в Гардеробе.');}catch(e){}},200);}}
 // ── Fighter emotes (tap your own zone) ──
-function spawnEmote(pi,text){let c=_areaCenter(pi);let b=document.createElement('div');b.className='emote-bubble';b.textContent=text;b.style.left=c.x+'px';b.style.top=(c.y-12)+'px';document.body.appendChild(b);let a=document.getElementById('p'+(pi+1)+'-area');if(a){a.classList.remove('emote-wobble');void a.offsetWidth;a.classList.add('emote-wobble');}setTimeout(()=>b.remove(),1600);}
+let _emoteEl=[null,null];
+function spawnEmote(pi,text,who){if(!text)return;let c=_areaCenter(pi);if(_emoteEl[pi]){try{_emoteEl[pi].remove();}catch(e){}}let b=document.createElement('div');b.className='emote-bubble';b.textContent=text;let dur=Math.max(2600,Math.min(5000,2400+text.length*46));b.style.animationDuration=dur+'ms';b.style.left=c.x+'px';b.style.top=(c.y-12)+'px';document.body.appendChild(b);_emoteEl[pi]=b;let a=document.getElementById('p'+(pi+1)+'-area');if(a){a.classList.remove('emote-wobble');void a.offsetWidth;a.classList.add('emote-wobble');}setTimeout(()=>{if(_emoteEl[pi]===b)_emoteEl[pi]=null;b.remove();},dur);logDialog(who||(isOnline?(pi===myIndex?'ВЫ':'СОПЕРНИК'):(pi===HUMAN?'ВЫ':'СОПЕРНИК')),text);}
+// ── J5: dialogue log ──
+let DIALOG_LOG=[];
+function logDialog(who,text){DIALOG_LOG.push({who,text});if(DIALOG_LOG.length>40)DIALOG_LOG.shift();let p=document.getElementById('chatlog');if(p&&p.style.display!=='none')renderChatlog();}
+function renderChatlog(){let host=document.getElementById('chatlog-body');if(!host)return;if(!DIALOG_LOG.length){host.innerHTML='<div class="cl-empty">Пока тихо... реплики появятся по ходу боя.</div>';return;}host.innerHTML=DIALOG_LOG.map(d=>'<div class="cl-line"><b>'+d.who+':</b> '+d.text+'</div>').join('');host.scrollTop=host.scrollHeight;}
+function openChatlog(){renderChatlog();document.getElementById('chatlog').style.display='flex';}
+function closeChatlog(){document.getElementById('chatlog').style.display='none';}
+function clearChatlog(){DIALOG_LOG=[];renderChatlog();}
 // ── G5: livelier bot — typed reactions by event & difficulty ──
 const BOT_PHRASES={
   greet:{easy:['привет, воин! 🙂','давай по-честному','ну, поехали'],warrior:['готовься к сече ⚔','ГОЙДА за мной!','покажи, что умеешь'],oprichnik:['ты уже проиграл 😏','помолись Дрону','я тут хозяин']},
@@ -1452,18 +1485,29 @@ const BOT_PHRASES={
   panic:{easy:['ай, больно! 😣','полегче...','ну ты чего'],warrior:['врёшь, не возьмёшь!','ещё держусь 💪','рано радуешься'],oprichnik:['это ничего... 😒','я не сдамся','тьфу']},
   super:{easy:['ого, сила! ✨'],warrior:['СВЕРХ-ГОЙДА!!! 🔥'],oprichnik:['теперь тебе конец 💀']},
   gg:{easy:['хорошая игра! 🤝'],warrior:['достойный бой ⚔'],oprichnik:['слабак. 😎']},
-  reply:{easy:['ой, напугал 😄','и тебе того же','ха-ха, ну ты даёшь'],warrior:['громко кричишь!','слова-слова, покажи делом','ну-ну'],oprichnik:['пищит мышь 😏','кричи громче, труп','цыц! 🤫']}
+  reply:{easy:['ой, напугал 😄','и тебе того же','ха-ха, ну ты даёшь'],warrior:['громко кричишь!','слова-слова, покажи делом','ну-ну'],oprichnik:['пищит мышь 😏','кричи громче, труп','цыц! 🤫']},
+  block:{easy:['ха, не пробил!','щит держит 🛡'],warrior:['броня крепка!','об меня не точи зубы'],oprichnik:['смешные потуги 😏','царапина']},
+  reflect:{easy:['ой, вернулось! 😵','зеркало!'],warrior:['получай назад!','эхо Гойды!'],oprichnik:['твой же удар, глупец','отзеркалено']},
+  stun:{easy:['ой, в ушах звенит','оглушил 😵'],warrior:['постой, отдохни!','тишина!'],oprichnik:['замолчи и стой','оглушён, раб']},
+  poison:{easy:['фу, отрава 🤢','щиплет...'],warrior:['яд по венам!','травлю гада'],oprichnik:['гнить тебе медленно','яд Гойды']},
+  combo:{easy:['ого, серия!','раз-раз-раз!'],warrior:['комбо! 💥','натиск!'],oprichnik:['чувствуешь ритм смерти?','серия казни']}
 };
 function _presetPhrase(kind){let pool=(BOT_PHRASES[kind]||{})[botLevel]||(BOT_PHRASES[kind]||{}).warrior||['ГОЙДА!'];return pool[Math.floor(Math.random()*pool.length)];}
 let _botReactLast=0;
-function botReact(kind,force,ctx){if(!isBot)return;let now=Date.now();if(now-_botReactLast<3000)return;if(!force&&Math.random()>0.6)return;_botReactLast=now;ctx=ctx||{};if(window._campaignBoss)ctx.boss=window._campaignBoss;if(STATS.geminiKey){geminiSay(kind,ctx).then(t=>spawnEmote(BOT,t||_presetPhrase(kind)));}else{spawnEmote(BOT,_presetPhrase(kind));}}
-// ── H4: Gemini chat (player's own free key; opt-in, graceful fallback) ──
+function botReact(kind,force,ctx){if(!isBot)return;let now=Date.now();if(now-_botReactLast<3000)return;if(!force&&Math.random()>0.6)return;_botReactLast=now;ctx=ctx||{};if(window._campaignBoss)ctx.boss=window._campaignBoss;if(window._campaignPersona)ctx.persona=window._campaignPersona;if(_recent.length)ctx.recent=_recent.join('; ');if(STATS.geminiKey){geminiSay(kind,ctx).then(t=>spawnEmote(BOT,t||_presetPhrase(kind)));}else{spawnEmote(BOT,_presetPhrase(kind));}}
+// ── H4/J3: Gemini chat (player's own free key; opt-in, memory + persona) ──
 const GEMINI_URL='https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=';
-let _geminiCD=0;
-function _geminiPrompt(kind,ctx){ctx=ctx||{};let who=ctx.boss?('Ты играешь босса по имени «'+ctx.boss+'». '):'Ты — бот-противник. ';switch(kind){case'greet':return who+'Поприветствуй игрока перед боем, с лёгким подколом.';case'taunt':return who+'Ты только что сильно ударил игрока. Подколи его.';case'panic':return who+'У тебя мало здоровья. Браво сквозь панику.';case'super':return who+'Ты вошёл в режим СВЕРХ-ГОЙДА. Пригрози.';case'gg':return who+(ctx.win?'Ты проиграл — признай поражение с достоинством.':'Ты победил — слегка позлорадствуй.');case'reply':return who+'Игрок крикнул тебе: "'+(ctx.myEmote||'ГОЙДА!')+'". Ответь дерзко и по теме.';case'intro':return who+'Грозная вступительная фраза босса перед боем.';default:return who+'Короткая боевая реплика.';}}
-async function geminiSay(kind,ctx){let key=STATS.geminiKey;if(!key)return null;let now=Date.now();if(now-_geminiCD<2500)return null;_geminiCD=now;try{let sys='Ты — дерзкий идол-комментатор в меме-карточной игре «ГОЙДА» (славяно-рейв стиль). Отвечай ОДНОЙ короткой репликой на русском, не более 8 слов, без кавычек и пояснений.';let ctrl=new AbortController();let to=setTimeout(()=>ctrl.abort(),4500);let r=await fetch(GEMINI_URL+encodeURIComponent(key),{method:'POST',headers:{'Content-Type':'application/json'},signal:ctrl.signal,body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:[{parts:[{text:_geminiPrompt(kind,ctx)}]}],generationConfig:{maxOutputTokens:32,temperature:1.15}})});clearTimeout(to);if(!r.ok)return null;let j=await r.json();let t=j&&j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts&&j.candidates[0].content.parts[0]&&j.candidates[0].content.parts[0].text;if(!t)return null;return String(t).trim().replace(/^["'«»\s]+|["'«»\s]+$/g,'').slice(0,44);}catch(e){return null;}}
+let _geminiCD=0,_recent=[];
+function pushRecent(s){_recent.push(s);if(_recent.length>5)_recent.shift();}
+function _geminiPrompt(kind,ctx){ctx=ctx||{};let who=ctx.boss?('Ты играешь босса по имени «'+ctx.boss+'»'+(ctx.persona?(', характер: '+ctx.persona):'')+'. '):'Ты — дерзкий бот-противник. ';let mem=ctx.recent?(' Недавние ходы игрока: '+ctx.recent+'.'):'';let base;switch(kind){case'greet':base='Поприветствуй игрока перед боем, с лёгким подколом.';break;case'taunt':base='Ты только что сильно ударил игрока. Подколи его.';break;case'panic':base='У тебя мало здоровья. Браво сквозь панику.';break;case'super':base='Ты вошёл в режим СВЕРХ-ГОЙДА. Пригрози.';break;case'gg':base=(ctx.win?'Ты проиграл — признай поражение с достоинством.':'Ты победил — слегка позлорадствуй.');break;case'reply':base='Игрок крикнул тебе: "'+(ctx.myEmote||'ГОЙДА!')+'". Ответь дерзко и по теме.';break;case'intro':base='Скажи грозную вступительную фразу босса перед боем (1-2 предложения).';break;case'recap':base='Бой окончен, игрок '+(ctx.win?'победил':'проиграл')+'. Дай короткий едкий разбор его игры по недавним ходам (1-2 предложения).';break;case'advice':base='Ты — мудрый идол Гойды. Дай игроку ОДИН короткий тактический совет по текущей ситуации (HP '+(ctx.hp||'?')+', база '+(ctx.base||0)+'%, монет '+(ctx.coins||0)+', у врага HP '+(ctx.foeHp||'?')+'). Будь полезным.';break;default:base='Короткая боевая реплика.';}return who+base+mem;}
+async function geminiSay(kind,ctx){let key=STATS.geminiKey;if(!key)return null;let now=Date.now();if(now-_geminiCD<2200)return null;_geminiCD=now;let long=(kind==='intro'||kind==='gg'||kind==='recap'||kind==='advice'||kind==='reply');try{let sys='Ты — дерзкий идол-комментатор в меме-карточной игре «ГОЙДА» (славяно-рейв стиль). Отвечай на русском живо и по делу'+(long?', не более 2 коротких предложений':', ОДНОЙ репликой до 8 слов')+', без кавычек и пояснений.';let ctrl=new AbortController();let to=setTimeout(()=>ctrl.abort(),5000);let r=await fetch(GEMINI_URL+encodeURIComponent(key),{method:'POST',headers:{'Content-Type':'application/json'},signal:ctrl.signal,body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:[{parts:[{text:_geminiPrompt(kind,ctx)}]}],generationConfig:{maxOutputTokens:long?70:32,temperature:1.1}})});clearTimeout(to);if(!r.ok)return null;let j=await r.json();let t=j&&j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts&&j.candidates[0].content.parts[0]&&j.candidates[0].content.parts[0].text;if(!t)return null;return String(t).trim().replace(/^["'«»\s]+|["'«»\s]+$/g,'').slice(0,long?140:46);}catch(e){return null;}}
 function setGeminiKey(){let cur=STATS.geminiKey||'';let k=prompt('Вставь свой бесплатный Gemini API-ключ (Google AI Studio).\nХранится только в этом браузере. Пусто = выключить.',cur);if(k===null)return;k=k.trim();STATS.geminiKey=k||'';saveStats();_updateGeminiBtn();alert(k?'🤖 Gemini подключён! Бот и боссы оживут.':'Gemini выключен — используются заготовки.');}
 function _updateGeminiBtn(){let b=document.getElementById('gemini-bb');if(b)b.textContent=STATS.geminiKey?'🤖 GEMINI ВКЛ':'🤖 GEMINI';}
+// ── J4: advisor + post-match recap ──
+const PRESET_TIPS=['Копи монеты на дорогие тактики.','Щит ставь ДО атаки врага.','Базометр до 100% = Сверх-Гойда!','Зеркало возвращает 75% урона.','ГИПЕР-ГОЙДА сносит щит и отражение.','Яд и шипы хороши против защитников.','Комбо ГОЙДА растёт — бей сериями.','Оглушение даёт лишний ход.','Лечись Гойдушкой, пока не поздно.'];
+let _adviceCD=0;
+function askAdvice(){let bb=document.getElementById('bottom-bar');if(bb&&bb.classList.contains('hidden'))return;if(!G||!G.players||G.players.length<2||G.over)return;let now=Date.now();if(now-_adviceCD<5000){spawnEmote(isOnline?myIndex:HUMAN,'⏳ Гойда думает...','💡');return;}_adviceCD=now;let mi=isOnline?myIndex:HUMAN,me=G.players[mi],foe=G.players[1-mi];let preset=PRESET_TIPS[Math.floor(Math.random()*PRESET_TIPS.length)];if(STATS.geminiKey){spawnEmote(mi,'💭 ...','💡 ГОЙДА');geminiSay('advice',{hp:me.hp,base:me.base,coins:me.coins,foeHp:foe.hp,recent:_recent.join('; ')}).then(t=>spawnEmote(mi,t||preset,'💡 ГОЙДА'));}else spawnEmote(mi,preset,'💡 ГОЙДА');}
+function geminiRecap(playerWon){if(!STATS.geminiKey)return;geminiSay('recap',{win:playerWon}).then(t=>{if(!t)return;let el=document.getElementById('over-txt');if(el){let d=document.createElement('div');d.className='over-recap';d.textContent='🗯 '+t;el.appendChild(d);}logDialog('ДРОН',t);});}
 // ── Emote wheel ──
 const EMOTES=[{ic:'⚔️',txt:'ГОЙДА!!!'},{ic:'🔥',txt:'ОГОНЬ!'},{ic:'🛡',txt:'ДЕРЖИСЬ!'},{ic:'👑',txt:'СЛАВА!'},{ic:'❄️',txt:'СТОЯТЬ!'},{ic:'😤',txt:'ЯРОСТЬ!'},{ic:'🏆',txt:'ПОБЕДА!'},{ic:'💀',txt:'ТРЕПЕЩИ!'}];
 let _wheelOpen=false,_wheelPi=0;
@@ -1579,8 +1623,20 @@ function startMusicIfEnabled(){if(STATS.music)startMusic();}
 
 // ── F5: LIVING TOTEM ──
 let _totemSayLast=0,_idleTimer=null;
-function totemSay(text,force){let now=Date.now();if(!force&&now-_totemSayLast<2200)return;_totemSayLast=now;let t=document.getElementById('totem-idol');if(!t)return;let r=t.getBoundingClientRect();let b=document.createElement('div');b.className='totem-say';b.textContent=text;b.style.left=(r.left+r.width/2)+'px';b.style.top=(r.top-20)+'px';document.body.appendChild(b);t.classList.remove('totem-bang');void t.offsetWidth;t.classList.add('totem-bang');setTimeout(()=>b.remove(),1700);}
+let _totemSayEl=null;
+function totemSay(text,force){let now=Date.now();if(!force&&now-_totemSayLast<2200)return;_totemSayLast=now;let t=document.getElementById('totem-idol');if(!t)return;let r=t.getBoundingClientRect();if(_totemSayEl){try{_totemSayEl.remove();}catch(e){}}let b=document.createElement('div');b.className='totem-say';b.textContent=text;let dur=Math.max(1800,Math.min(4200,1900+text.length*42));b.style.animationDuration=dur+'ms';b.style.left=(r.left+r.width/2)+'px';b.style.top=(r.top-20)+'px';document.body.appendChild(b);_totemSayEl=b;t.classList.remove('totem-bang');void t.offsetWidth;t.classList.add('totem-bang');setTimeout(()=>{if(_totemSayEl===b)_totemSayEl=null;b.remove();},dur);logDialog('ДРОН',text);}
 function totemDance(){let t=document.getElementById('totem-idol');if(!t)return;t.classList.add('totem-dance');setTimeout(()=>t.classList.remove('totem-dance'),2100);}
+// ── J2: totem event commentary (neutral, throttled) ──
+const TOTEM_EV={
+  block:['🛡 БРОНЯ ДЕРЖИТ!','ЛЯЗГ! Отбито.','НЕ ПРОБИЛ!'],
+  reflect:['↩️ ЗЕРКАЛО!','ВЕРНУЛОСЬ!','ОТРАЖЕНО!'],
+  stun:['⚡ ОГЛУШЁН!','В ГЛАЗАХ ЗВЁЗДЫ!','ТИШИНА...'],
+  poison:['☠️ ЯД ПОШЁЛ!','ТРАВЯТ!','ГНИЁТ ИЗНУТРИ'],
+  combo:['🔥 СЕРИЯ!','КОМБО ГОЙДЫ!','РАЗ-ДВА-ТРИ!'],
+  stage:['⬆️ НОВЫЙ ЭТАП!','СИЛА РАСТЁТ!','БАЗА КРЕПНЕТ!'],
+  steal:['🫳 КАРМАН ПУСТ!','СТЯНУЛ!','ВОРИШКА!']
+};
+function totemEvent(kind){let p=TOTEM_EV[kind];if(!p)return;totemSay(p[Math.floor(Math.random()*p.length)]);}
 function resetIdle(){
   clearTimeout(_idleTimer);
   if(!((isBot||isLocal||isOnline)&&G&&!G.over))return;
