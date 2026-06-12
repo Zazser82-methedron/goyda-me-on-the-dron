@@ -30,6 +30,22 @@ body{cursor:var(--cur);background:var(--bg);background-image:radial-gradient(ell
 body::before{content:'';position:fixed;inset:-10%;z-index:0;pointer-events:none;background:radial-gradient(ellipse at 50% 42%,rgba(130,20,0,.4),rgba(40,8,0,.2) 45%,transparent 75%);animation:cosmicPulse 10s ease-in-out infinite;}
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:4;opacity:0;transition:opacity .8s ease;background:radial-gradient(circle,transparent 40%,rgba(0,0,0,.5) 70%,rgba(180,15,0,.7) 100%);}
 body.super-mode-active::after{opacity:.85;}
+/* ── ARENA SCENE (layered battlefield behind the game) ── */
+#arena-scene{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden;background:linear-gradient(180deg,transparent 50%,rgba(70,32,10,.30) 70%,rgba(18,7,2,.62) 100%),radial-gradient(ellipse 130% 46% at 50% 60%,rgba(150,55,12,.28),transparent 62%);}
+.arena-floor{position:absolute;left:-30%;right:-30%;bottom:0;height:46%;background-image:repeating-linear-gradient(90deg,rgba(255,165,70,.08) 0 2px,transparent 2px 64px),repeating-linear-gradient(0deg,rgba(255,150,60,.07) 0 2px,transparent 2px 52px);transform:perspective(360px) rotateX(64deg);transform-origin:bottom center;opacity:.55;}
+.arena-pillar{position:absolute;top:5%;width:52px;height:66%;background:linear-gradient(180deg,#1c0e06,#0a0502 88%);border-left:1px solid rgba(212,160,23,.14);border-right:1px solid rgba(212,160,23,.14);box-shadow:0 0 36px rgba(0,0,0,.7),inset 0 0 18px rgba(0,0,0,.6);border-radius:0 0 6px 6px;}
+.arena-pillar::before{content:'';position:absolute;top:0;left:-6px;right:-6px;height:18px;background:linear-gradient(180deg,#3a2410,#1c0e06);border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,.6);}
+.arena-pillar::after{content:'ᛟ';position:absolute;top:30%;left:50%;transform:translateX(-50%);color:rgba(212,160,23,.22);font-size:26px;writing-mode:vertical-rl;letter-spacing:30px;}
+.arena-pillar.l{left:-10px;}.arena-pillar.r{right:-10px;}
+.arena-fog{position:absolute;left:0;right:0;bottom:0;height:32%;background:linear-gradient(0deg,rgba(45,18,6,.55),transparent);animation:cosmicPulse 9s ease-in-out infinite;}
+body.theme-neon #arena-scene{background:linear-gradient(180deg,transparent 50%,rgba(0,80,110,.28) 70%,rgba(2,12,20,.62) 100%),radial-gradient(ellipse 130% 46% at 50% 60%,rgba(0,150,200,.26),transparent 62%);}
+body.theme-frost #arena-scene{background:linear-gradient(180deg,transparent 50%,rgba(60,110,150,.26) 70%,rgba(4,14,22,.62) 100%),radial-gradient(ellipse 130% 46% at 50% 60%,rgba(120,200,255,.22),transparent 62%);}
+body.theme-gold #arena-scene{background:linear-gradient(180deg,transparent 50%,rgba(120,90,20,.30) 70%,rgba(20,14,2,.62) 100%),radial-gradient(ellipse 130% 46% at 50% 60%,rgba(255,200,80,.24),transparent 62%);}
+@media(max-width:640px){.arena-floor{opacity:.3;background-size:48px 48px;}.arena-pillar{width:30px;}}
+/* generated battlefield image as backdrop (with readability overlay); falls back to CSS scene if absent */
+body.has-arena-bg #arena-scene{background:linear-gradient(180deg,rgba(8,3,2,.55),rgba(8,3,2,.40) 45%,rgba(10,4,2,.66)),url('art/arena-bg.png') center/cover no-repeat;}
+body.has-arena-bg .arena-floor,body.has-arena-bg .arena-pillar,body.has-arena-bg .arena-fog{display:none;}
+body.has-arena-bg.theme-frost #arena-scene,body.has-arena-bg.theme-gold #arena-scene,body.has-arena-bg.theme-neon #arena-scene{background:linear-gradient(180deg,rgba(8,3,2,.55),rgba(8,3,2,.40) 45%,rgba(10,4,2,.66)),url('art/arena-bg.png') center/cover no-repeat;}
 @keyframes cosmicPulse{0%,100%{opacity:.5;transform:scale(1);}50%{opacity:.85;transform:scale(1.06);}}
 @keyframes shake{0%,100%{transform:translateX(0);}10%,90%{transform:translateX(-12px) translateY(2px);}30%,70%{transform:translateX(10px) translateY(-2px);}50%{transform:translateX(-6px) translateY(3px);}}
 @keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1.4);}80%{opacity:.9;}100%{opacity:0;transform:translateY(-130px) scale(.8);}}
@@ -320,6 +336,11 @@ body.back-fire .back-rune,body.back-crown .back-rune{filter:drop-shadow(0 0 6px 
 .hand .card-container:hover{animation:none;}
 @keyframes cardIdle{0%,100%{transform:translateY(0) rotate(0);}50%{transform:translateY(-3px) rotate(.4deg);}}
 @media(max-width:640px){.hand .card-container{animation:none;}}
+/* L2: holographic sheen sweep on rare+ cards in hand */
+.hand .card.rarity-rare>.holo,.hand .card.rarity-epic>.holo,.hand .card.rarity-legendary>.holo{position:absolute;inset:0;z-index:6;pointer-events:none;border-radius:10px;background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.22) 48%,rgba(180,220,255,.12) 52%,transparent 62%);background-size:280% 280%;mix-blend-mode:screen;animation:holoSheen 4.5s linear infinite;}
+.hand .card.rarity-legendary>.holo{animation-duration:3.4s;background:linear-gradient(115deg,transparent 36%,rgba(255,240,190,.3) 47%,rgba(255,210,120,.16) 53%,transparent 64%);background-size:280% 280%;}
+@keyframes holoSheen{0%{background-position:150% 0;}100%{background-position:-60% 0;}}
+@media(max-width:640px){.hand .card>.holo{display:none;}}
 /* COSMETIC: board themes (override vars) */
 body.theme-neon{--gold:#00eeff;--gold-bright:#7dffff;--neon-pink:#ff2bd6;background-image:radial-gradient(ellipse at 50% 40%,#04121a 0%,#02060a 70%,#000 100%);}
 body.theme-frost{--gold:#9fe8ff;--gold-bright:#d8f6ff;--neon-pink:#5ad1ff;background-image:radial-gradient(ellipse at 50% 40%,#06121a 0%,#020a10 70%,#000 100%);}
@@ -488,6 +509,12 @@ body.fire-wind::after{opacity:.5!important;background:radial-gradient(ellipse at
 </head>
 <body>
 
+<div id="arena-scene">
+  <div class="arena-floor"></div>
+  <div class="arena-pillar l"></div>
+  <div class="arena-pillar r"></div>
+  <div class="arena-fog"></div>
+</div>
 <canvas id="sparks" style="position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.8"></canvas>
 <div class="banner banner-l" onclick="hitBanner(this)" title="взмахни знаменем"></div>
 <div class="banner banner-r" onclick="hitBanner(this)" title="взмахни знаменем"></div>
@@ -1358,7 +1385,7 @@ function render(){let[p1,p2]=G.players;renderHP(0,p1);renderHP(1,p2);updateShiel
 function applyAuras(pi,p){let a=document.getElementById('p'+(pi+1)+'-area');if(!a)return;a.classList.toggle('aura-shield',p.sh>0);a.classList.toggle('aura-reflect',p.re>0);a.classList.toggle('aura-frozen',!!p.freezeNext);a.classList.toggle('aura-super',!!p.superMode);}
 function renderHP(i,p){let f=document.getElementById('p'+(i+1)+'-hp'),t=document.getElementById('p'+(i+1)+'-hptxt'),pct=Math.max(0,Math.round(p.hp/100*100));f.style.width=pct+'%';f.style.background=pct>60?'linear-gradient(90deg,#27ae60,#2ecc71)':pct>30?'linear-gradient(90deg,#c9620a,#e67e22)':'linear-gradient(90deg,#7b241c,#c0392b)';t.textContent=p.hp+'/100';}
 function renderBase(i,p){let wrap=document.getElementById('p'+(i+1)+'-base-wrap'),fill=document.getElementById('p'+(i+1)+'-base-fill'),num=document.getElementById('p'+(i+1)+'-base-num'),stxt=document.getElementById('p'+(i+1)+'-stage-txt');if(p.superMode){fill.style.width='100%';fill.classList.add('super-mode');wrap.classList.add('super-glow');num.textContent='ЯРОСТЬ';stxt.textContent=`СВЕРХ-ГОЙДА (${p.superTurns+1} Х)`;}else{fill.style.width=p.base+'%';fill.classList.remove('super-mode');wrap.classList.remove('super-glow');num.textContent=p.base;let st=getStage(p.base);stxt.textContent=st===3?'ЭТАП III':st===2?'ЭТАП II':'ЭТАП I';}}
-function renderHand(pi,player,cid,faceUp){let c=document.getElementById(cid);c.innerHTML='';if(!faceUp){let rune=currentBack().rune;player.hand.forEach(()=>{let d=document.createElement('div');d.className='card-container';d.innerHTML='<div class="card back"><div class="back-rune">'+rune+'</div></div>';c.appendChild(d);});return;}player.hand.forEach(card=>{let container=document.createElement('div');container.className='card-container';let isLocked=false,lockTxt='';if(card.id==='OPLICH_GOYDA'&&getStage(player.base)<2&&!player.superMode){isLocked=true;lockTxt='ЭТАП II';}if(card.id==='GOYDO_OBEREG'&&getStage(player.base)<2&&!player.superMode){isLocked=true;lockTxt='ЭТАП II';}if(card.id==='GIPER_GOYD'&&getStage(player.base)<3&&!player.superMode){isLocked=true;lockTxt='ЭТАП III';}let d=document.createElement('div');d.className='card click rarity-'+rarityOf(card);d.style.setProperty('--cbg',isLocked?'#151515':card.bg);d.style.setProperty('--cbc',isLocked?'#3c3c3c':card.bc);d.innerHTML=`<div class="card-shine"></div><div class="card-role-tab"><span>✦</span><span>${card.role}</span></div><div class="card-emblem"><span class="card-ico">${card.ic}</span></div><div class="card-name">${card.n}</div><div class="card-stat kind-${card.kind}"><span class="card-num">${card.num}</span><span class="card-unit">${card.unit}</span></div><div class="card-effect">${card.eff}</div><div class="card-tag" style="${isLocked?'background:#500;border-color:#f33;color:#f88;':''}">${isLocked?lockTxt:rarityLabel(card)}</div>`;d.onclick=()=>playCard(pi,card);container.appendChild(d);c.appendChild(container);applyCardParallax(container);});setupHandHover(c);}
+function renderHand(pi,player,cid,faceUp){let c=document.getElementById(cid);c.innerHTML='';if(!faceUp){let rune=currentBack().rune;player.hand.forEach(()=>{let d=document.createElement('div');d.className='card-container';d.innerHTML='<div class="card back"><div class="back-rune">'+rune+'</div></div>';c.appendChild(d);});return;}player.hand.forEach(card=>{let container=document.createElement('div');container.className='card-container';let isLocked=false,lockTxt='';if(card.id==='OPLICH_GOYDA'&&getStage(player.base)<2&&!player.superMode){isLocked=true;lockTxt='ЭТАП II';}if(card.id==='GOYDO_OBEREG'&&getStage(player.base)<2&&!player.superMode){isLocked=true;lockTxt='ЭТАП II';}if(card.id==='GIPER_GOYD'&&getStage(player.base)<3&&!player.superMode){isLocked=true;lockTxt='ЭТАП III';}let d=document.createElement('div');d.className='card click rarity-'+rarityOf(card);d.style.setProperty('--cbg',isLocked?'#151515':card.bg);d.style.setProperty('--cbc',isLocked?'#3c3c3c':card.bc);d.innerHTML=`<div class="card-shine"></div><div class="card-role-tab"><span>✦</span><span>${card.role}</span></div><div class="card-emblem"><span class="card-ico">${card.ic}</span></div><div class="card-name">${card.n}</div><div class="card-stat kind-${card.kind}"><span class="card-num">${card.num}</span><span class="card-unit">${card.unit}</span></div><div class="card-effect">${card.eff}</div><div class="card-tag" style="${isLocked?'background:#500;border-color:#f33;color:#f88;':''}">${isLocked?lockTxt:rarityLabel(card)}</div>`;d.onclick=()=>playCard(pi,card);if(!LOW_FX){let rr=rarityOf(card);if(rr==='rare'||rr==='epic'||rr==='legendary'){let ho=document.createElement('div');ho.className='holo';d.appendChild(ho);}}container.appendChild(d);c.appendChild(container);applyCardParallax(container);});setupHandHover(c);}
 function renderAbils(pi,active,player){let c=document.getElementById(`p${pi+1}-abils`);c.innerHTML='';player.abilities.forEach((ab,idx)=>{let canUse=active&&player.coins>=ab.cost;let container=document.createElement('div');container.className='abil-card-container';let btn=document.createElement('div');btn.className='abil-card'+(canUse?' ready':'');if(canUse){btn.style.setProperty('--bbg',ab.bg);btn.style.setProperty('--bc',ab.bc);btn.onclick=()=>useAbil(pi,idx);}btn.innerHTML=`<div class="abil-card-header"><span>${ab.ic} ${ab.n}</span><span style="font-size:7px;color:#888">Тактика</span></div><div class="abil-card-desc" title="${ab.d}">${ab.d}</div><div class="abil-card-cost">💰 ${ab.cost} ВЕЧЕВЫХ</div>`;container.appendChild(btn);c.appendChild(container);});}
 function renderPlayed(sid,card){let s=document.getElementById(sid);if(!card){s.innerHTML='<div class="empty-slot">ᚦ</div>';return;}s.innerHTML=`<div class="played" style="background:${card.bg};border-color:${card.bc}"><div class="text-2xl">${card.ic}</div><div class="font-black text-[9px] mt-1">${card.n}</div></div>`;}
 function updateShieldAndReflectIcons(pi,sh,re){let sl=document.getElementById(`p${pi+1}-shields-list`);sl.innerHTML='';for(let i=1;i<=2;i++){let d=document.createElement('div');d.className=`shield-slot ${i<=sh?'active':''}`;d.innerHTML=i<=sh?'🛡️':'';sl.appendChild(d);}let rl=document.getElementById(`p${pi+1}-reflects-list`);rl.innerHTML='';let d=document.createElement('div');d.className=`reflect-slot ${re>0?'active':''}`;d.innerHTML=re>0?'🪬':'';rl.appendChild(d);}
@@ -1494,10 +1521,12 @@ const BOT_PHRASES={
 };
 function _presetPhrase(kind){let pool=(BOT_PHRASES[kind]||{})[botLevel]||(BOT_PHRASES[kind]||{}).warrior||['ГОЙДА!'];return pool[Math.floor(Math.random()*pool.length)];}
 let _botReactLast=0;
-function botReact(kind,force,ctx){if(!isBot)return;let now=Date.now();if(now-_botReactLast<3000)return;if(!force&&Math.random()>0.6)return;_botReactLast=now;ctx=ctx||{};if(window._campaignBoss)ctx.boss=window._campaignBoss;if(window._campaignPersona)ctx.persona=window._campaignPersona;if(_recent.length)ctx.recent=_recent.join('; ');if(STATS.geminiKey){geminiSay(kind,ctx).then(t=>spawnEmote(BOT,t||_presetPhrase(kind)));}else{spawnEmote(BOT,_presetPhrase(kind));}}
+// Gemini only for conversational moments; frequent events stay on free presets (save quota)
+const GEMINI_OK={greet:1,gg:1,reply:1,super:1,intro:1,recap:1,advice:1};
+function botReact(kind,force,ctx){if(!isBot)return;let now=Date.now();if(now-_botReactLast<3000)return;if(!force&&Math.random()>0.6)return;_botReactLast=now;ctx=ctx||{};if(window._campaignBoss)ctx.boss=window._campaignBoss;if(window._campaignPersona)ctx.persona=window._campaignPersona;if(_recent.length)ctx.recent=_recent.join('; ');let lv=(STATS.geminiChatLevel==null?1:STATS.geminiChatLevel);let useG=STATS.geminiKey&&lv>0&&(GEMINI_OK[kind]||(lv>=2&&(kind==='taunt'||kind==='panic')));if(useG){geminiSay(kind,ctx).then(t=>spawnEmote(BOT,t||_presetPhrase(kind)));}else{spawnEmote(BOT,_presetPhrase(kind));}}
 // ── H4/J3: Gemini chat (player's own free key; opt-in, memory + persona) ──
-const GEMINI_MODELS=['gemini-2.5-flash','gemini-2.0-flash','gemini-flash-latest','gemini-1.5-flash'];
-let _geminiModel=(STATS&&STATS.geminiModel)||null,_geminiLastErr='',_recent=[];
+const GEMINI_MODELS=['gemini-2.5-flash-lite','gemini-2.0-flash-lite','gemini-2.0-flash','gemini-2.5-flash','gemini-flash-latest','gemini-1.5-flash'];
+let _geminiModel=(STATS&&STATS.geminiModel)||null,_geminiLastErr='',_geminiLastStatus=0,_geminiCD=0,_geminiBlockUntil=0,_recent=[];
 function pushRecent(s){_recent.push(s);if(_recent.length>5)_recent.shift();}
 function _geminiPrompt(kind,ctx){ctx=ctx||{};let who=ctx.boss?('Ты играешь босса по имени «'+ctx.boss+'»'+(ctx.persona?(', характер: '+ctx.persona):'')+'. '):'Ты — дерзкий бот-противник. ';let mem=ctx.recent?(' Недавние ходы игрока: '+ctx.recent+'.'):'';let base;switch(kind){case'greet':base='Поприветствуй игрока перед боем, с лёгким подколом.';break;case'taunt':base='Ты только что сильно ударил игрока. Подколи его.';break;case'panic':base='У тебя мало здоровья. Браво сквозь панику.';break;case'super':base='Ты вошёл в режим СВЕРХ-ГОЙДА. Пригрози.';break;case'gg':base=(ctx.win?'Ты проиграл — признай поражение с достоинством.':'Ты победил — слегка позлорадствуй.');break;case'reply':base='Игрок крикнул тебе: "'+(ctx.myEmote||'ГОЙДА!')+'". Ответь дерзко и по теме.';break;case'intro':base='Скажи грозную вступительную фразу босса перед боем (1-2 предложения).';break;case'recap':base='Бой окончен, игрок '+(ctx.win?'победил':'проиграл')+'. Дай короткий едкий разбор его игры по недавним ходам (1-2 предложения).';break;case'advice':base='Ты — мудрый идол Гойды. Дай игроку ОДИН короткий тактический совет по текущей ситуации (HP '+(ctx.hp||'?')+', база '+(ctx.base||0)+'%, монет '+(ctx.coins||0)+', у врага HP '+(ctx.foeHp||'?')+'). Будь полезным.';break;default:base='Короткая боевая реплика.';}return who+base+mem;}
 function _geminiClean(t,long){return String(t).trim().replace(/^["'«»\s]+|["'«»\s]+$/g,'').slice(0,long?160:46);}
@@ -1507,7 +1536,7 @@ async function _geminiFetch(model,key,body){
     let r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+encodeURIComponent(key),{method:'POST',headers:{'Content-Type':'application/json'},signal:ctrl.signal,body});
     clearTimeout(to);
     let j=await r.json().catch(()=>null);
-    if(!r.ok){_geminiLastErr=(j&&j.error&&j.error.message)?j.error.message:('HTTP '+r.status);return{status:r.status};}
+    if(!r.ok){_geminiLastErr=(j&&j.error&&j.error.message)?j.error.message:('HTTP '+r.status);_geminiLastStatus=r.status;if(r.status===429){let sec=50;try{let m=/retry in ([\d.]+)s/i.exec(_geminiLastErr);if(m)sec=Math.ceil(parseFloat(m[1]));}catch(e){}_geminiBlockUntil=Date.now()+sec*1000;if(typeof addLog==='function'&&gameStarted!==undefined)try{addLog('🤖 Gemini-лимит исчерпан — пауза ~'+sec+'с, идут заготовки.','#9a7b3a');}catch(e){}}return{status:r.status};}
     let t=j&&j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts&&j.candidates[0].content.parts[0]&&j.candidates[0].content.parts[0].text;
     if(!t){_geminiLastErr='пустой ответ от модели';return{status:200};}
     return{text:t};
@@ -1515,6 +1544,11 @@ async function _geminiFetch(model,key,body){
 }
 async function geminiSay(kind,ctx){
   let key=STATS.geminiKey;if(!key)return null;
+  let now=Date.now();
+  if(now<_geminiBlockUntil)return null; // rate-limited: silently use presets
+  let _gap=[9000,4500,3000][(STATS.geminiChatLevel==null?1:STATS.geminiChatLevel)]||4500;
+  if(kind!=='advice'&&now-_geminiCD<_gap)return null; // global throttle (advice is user-initiated)
+  _geminiCD=now;
   let long=(kind==='intro'||kind==='gg'||kind==='recap'||kind==='advice'||kind==='reply');
   let sys='Ты — дерзкий идол-комментатор в меме-карточной игре «ГОЙДА» (славяно-рейв стиль). Отвечай на русском живо и по делу'+(long?', не более 2 коротких предложений':', ОДНОЙ репликой до 8 слов')+', без кавычек и пояснений.';
   let body=JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:[{parts:[{text:_geminiPrompt(kind,ctx)}]}],generationConfig:{maxOutputTokens:long?80:36,temperature:1.1}});
@@ -1527,7 +1561,7 @@ async function geminiSay(kind,ctx){
   }
   return null;
 }
-function setGeminiKey(){let cur=STATS.geminiKey||'';let k=prompt('Вставь свой бесплатный Gemini API-ключ.\nВзять: aistudio.google.com/apikey (Google AI Studio).\nХранится только в этом браузере. Пусто = выключить.',cur);if(k===null)return;k=k.trim();STATS.geminiKey=k||'';_geminiModel=null;STATS.geminiModel='';_geminiLastErr='';saveStats();_updateGeminiBtn();if(!k){alert('Gemini выключен — используются заготовки.');return;}let btn=document.getElementById('gemini-bb');if(btn)btn.textContent='🤖 ПРОВЕРКА…';geminiSay('greet',{}).then(t=>{_updateGeminiBtn();if(t)alert('✅ Gemini работает!\nМодель: '+(_geminiModel||'?')+'\nПример реплики: «'+t+'»');else alert('❌ Gemini не ответил.\nОшибка: '+(_geminiLastErr||'неизвестно')+'\n\nПроверь:\n• ключ создан на aistudio.google.com/apikey и активен;\n• в стране доступен Gemini API;\n• нет блокировки сети/VPN.');});}
+function setGeminiKey(){let cur=STATS.geminiKey||'';let k=prompt('Вставь свой бесплатный Gemini API-ключ.\nВзять: aistudio.google.com/apikey (Google AI Studio).\nХранится только в этом браузере. Пусто = выключить.',cur);if(k===null)return;k=k.trim();STATS.geminiKey=k||'';_geminiModel=null;STATS.geminiModel='';_geminiLastErr='';saveStats();_updateGeminiBtn();if(!k){alert('Gemini выключен — используются заготовки.');return;}let lv=prompt('Болтливость ИИ:\n0 = тихо (только ключевые реплики)\n1 = норма\n2 = болтлив (бережёт лимит хуже)',String(STATS.geminiChatLevel==null?1:STATS.geminiChatLevel));if(lv!==null){let nn=parseInt(lv,10);if(!isNaN(nn)){STATS.geminiChatLevel=Math.max(0,Math.min(2,nn));saveStats();}}let btn=document.getElementById('gemini-bb');if(btn)btn.textContent='🤖 ПРОВЕРКА…';_geminiCD=0;_geminiBlockUntil=0;geminiSay('greet',{}).then(t=>{_updateGeminiBtn();if(t){alert('✅ Gemini работает!\nМодель: '+(_geminiModel||'?')+'\nПример реплики: «'+t+'»');}else if(_geminiLastStatus===429){alert('✅ Ключ принят, но сейчас исчерпан бесплатный лимит.\nПодожди минуту и играй — реплики появятся сами.\n(Игра шлёт запросы только в ключевые моменты, чтобы беречь лимит.)');}else{alert('❌ Gemini не ответил.\nОшибка: '+(_geminiLastErr||'неизвестно')+'\n\nПроверь:\n• ключ создан на aistudio.google.com/apikey и активен;\n• в стране доступен Gemini API;\n• нет блокировки сети/VPN.');}});}
 function _updateGeminiBtn(){let b=document.getElementById('gemini-bb');if(b)b.textContent=STATS.geminiKey?'🤖 GEMINI ВКЛ':'🤖 GEMINI';}
 // ── J4: advisor + post-match recap ──
 const PRESET_TIPS=['Копи монеты на дорогие тактики.','Щит ставь ДО атаки врага.','Базометр до 100% = Сверх-Гойда!','Зеркало возвращает 75% урона.','ГИПЕР-ГОЙДА сносит щит и отражение.','Яд и шипы хороши против защитников.','Комбо ГОЙДА растёт — бей сериями.','Оглушение даёт лишний ход.','Лечись Гойдушкой, пока не поздно.'];
@@ -1760,6 +1794,7 @@ document.getElementById('btn-join').addEventListener('click',joinRoomBtn);
 document.getElementById('room-input').addEventListener('keydown',function(e){if(e.key==='Enter')joinRoomBtn();});
 
 renderLobbyStats();applyCosmetics();maybeOfferTutorial();
+(function(){var im=new Image();im.onload=function(){document.body.classList.add('has-arena-bg');};im.src='art/arena-bg.png';})();
 (function(){let btn=document.getElementById('mute-bb');if(btn)btn.textContent=sndMuted?'🔇 ЗВУК ВЫКЛ':'🔊 ЗВУК ВКЛ';_updateMusicBtn();_updateGeminiBtn();})();
 initGame();render();renderDiscard(0);renderDiscard(1);
 // Show library load status in lobby
