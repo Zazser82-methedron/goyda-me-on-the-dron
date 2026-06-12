@@ -50,6 +50,9 @@ body.has-arena-frost.theme-frost #arena-scene{background:linear-gradient(180deg,
 body.has-arena-gold.theme-gold #arena-scene{background:linear-gradient(180deg,rgba(20,14,2,.55),rgba(20,14,2,.40) 45%,rgba(14,9,1,.66)),url('art/arena-gold.png') center/cover no-repeat;}
 body.has-arena-neon.theme-neon #arena-scene{background:linear-gradient(180deg,rgba(2,12,20,.55),rgba(2,12,20,.40) 45%,rgba(1,8,14,.66)),url('art/arena-neon.png') center/cover no-repeat;}
 body.has-arena3d #arena-scene{filter:brightness(.82) saturate(1.05);}
+/* when the 3D idol is live, hide the flat emoji totem + its spinning decorations (keep it clickable as the hotspot) */
+body.has-arena3d #totem-idol{opacity:0;}
+body.has-arena3d .totem-glow,body.has-arena3d .totem-runes{display:none;}
 /* ── VS / boss intro screen ── */
 #vs-screen{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;pointer-events:none;background:radial-gradient(ellipse at center,rgba(40,6,2,.62),rgba(0,0,0,.9) 78%);opacity:0;transition:opacity .35s ease;}
 #vs-screen.show{display:flex;opacity:1;pointer-events:auto;cursor:pointer;}
@@ -1591,7 +1594,7 @@ function doodadHit(key,el,opts){
 function hitTorch(el){doodadHit('torch'+(el.classList.contains('torch-l')?'L':'R'),el,{anim:'torch-flare',sound:sndCrackle,shards:true,shardColor:'#ff9a2a',shardN:9,cd:340});}
 function hitBanner(el){doodadHit(el.classList.contains('banner-l')?'banL':'banR',el,{anim:'banner-wave',sound:sndHorn,shards:true,shardColor:'#ffd24a',shardN:5,cd:600});}
 let _stoneTaps=0,_stoneTapT=0;
-function hitTotem(){doodadHit('totem',document.getElementById('totem-idol'),{anim:'totem-bang',sound:sndThud,shards:true,shardColor:'#ff6a2a',shardN:11,cry:true,ring:true,cd:420});let now=Date.now();if(now-_stoneTapT<1400)_stoneTaps++;else _stoneTaps=1;_stoneTapT=now;if(_stoneTaps>=10){_stoneTaps=0;triggerEgg();}}
+function hitTotem(){doodadHit('totem',document.getElementById('totem-idol'),{anim:'totem-bang',sound:sndThud,shards:true,shardColor:'#ff6a2a',shardN:11,cry:true,ring:true,cd:420});if(window.arena3dPulse)arena3dPulse('normal');let now=Date.now();if(now-_stoneTapT<1400)_stoneTaps++;else _stoneTaps=1;_stoneTapT=now;if(_stoneTaps>=10){_stoneTaps=0;triggerEgg();}}
 function triggerEgg(){let t=document.getElementById('totem-idol');if(t){let r=t.getBoundingClientRect();let cols=['#ff4d4d','#ffd24a','#5eff8b','#5eb5ff','#cc66ff','#fff'];for(let k=0;k<6;k++)spawnShardsXY(r.left+r.width/2,r.top+r.height/2,cols[k%cols.length],fxCount(10));}totemSay('👁️ ОКО ГОЙДЫ ОТКРЫТО!',true);screenFlash('fx-holy',700);let was=!!STATS.eggFound;STATS.eggFound=true;saveStats();if(!was){addLog('🥚 ПАСХАЛКА! Открыта тайная рубашка «Око Гойды» — загляни в Гардероб!','#cc66ff');setTimeout(()=>{try{alert('🥚 Пасхалка найдена!\nТайная рубашка «👁️ Око Гойды» разблокирована в Гардеробе.');}catch(e){}},200);}}
 // ── Fighter emotes (tap your own zone) ──
 let _emoteEl=[null,null];
@@ -1831,13 +1834,13 @@ function updateWeather(){
 let _stormAnnounced=false;
 
 // FX
-(function(){const cv=document.getElementById('sparks'),ctx=cv.getContext('2d');let W,H;function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;}window.addEventListener('resize',resize);resize();const COLORS=['#ff5500','#ff8800','#ffd700','#ff2200','#ffee88'],particles=[],MAX=LOW_FX?12:25;function P(){this.reset(true);}P.prototype.reset=function(init){this.x=Math.random()*W;this.y=init?Math.random()*H:H+10;this.vy=-(Math.random()*.9+.3);this.vx=(Math.random()-.5)*.4;this.life=Math.random()*.6+.4;this.decay=Math.random()*.003+.0015;this.r=Math.random()*2+.5;this.color=COLORS[Math.floor(Math.random()*COLORS.length)];};for(let i=0;i<MAX;i++)particles.push(new P());function tick(){if(document.hidden){requestAnimationFrame(tick);return;}ctx.clearRect(0,0,W,H);for(let p of particles){p.x+=p.vx+(Math.random()-.5)*.1+(window._fxWind||0);p.y+=p.vy*(window._fxBoost||1);p.life-=p.decay;if(p.life<=0||p.y<-10)p.reset(false);ctx.save();ctx.globalAlpha=p.life*.7;ctx.fillStyle=p.color;ctx.shadowBlur=6;ctx.shadowColor=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();ctx.restore();}requestAnimationFrame(tick);}tick();})();
+(function(){const cv=document.getElementById('sparks'),ctx=cv.getContext('2d');let W,H;function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;}window.addEventListener('resize',resize);resize();const COLORS=['#ff5500','#ff8800','#ffd700','#ff2200','#ffee88'],particles=[],MAX=LOW_FX?6:10;function P(){this.reset(true);}P.prototype.reset=function(init){this.x=Math.random()*W;this.y=init?Math.random()*H:H+10;this.vy=-(Math.random()*.9+.3);this.vx=(Math.random()-.5)*.4;this.life=Math.random()*.6+.4;this.decay=Math.random()*.003+.0015;this.r=Math.random()*2+.5;this.color=COLORS[Math.floor(Math.random()*COLORS.length)];};for(let i=0;i<MAX;i++)particles.push(new P());function tick(){if(document.hidden){requestAnimationFrame(tick);return;}ctx.clearRect(0,0,W,H);for(let p of particles){p.x+=p.vx+(Math.random()-.5)*.1+(window._fxWind||0);p.y+=p.vy*(window._fxBoost||1);p.life-=p.decay;if(p.life<=0||p.y<-10)p.reset(false);ctx.save();ctx.globalAlpha=p.life*.7;ctx.fillStyle=p.color;ctx.shadowBlur=6;ctx.shadowColor=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();ctx.restore();}requestAnimationFrame(tick);}tick();})();
 function flashA(pi,type){let el=document.getElementById('p'+(pi+1)+'-area');el.classList.remove('border-red-500','border-green-500','border-blue-500','border-yellow-500');void el.offsetWidth;el.classList.add('border-'+(type==='red'?'red-500':type==='grn'?'green-500':type==='blu'?'blue-500':'yellow-500'));}
 function shakeA(pi){let el=document.getElementById('p'+(pi+1)+'-area');el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');}
 function hpHit(pi){let el=document.getElementById('p'+(pi+1)+'-hit');if(!el)return;el.classList.remove('go');void el.offsetWidth;el.classList.add('go');}
 function bumpCoins(pi){let el=document.getElementById('p'+(pi+1)+'-co');if(!el)return;el.classList.add('scale-125');setTimeout(()=>el.classList.remove('scale-125'),200);}
 function spawnFl(pi,txt,type){let area=document.getElementById('p'+(pi+1)+'-area');let rect=area.getBoundingClientRect();let el=document.createElement('div');el.className='float-num fn-'+type;el.textContent=txt;el.style.left=(rect.left+rect.width/2-28+(Math.random()*40-20))+'px';el.style.top=(rect.top+rect.height/2-20)+'px';document.body.appendChild(el);setTimeout(()=>el.remove(),1100);}
-function spawnSuperOverlay(pi){let b=document.createElement('div');b.className='super-overlay';b.innerHTML=`✦ СВЕРХ-ГОЙДА ✦<br><span style="font-size:14px">У ${pn(pi)}!</span>`;document.body.appendChild(b);setTimeout(()=>b.remove(),1800);quake(28);}
+function spawnSuperOverlay(pi){let b=document.createElement('div');b.className='super-overlay';b.innerHTML=`✦ СВЕРХ-ГОЙДА ✦<br><span style="font-size:14px">У ${pn(pi)}!</span>`;document.body.appendChild(b);setTimeout(()=>b.remove(),1800);quake(28);if(window.arena3dPulse)arena3dPulse('big');}
 // ── Cross-board projectiles + impact shards ──
 function _areaCenter(pi){let a=document.getElementById('p'+(pi+1)+'-area');if(!a)return{x:window.innerWidth/2,y:window.innerHeight/2};let r=a.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2};}
 function spawnShards(pi,color,n){let mob=window.innerWidth<=640;n=n||(mob?4:9);if(mob)n=Math.min(n,5);let c=_areaCenter(pi);for(let i=0;i<n;i++){let sh=document.createElement('div');sh.className='shard';sh.style.background=color||'#ff6a2a';sh.style.color=color||'#ff6a2a';sh.style.left=c.x+'px';sh.style.top=c.y+'px';document.body.appendChild(sh);let ang=Math.random()*Math.PI*2,dist=28+Math.random()*55;sh.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${Math.cos(ang)*dist}px,${Math.sin(ang)*dist}px) scale(.2)`,opacity:0}],{duration:420+Math.random()*260,easing:'cubic-bezier(.2,.6,.3,1)',fill:'forwards'}).onfinish=()=>sh.remove();}}
@@ -1853,6 +1856,7 @@ function iceSpikes(pi){let c=_areaCenter(pi),n=fxCount(7);for(let i=0;i<n;i++){l
 function lightPillar(pi,color){let c=_areaCenter(pi);let p=document.createElement('div');p.className='light-pillar';p.style.left=c.x+'px';p.style.setProperty('--pc',color||'#ffd700');document.body.appendChild(p);p.animate([{transform:'translateX(-50%) scaleY(0)',opacity:0},{transform:'translateX(-50%) scaleY(1)',opacity:.9,offset:.3},{transform:'translateX(-50%) scaleY(1)',opacity:0}],{duration:650,easing:'ease-out',fill:'forwards'}).onfinish=()=>p.remove();}
 function skyLightning(pi){let c=_areaCenter(pi);let b=document.createElement('div');b.className='sky-bolt';b.textContent='⚡';b.style.left=c.x+'px';document.body.appendChild(b);b.animate([{transform:'translate(-50%,-60px) scale(.6)',opacity:0},{transform:'translate(-50%,0) scale(1.3)',opacity:1,offset:.25},{transform:'translate(-50%,0) scale(1)',opacity:0}],{duration:480,easing:'ease-out',fill:'forwards'}).onfinish=()=>b.remove();spawnShards(pi,'#fff7c0',fxCount(8));}
 function castFX(pi,card){
+  if(window.arena3dPulse)arena3dPulse(['GIPER_GOYD','OPLICH_GOYDA','ABSOLUT_GOYDA'].includes(card.id)?'big':'small');
   switch(card.id){
     case'GIPER_GOYD':screenFlash('fx-boom',520);quake(40);spawnRing(_areaCenter(1-pi).x,_areaCenter(1-pi).y);skyLightning(1-pi);break;
     case'KRIO_GOYDA':screenFlash('fx-frost',520);iceSpikes(1-pi);break;
@@ -1866,6 +1870,12 @@ function castFX(pi,card){
     case'CRINGE_GOYDA':screenFlash('fx-cringe',360);break;
     case'GOYDO_YAD':{let c=_areaCenter(1-pi);spawnShardsXY(c.x,c.y,'#7cff5a',fxCount(8));break;}
     case'GLUSHILKA':screenFlash('fx-bass',300);break;
+    case'GOYDA':{let c=_areaCenter(pi);spawnShardsXY(c.x,c.y,'#ff5e3a',fxCount(6));break;}
+    case'PEREGOYDA':{let c=_areaCenter(pi);spawnRing(c.x,c.y);spawnShardsXY(c.x,c.y,'#b366ff',fxCount(6));break;}
+    case'GOYDO_SHIELD':{let c=_areaCenter(pi);spawnShardsXY(c.x,c.y,'#5eb5ff',fxCount(6));break;}
+    case'GOYDO_OBEREG':lightPillar(pi,'#00ffff');break;
+    case'SHIPOGOYDA':{let c=_areaCenter(pi);spawnShardsXY(c.x,c.y,'#aadd33',fxCount(7));break;}
+    case'KARMANNIK':{let c=_areaCenter(1-pi);spawnShardsXY(c.x,c.y,'#cc66ff',fxCount(6));break;}
   }
 }
 function applyCardParallax(cc){const card=cc.querySelector('.card');cc.addEventListener('mousemove',e=>{const r=cc.getBoundingClientRect();const x=e.clientX-r.left,y=e.clientY-r.top;card.style.transform=`rotateX(${-((y-r.height/2)/r.height/2)*20}deg) rotateY(${((x-r.width/2)/r.width/2)*20}deg)`;card.style.setProperty('--shine-x',(x/r.width*100)+'%');card.style.setProperty('--shine-y',(y/r.height*100)+'%');});cc.addEventListener('mouseleave',()=>card.style.transform='rotateX(0) rotateY(0)');}
@@ -1909,25 +1919,25 @@ setTimeout(()=>{
   }
 },600);
 </script>
-<!-- ── 3D arena layer (Three.js): parallax camera, floating embers, runic ring, pillars. Graceful: CSS scene stays if this fails. ── -->
+<!-- ── 3D arena props (Three.js): static scene — central DRON idol + side braziers, theme & event reactive. Graceful: CSS scene + emoji totem stay if this fails. ── -->
 <script type="module">
 (async function(){
   const cv=document.getElementById('arena3d'); if(!cv) return;
   const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const small=Math.min(window.innerWidth,window.innerHeight)<=640;
-  if(reduce||small) return; // keep lightweight CSS scene on mobile / reduced-motion
-  // WebGL support probe
+  if(reduce||small) return; // keep lightweight CSS scene + emoji totem on mobile / reduced-motion
   try{const t=document.createElement('canvas');if(!(t.getContext('webgl2')||t.getContext('webgl'))) return;}catch(e){return;}
   let THREE;
   try{ THREE=await import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js'); }
   catch(e){ return; } // CDN blocked/offline → CSS arena stays
   if(!THREE||!THREE.WebGLRenderer) return;
 
+  // theme palettes: stone tint, glowing eye/rune, flame, brazier light
   const PAL={
-    default:{ember:0xff7a2a,ring:0xd4a017,pillar:0x2a1408,fog:0x130602,dust:0xff9a4a},
-    neon:   {ember:0x00e5ff,ring:0xff2bd6,pillar:0x07202a,fog:0x02101a,dust:0x4ad6ff},
-    frost:  {ember:0xbfe9ff,ring:0x9fe8ff,pillar:0x0c1c2a,fog:0x06121c,dust:0xd8f6ff},
-    gold:   {ember:0xffd24a,ring:0xffd700,pillar:0x2a2008,fog:0x141002,dust:0xffe9a8}
+    default:{stone:0x4a3526,eye:0xffb347,flame:0xff6a2a,light:0xff8a3a,fog:0x130602},
+    neon:   {stone:0x1b2a36,eye:0x39e6ff,flame:0x18c6ff,light:0x2bd0ff,fog:0x02101a},
+    frost:  {stone:0x2a3a44,eye:0xbfe9ff,flame:0x9fd8ff,light:0x9fd8ff,fog:0x06121c},
+    gold:   {stone:0x3a2c10,eye:0xffd700,flame:0xffc24a,light:0xffce55,fog:0x141002}
   };
   let pal=PAL.default;
 
@@ -1935,61 +1945,85 @@ setTimeout(()=>{
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
   renderer.setSize(window.innerWidth,window.innerHeight,false);
   const scene=new THREE.Scene();
-  scene.fog=new THREE.FogExp2(pal.fog,0.052);
-  const camera=new THREE.PerspectiveCamera(55,window.innerWidth/window.innerHeight,0.1,100);
-  camera.position.set(0,0.6,9);
+  scene.fog=new THREE.FogExp2(pal.fog,0.020);
+  const camera=new THREE.PerspectiveCamera(50,window.innerWidth/window.innerHeight,0.1,100);
+  camera.position.set(0,1.1,13); camera.lookAt(0,0.2,0);
 
-  // runic ring (glowing torus, lies low and rotates)
-  const ringMat=new THREE.MeshBasicMaterial({color:pal.ring,transparent:true,opacity:0.55,blending:THREE.AdditiveBlending,depthWrite:false});
-  const ring=new THREE.Mesh(new THREE.TorusGeometry(3.0,0.055,8,90),ringMat);
-  ring.rotation.x=Math.PI*0.46; ring.position.set(0,-2.6,-1); scene.add(ring);
-  const ring2=new THREE.Mesh(new THREE.TorusGeometry(2.1,0.035,8,70),ringMat.clone());
-  ring2.rotation.x=Math.PI*0.46; ring2.position.set(0,-2.55,-1); scene.add(ring2);
+  // lights
+  const amb=new THREE.AmbientLight(0x55401e,0.7); scene.add(amb);
+  const key=new THREE.DirectionalLight(0xffd9a0,0.5); key.position.set(0,6,8); scene.add(key);
 
-  // flanking pillars (depth)
-  const pillarMat=new THREE.MeshBasicMaterial({color:pal.pillar});
-  const pillars=[];
-  [[-5.4,-4],[5.4,-4],[-7,-9],[7,-9]].forEach(([x,z])=>{
-    const p=new THREE.Mesh(new THREE.BoxGeometry(0.9,11,0.9),pillarMat);
-    p.position.set(x,-1,z); scene.add(p); pillars.push(p);
-  });
+  // soft additive glow sprite texture
+  function glowTex(){const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');const gr=g.createRadialGradient(64,64,0,64,64,64);gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.35,'rgba(255,255,255,.55)');gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.fillRect(0,0,128,128);return new THREE.CanvasTexture(c);}
+  const GLOW=glowTex();
+  function glowSprite(color,scale){const m=new THREE.SpriteMaterial({map:GLOW,color:color,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,opacity:0.9});const s=new THREE.Sprite(m);s.scale.set(scale,scale,1);return s;}
 
-  // floating embers (rise + recycle)
-  function makePoints(count,spreadX,spreadZ,yMin,yMax,size,color,opacity){
-    const g=new THREE.BufferGeometry(); const pos=new Float32Array(count*3); const vel=new Float32Array(count);
-    for(let i=0;i<count;i++){pos[i*3]=(Math.random()-0.5)*spreadX;pos[i*3+1]=yMin+Math.random()*(yMax-yMin);pos[i*3+2]=(Math.random()-0.5)*spreadZ-2;vel[i]=0.006+Math.random()*0.02;}
-    g.setAttribute('position',new THREE.BufferAttribute(pos,3));
-    const m=new THREE.PointsMaterial({color:color,size:size,transparent:true,opacity:opacity,blending:THREE.AdditiveBlending,depthWrite:false});
-    const pts=new THREE.Points(g,m); scene.add(pts);
-    return {pts,pos,vel,count,spreadX,spreadZ,yMin,yMax};
+  // ── central DRON idol (stylised stone monolith with glowing eyes & chest rune) ──
+  const stoneMat=new THREE.MeshStandardMaterial({color:pal.stone,roughness:0.92,metalness:0.08,flatShading:true});
+  const eyeMat=new THREE.MeshStandardMaterial({color:0x120800,emissive:pal.eye,emissiveIntensity:1.6,roughness:0.4});
+  const runeMat=new THREE.MeshStandardMaterial({color:0x120800,emissive:pal.eye,emissiveIntensity:1.1,roughness:0.5});
+  const idol=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(1.15,1.6,3.4,6),stoneMat); body.position.y=0; idol.add(body);
+  const head=new THREE.Mesh(new THREE.BoxGeometry(1.9,1.5,1.4),stoneMat); head.position.y=2.05; idol.add(head);
+  const brow=new THREE.Mesh(new THREE.BoxGeometry(2.05,0.34,0.35),stoneMat); brow.position.set(0,2.45,0.62); idol.add(brow);
+  const eyeGeo=new THREE.SphereGeometry(0.24,18,18);
+  const eyeL=new THREE.Mesh(eyeGeo,eyeMat); eyeL.position.set(-0.52,2.05,0.66); idol.add(eyeL);
+  const eyeR=new THREE.Mesh(eyeGeo,eyeMat); eyeR.position.set(0.52,2.05,0.66); idol.add(eyeR);
+  const eyeGlowL=glowSprite(pal.eye,1.1); eyeGlowL.position.copy(eyeL.position); idol.add(eyeGlowL);
+  const eyeGlowR=glowSprite(pal.eye,1.1); eyeGlowR.position.copy(eyeR.position); idol.add(eyeGlowR);
+  const rune=new THREE.Mesh(new THREE.TorusGeometry(0.5,0.07,8,28),runeMat); rune.position.set(0,0.35,1.15); idol.add(rune);
+  const idolLight=new THREE.PointLight(pal.eye,1.2,14); idolLight.position.set(0,1.6,2.2); idol.add(idolLight);
+  const idolAura=glowSprite(pal.eye,5.5); idolAura.position.set(0,1.4,-0.6); idolAura.material.opacity=0.32; idol.add(idolAura);
+  idol.position.set(0,-1.3,0); scene.add(idol);
+
+  // ── side braziers (bowl + flame sprites + spark jet + warm light) ──
+  function makeBrazier(x){
+    const g=new THREE.Group();
+    const bowl=new THREE.Mesh(new THREE.CylinderGeometry(0.72,0.42,0.6,14),new THREE.MeshStandardMaterial({color:0x2a1c10,roughness:0.8,metalness:0.3}));
+    const stem=new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.26,2.4,10),new THREE.MeshStandardMaterial({color:0x241910,roughness:0.85,metalness:0.25}));
+    stem.position.y=-1.5; g.add(stem,bowl);
+    const flame=glowSprite(pal.flame,2.0); flame.position.y=0.7; flame.scale.set(1.3,2.2,1); g.add(flame);
+    const flameCore=glowSprite(0xfff3c0,1.0); flameCore.position.y=0.55; flameCore.scale.set(0.8,1.4,1); g.add(flameCore);
+    const N=18,sp=new Float32Array(N*3),sv=new Float32Array(N);
+    for(let i=0;i<N;i++){sp[i*3]=(Math.random()-.5)*0.5;sp[i*3+1]=0.4+Math.random()*1.6;sp[i*3+2]=(Math.random()-.5)*0.5;sv[i]=0.02+Math.random()*0.03;}
+    const sg=new THREE.BufferGeometry(); sg.setAttribute('position',new THREE.BufferAttribute(sp,3));
+    const sparks=new THREE.Points(sg,new THREE.PointsMaterial({color:pal.flame,size:0.16,transparent:true,opacity:0.9,blending:THREE.AdditiveBlending,depthWrite:false}));
+    g.add(sparks);
+    const light=new THREE.PointLight(pal.light,1.6,12); light.position.set(0,0.8,0.5); g.add(light);
+    g.position.set(x,-1.0,1.5); scene.add(g);
+    return {g,flame,flameCore,sparks,sp,sv,N,light};
   }
-  const embers=makePoints(130,16,12,-5,7,0.10,pal.ember,0.85);
-  const dust  =makePoints(90,22,16,-7,9,0.045,pal.dust,0.4);
+  const braziers=[makeBrazier(-7.2),makeBrazier(7.2)];
 
-  function step(layer,phase){
-    const {pos,vel,count,spreadX,yMin,yMax}=layer;
-    for(let i=0;i<count;i++){
-      pos[i*3+1]+=vel[i];
-      pos[i*3]+=Math.sin((pos[i*3+1]+i)*0.5)*0.0015;
-      if(pos[i*3+1]>yMax){pos[i*3+1]=yMin;pos[i*3]=(Math.random()-0.5)*spreadX;}
-    }
-    layer.pts.geometry.attributes.position.needsUpdate=true;
-  }
-
-  // parallax target from pointer / device tilt
-  let tx=0,ty=0,cx=0,cy=0;
-  window.addEventListener('mousemove',e=>{tx=(e.clientX/window.innerWidth-0.5);ty=(e.clientY/window.innerHeight-0.5);},{passive:true});
-  window.addEventListener('deviceorientation',e=>{if(e.gamma!=null){tx=Math.max(-0.5,Math.min(0.5,e.gamma/45));ty=Math.max(-0.5,Math.min(0.5,(e.beta-40)/45));}},{passive:true});
+  // ── reactive pulse (called from game FX hooks) ──
+  let pulse=0, pulseMax=0;
+  window.arena3dPulse=function(kind){ const amt=kind==='big'?1.0:(kind==='small'?0.4:0.7); pulse=Math.max(pulse,amt); pulseMax=Math.max(pulseMax,amt); };
 
   function resize(){renderer.setSize(window.innerWidth,window.innerHeight,false);camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();}
   window.addEventListener('resize',resize);
 
-  let raf=0,running=false;
+  let raf=0,running=false,t=0;
   function loop(){
-    cx+=(tx-cx)*0.05; cy+=(ty-cy)*0.05;
-    camera.position.x=cx*2.6; camera.position.y=0.6-cy*1.6; camera.lookAt(0,-0.3,-2);
-    ring.rotation.z+=0.0016; ring2.rotation.z-=0.0024;
-    step(embers); step(dust);
+    t+=0.016;
+    // idol idle bob + pulse flare
+    idol.position.y=-1.3+Math.sin(t*1.1)*0.07;
+    idol.rotation.y=Math.sin(t*0.35)*0.06;
+    const flare=1+pulse*1.4;
+    eyeMat.emissiveIntensity=1.6*flare+Math.sin(t*3)*0.15;
+    runeMat.emissiveIntensity=1.1*flare;
+    idolLight.intensity=1.2*flare;
+    const eg=1.1*(1+pulse*0.8); eyeGlowL.scale.set(eg,eg,1); eyeGlowR.scale.set(eg,eg,1);
+    idolAura.material.opacity=0.32+pulse*0.4;
+    const ks=1+pulse*0.08; idol.scale.set(ks,ks,ks);
+    // braziers: flicker + spark jet + pulse
+    for(const b of braziers){
+      const fl=0.85+Math.sin(t*9+b.g.position.x)*0.12+Math.random()*0.06+pulse*0.6;
+      b.flame.scale.set(1.3*fl,2.2*fl,1); b.flameCore.scale.set(0.8*fl,1.4*fl,1);
+      b.light.intensity=1.6*(0.8+Math.sin(t*8+b.g.position.x)*0.18)+pulse*2.2;
+      for(let i=0;i<b.N;i++){b.sp[i*3+1]+=b.sv[i]*(1+pulse);if(b.sp[i*3+1]>2.2){b.sp[i*3+1]=0.4;b.sp[i*3]=(Math.random()-.5)*0.5;b.sp[i*3+2]=(Math.random()-.5)*0.5;}}
+      b.sparks.geometry.attributes.position.needsUpdate=true;
+    }
+    if(pulse>0) pulse=Math.max(0,pulse-0.045);
     renderer.render(scene,camera);
     raf=requestAnimationFrame(loop);
   }
@@ -2001,11 +2035,12 @@ setTimeout(()=>{
   window.setArena3DTheme=function(theme){
     pal=PAL[theme]||PAL.default;
     scene.fog.color.setHex(pal.fog);
-    ringMat.color.setHex(pal.ring); ring2.material.color.setHex(pal.ring);
-    pillarMat.color.setHex(pal.pillar);
-    embers.pts.material.color.setHex(pal.ember); dust.pts.material.color.setHex(pal.dust);
+    stoneMat.color.setHex(pal.stone);
+    eyeMat.emissive.setHex(pal.eye); runeMat.emissive.setHex(pal.eye);
+    eyeGlowL.material.color.setHex(pal.eye); eyeGlowR.material.color.setHex(pal.eye);
+    idolLight.color.setHex(pal.eye); idolAura.material.color.setHex(pal.eye);
+    for(const b of braziers){ b.flame.material.color.setHex(pal.flame); b.sparks.material.color.setHex(pal.flame); b.light.color.setHex(pal.light); }
   };
-  // apply whatever theme is currently active
   const tcls=['neon','frost','gold'].find(t=>document.body.classList.contains('theme-'+t))||'default';
   window.setArena3DTheme(tcls);
 
