@@ -241,6 +241,39 @@ body.super-mode-active .totem-idol{animation:totemRoar .5s ease-in-out infinite;
 /* WARDROBE */
 .btn-wardrobe{background:linear-gradient(135deg,#3a2a5a,#6a3a8a) !important;color:#e0c8ff !important;box-shadow:0 4px 15px rgba(150,80,255,.2) !important;font-size:11px !important;padding:9px 22px !important;}
 .btn-wardrobe:hover{box-shadow:0 6px 20px rgba(150,80,255,.45) !important;}
+.btn-tut{background:linear-gradient(135deg,#1e4a3a,#1a6b55) !important;color:#9effd0 !important;box-shadow:0 4px 15px rgba(40,255,180,.18) !important;font-size:11px !important;padding:9px 22px !important;}
+.btn-tut:hover{box-shadow:0 6px 20px rgba(40,255,180,.42) !important;}
+.btn-campaign{background:linear-gradient(135deg,#5a2a0a,#8a3a1a) !important;color:#ffd0a0 !important;box-shadow:0 4px 15px rgba(255,120,40,.22) !important;font-size:12px !important;padding:10px 22px !important;}
+.btn-campaign:hover{box-shadow:0 6px 20px rgba(255,120,40,.45) !important;}
+/* CAMPAIGN */
+#campaign{position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,#180a04 0%,#000 100%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:142;padding:16px;}
+.cmp-panel{width:100%;max-width:480px;max-height:90vh;display:flex;flex-direction:column;background:rgba(14,6,2,.97);border:1.5px solid rgba(255,150,60,.35);border-radius:16px;box-shadow:0 0 30px rgba(255,120,40,.22);overflow:hidden;}
+.cmp-prog{text-align:center;font-size:12px;color:#ffd24a;font-weight:900;margin:10px 0;letter-spacing:1px;}
+.cmp-boss{display:flex;align-items:center;gap:12px;background:rgba(40,18,6,.8);border:1.5px solid rgba(255,150,60,.2);border-radius:12px;padding:10px 12px;margin:0 12px 8px;transition:all .15s;}
+.cmp-boss.cur{cursor:pointer;border-color:#ffae42;box-shadow:0 0 14px rgba(255,150,40,.3);animation:cmpPulse 1.8s ease-in-out infinite;}
+.cmp-boss.cur:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(255,140,40,.4);}
+@keyframes cmpPulse{0%,100%{border-color:rgba(255,174,66,.5);}50%{border-color:rgba(255,210,120,1);}}
+.cmp-boss.lock{opacity:.45;filter:grayscale(70%);}
+.cmp-boss.done{opacity:.8;border-color:rgba(94,255,139,.35);}
+.cmp-ic{font-size:34px;line-height:1;flex-shrink:0;}
+.cmp-info{text-align:left;}
+.cmp-name{font-size:13px;font-weight:900;color:#fff;}
+.cmp-sub{font-size:10px;color:#caa;letter-spacing:.5px;margin-top:2px;}
+/* TUTORIAL */
+#tutorial{position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,#0a0518 0%,#000 100%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:150;padding:18px;}
+.tut-panel{position:relative;width:100%;max-width:440px;background:rgba(8,3,14,.97);border:1.5px solid rgba(120,200,255,.35);border-radius:18px;box-shadow:0 0 34px rgba(60,160,255,.25);padding:26px 22px 18px;text-align:center;}
+.tut-x{position:absolute;top:8px;right:10px;background:none;border:none;color:#888;font-size:18px;cursor:pointer;font-family:inherit;}
+.tut-x:hover{color:#fff;}
+.tut-ic{font-size:54px;line-height:1;margin-bottom:8px;filter:drop-shadow(0 0 12px rgba(120,200,255,.5));animation:tutPop .4s cubic-bezier(.2,1.5,.4,1);}
+@keyframes tutPop{0%{transform:scale(.4);opacity:0;}100%{transform:scale(1);opacity:1;}}
+.tut-title{font-size:18px;font-weight:900;color:#bfe6ff;letter-spacing:1px;margin-bottom:8px;text-shadow:0 0 10px rgba(120,200,255,.4);}
+.tut-desc{font-size:13px;line-height:1.5;color:#e8f4ff;min-height:64px;}
+.tut-dots{display:flex;gap:6px;justify-content:center;margin:12px 0;}
+.tut-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.18);}
+.tut-dot.on{background:#5eb5ff;box-shadow:0 0 6px #5eb5ff;}
+.tut-nav{display:flex;gap:10px;justify-content:center;}
+.tut-skip{margin-top:10px;font-size:9px;color:#5a6a7a;letter-spacing:1px;text-transform:uppercase;cursor:pointer;}
+.tut-skip:hover{color:#9ab;}
 #wardrobe{position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,#0e0518 0%,#000 100%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:140;padding:16px;}
 .wd-panel{width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;background:rgba(8,3,14,.96);border:1.5px solid rgba(180,120,255,.35);border-radius:16px;box-shadow:0 0 30px rgba(140,60,255,.25);overflow:hidden;}
 .wd-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(180,120,255,.2);}
@@ -265,7 +298,20 @@ body.back-obereg .card.back{background:linear-gradient(135deg,#021a2a,#00a2ff 75
 body.back-frost .card.back{background:linear-gradient(135deg,#012a30,#3aebff 75%,#01323a) !important;}
 body.back-star .card.back{background:linear-gradient(135deg,#1a1a2e,#b366ff 70%,#0e0e1c) !important;}
 body.back-crown .card.back{background:linear-gradient(135deg,#3a2a00,#ffd700 70%,#5a4200) !important;}
+body.back-goyda_eye .card.back{background:radial-gradient(circle at 50% 42%,#2a0a4a,#11001f 70%) !important;border-color:#cc66ff !important;}
+body.back-goyda_eye .back-rune{filter:drop-shadow(0 0 9px rgba(204,102,255,.9));animation:eyePulse 2.2s ease-in-out infinite !important;}
+@keyframes eyePulse{0%,100%{transform:scale(1);opacity:.85;}50%{transform:scale(1.18);opacity:1;}}
 body.back-fire .back-rune,body.back-crown .back-rune{filter:drop-shadow(0 0 6px rgba(255,180,40,.7));}
+/* H6: richer card backs — layered weave + corner glints */
+.card.back::before{background:repeating-linear-gradient(45deg,rgba(212,160,23,.10) 0,rgba(212,160,23,.10) 2px,transparent 2px,transparent 9px) !important;border:1px solid rgba(212,160,23,.25);}
+.card.back::after{background:radial-gradient(circle at 50% 50%,rgba(255,220,140,.14),transparent 55%),repeating-conic-gradient(from 0deg,rgba(255,210,120,.05) 0deg,transparent 8deg 30deg) !important;}
+/* H6: living hand cards — gentle idle breathing (staggered) */
+.hand .card-container{animation:cardIdle 4.2s ease-in-out infinite;}
+.hand .card-container:nth-child(2n){animation-delay:.5s;animation-duration:4.7s;}
+.hand .card-container:nth-child(3n){animation-delay:1s;animation-duration:3.9s;}
+.hand .card-container:hover{animation:none;}
+@keyframes cardIdle{0%,100%{transform:translateY(0) rotate(0);}50%{transform:translateY(-3px) rotate(.4deg);}}
+@media(max-width:640px){.hand .card-container{animation:none;}}
 /* COSMETIC: board themes (override vars) */
 body.theme-neon{--gold:#00eeff;--gold-bright:#7dffff;--neon-pink:#ff2bd6;background-image:radial-gradient(ellipse at 50% 40%,#04121a 0%,#02060a 70%,#000 100%);}
 body.theme-frost{--gold:#9fe8ff;--gold-bright:#d8f6ff;--neon-pink:#5ad1ff;background-image:radial-gradient(ellipse at 50% 40%,#06121a 0%,#020a10 70%,#000 100%);}
@@ -383,6 +429,7 @@ body.fire-wind::after{opacity:.5!important;background:radial-gradient(ellipse at
 .screen-fx.fx-rage{background:radial-gradient(circle at 50% 50%,rgba(255,40,20,.5),rgba(120,0,0,.25) 45%,transparent 72%);}
 .screen-fx.fx-bass{background:repeating-radial-gradient(circle at 50% 50%,rgba(255,189,21,.16) 0,rgba(255,189,21,.16) 10px,transparent 10px,transparent 24px);}
 .screen-fx.fx-holy{background:radial-gradient(circle at 50% 50%,rgba(255,250,210,.7),rgba(255,220,120,.3) 45%,transparent 75%);}
+.screen-fx.fx-cringe{background:radial-gradient(circle at 50% 50%,rgba(80,255,90,.35),rgba(20,120,30,.18) 45%,transparent 72%);}
 .ice-spike{position:fixed;transform:translate(-50%,-50%);z-index:60;pointer-events:none;font-size:22px;color:#bdeeff;text-shadow:0 0 8px rgba(120,220,255,.9);will-change:transform,opacity;}
 .light-pillar{position:fixed;bottom:0;top:0;width:60px;z-index:57;pointer-events:none;background:linear-gradient(180deg,transparent,var(--pc,#ffd700) 40%,var(--pc,#ffd700) 60%,transparent);filter:blur(2px);transform-origin:center bottom;mix-blend-mode:screen;}
 .sky-bolt{position:fixed;top:6%;transform:translate(-50%,0);z-index:60;pointer-events:none;font-size:54px;color:#fff7c0;text-shadow:0 0 18px rgba(255,240,120,1),0 0 6px #fff;will-change:transform,opacity;}
@@ -449,6 +496,34 @@ body.fire-wind::after{opacity:.5!important;background:radial-gradient(ellipse at
   </div>
 </div>
 
+<!-- КАМПАНИЯ -->
+<div id="campaign">
+  <div class="cmp-panel">
+    <div class="wd-header">
+      <span class="wd-title">🎬 ПУТЬ ГОЙДЫ</span>
+      <button class="btn" style="padding:4px 12px;font-size:11px" onclick="closeCampaign()">✖ ЗАКРЫТЬ</button>
+    </div>
+    <div id="campaign-body" class="wd-scroll"></div>
+    <div class="wd-foot">Побеждай боссов по очереди — каждый открывает следующего. С ключом Gemini боссы заговорят живьём!</div>
+  </div>
+</div>
+
+<!-- ОБУЧЕНИЕ -->
+<div id="tutorial">
+  <div class="tut-panel">
+    <button class="tut-x" onclick="closeTutorial()" title="пропустить">✖</button>
+    <div class="tut-ic" id="tut-ic">⚔️</div>
+    <div class="tut-title" id="tut-title"></div>
+    <div class="tut-desc" id="tut-desc"></div>
+    <div class="tut-dots" id="tut-dots"></div>
+    <div class="tut-nav">
+      <button class="btn tut-back" id="tut-back" onclick="tutGo(-1)">‹ Назад</button>
+      <button class="btn" id="tut-next" onclick="tutGo(1)">Далее ›</button>
+    </div>
+    <div class="tut-skip" onclick="closeTutorial()">пропустить обучение</div>
+  </div>
+</div>
+
 
 <!-- ЛОББИ -->
 <div id="lobby">
@@ -457,7 +532,9 @@ body.fire-wind::after{opacity:.5!important;background:radial-gradient(ellipse at
   <div class="lobby-divider"></div>
 
   <div id="lobby-stats" class="lobby-stats" style="display:none"></div>
+  <button class="btn btn-campaign" onclick="openCampaign()">🎬 ПУТЬ ГОЙДЫ</button>
   <button class="btn btn-wardrobe" onclick="openWardrobe()">🎴 ГАРДЕРОБ</button>
+  <button class="btn btn-tut" onclick="openTutorial()">🎓 КАК ИГРАТЬ</button>
 
   <div class="lobby-section">
     <div class="lobby-label">🤖 Биться в одиночку — против бота</div>
@@ -745,7 +822,8 @@ const COSMETICS={
     {id:'obereg',name:'Оберег',ic:'🧿',minSlava:160,rune:'🧿'},
     {id:'frost',name:'Ледяная',ic:'❄️',minSlava:320,rune:'❄️'},
     {id:'star',name:'Звёздная',ic:'🌟',minSlava:540,rune:'🌟'},
-    {id:'crown',name:'Княжья',ic:'👑',minSlava:1200,rune:'👑'}
+    {id:'crown',name:'Княжья',ic:'👑',minSlava:1200,rune:'👑'},
+    {id:'goyda_eye',name:'Око Гойды',ic:'👁️',minSlava:0,egg:true,rune:'👁️'}
   ],
   theme:[
     {id:'default',name:'Багровая Гойда',ic:'🩸',minSlava:0},
@@ -762,7 +840,7 @@ const COSMETICS={
 };
 function rarityOf(card){let n=card.cnt;return n<=2?'legendary':n===3?'epic':n===4?'rare':'common';}
 function rarityLabel(card){return{legendary:'☆ ЛЕГЕНДА ☆',epic:'Эпический свиток',rare:'Редкий свиток',common:'Свиток Гойды'}[rarityOf(card)];}
-function cosmeticUnlocked(c){return STATS.slava>=c.minSlava;}
+function cosmeticUnlocked(c){return c.egg?!!STATS.eggFound:STATS.slava>=c.minSlava;}
 function currentBack(){let id=(STATS.cosmetics&&STATS.cosmetics.back)||'default';return COSMETICS.back.find(b=>b.id===id)||COSMETICS.back[0];}
 function applyCosmetics(){
   let c=STATS.cosmetics||{};
@@ -787,6 +865,37 @@ function selectCosmetic(cat,id){
   sfx('coin');
 }
 function openWardrobe(){renderWardrobe();document.getElementById('wardrobe').style.display='flex';}
+// ── H2: optional tutorial ──
+const TUT_SLIDES=[
+  {ic:'⚔️',t:'Добро пожаловать в ГОЙДУ!',d:'Карточная дуэль один на один: снеси врагу 100 ОЗ раньше, чем он тебе.'},
+  {ic:'🃏',t:'Твоя рука',d:'Каждый ход играешь ОДНУ карту: атака, лечение, щит или баф. Карта улетает в центр арены.'},
+  {ic:'📊',t:'Базометр и Этапы',d:'Многие карты качают Базометр. Дошёл до 100% → СВЕРХ-ГОЙДА: 2 хода ярости и защиты. Этап (I–III) открывает мощные карты.'},
+  {ic:'💰',t:'Тактики за монеты',d:'Внизу 3 тактики — каждый ход новые. Копи монеты и трать на них в нужный момент (вместо карты).'},
+  {ic:'🛡️',t:'Защита',d:'🛡 Броня гасит один удар, 🪬 Зеркало отражает 75% урона обратно врагу.'},
+  {ic:'☠️',t:'Статусы',d:'☠ Яд жалит каждый ход, 🌵 Шипы бьют в ответ на удар, ⚡ Оглушение пропускает ход врага, 🫳 Кража тянет карту из руки врага.'},
+  {ic:'🗿',t:'Живое поле',d:'Тапай факелы, знамёна и камень-ДРОН ради эффектов. Тапни своё имя — швырни сопернику эмоцию!'},
+  {ic:'🏆',t:'Готов? ГОЙДА!',d:'Жми «В БОЙ» и сыграй с лёгким ботом, чтобы освоиться.'}
+];
+let _tutIdx=0;
+function openTutorial(){_tutIdx=0;STATS.tutSeen=true;saveStats();document.getElementById('tutorial').style.display='flex';renderTut();}
+function closeTutorial(){document.getElementById('tutorial').style.display='none';}
+function tutGo(d){if(d>0&&_tutIdx===TUT_SLIDES.length-1){closeTutorial();startBotGame('easy');return;}_tutIdx=Math.max(0,Math.min(TUT_SLIDES.length-1,_tutIdx+d));renderTut();}
+function renderTut(){let s=TUT_SLIDES[_tutIdx];document.getElementById('tut-ic').textContent=s.ic;document.getElementById('tut-title').textContent=s.t;document.getElementById('tut-desc').textContent=s.d;document.getElementById('tut-back').style.visibility=_tutIdx===0?'hidden':'visible';document.getElementById('tut-next').textContent=_tutIdx===TUT_SLIDES.length-1?'⚔ В БОЙ':'Далее ›';let dots='';for(let i=0;i<TUT_SLIDES.length;i++)dots+='<span class="tut-dot'+(i===_tutIdx?' on':'')+'"></span>';document.getElementById('tut-dots').innerHTML=dots;}
+function maybeOfferTutorial(){if(STATS.games===0&&!STATS.tutSeen){setTimeout(()=>{if(STATS.tutSeen)return;if(confirm('Новичок в ГОЙДЕ? Пройти быстрое обучение (1 минута)?'))openTutorial();else{STATS.tutSeen=true;saveStats();}},700);}}
+// ── H3: campaign «Путь Гойды» ──
+const CAMPAIGN=[
+  {name:'Холоп-Лежебока',ic:'😴',level:'easy',intro:'Эх, опять биться... ну давай, только по-быстрому.'},
+  {name:'Ратник Фёдор',ic:'⚔️',level:'easy',intro:'За Дрон и Гойду! Покажу тебе сечу!'},
+  {name:'Воевода Скуф',ic:'🛡️',level:'warrior',intro:'Молод ты ещё против воеводы.'},
+  {name:'Опричник-Душнила',ic:'👹',level:'warrior',intro:'Сейчас занудно и больно объясню, кто тут главный.'},
+  {name:'Волхв Криовед',ic:'❄️',level:'oprichnik',intro:'Заморожу твою Гойду в лёд, дитя.'},
+  {name:'Сам Гойда-Батя',ic:'👑',level:'oprichnik',intro:'Ты дошёл до меня? Что ж... ГОЙДА РЕШАЕТ.'}
+];
+let _campaignIdx=-1;
+function openCampaign(){renderCampaign();document.getElementById('campaign').style.display='flex';}
+function closeCampaign(){document.getElementById('campaign').style.display='none';}
+function renderCampaign(){let host=document.getElementById('campaign-body');if(!host)return;let prog=STATS.campaign||0,done=Math.min(prog,CAMPAIGN.length);let lvl={easy:'Лёгкий',warrior:'Воин',oprichnik:'Опричник'};let html='<div class="cmp-prog">Пройдено боссов: '+done+'/'+CAMPAIGN.length+(done>=CAMPAIGN.length?' — ПУТЬ ЗАВЕРШЁН! 👑':'')+'</div>';CAMPAIGN.forEach((b,i)=>{let st=i<prog?'done':i===prog?'cur':'lock';html+='<div class="cmp-boss '+st+'" '+(st==='cur'?'onclick="startCampaignBattle('+i+')"':'')+'><div class="cmp-ic">'+b.ic+'</div><div class="cmp-info"><div class="cmp-name">'+(i+1)+'. '+b.name+'</div><div class="cmp-sub">'+(st==='done'?'✅ повержен':st==='cur'?'◄ ТВОЙ БОЙ · '+lvl[b.level]:'🔒 закрыто')+'</div></div></div>';});host.innerHTML=html;}
+function startCampaignBattle(idx){let b=CAMPAIGN[idx];if(!b)return;_campaignIdx=idx;window._campaignBoss=b.name;closeCampaign();startBotGame(b.level,true);let nm=document.getElementById('pname2');if(nm)nm.textContent='⚔ '+b.ic+' '+b.name;setTimeout(()=>{if(STATS.geminiKey){geminiSay('intro',{boss:b.name}).then(t=>spawnEmote(BOT,t||b.intro));}else spawnEmote(BOT,b.intro);},900);}
 function closeWardrobe(){document.getElementById('wardrobe').style.display='none';}
 const COSMETIC_CATS=[{key:'back',title:'🎴 Рубашки карт'},{key:'theme',title:'🎨 Темы поля'},{key:'frame',title:'🖼️ Рамки бойца'}];
 function renderWardrobe(){
@@ -1042,7 +1151,7 @@ function onDisconnect(){
 }
 
 function startOnlineGame(){
-  gameStarted=true;
+  gameStarted=true;_campaignIdx=-1;window._campaignBoss='';
   document.getElementById('lobby').style.display='none';
   document.getElementById('bottom-bar').classList.remove('hidden');
   document.getElementById('log-toggle').style.display='block';
@@ -1207,7 +1316,7 @@ function checkWin(me,foe,pi){
   else if(me.hp<=0){G.over=true;ended=true;html=`🏆 ${pn(1-pi)} ТРИУМФОВАЛ!`;}
   if(!ended||isOnline)return; // online handled in showOnlineOver
   let res=null,o=null;
-  if(isBot){o=botOutcome();res=recordResult('bot',o);html=o==='win'?'🏆 ВЫ ТРИУМФОВАЛИ!<br><span class="text-sm font-normal">Бот повержен. Гойда абсолютна!</span>':o==='loss'?'💀 ВЫ ПАЛИ!<br><span class="text-sm font-normal">Бот оказался базированнее.</span>':'⚔️ СОВМЕСТНАЯ СМЕРТЬ!';showBotThinking(false);renderLobbyStats();setTimeout(()=>{_botReactLast=0;botReact('gg',true,{win:o==='win'});},500);}
+  if(isBot){o=botOutcome();res=recordResult('bot',o);let cmpHtml='';if(_campaignIdx>=0){let bossName=(CAMPAIGN[_campaignIdx]||{}).name||'босс';if(o==='win'){if(_campaignIdx===(STATS.campaign||0)){STATS.campaign=(STATS.campaign||0)+1;saveStats();}let last=_campaignIdx>=CAMPAIGN.length-1;cmpHtml=last?'<div class="rank-up-toast" style="color:#ffd24a">👑 ПУТЬ ГОЙДЫ ПРОЙДЕН ДО КОНЦА!</div>':'<div class="rank-up-toast" style="color:#5eff8b">🎬 Босс «'+bossName+'» повержен! Открыт следующий.</div>';}else if(o==='loss'){cmpHtml='<div class="unlock-toast">🎬 «'+bossName+'» устоял. Попробуй снова!</div>';}}html=(o==='win'?'🏆 ВЫ ТРИУМФОВАЛИ!<br><span class="text-sm font-normal">Бот повержен. Гойда абсолютна!</span>':o==='loss'?'💀 ВЫ ПАЛИ!<br><span class="text-sm font-normal">Бот оказался базированнее.</span>':'⚔️ СОВМЕСТНАЯ СМЕРТЬ!')+cmpHtml;showBotThinking(false);renderLobbyStats();setTimeout(()=>{_botReactLast=0;botReact('gg',true,{win:o==='win'});},500);}
   else if(!_resultRecorded){_resultRecorded=true;STATS.games++;saveStats();renderLobbyStats();o=(me.hp<=0&&foe.hp<=0)?'draw':'win';}
   showOver(html,res,o);
 }
@@ -1299,10 +1408,10 @@ function sfx(name){if(!actx||sndMuted)return;if(actx.state==='suspended')actx.re
   case'click':tone(900,.05,'sine',.08);break;
 }}
 function toggleMute(){initSound();sndMuted=!sndMuted;STATS.muted=sndMuted;saveStats();if(master)master.gain.value=sndMuted?0:.7;let btn=document.getElementById('mute-bb');if(btn)btn.textContent=sndMuted?'🔇 ЗВУК ВЫКЛ':'🔊 ЗВУК ВКЛ';}
-function startLocalGame(){isOnline=false;isLocal=true;isBot=false;document.getElementById('lobby').style.display='none';document.getElementById('bottom-bar').classList.remove('hidden');document.getElementById('log-toggle').style.display='block';document.getElementById('bb-lobby').style.display='inline-block';initGame();render();renderDiscard(0);renderDiscard(1);sfx('start');startMusicIfEnabled();resetIdle();showPass(0);}
+function startLocalGame(){isOnline=false;isLocal=true;isBot=false;_campaignIdx=-1;window._campaignBoss='';document.getElementById('lobby').style.display='none';document.getElementById('bottom-bar').classList.remove('hidden');document.getElementById('log-toggle').style.display='block';document.getElementById('bb-lobby').style.display='inline-block';initGame();render();renderDiscard(0);renderDiscard(1);sfx('start');startMusicIfEnabled();resetIdle();showPass(0);}
 const BOT_NAMES={easy:'БОТ-НОВОБРАНЕЦ',warrior:'БОТ-ВОИН',oprichnik:'БОТ-ОПРИЧНИК'};
-function startBotGame(level){isOnline=false;isLocal=false;isBot=true;botLevel=level||'warrior';myIndex=HUMAN;document.getElementById('lobby').style.display='none';document.getElementById('bottom-bar').classList.remove('hidden');document.getElementById('log-toggle').style.display='block';document.getElementById('bb-lobby').style.display='inline-block';initGame();addLog('🤖 Бой против '+BOT_NAMES[botLevel]+'! Ты ходишь первым. ГОЙДА!','#ff9eb5');render();renderDiscard(0);renderDiscard(1);sfx('start');startMusicIfEnabled();resetIdle();setTimeout(()=>botReact('greet',true),700);offerMulligan(HUMAN);}
-function backToLobby(force){if(!force&&!confirm('Вернуться в меню? Текущая схватка будет завершена. ГОЙДА?'))return;_intentionalClose=true;_reconnecting=false;clearTimeout(_reconnectTimer);showReconnectBanner(false);_iWantRematch=false;_oppWantsRematch=false;isOnline=false;isLocal=false;isBot=false;myIndex=-1;gameStarted=false;showBotThinking(false);closeEmoteWheel(true);stopMusic();clearTimeout(_idleTimer);clearTimeout(_stormTimer);_stormTimer=null;document.body.classList.remove('flip-view');if(mqttClient){try{mqttClient.end(true);}catch(e){}mqttClient=null;}document.getElementById('lobby').style.display='flex';document.getElementById('over').style.display='none';document.getElementById('bottom-bar').classList.add('hidden');document.getElementById('log-toggle').style.display='none';document.getElementById('bb-lobby').style.display='none';renderLobbyStats();}
+function startBotGame(level,isCampaign){isOnline=false;isLocal=false;isBot=true;botLevel=level||'warrior';myIndex=HUMAN;if(!isCampaign){_campaignIdx=-1;window._campaignBoss='';}document.getElementById('lobby').style.display='none';document.getElementById('bottom-bar').classList.remove('hidden');document.getElementById('log-toggle').style.display='block';document.getElementById('bb-lobby').style.display='inline-block';initGame();addLog(isCampaign?('🎬 ПУТЬ ГОЙДЫ: бой против «'+(window._campaignBoss||'босса')+'»!'):('🤖 Бой против '+BOT_NAMES[botLevel]+'! Ты ходишь первым. ГОЙДА!'),'#ff9eb5');render();renderDiscard(0);renderDiscard(1);sfx('start');startMusicIfEnabled();resetIdle();if(!isCampaign)setTimeout(()=>botReact('greet',true),700);offerMulligan(HUMAN);}
+function backToLobby(force){if(!force&&!confirm('Вернуться в меню? Текущая схватка будет завершена. ГОЙДА?'))return;_intentionalClose=true;_reconnecting=false;clearTimeout(_reconnectTimer);showReconnectBanner(false);_iWantRematch=false;_oppWantsRematch=false;_campaignIdx=-1;window._campaignBoss='';isOnline=false;isLocal=false;isBot=false;myIndex=-1;gameStarted=false;showBotThinking(false);closeEmoteWheel(true);stopMusic();clearTimeout(_idleTimer);clearTimeout(_stormTimer);_stormTimer=null;document.body.classList.remove('flip-view');if(mqttClient){try{mqttClient.end(true);}catch(e){}mqttClient=null;}document.getElementById('lobby').style.display='flex';document.getElementById('over').style.display='none';document.getElementById('bottom-bar').classList.add('hidden');document.getElementById('log-toggle').style.display='none';document.getElementById('bb-lobby').style.display='none';renderLobbyStats();}
 
 // === SIDE PANELS ===
 const BATTLE_CRIES=['ГОЙДА!!!','СЛАВА!','В АТАКУ!','СТОЯТЬ!','ДЕРЖИСЬ!','ЗА ДРОН!','СИЛА!','УДАЧА!','ВПЕРЁД!','НЕ СДАВАЙ!','ОГОНЬ!','ГОЙДА-МАТ!','ЯРОСТЬ!','ПОБЕДА!'];
@@ -1331,7 +1440,9 @@ function doodadHit(key,el,opts){
 }
 function hitTorch(el){doodadHit('torch'+(el.classList.contains('torch-l')?'L':'R'),el,{anim:'torch-flare',sound:sndCrackle,shards:true,shardColor:'#ff9a2a',shardN:9,cd:340});}
 function hitBanner(el){doodadHit(el.classList.contains('banner-l')?'banL':'banR',el,{anim:'banner-wave',sound:sndHorn,shards:true,shardColor:'#ffd24a',shardN:5,cd:600});}
-function hitTotem(){doodadHit('totem',document.getElementById('totem-idol'),{anim:'totem-bang',sound:sndThud,shards:true,shardColor:'#ff6a2a',shardN:11,cry:true,ring:true,cd:420});}
+let _stoneTaps=0,_stoneTapT=0;
+function hitTotem(){doodadHit('totem',document.getElementById('totem-idol'),{anim:'totem-bang',sound:sndThud,shards:true,shardColor:'#ff6a2a',shardN:11,cry:true,ring:true,cd:420});let now=Date.now();if(now-_stoneTapT<1400)_stoneTaps++;else _stoneTaps=1;_stoneTapT=now;if(_stoneTaps>=10){_stoneTaps=0;triggerEgg();}}
+function triggerEgg(){let t=document.getElementById('totem-idol');if(t){let r=t.getBoundingClientRect();let cols=['#ff4d4d','#ffd24a','#5eff8b','#5eb5ff','#cc66ff','#fff'];for(let k=0;k<6;k++)spawnShardsXY(r.left+r.width/2,r.top+r.height/2,cols[k%cols.length],fxCount(10));}totemSay('👁️ ОКО ГОЙДЫ ОТКРЫТО!',true);screenFlash('fx-holy',700);let was=!!STATS.eggFound;STATS.eggFound=true;saveStats();if(!was){addLog('🥚 ПАСХАЛКА! Открыта тайная рубашка «Око Гойды» — загляни в Гардероб!','#cc66ff');setTimeout(()=>{try{alert('🥚 Пасхалка найдена!\nТайная рубашка «👁️ Око Гойды» разблокирована в Гардеробе.');}catch(e){}},200);}}
 // ── Fighter emotes (tap your own zone) ──
 function spawnEmote(pi,text){let c=_areaCenter(pi);let b=document.createElement('div');b.className='emote-bubble';b.textContent=text;b.style.left=c.x+'px';b.style.top=(c.y-12)+'px';document.body.appendChild(b);let a=document.getElementById('p'+(pi+1)+'-area');if(a){a.classList.remove('emote-wobble');void a.offsetWidth;a.classList.add('emote-wobble');}setTimeout(()=>b.remove(),1600);}
 // ── G5: livelier bot — typed reactions by event & difficulty ──
@@ -1536,6 +1647,11 @@ function castFX(pi,card){
     case'ABSOLUT_GOYDA':lightPillar(pi,'#ffffff');screenFlash('fx-holy',600);break;
     case'NAGOYDATEL':lightPillar(pi,'#ff8a00');break;
     case'GOYDUSHKA':lightPillar(pi,'#5eff8b');break;
+    case'GOYDO_HAMSTER':{let c=_areaCenter(pi);spawnShardsXY(c.x,c.y,'#ffd700',fxCount(10));break;}
+    case'GOYDO_DILER':{let c=_areaCenter(pi);spawnShardsXY(c.x,c.y,'#3ae4d0',fxCount(9));break;}
+    case'CRINGE_GOYDA':screenFlash('fx-cringe',360);break;
+    case'GOYDO_YAD':{let c=_areaCenter(1-pi);spawnShardsXY(c.x,c.y,'#7cff5a',fxCount(8));break;}
+    case'GLUSHILKA':screenFlash('fx-bass',300);break;
   }
 }
 function applyCardParallax(cc){const card=cc.querySelector('.card');cc.addEventListener('mousemove',e=>{const r=cc.getBoundingClientRect();const x=e.clientX-r.left,y=e.clientY-r.top;card.style.transform=`rotateX(${-((y-r.height/2)/r.height/2)*20}deg) rotateY(${((x-r.width/2)/r.width/2)*20}deg)`;card.style.setProperty('--shine-x',(x/r.width*100)+'%');card.style.setProperty('--shine-y',(y/r.height*100)+'%');});cc.addEventListener('mouseleave',()=>card.style.transform='rotateX(0) rotateY(0)');}
@@ -1561,7 +1677,7 @@ document.getElementById('btn-local').addEventListener('click',startLocalGame);
 document.getElementById('btn-join').addEventListener('click',joinRoomBtn);
 document.getElementById('room-input').addEventListener('keydown',function(e){if(e.key==='Enter')joinRoomBtn();});
 
-renderLobbyStats();applyCosmetics();
+renderLobbyStats();applyCosmetics();maybeOfferTutorial();
 (function(){let btn=document.getElementById('mute-bb');if(btn)btn.textContent=sndMuted?'🔇 ЗВУК ВЫКЛ':'🔊 ЗВУК ВКЛ';_updateMusicBtn();_updateGeminiBtn();})();
 initGame();render();renderDiscard(0);renderDiscard(1);
 // Show library load status in lobby
