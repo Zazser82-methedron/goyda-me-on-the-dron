@@ -528,6 +528,56 @@ body.fire-wind::after{opacity:.5!important;background:radial-gradient(ellipse at
   #waiting-overlay{top:56px;}
   .waiting-box{padding:6px 16px 8px;}
 }
+/* ── DESKTOP SCALE-UP: bigger cards/board, use the side space (gated on height to avoid overflow) ── */
+@media (min-width:1024px) and (min-height:880px){
+  .card-container{width:158px;height:218px;}
+  .card-container:hover{transform:scale(1.28) translateY(-24px) !important;}
+  .card-name{font-size:14px;min-height:28px;}
+  .card-ico{font-size:30px;}
+  .card-emblem{width:52px;height:52px;}
+  .card-stat .card-num,.card-num{font-size:25px;}
+  .card-unit{font-size:10px;}
+  .card-effect{font-size:11px;}
+  .card-role-tab{font-size:10px;}
+  .card-tag{font-size:9px;}
+  .hand{gap:18px;min-height:250px;padding-top:20px;}
+  .abil-card-container{width:236px;height:118px;}
+  .abil-card-header{font-size:16px;}
+  .abil-card-desc{font-size:13px;}
+  .abil-card-cost{font-size:14px;}
+  .scroller-abil{gap:16px;min-height:74px;}
+  #mid{gap:26px;padding:10px 24px;}
+  .clash-slot{width:104px;min-height:118px;}
+  .played{width:90px;height:126px;}
+  .totem-idol{font-size:58px;}
+  .totem-glow{width:184px;height:184px;}
+  .totem-runes{width:88px;height:88px;}
+  .totem-deck{font-size:15px;}
+  .torch{font-size:28px;}
+  .arena-col{width:130px;}
+  .area-inner{gap:24px;}
+  .player-area{padding:14px 44px;}
+  .base-wrap{width:260px;height:30px;}
+  .base-txt{font-size:13px;}
+  .shield-slot,.reflect-slot{width:52px;height:52px;font-size:30px;}
+  .pname{font-size:16px;}
+  .info-row .hp-wrap{width:260px !important;height:28px !important;}
+  .hp-txt{font-size:15px !important;}
+}
+/* extra bump for very large screens */
+@media (min-width:1600px) and (min-height:1000px){
+  .card-container{width:178px;height:246px;}
+  .card-name{font-size:15px;}
+  .card-ico{font-size:34px;}
+  .card-emblem{width:58px;height:58px;}
+  .card-stat .card-num,.card-num{font-size:28px;}
+  .card-effect{font-size:12px;}
+  .hand{gap:22px;min-height:280px;}
+  .abil-card-container{width:262px;height:130px;}
+  .totem-idol{font-size:66px;}
+  .clash-slot{width:118px;}
+  .played{width:102px;height:142px;}
+}
 </style>
 </head>
 <body>
