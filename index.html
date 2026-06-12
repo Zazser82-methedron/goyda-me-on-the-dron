@@ -1021,12 +1021,12 @@ function renderTut(){let s=TUT_SLIDES[_tutIdx];document.getElementById('tut-ic')
 function maybeOfferTutorial(){if(STATS.games===0&&!STATS.tutSeen){setTimeout(()=>{if(STATS.tutSeen)return;if(confirm('Новичок в ГОЙДЕ? Пройти быстрое обучение (1 минута)?'))openTutorial();else{STATS.tutSeen=true;saveStats();}},700);}}
 // ── H3: campaign «Путь Гойды» ──
 const CAMPAIGN=[
-  {id:'holop',name:'Холоп-Лежебока',ic:'😴',level:'easy',persona:'ленивый добродушный ворчун, зевает',intro:'Эх, опять биться... ну давай, только по-быстрому.'},
-  {id:'ratnik',name:'Ратник Фёдор',ic:'⚔️',level:'easy',persona:'простой бравый ратник, кричит за Дрон',intro:'За Дрон и Гойду! Покажу тебе сечу!'},
-  {id:'voevoda',name:'Воевода Скуф',ic:'🛡️',level:'warrior',persona:'снисходительный бывалый воевода',intro:'Молод ты ещё против воеводы.'},
-  {id:'oprichnik',name:'Опричник-Душнила',ic:'👹',level:'warrior',persona:'занудный придирчивый опричник, поучает',intro:'Сейчас занудно и больно объясню, кто тут главный.'},
-  {id:'volhv',name:'Волхв Криовед',ic:'❄️',level:'oprichnik',persona:'холодный загадочный волхв-ледяной',intro:'Заморожу твою Гойду в лёд, дитя.'},
-  {id:'batya',name:'Сам Гойда-Батя',ic:'👑',level:'oprichnik',persona:'величественный грозный князь Гойды',intro:'Ты дошёл до меня? Что ж... ГОЙДА РЕШАЕТ.'}
+  {id:'holop',name:'Холоп-Лежебока',ic:'😴',level:'easy',persona:'ленивый добродушный ворчун, зевает',intro:'Эх, опять биться... ну давай, только по-быстрому.',passive:'Дрёма: лечит +8 ОЗ в начале своего хода'},
+  {id:'ratnik',name:'Ратник Фёдор',ic:'⚔️',level:'easy',persona:'простой бравый ратник, кричит за Дрон',intro:'За Дрон и Гойду! Покажу тебе сечу!',passive:'Стойка: +1 броня в начале своего хода'},
+  {id:'voevoda',name:'Воевода Скуф',ic:'🛡️',level:'warrior',persona:'снисходительный бывалый воевода',intro:'Молод ты ещё против воеводы.',passive:'Опыт: Базометр копится в 1.5× быстрее'},
+  {id:'oprichnik',name:'Опричник-Душнила',ic:'👹',level:'warrior',persona:'занудный придирчивый опричник, поучает',intro:'Сейчас занудно и больно объясню, кто тут главный.',passive:'Душнила: получив ≥18 урона, ставит себе отражение'},
+  {id:'volhv',name:'Волхв Криовед',ic:'❄️',level:'oprichnik',persona:'холодный загадочный волхв-ледяной',intro:'Заморожу твою Гойду в лёд, дитя.',passive:'Стужа: его удары замораживают твой Базометр'},
+  {id:'batya',name:'Сам Гойда-Батя',ic:'👑',level:'oprichnik',persona:'величественный грозный князь Гойды',intro:'Ты дошёл до меня? Что ж... ГОЙДА РЕШАЕТ.',passive:'Воля Бати: все его удары +3, стартует с бронёй'}
 ];
 let _campaignIdx=-1;
 function openCampaign(){renderCampaign();document.getElementById('campaign').style.display='flex';}
@@ -1039,7 +1039,7 @@ function showVS(b){
   let lvl={easy:'Лёгкий',warrior:'Воин',oprichnik:'Опричник'}[b.level]||'';
   foe.textContent=b.ic||'👹';foe.style.backgroundImage='';
   nm.textContent=b.name||'Босс';
-  sub.textContent=((b.persona||'враг').split(',')[0])+(lvl?(' · '+lvl):'');
+  sub.textContent=b.passive?('🩸 '+b.passive):(((b.persona||'враг').split(',')[0])+(lvl?(' · '+lvl):''));
   if(b.id){var im=new Image();im.onload=function(){foe.style.backgroundImage="url('art/boss-"+b.id+".png')";foe.textContent='';};im.src='art/boss-'+b.id+'.png';}
   vs.onclick=hideVS;
   vs.classList.remove('show','flash');void vs.offsetWidth;vs.classList.add('show','flash');
@@ -1048,7 +1048,8 @@ function showVS(b){
   clearTimeout(window._vsTimer);
   window._vsTimer=setTimeout(hideVS,2400);
 }
-function startCampaignBattle(idx){let b=CAMPAIGN[idx];if(!b)return;_campaignIdx=idx;window._campaignBoss=b.name;window._campaignPersona=b.persona||'';closeCampaign();showVS(b);startBotGame(b.level,true);let nm=document.getElementById('pname2');if(nm)nm.textContent='⚔ '+b.ic+' '+b.name;setTimeout(()=>{if(STATS.geminiKey){geminiSay('intro',{boss:b.name,persona:b.persona}).then(t=>spawnEmote(BOT,t||b.intro,b.name));}else spawnEmote(BOT,b.intro,b.name);},900);}
+function bossPid(){return (isBot&&_campaignIdx>=0&&CAMPAIGN[_campaignIdx])?CAMPAIGN[_campaignIdx].id:null;}
+function startCampaignBattle(idx){let b=CAMPAIGN[idx];if(!b)return;_campaignIdx=idx;window._campaignBoss=b.name;window._campaignPersona=b.persona||'';closeCampaign();showVS(b);startBotGame(b.level,true);if(b.id==='batya'){G.players[BOT].sh=Math.min(G.players[BOT].sh+1,2);render();}if(b.passive)addLog('🩸 Пассивка «'+b.name+'»: '+b.passive,'#ffae42');let nm=document.getElementById('pname2');if(nm)nm.textContent='⚔ '+b.ic+' '+b.name;setTimeout(()=>{if(STATS.geminiKey){geminiSay('intro',{boss:b.name,persona:b.persona}).then(t=>spawnEmote(BOT,t||b.intro,b.name));}else spawnEmote(BOT,b.intro,b.name);},900);}
 function closeWardrobe(){document.getElementById('wardrobe').style.display='none';}
 const COSMETIC_CATS=[{key:'back',title:'🎴 Рубашки карт'},{key:'theme',title:'🎨 Темы поля'},{key:'frame',title:'🖼️ Рамки бойца'}];
 function renderWardrobe(){
@@ -1350,7 +1351,7 @@ function applyCard(pi,card,me,foe){
     case'GOYDO_SHIELD':{me.sh=Math.min(me.sh+1,2);flashA(pi,'blu');spawnFl(pi,'🛡️ Броня +1','block');sfx('shield');msg=`${pn(pi)} · Гойдо-Щит воздвигнут (${me.sh}/2)`;col='#00eeff';extra.result=`+1 🛡️`;extra.resType='shield';break;}
     case'GOYDO_FONK':{let dmg=Math.floor(18*sm);let r=doAtk(pi,dmg,false,me,foe,card.ic);msg=`${pn(pi)} · Гойдо-Фонк врубил ➔ ${r.msg}`;col='#ffd700';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
     case'PEREGOYDA':{me.re=Math.min(me.re+1,1);flashA(pi,'gld');spawnFl(pi,'🪬 Отражение','ref');sfx('shield');msg=`${pn(pi)} · Перегойда — зеркало поднято!`;col='#cc44ff';extra.result=`+1 🪬`;extra.resType='shield';break;}
-    case'GOYDO_DILER':{draw(me,2);msg=`${pn(pi)} · Гойдо-Дилер раздал ➔ +2 карты`;col='#3ae4d0';extra.result=`+2 🃏`;extra.resType='draw';break;}
+    case'GOYDO_DILER':{draw(me,2);sfx('draw');msg=`${pn(pi)} · Гойдо-Дилер раздал ➔ +2 карты`;col='#3ae4d0';extra.result=`+2 🃏`;extra.resType='draw';break;}
     case'GOYDO_HAMSTER':{me.coins+=2;bumpCoins(pi);spawnFl(pi,'+2 💰','coin');sfx('coin');msg=`${pn(pi)} · Гойдо-Хомяк нафармил ➔ +2 💰`;col='#ffd700';extra.result=`+2 💰`;extra.resType='coin';break;}
     case'NAGOYDATEL':{msg=`${pn(pi)} · Нагойдатель накачал Базометр!`;col='#ff6600';extra.result=`+20%`;extra.resType='base';break;}
     case'CRINGE_GOYDA':{let dmg=Math.floor(14*sm);let r=doAtk(pi,dmg,false,me,foe,card.ic);changeBase(1-pi,foe,-20);msg=`${pn(pi)} · Кринжо-Гойда кринжует врага ➔ ${r.msg}`;col='#44ff00';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
@@ -1368,12 +1369,14 @@ function applyCard(pi,card,me,foe){
   checkWin(me,foe,pi);
 }
 function useAbil(pi,idx){if(G.over||G.turn!==pi)return;if(isOnline&&pi!==myIndex)return;let me=G.players[pi],foe=G.players[1-pi],ab=me.abilities[idx];if(me.coins<ab.cost)return;me.coins-=ab.cost;addLog(`💫 ${pn(pi)} применил тактику [${ab.n}] за ${ab.cost} 💰`,'#ffd700');ab.run(pi,me,foe);checkWin(me,foe,pi);if(!G.over)endTurn(pi);else if(isOnline){syncState('state');showOnlineOver();}render();resetIdle();}
-function doAtk(pi,dmg,pierce,me,foe,vfx){let ic=vfx||'⚔️';if(foe.superMode){let thru=Math.floor(dmg*.35);foe.hp=Math.max(0,foe.hp-thru);spawnProjectile(pi,1-pi,ic,'fwd');flashA(1-pi,'grn');if(thru>0)spawnFl(1-pi,'-'+thru,'dmg');spawnFl(1-pi,'⚡СВЕРХ (−65%)','block');sfx('shield');return{msg:`СВЕРХ-ГОЙДА поглотила бо́льшую часть (${thru} прошло)`,hit:thru>0};}if(foe.re>0){foe.re--;let ref=Math.floor(dmg*.75);me.hp=Math.max(0,me.hp-ref);spawnProjectile(pi,1-pi,ic,'reflect');flashA(pi,'red');shakeA(pi);hpHit(pi);spawnFl(pi,'-'+ref,'dmg');spawnFl(1-pi,'↩️ 75% назад!','ref');quake(ref);sfx('hit');totemEvent('reflect');if(isBot&&(1-pi)===BOT)botReact('reflect');return{msg:`${ref} (75%) отражено назад!`,hit:false};}if(!lockShield&&!pierce&&foe.sh>0){foe.sh--;spawnProjectile(pi,1-pi,ic,'block');flashA(1-pi,'blu');spawnFl(1-pi,'🛡️ броня','block');sfx('shield');totemEvent('block');if(isBot&&(1-pi)===BOT)botReact('block');return{msg:'принято на прочную броню',hit:false};}foe.hp=Math.max(0,foe.hp-dmg);spawnProjectile(pi,1-pi,ic,'fwd');flashA(1-pi,'red');shakeA(1-pi);hpHit(1-pi);spawnFl(1-pi,'-'+dmg,'dmg');quake(dmg);sfx('hit');if(foe.thorns>0&&foe.hp>0){foe.thorns--;let tn=8;me.hp=Math.max(0,me.hp-tn);flashA(pi,'red');spawnFl(pi,'🌵 -'+tn,'dmg');addLog(`🌵 Шипы ${pn(1-pi)} ужалили ${pn(pi)} на ${tn}!`,'#7cff5a');}if(foe.hp<=0)totemSay('ДОБИЛ! ГОЙДА!',true);else if(dmg>=28)totemSay('ОГО-ГОЙДА!!!',true);else if(dmg>=15&&Math.random()<.7)totemSay(['В МЯСО!','БЕЙ!','КРЕПКО!','ОЙ-ГОЙ!'][Math.floor(Math.random()*4)]);if(isBot&&pi===BOT&&dmg>=20&&foe.hp>0)botReact('taunt');return{msg:`${dmg} чистого урона`,hit:true};}
+function doAtk(pi,dmg,pierce,me,foe,vfx){let ic=vfx||'⚔️';if(pi===BOT&&bossPid()==='batya')dmg+=3;if(foe.superMode){let thru=Math.floor(dmg*.35);foe.hp=Math.max(0,foe.hp-thru);spawnProjectile(pi,1-pi,ic,'fwd');flashA(1-pi,'grn');if(thru>0)spawnFl(1-pi,'-'+thru,'dmg');spawnFl(1-pi,'⚡СВЕРХ (−65%)','block');sfx('shield');return{msg:`СВЕРХ-ГОЙДА поглотила бо́льшую часть (${thru} прошло)`,hit:thru>0};}if(foe.re>0){foe.re--;let ref=Math.floor(dmg*.75);me.hp=Math.max(0,me.hp-ref);spawnProjectile(pi,1-pi,ic,'reflect');flashA(pi,'red');shakeA(pi);hpHit(pi);spawnFl(pi,'-'+ref,'dmg');spawnFl(1-pi,'↩️ 75% назад!','ref');quake(ref);sfx('hit');totemEvent('reflect');if(isBot&&(1-pi)===BOT)botReact('reflect');return{msg:`${ref} (75%) отражено назад!`,hit:false};}if(!lockShield&&!pierce&&foe.sh>0){foe.sh--;spawnProjectile(pi,1-pi,ic,'block');flashA(1-pi,'blu');spawnFl(1-pi,'🛡️ броня','block');sfx('shield');totemEvent('block');if(isBot&&(1-pi)===BOT)botReact('block');return{msg:'принято на прочную броню',hit:false};}foe.hp=Math.max(0,foe.hp-dmg);spawnProjectile(pi,1-pi,ic,'fwd');flashA(1-pi,'red');shakeA(1-pi);hpHit(1-pi);spawnFl(1-pi,'-'+dmg,'dmg');quake(dmg);sfx('hit');if(pi===BOT&&bossPid()==='volhv'&&foe.hp>0&&!foe.freezeNext){foe.freezeNext=true;spawnFl(1-pi,'❄️ СТУЖА','baseloss');}if((1-pi)===BOT&&bossPid()==='oprichnik'&&dmg>=18&&foe.hp>0&&foe.re<1){foe.re++;spawnFl(1-pi,'🪬 +1','ref');addLog('👹 Опричник в ярости ставит отражение!','#cc99ff');}if(foe.thorns>0&&foe.hp>0){foe.thorns--;let tn=8;me.hp=Math.max(0,me.hp-tn);flashA(pi,'red');spawnFl(pi,'🌵 -'+tn,'dmg');addLog(`🌵 Шипы ${pn(1-pi)} ужалили ${pn(pi)} на ${tn}!`,'#7cff5a');}if(foe.hp<=0)totemSay('ДОБИЛ! ГОЙДА!',true);else if(dmg>=28)totemSay('ОГО-ГОЙДА!!!',true);else if(dmg>=15&&Math.random()<.7)totemSay(['В МЯСО!','БЕЙ!','КРЕПКО!','ОЙ-ГОЙ!'][Math.floor(Math.random()*4)]);if(isBot&&pi===BOT&&dmg>=20&&foe.hp>0)botReact('taunt');return{msg:`${dmg} чистого урона`,hit:true};}
 function dealRaw(tpi,amount){let t=G.players[tpi];if(t.superMode){spawnFl(tpi,'🛡️ НЕУЯЗВИМ','block');return;}t.hp=Math.max(0,t.hp-amount);flashA(tpi,'red');shakeA(tpi);hpHit(tpi);spawnFl(tpi,'-'+amount,'dmg');spawnShards(tpi,'#ffd700');quake(amount);sfx('hit');}
 function healRaw(pi,amount){let p=G.players[pi],h=Math.min(amount,100-p.hp);p.hp=Math.min(100,p.hp+amount);flashA(pi,'grn');spawnFl(pi,'+'+h,'heal');sfx('heal');if(h>=20&&Math.random()<.5)totemSay('ЖИВУЧИЙ!');return h;}
-function changeBase(pi,p,amount){if(amount>0&&p.freezeNext){p.freezeNext=false;spawnFl(pi,'❄️ ЗАМОРОЖЕНО!','baseloss');addLog(`❄️ Прирост Базометра ${pn(pi)} заморожен!`,'#3aebff');return;}if(p.superMode){p.base=Math.max(0,Math.min(100,p.base+amount));spawnFl(pi,(amount>0?'+':'')+amount+'% БАЗЫ','base');return;}let _os=getStage(p.base);p.base=Math.max(0,Math.min(100,p.base+amount));if(amount>0)spawnFl(pi,'+'+amount+'% БАЗЫ','base');else if(amount<0)spawnFl(pi,amount+'% БАЗЫ','baseloss');if(amount>0&&getStage(p.base)>_os&&p.base<100)totemEvent('stage');if(p.base>=100)triggerSuperGoyda(pi,p);}
+function changeBase(pi,p,amount){if(pi===BOT&&amount>0&&bossPid()==='voevoda')amount=Math.round(amount*1.5);if(amount>0&&p.freezeNext){p.freezeNext=false;spawnFl(pi,'❄️ ЗАМОРОЖЕНО!','baseloss');addLog(`❄️ Прирост Базометра ${pn(pi)} заморожен!`,'#3aebff');return;}if(p.superMode){p.base=Math.max(0,Math.min(100,p.base+amount));spawnFl(pi,(amount>0?'+':'')+amount+'% БАЗЫ','base');return;}let _os=getStage(p.base);p.base=Math.max(0,Math.min(100,p.base+amount));if(amount>0)spawnFl(pi,'+'+amount+'% БАЗЫ','base');else if(amount<0)spawnFl(pi,amount+'% БАЗЫ','baseloss');if(amount>0&&getStage(p.base)>_os&&p.base<100){totemEvent('stage');sfx('stage');}if(p.base>=100)triggerSuperGoyda(pi,p);}
 function triggerSuperGoyda(pi,p){p.superMode=true;p.superTurns=2;p.base=0;spawnSuperOverlay(pi);addLog(`🔥 СВЕРХ-ГОЙДА у ${pn(pi)}! Базометр сброшен. Ярость на 2 хода!`,'#39ff14');sfx('super');totemSay('СВЕРХ!!!',true);totemDance();if(isBot&&pi===HUMAN)pushRecent('вошёл в Сверх-Гойду');if(isBot&&pi===BOT)botReact('super',true);}
+function applyBossTurnStart(){let pid=bossPid();if(!pid||G.turn!==BOT)return;let me=G.players[BOT];if(pid==='holop'){let h=Math.min(8,100-me.hp);if(h>0){me.hp+=h;spawnFl(BOT,'+'+h,'heal');addLog('😴 Холоп подремал и подлечился (+'+h+' ОЗ)','#5eff8b');}}else if(pid==='ratnik'){if(me.sh<2){me.sh++;spawnFl(BOT,'🛡️ +1','block');addLog('⚔️ Ратник встал в стойку (+1 броня)','#00ccff');}}}
 function endTurn(pi){let me=G.players[pi];if(me.superMode)changeBase(pi,me,10);G.turn=1-pi;let next=G.players[G.turn];next.coins++;bumpCoins(G.turn);rollAbilities(next);if(next.superMode){next.superTurns--;if(next.superTurns<0){next.superMode=false;addLog(`⚠️ Режим СВЕРХ-ГОЙДЫ у ${pn(G.turn)} угас!`,'#ffd700');}}
+  if(G.turn===BOT)applyBossTurnStart();
   // ☠ poison ticks at the start of this player's turn
   if(next.poison>0){let d=next.poison;dealRaw(G.turn,d);addLog(`☠️ Яд жалит ${pn(G.turn)} на ${d}!`,'#7cff5a');next.poison--;}
   if(next.hp<=0){checkWin(G.players[pi],G.players[G.turn],pi);render();if(isOnline){syncState('state');showOnlineOver();}return;}
@@ -1473,7 +1476,7 @@ function checkWin(me,foe,pi){
   else if(!_resultRecorded){_resultRecorded=true;STATS.games++;saveStats();renderLobbyStats();o=(me.hp<=0&&foe.hp<=0)?'draw':'win';}
   showOver(html,res,o);
 }
-function showOver(html,res,outcome){let show=()=>{document.getElementById('over-txt').innerHTML=html+rewardHtml(res);let ob=document.getElementById('over-btn');if(ob){ob.disabled=false;ob.textContent=isOnline?(_oppWantsRematch?'🔄 РЕВАНШ — соперник готов!':'🔄 РЕВАНШ'):'⚔ Новая Схватка!';}let ov=document.getElementById('over');ov.style.display='flex';ov.classList.remove('over-fade');void ov.offsetWidth;ov.classList.add('over-fade');};if(outcome){playCutscene(outcome,show);}else show();}
+function showOver(html,res,outcome){if(outcome==='win')sfx('win');else if(outcome==='loss')sfx('lose');let show=()=>{document.getElementById('over-txt').innerHTML=html+rewardHtml(res);let ob=document.getElementById('over-btn');if(ob){ob.disabled=false;ob.textContent=isOnline?(_oppWantsRematch?'🔄 РЕВАНШ — соперник готов!':'🔄 РЕВАНШ'):'⚔ Новая Схватка!';}let ov=document.getElementById('over');ov.style.display='flex';ov.classList.remove('over-fade');void ov.offsetWidth;ov.classList.add('over-fade');};if(outcome){playCutscene(outcome,show);}else show();}
 function getStage(v){return v>=66?3:v>=33?2:1;}
 function showPass(pi){if(isOnline)return;document.getElementById('pass-h').textContent='ПЕРЕДАЧА ХОДА: '+pn(pi);document.getElementById('pass-p').textContent='Передайте устройство следующему опричнику!';document.getElementById('pass-leg').innerHTML='';document.getElementById('pass').style.display='flex';render();}
 function confirmPass(){document.getElementById('pass').style.display='none';render();}
@@ -1484,7 +1487,8 @@ function pn(pi){if(isOnline)return pi===myIndex?'ВЫ':'СОПЕРНИК';if(isB
 function statusStr(p){return (p.poison?' ☠'+p.poison:'')+(p.thorns?' 🌵'+p.thorns:'')+(p.stunNext?' ⚡':'');}
 function render(){let[p1,p2]=G.players;renderHP(0,p1);renderHP(1,p2);updateShieldAndReflectIcons(0,p1.sh,p1.re);updateShieldAndReflectIcons(1,p2.sh,p2.re);renderBase(0,p1);renderBase(1,p2);document.getElementById('p1-co').textContent='💰 '+p1.coins+statusStr(p1);document.getElementById('p2-co').textContent='💰 '+p2.coins+statusStr(p2);let passOpen=document.getElementById('pass')&&document.getElementById('pass').style.display!=='none';let a0=(G.turn===0)&&!G.over&&(isOnline?myIndex===0:!passOpen);let a1=(G.turn===1)&&!G.over&&(isOnline?myIndex===1:!passOpen);let area1=document.getElementById('p1-area'),area2=document.getElementById('p2-area'),badge1=document.getElementById('p1-turn-badge'),badge2=document.getElementById('p2-turn-badge');if(G.turn===0&&!G.over){area1.classList.add('active-turn');area1.classList.remove('inactive-turn');badge1.classList.remove('hidden');area2.classList.add('inactive-turn');area2.classList.remove('active-turn');badge2.classList.add('hidden');}else if(G.turn===1&&!G.over){area2.classList.add('active-turn');area2.classList.remove('inactive-turn');badge2.classList.remove('hidden');area1.classList.add('inactive-turn');area1.classList.remove('active-turn');badge1.classList.add('hidden');}else{area1.classList.remove('active-turn','inactive-turn');badge1.classList.add('hidden');area2.classList.remove('active-turn','inactive-turn');badge2.classList.add('hidden');}let fu0=a0,fu1=a1,ab0=a0,ab1=a1;if(isBot){fu0=!G.over;fu1=false;ab1=false;}renderHand(0,p1,'p1-hand',fu0);renderHand(1,p2,'p2-hand',fu1);renderAbils(0,ab0,p1);renderAbils(1,ab1,p2);renderPlayed('clash-p1',G.last[0]);renderPlayed('clash-p2',G.last[1]);let dc=document.getElementById('deck-count');if(dc)dc.textContent=G.deck.length;document.body.classList.toggle('super-mode-active',p1.superMode||p2.superMode);applyAuras(0,p1);applyAuras(1,p2);updateWeather();}
 function applyAuras(pi,p){let a=document.getElementById('p'+(pi+1)+'-area');if(!a)return;a.classList.toggle('aura-shield',p.sh>0);a.classList.toggle('aura-reflect',p.re>0);a.classList.toggle('aura-frozen',!!p.freezeNext);a.classList.toggle('aura-super',!!p.superMode);}
-function renderHP(i,p){let f=document.getElementById('p'+(i+1)+'-hp'),t=document.getElementById('p'+(i+1)+'-hptxt'),pct=Math.max(0,Math.round(p.hp/100*100));f.style.width=pct+'%';f.style.background=pct>60?'linear-gradient(90deg,#27ae60,#2ecc71)':pct>30?'linear-gradient(90deg,#c9620a,#e67e22)':'linear-gradient(90deg,#7b241c,#c0392b)';t.textContent=p.hp+'/100';}
+let _lowhpT=0;
+function renderHP(i,p){let f=document.getElementById('p'+(i+1)+'-hp'),t=document.getElementById('p'+(i+1)+'-hptxt'),pct=Math.max(0,Math.round(p.hp/100*100));f.style.width=pct+'%';if(p.hp>0&&p.hp<25){let hi=isOnline?myIndex:(isBot?HUMAN:-1);if(i===hi){let now=Date.now();if(now-_lowhpT>2600){_lowhpT=now;sfx('lowhp');}}}f.style.background=pct>60?'linear-gradient(90deg,#27ae60,#2ecc71)':pct>30?'linear-gradient(90deg,#c9620a,#e67e22)':'linear-gradient(90deg,#7b241c,#c0392b)';t.textContent=p.hp+'/100';}
 function renderBase(i,p){let wrap=document.getElementById('p'+(i+1)+'-base-wrap'),fill=document.getElementById('p'+(i+1)+'-base-fill'),num=document.getElementById('p'+(i+1)+'-base-num'),stxt=document.getElementById('p'+(i+1)+'-stage-txt');if(p.superMode){fill.style.width='100%';fill.classList.add('super-mode');wrap.classList.add('super-glow');num.textContent='ЯРОСТЬ';stxt.textContent=`СВЕРХ-ГОЙДА (${p.superTurns+1} Х)`;}else{fill.style.width=p.base+'%';fill.classList.remove('super-mode');wrap.classList.remove('super-glow');num.textContent=p.base;let st=getStage(p.base);stxt.textContent=st===3?'ЭТАП III':st===2?'ЭТАП II':'ЭТАП I';}}
 function renderHand(pi,player,cid,faceUp){let c=document.getElementById(cid);c.innerHTML='';if(!faceUp){let rune=currentBack().rune;player.hand.forEach(()=>{let d=document.createElement('div');d.className='card-container';d.innerHTML='<div class="card back"><div class="back-rune">'+rune+'</div></div>';c.appendChild(d);});return;}player.hand.forEach(card=>{let container=document.createElement('div');container.className='card-container';let isLocked=false,lockTxt='';if(card.id==='OPLICH_GOYDA'&&getStage(player.base)<2&&!player.superMode){isLocked=true;lockTxt='ЭТАП II';}if(card.id==='GOYDO_OBEREG'&&getStage(player.base)<2&&!player.superMode){isLocked=true;lockTxt='ЭТАП II';}if(card.id==='GIPER_GOYD'&&getStage(player.base)<3&&!player.superMode){isLocked=true;lockTxt='ЭТАП III';}let d=document.createElement('div');d.className='card click rarity-'+rarityOf(card);d.style.setProperty('--cbg',isLocked?'#151515':card.bg);d.style.setProperty('--cbc',isLocked?'#3c3c3c':card.bc);d.innerHTML=`<div class="card-shine"></div><div class="card-role-tab"><span>✦</span><span>${card.role}</span></div><div class="card-emblem"><span class="card-ico">${card.ic}</span></div><div class="card-name">${card.n}</div><div class="card-stat kind-${card.kind}"><span class="card-num">${card.num}</span><span class="card-unit">${card.unit}</span></div><div class="card-effect">${card.eff}</div><div class="card-tag" style="${isLocked?'background:#500;border-color:#f33;color:#f88;':''}">${isLocked?lockTxt:rarityLabel(card)}</div>`;d.onclick=()=>playCard(pi,card);if(!LOW_FX){let rr=rarityOf(card);if(rr==='rare'||rr==='epic'||rr==='legendary'){let ho=document.createElement('div');ho.className='holo';d.appendChild(ho);}}container.appendChild(d);c.appendChild(container);applyCardParallax(container);});setupHandHover(c);}
 function renderAbils(pi,active,player){let c=document.getElementById(`p${pi+1}-abils`);c.innerHTML='';player.abilities.forEach((ab,idx)=>{let canUse=active&&player.coins>=ab.cost;let container=document.createElement('div');container.className='abil-card-container';let btn=document.createElement('div');btn.className='abil-card'+(canUse?' ready':'');if(canUse){btn.style.setProperty('--bbg',ab.bg);btn.style.setProperty('--bc',ab.bc);btn.onclick=()=>useAbil(pi,idx);}btn.innerHTML=`<div class="abil-card-header"><span>${ab.ic} ${ab.n}</span><span style="font-size:7px;color:#888">Тактика</span></div><div class="abil-card-desc" title="${ab.d}">${ab.d}</div><div class="abil-card-cost">💰 ${ab.cost} ВЕЧЕВЫХ</div>`;container.appendChild(btn);c.appendChild(container);});}
@@ -1559,6 +1563,10 @@ function sfx(name){if(!actx||sndMuted)return;if(actx.state==='suspended')actx.re
   case'turn':tone(440,.1,'triangle',.18,560);setTimeout(()=>tone(560,.14,'triangle',.15,700),90);setTimeout(()=>tone(700,.18,'triangle',.1,850),200);break;
   case'start':[0,120,260].forEach((t,i)=>setTimeout(()=>tone(330+i*165,.35,'triangle',.2),t));setTimeout(()=>noiseBurst(.25,.2,1500),300);break;
   case'click':tone(900,.05,'sine',.08);break;
+  case'stage':[0,70,150].forEach((d,i)=>setTimeout(()=>tone(440+i*180,.16,'triangle',.18,700+i*120),d));break;
+  case'win':[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.4,'triangle',.22),i*140));setTimeout(()=>noiseBurst(.3,.16,1600),320);break;
+  case'lose':[392,311,233].forEach((f,i)=>setTimeout(()=>tone(f,.5,'sine',.2,f*.8),i*180));break;
+  case'lowhp':tone(90,.12,'sine',.16,30);setTimeout(()=>tone(95,.14,'sine',.14,30),180);break;
 }}
 function toggleMute(){initSound();sndMuted=!sndMuted;STATS.muted=sndMuted;saveStats();if(master)master.gain.value=sndMuted?0:.7;let btn=document.getElementById('mute-bb');if(btn)btn.textContent=sndMuted?'🔇 ЗВУК ВЫКЛ':'🔊 ЗВУК ВКЛ';}
 function startLocalGame(){isOnline=false;isLocal=true;isBot=false;_campaignIdx=-1;window._campaignBoss='';window._campaignPersona='';document.getElementById('lobby').style.display='none';document.getElementById('bottom-bar').classList.remove('hidden');document.getElementById('log-toggle').style.display='block';document.getElementById('bb-lobby').style.display='inline-block';initGame();render();renderDiscard(0);renderDiscard(1);sfx('start');startMusicIfEnabled();resetIdle();showPass(0);}
@@ -1854,7 +1862,7 @@ function turnSweep(pi){if(document.hidden)return;let a=document.getElementById('
 function screenFlash(cls,ms){let f=document.createElement('div');f.className='screen-fx '+cls;document.body.appendChild(f);setTimeout(()=>f.remove(),ms||450);}
 function iceSpikes(pi){let c=_areaCenter(pi),n=fxCount(7);for(let i=0;i<n;i++){let s=document.createElement('div');s.className='ice-spike';s.textContent='❄';s.style.left=(c.x-50+Math.random()*100)+'px';s.style.top=c.y+'px';document.body.appendChild(s);s.animate([{transform:'translateY(20px) scale(.3)',opacity:0},{transform:'translateY(-10px) scale(1.2)',opacity:1,offset:.4},{transform:'translateY(-4px) scale(1)',opacity:0}],{duration:700,delay:i*30,easing:'ease-out',fill:'forwards'}).onfinish=()=>s.remove();}}
 function lightPillar(pi,color){let c=_areaCenter(pi);let p=document.createElement('div');p.className='light-pillar';p.style.left=c.x+'px';p.style.setProperty('--pc',color||'#ffd700');document.body.appendChild(p);p.animate([{transform:'translateX(-50%) scaleY(0)',opacity:0},{transform:'translateX(-50%) scaleY(1)',opacity:.9,offset:.3},{transform:'translateX(-50%) scaleY(1)',opacity:0}],{duration:650,easing:'ease-out',fill:'forwards'}).onfinish=()=>p.remove();}
-function skyLightning(pi){let c=_areaCenter(pi);let b=document.createElement('div');b.className='sky-bolt';b.textContent='⚡';b.style.left=c.x+'px';document.body.appendChild(b);b.animate([{transform:'translate(-50%,-60px) scale(.6)',opacity:0},{transform:'translate(-50%,0) scale(1.3)',opacity:1,offset:.25},{transform:'translate(-50%,0) scale(1)',opacity:0}],{duration:480,easing:'ease-out',fill:'forwards'}).onfinish=()=>b.remove();spawnShards(pi,'#fff7c0',fxCount(8));}
+function skyLightning(pi){if(window.arena3dFlash)arena3dFlash();let c=_areaCenter(pi);let b=document.createElement('div');b.className='sky-bolt';b.textContent='⚡';b.style.left=c.x+'px';document.body.appendChild(b);b.animate([{transform:'translate(-50%,-60px) scale(.6)',opacity:0},{transform:'translate(-50%,0) scale(1.3)',opacity:1,offset:.25},{transform:'translate(-50%,0) scale(1)',opacity:0}],{duration:480,easing:'ease-out',fill:'forwards'}).onfinish=()=>b.remove();spawnShards(pi,'#fff7c0',fxCount(8));}
 function castFX(pi,card){
   if(window.arena3dPulse)arena3dPulse(['GIPER_GOYD','OPLICH_GOYDA','ABSOLUT_GOYDA'].includes(card.id)?'big':'small');
   switch(card.id){
@@ -1995,26 +2003,49 @@ setTimeout(()=>{
   }
   const braziers=[makeBrazier(-7.2),makeBrazier(7.2)];
 
-  // ── reactive pulse (called from game FX hooks) ──
-  let pulse=0, pulseMax=0;
-  window.arena3dPulse=function(kind){ const amt=kind==='big'?1.0:(kind==='small'?0.4:0.7); pulse=Math.max(pulse,amt); pulseMax=Math.max(pulseMax,amt); };
+  // 3D lightning flash light + theme fog target
+  const flashLight=new THREE.DirectionalLight(0xffffff,0); flashLight.position.set(0,8,6); scene.add(flashLight);
+  let flash=0;
+  const fogTarget=new THREE.Color(pal.fog), cTmp=new THREE.Color();
+
+  // idol impact dust (puffs out on a heavy hit)
+  const DUST=24, dpos=new Float32Array(DUST*3), dvel=new Float32Array(DUST*3); let dustLife=0;
+  const dgeo=new THREE.BufferGeometry(); dgeo.setAttribute('position',new THREE.BufferAttribute(dpos,3));
+  const dustPts=new THREE.Points(dgeo,new THREE.PointsMaterial({color:pal.flame,size:0.2,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false})); idol.add(dustPts);
+  function burstDust(){dustLife=1;for(let i=0;i<DUST;i++){dpos[i*3]=(Math.random()-.5)*0.6;dpos[i*3+1]=2.2+(Math.random()-.5)*0.6;dpos[i*3+2]=0.6+(Math.random()-.5)*0.6;const a=Math.random()*Math.PI*2,s=0.04+Math.random()*0.06;dvel[i*3]=Math.cos(a)*s;dvel[i*3+1]=0.02+Math.random()*0.05;dvel[i*3+2]=Math.sin(a)*s;}dgeo.attributes.position.needsUpdate=true;}
+
+  // ── reactive pulse + timers (called from game FX hooks) ──
+  let pulse=0, shud=0, idle=0;
+  window.arena3dPulse=function(kind){ const amt=kind==='big'?1.0:(kind==='small'?0.4:0.7); pulse=Math.max(pulse,amt); idle=0; if(kind==='big'){shud=1; burstDust();} };
+  window.arena3dFlash=function(){ flash=1; };
 
   function resize(){renderer.setSize(window.innerWidth,window.innerHeight,false);camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();}
   window.addEventListener('resize',resize);
 
   let raf=0,running=false,t=0;
   function loop(){
-    t+=0.016;
-    // idol idle bob + pulse flare
+    t+=0.016; idle+=0.016;
+    // reactive fog: red in Super-Goyda, blue-steel on freeze/storm, else theme
+    const sup=document.body.classList.contains('super-mode-active');
+    const cold=document.body.classList.contains('storm-sky')||!!document.querySelector('.aura-frozen');
+    if(sup)cTmp.setHex(0x3a0a04); else if(cold)cTmp.setHex(0x06121e); else cTmp.copy(fogTarget);
+    scene.fog.color.lerp(cTmp,0.04);
+    // sleep when idle long: dim eyes + sleepy lean
+    const sleep=Math.max(0,Math.min(1,(idle-12)/4)), wake=1-sleep*0.7;
+    // idol bob + flare + shudder(big hit) + sleepy lean
     idol.position.y=-1.3+Math.sin(t*1.1)*0.07;
     idol.rotation.y=Math.sin(t*0.35)*0.06;
+    idol.rotation.x=shud*Math.sin(t*32)*0.13+sleep*0.10;
     const flare=1+pulse*1.4;
-    eyeMat.emissiveIntensity=1.6*flare+Math.sin(t*3)*0.15;
-    runeMat.emissiveIntensity=1.1*flare;
-    idolLight.intensity=1.2*flare;
+    eyeMat.emissiveIntensity=(1.6*flare+Math.sin(t*3)*0.15)*wake;
+    runeMat.emissiveIntensity=1.1*flare*wake;
+    idolLight.intensity=1.2*flare*wake;
     const eg=1.1*(1+pulse*0.8); eyeGlowL.scale.set(eg,eg,1); eyeGlowR.scale.set(eg,eg,1);
-    idolAura.material.opacity=0.32+pulse*0.4;
+    eyeGlowL.material.opacity=0.9*wake; eyeGlowR.material.opacity=0.9*wake;
+    idolAura.material.opacity=(0.32+pulse*0.4)*wake;
     const ks=1+pulse*0.08; idol.scale.set(ks,ks,ks);
+    // impact dust
+    if(dustLife>0){dustLife=Math.max(0,dustLife-0.02);for(let i=0;i<DUST;i++){dpos[i*3]+=dvel[i*3];dpos[i*3+1]+=dvel[i*3+1];dvel[i*3+1]-=0.002;dpos[i*3+2]+=dvel[i*3+2];}dgeo.attributes.position.needsUpdate=true;dustPts.material.opacity=dustLife*0.8;}
     // braziers: flicker + spark jet + pulse
     for(const b of braziers){
       const fl=0.85+Math.sin(t*9+b.g.position.x)*0.12+Math.random()*0.06+pulse*0.6;
@@ -2023,7 +2054,9 @@ setTimeout(()=>{
       for(let i=0;i<b.N;i++){b.sp[i*3+1]+=b.sv[i]*(1+pulse);if(b.sp[i*3+1]>2.2){b.sp[i*3+1]=0.4;b.sp[i*3]=(Math.random()-.5)*0.5;b.sp[i*3+2]=(Math.random()-.5)*0.5;}}
       b.sparks.geometry.attributes.position.needsUpdate=true;
     }
+    if(flash>0){flashLight.intensity=flash*3.2;flash=Math.max(0,flash-0.08);}else if(flashLight.intensity)flashLight.intensity=0;
     if(pulse>0) pulse=Math.max(0,pulse-0.045);
+    if(shud>0) shud=Math.max(0,shud-0.06);
     renderer.render(scene,camera);
     raf=requestAnimationFrame(loop);
   }
@@ -2034,7 +2067,8 @@ setTimeout(()=>{
   // theme palette switch (called from applyCosmetics)
   window.setArena3DTheme=function(theme){
     pal=PAL[theme]||PAL.default;
-    scene.fog.color.setHex(pal.fog);
+    fogTarget.setHex(pal.fog);
+    dustPts.material.color.setHex(pal.flame);
     stoneMat.color.setHex(pal.stone);
     eyeMat.emissive.setHex(pal.eye); runeMat.emissive.setHex(pal.eye);
     eyeGlowL.material.color.setHex(pal.eye); eyeGlowR.material.color.setHex(pal.eye);
