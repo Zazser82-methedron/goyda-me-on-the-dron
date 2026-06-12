@@ -529,7 +529,9 @@ body.fire-wind::after{opacity:.5!important;background:radial-gradient(ellipse at
   .waiting-box{padding:6px 16px 8px;}
 }
 /* ── DESKTOP SCALE-UP: bigger cards/board, use the side space (gated on height to avoid overflow) ── */
-@media (min-width:1024px) and (min-height:880px){
+@media (min-width:1024px) and (min-height:980px){
+  /* reserve the fixed bottom bar so the lower player's name/HP/base row is never hidden behind it */
+  #game{height:calc(100vh - 52px);}
   .card-container{width:158px;height:218px;}
   .card-container:hover{transform:scale(1.28) translateY(-24px) !important;}
   .card-name{font-size:14px;min-height:28px;}
@@ -540,41 +542,41 @@ body.fire-wind::after{opacity:.5!important;background:radial-gradient(ellipse at
   .card-effect{font-size:11px;}
   .card-role-tab{font-size:10px;}
   .card-tag{font-size:9px;}
-  .hand{gap:18px;min-height:250px;padding-top:20px;}
-  .abil-card-container{width:236px;height:118px;}
+  .hand{gap:18px;min-height:212px;padding-top:12px;}
+  .abil-card-container{width:236px;height:108px;}
   .abil-card-header{font-size:16px;}
   .abil-card-desc{font-size:13px;}
   .abil-card-cost{font-size:14px;}
-  .scroller-abil{gap:16px;min-height:74px;}
-  #mid{gap:26px;padding:10px 24px;}
-  .clash-slot{width:104px;min-height:118px;}
+  .scroller-abil{gap:16px;min-height:64px;}
+  #mid{gap:26px;padding:6px 24px;}
+  .clash-slot{width:104px;min-height:104px;}
   .played{width:90px;height:126px;}
-  .totem-idol{font-size:58px;}
-  .totem-glow{width:184px;height:184px;}
-  .totem-runes{width:88px;height:88px;}
+  .totem-idol{font-size:54px;}
+  .totem-glow{width:170px;height:170px;}
+  .totem-runes{width:84px;height:84px;}
   .totem-deck{font-size:15px;}
-  .torch{font-size:28px;}
-  .arena-col{width:130px;}
+  .torch{font-size:26px;}
+  .arena-col{width:128px;}
   .area-inner{gap:24px;}
-  .player-area{padding:14px 44px;}
-  .base-wrap{width:260px;height:30px;}
+  .player-area{padding:8px 44px;}
+  .base-wrap{width:250px;height:28px;}
   .base-txt{font-size:13px;}
-  .shield-slot,.reflect-slot{width:52px;height:52px;font-size:30px;}
+  .shield-slot,.reflect-slot{width:46px;height:46px;font-size:27px;}
   .pname{font-size:16px;}
-  .info-row .hp-wrap{width:260px !important;height:28px !important;}
+  .info-row .hp-wrap{width:250px !important;height:26px !important;}
   .hp-txt{font-size:15px !important;}
 }
-/* extra bump for very large screens */
-@media (min-width:1600px) and (min-height:1000px){
+/* extra bump for very large / tall screens only (1080p uses the tier above) */
+@media (min-width:1600px) and (min-height:1200px){
   .card-container{width:178px;height:246px;}
   .card-name{font-size:15px;}
   .card-ico{font-size:34px;}
   .card-emblem{width:58px;height:58px;}
   .card-stat .card-num,.card-num{font-size:28px;}
   .card-effect{font-size:12px;}
-  .hand{gap:22px;min-height:280px;}
-  .abil-card-container{width:262px;height:130px;}
-  .totem-idol{font-size:66px;}
+  .hand{gap:22px;min-height:262px;}
+  .abil-card-container{width:262px;height:124px;}
+  .totem-idol{font-size:64px;}
   .clash-slot{width:118px;}
   .played{width:102px;height:142px;}
 }
