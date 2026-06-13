@@ -299,6 +299,43 @@ body.super-mode-active .totem-idol{animation:totemRoar .5s ease-in-out infinite;
 .cmp-boss.lock{opacity:.45;filter:grayscale(70%);}
 .cmp-boss.done{opacity:.8;border-color:rgba(94,255,139,.35);cursor:pointer;}
 .cmp-boss.done:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(94,255,139,.3);opacity:1;}
+/* ── ПОХОД ГОЙДЫ (roguelike run mode) ── */
+.btn-run{background:linear-gradient(135deg,#0a3a2a,#1a6a4a) !important;color:#b8ffe0 !important;box-shadow:0 4px 15px rgba(40,255,160,.2) !important;font-size:12px !important;padding:10px 22px !important;}
+.btn-run:hover{box-shadow:0 6px 20px rgba(40,255,160,.42) !important;}
+#run{position:fixed;inset:0;background:radial-gradient(circle at 50% 35%,#06140e 0%,#000 100%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:170;padding:16px;}
+.run-panel{width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;background:rgba(4,12,8,.97);border:1.5px solid rgba(60,255,160,.3);border-radius:16px;box-shadow:0 0 30px rgba(40,255,140,.2);overflow:hidden;}
+#run-body{overflow-y:auto;padding:14px 16px;}
+.run-menu{display:flex;flex-direction:column;gap:12px;align-items:center;padding:14px;}
+.run-hint{font-size:12px;color:#9cc;line-height:1.4;text-align:center;margin-top:6px;}
+.run-top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-weight:900;color:#cffae0;font-size:14px;margin-bottom:6px;}
+.run-mut{color:#ffd24a;}
+.run-relics{font-size:13px;color:#9fdcc0;margin-bottom:10px;}
+.run-relic{font-size:18px;margin:0 2px;cursor:help;}
+.run-relic-none{opacity:.5;}
+.run-map{display:flex;flex-direction:column;align-items:center;gap:0;}
+.run-node{width:100%;max-width:340px;display:flex;align-items:center;gap:12px;background:rgba(20,40,30,.7);border:1.5px solid rgba(120,200,160,.18);border-radius:12px;padding:9px 14px;transition:all .15s;}
+.run-node.cur{cursor:pointer;border-color:#3cffa0;box-shadow:0 0 14px rgba(40,255,140,.35);animation:cmpPulse 1.8s ease-in-out infinite;}
+.run-node.cur:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(40,255,140,.5);}
+.run-node.lock{opacity:.4;filter:grayscale(60%);}
+.run-node.done{opacity:.72;border-color:rgba(94,255,139,.3);}
+.run-node.boss{border-color:rgba(255,180,60,.4);}
+.rn-ic{font-size:24px;}
+.rn-lbl{flex:1;font-weight:900;color:#e8fff2;font-size:14px;}
+.rn-st{font-size:12px;color:#9fc;}
+.run-link{width:3px;height:13px;background:rgba(120,200,160,.2);}
+.run-link.on{background:rgba(94,255,139,.5);}
+.run-foot-btns{display:flex;justify-content:center;margin-top:12px;}
+#run-modal{position:fixed;inset:0;background:rgba(2,8,5,.86);display:none;align-items:center;justify-content:center;z-index:178;padding:16px;}
+.run-modal-panel{width:100%;max-width:560px;background:rgba(6,14,10,.98);border:1.5px solid rgba(60,255,160,.35);border-radius:16px;box-shadow:0 0 30px rgba(40,255,140,.25);padding:18px;max-height:90vh;overflow-y:auto;}
+.run-modal-title{font-size:18px;font-weight:900;color:#cffae0;text-align:center;text-shadow:0 2px 6px #000;}
+.run-modal-sub{font-size:13px;color:#9fdcc0;text-align:center;margin:6px 0 12px;line-height:1.4;}
+.run-opts{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;}
+.run-opt{flex:1;min-width:140px;max-width:200px;background:linear-gradient(160deg,rgba(20,50,36,.9),rgba(6,16,11,.95));border:1.5px solid rgba(80,220,150,.35);border-radius:12px;padding:12px;cursor:pointer;transition:all .15s;text-align:center;}
+.run-opt:hover{transform:translateY(-3px);border-color:#3cffa0;box-shadow:0 6px 18px rgba(40,255,140,.4);}
+.run-opt-ic{font-size:30px;}
+.run-opt-name{font-weight:900;color:#e8fff2;font-size:14px;margin:4px 0;}
+.run-opt-desc{font-size:11px;color:#a8d8c4;line-height:1.3;}
+@media(max-width:640px){.run-opt{min-width:110px;}.run-node{max-width:100%;}}
 .cmp-ic{font-size:34px;line-height:1;flex-shrink:0;}
 .cmp-info{text-align:left;}
 .cmp-name{font-size:13px;font-weight:900;color:#fff;}
@@ -643,6 +680,19 @@ body.fire-wind::after{opacity:.5!important;background:radial-gradient(ellipse at
   </div>
 </div>
 
+<!-- ПОХОД ГОЙДЫ (roguelike) -->
+<div id="run">
+  <div class="run-panel">
+    <div class="wd-header">
+      <span class="wd-title">🗺️ ПОХОД ГОЙДЫ</span>
+      <button class="btn" style="padding:4px 12px;font-size:11px" onclick="closeRun()">✖ ЗАКРЫТЬ</button>
+    </div>
+    <div id="run-body"></div>
+    <div class="wd-foot">Рогалик-забег: карта узлов, переносимое HP, реликвии «Благословения Дрона» и растущая колода. Дойди до финального босса!</div>
+  </div>
+</div>
+<div id="run-modal"><div class="run-modal-panel"><div class="run-modal-body"></div></div></div>
+
 <!-- ОБУЧЕНИЕ -->
 <div id="tutorial">
   <div class="tut-panel">
@@ -668,6 +718,7 @@ body.fire-wind::after{opacity:.5!important;background:radial-gradient(ellipse at
 
   <div id="lobby-stats" class="lobby-stats" style="display:none"></div>
   <button class="btn btn-campaign" onclick="openCampaign()">🎬 ПУТЬ ГОЙДЫ</button>
+  <button class="btn btn-run" onclick="openRun()">🗺️ ПОХОД ГОЙДЫ</button>
   <button class="btn btn-wardrobe" onclick="openWardrobe()">🎴 ГАРДЕРОБ</button>
   <button class="btn btn-tut" onclick="openTutorial()">🎓 КАК ИГРАТЬ</button>
 
@@ -1079,7 +1130,7 @@ function mkP(){return{hp:100,sh:0,re:0,combo:0,coins:0,hand:[],base:0,superMode:
 function buildDeck(){let d=[];for(let k in DEFS){let df=DEFS[k];for(let i=0;i<df.cnt;i++)d.push({...df,id:k,uid:k+'_'+Math.random()});}for(let i=d.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}return d;}
 function draw(p,n){for(let i=0;i<n;i++){if(!G.deck.length){G.deck=buildDeck();addLog('📜 Колода свитков перетасована! Ратный дух крепок.','#ffbd15');}if(p.hand.length<7)p.hand.push(G.deck.pop());}triggerDeckJiggle();}
 function rollAbilities(p){let t=TAP.map((_,i)=>i),idx=[];for(let i=0;i<3;i++){let r=Math.floor(Math.random()*t.length);idx.push(t.splice(r,1)[0]);}p.abilIdx=idx;p.abilities=idx.map(i=>TAP[i]);}
-function initGame(){_resultRecorded=false;_iWantRematch=false;_oppWantsRematch=false;_recent=[];G={deck:buildDeck(),turn:0,over:false,last:[null,null],disc:[[],[]],logLines:[],players:[mkP(),mkP()]};draw(G.players[0],5);draw(G.players[1],5);G.players[0].coins=1;rollAbilities(G.players[0]);rollAbilities(G.players[1]);document.getElementById('log').innerHTML='';document.getElementById('clash-p1').innerHTML='';document.getElementById('clash-p2').innerHTML='';document.getElementById('disc-p1-stack').innerHTML='';document.getElementById('disc-p2-stack').innerHTML='';document.getElementById('over').style.display='none';document.body.classList.remove('super-mode-active');addLog('⚔️ Бойцы вышли на ратное поле! ГОЙДА!','#ffbd15');}
+function initGame(){_resultRecorded=false;_iWantRematch=false;_oppWantsRematch=false;_recent=[];G={deck:runDeck(),turn:0,over:false,last:[null,null],disc:[[],[]],logLines:[],players:[mkP(),mkP()]};draw(G.players[0],5);draw(G.players[1],5);G.players[0].coins=1;rollAbilities(G.players[0]);rollAbilities(G.players[1]);document.getElementById('log').innerHTML='';document.getElementById('clash-p1').innerHTML='';document.getElementById('clash-p2').innerHTML='';document.getElementById('disc-p1-stack').innerHTML='';document.getElementById('disc-p2-stack').innerHTML='';document.getElementById('over').style.display='none';document.body.classList.remove('super-mode-active');addLog('⚔️ Бойцы вышли на ратное поле! ГОЙДА!','#ffbd15');}
 
 // ═══ MQTT NETWORKING (multi-broker fallback) ═══
 let mqttClient=null,roomCode=null,syncCounter=0,gameStarted=false;
@@ -1370,14 +1421,15 @@ function applyCard(pi,card,me,foe){
   checkWin(me,foe,pi);
 }
 function useAbil(pi,idx){if(G.over||G.turn!==pi)return;if(isOnline&&pi!==myIndex)return;let me=G.players[pi],foe=G.players[1-pi],ab=me.abilities[idx];if(me.coins<ab.cost)return;me.coins-=ab.cost;addLog(`💫 ${pn(pi)} применил тактику [${ab.n}] за ${ab.cost} 💰`,'#ffd700');ab.run(pi,me,foe);checkWin(me,foe,pi);if(!G.over)endTurn(pi);else if(isOnline){syncState('state');showOnlineOver();}render();resetIdle();}
-function doAtk(pi,dmg,pierce,me,foe,vfx){let ic=vfx||'⚔️';if(pi===BOT&&bossPid()==='batya')dmg+=3;if(foe.superMode){let thru=Math.floor(dmg*.35);foe.hp=Math.max(0,foe.hp-thru);spawnProjectile(pi,1-pi,ic,'fwd');flashA(1-pi,'grn');if(thru>0)spawnFl(1-pi,'-'+thru,'dmg');spawnFl(1-pi,'⚡СВЕРХ (−65%)','block');sfx('shield');return{msg:`СВЕРХ-ГОЙДА поглотила бо́льшую часть (${thru} прошло)`,hit:thru>0};}if(foe.re>0){foe.re--;let ref=Math.floor(dmg*.75);me.hp=Math.max(0,me.hp-ref);spawnProjectile(pi,1-pi,ic,'reflect');flashA(pi,'red');shakeA(pi);hpHit(pi);spawnFl(pi,'-'+ref,'dmg');spawnFl(1-pi,'↩️ 75% назад!','ref');quake(ref);sfx('hit');totemEvent('reflect');if(isBot&&(1-pi)===BOT)botReact('reflect');return{msg:`${ref} (75%) отражено назад!`,hit:false};}if(!lockShield&&!pierce&&foe.sh>0){foe.sh--;spawnProjectile(pi,1-pi,ic,'block');flashA(1-pi,'blu');spawnFl(1-pi,'🛡️ броня','block');sfx('shield');totemEvent('block');if(isBot&&(1-pi)===BOT)botReact('block');return{msg:'принято на прочную броню',hit:false};}foe.hp=Math.max(0,foe.hp-dmg);spawnProjectile(pi,1-pi,ic,'fwd');flashA(1-pi,'red');shakeA(1-pi);hpHit(1-pi);spawnFl(1-pi,'-'+dmg,'dmg');quake(dmg);sfx('hit');if(pi===BOT&&bossPid()==='volhv'&&foe.hp>0&&!foe.freezeNext){foe.freezeNext=true;spawnFl(1-pi,'❄️ СТУЖА','baseloss');}if((1-pi)===BOT&&bossPid()==='oprichnik'&&dmg>=18&&foe.hp>0&&foe.re<1){foe.re++;spawnFl(1-pi,'🪬 +1','ref');addLog('👹 Опричник в ярости ставит отражение!','#cc99ff');}if(foe.thorns>0&&foe.hp>0){foe.thorns--;let tn=8;me.hp=Math.max(0,me.hp-tn);flashA(pi,'red');spawnFl(pi,'🌵 -'+tn,'dmg');addLog(`🌵 Шипы ${pn(1-pi)} ужалили ${pn(pi)} на ${tn}!`,'#7cff5a');}if(foe.hp<=0)totemSay('ДОБИЛ! ГОЙДА!',true);else if(dmg>=28)totemSay('ОГО-ГОЙДА!!!',true);else if(dmg>=15&&Math.random()<.7)totemSay(['В МЯСО!','БЕЙ!','КРЕПКО!','ОЙ-ГОЙ!'][Math.floor(Math.random()*4)]);if(isBot&&pi===BOT&&dmg>=20&&foe.hp>0)botReact('taunt');return{msg:`${dmg} чистого урона`,hit:true};}
+function doAtk(pi,dmg,pierce,me,foe,vfx){let ic=vfx||'⚔️';if(pi===BOT&&bossPid()==='batya')dmg+=3;dmg=runAtkDmg(pi,dmg);if(foe.superMode){let thru=Math.floor(dmg*.35);foe.hp=Math.max(0,foe.hp-thru);spawnProjectile(pi,1-pi,ic,'fwd');flashA(1-pi,'grn');if(thru>0)spawnFl(1-pi,'-'+thru,'dmg');spawnFl(1-pi,'⚡СВЕРХ (−65%)','block');sfx('shield');return{msg:`СВЕРХ-ГОЙДА поглотила бо́льшую часть (${thru} прошло)`,hit:thru>0};}if(foe.re>0){foe.re--;let ref=Math.floor(dmg*.75);me.hp=Math.max(0,me.hp-ref);spawnProjectile(pi,1-pi,ic,'reflect');flashA(pi,'red');shakeA(pi);hpHit(pi);spawnFl(pi,'-'+ref,'dmg');spawnFl(1-pi,'↩️ 75% назад!','ref');quake(ref);sfx('hit');totemEvent('reflect');if(isBot&&(1-pi)===BOT)botReact('reflect');return{msg:`${ref} (75%) отражено назад!`,hit:false};}if(!lockShield&&!pierce&&foe.sh>0){foe.sh--;spawnProjectile(pi,1-pi,ic,'block');flashA(1-pi,'blu');spawnFl(1-pi,'🛡️ броня','block');sfx('shield');totemEvent('block');if(isBot&&(1-pi)===BOT)botReact('block');return{msg:'принято на прочную броню',hit:false};}foe.hp=Math.max(0,foe.hp-dmg);spawnProjectile(pi,1-pi,ic,'fwd');flashA(1-pi,'red');shakeA(1-pi);hpHit(1-pi);spawnFl(1-pi,'-'+dmg,'dmg');quake(dmg);sfx('hit');if(pi===BOT&&bossPid()==='volhv'&&foe.hp>0&&!foe.freezeNext){foe.freezeNext=true;spawnFl(1-pi,'❄️ СТУЖА','baseloss');}if((1-pi)===BOT&&bossPid()==='oprichnik'&&dmg>=18&&foe.hp>0&&foe.re<1){foe.re++;spawnFl(1-pi,'🪬 +1','ref');addLog('👹 Опричник в ярости ставит отражение!','#cc99ff');}runOnHit(pi,me);if(foe.thorns>0&&foe.hp>0){foe.thorns--;let tn=8;me.hp=Math.max(0,me.hp-tn);flashA(pi,'red');spawnFl(pi,'🌵 -'+tn,'dmg');addLog(`🌵 Шипы ${pn(1-pi)} ужалили ${pn(pi)} на ${tn}!`,'#7cff5a');}if(foe.hp<=0)totemSay('ДОБИЛ! ГОЙДА!',true);else if(dmg>=28)totemSay('ОГО-ГОЙДА!!!',true);else if(dmg>=15&&Math.random()<.7)totemSay(['В МЯСО!','БЕЙ!','КРЕПКО!','ОЙ-ГОЙ!'][Math.floor(Math.random()*4)]);if(isBot&&pi===BOT&&dmg>=20&&foe.hp>0)botReact('taunt');return{msg:`${dmg} чистого урона`,hit:true};}
 function dealRaw(tpi,amount){let t=G.players[tpi];if(t.superMode){spawnFl(tpi,'🛡️ НЕУЯЗВИМ','block');return;}t.hp=Math.max(0,t.hp-amount);flashA(tpi,'red');shakeA(tpi);hpHit(tpi);spawnFl(tpi,'-'+amount,'dmg');spawnShards(tpi,'#ffd700');quake(amount);sfx('hit');}
 function healRaw(pi,amount){let p=G.players[pi],h=Math.min(amount,100-p.hp);p.hp=Math.min(100,p.hp+amount);flashA(pi,'grn');spawnFl(pi,'+'+h,'heal');sfx('heal');if(h>=20&&Math.random()<.5)totemSay('ЖИВУЧИЙ!');return h;}
-function changeBase(pi,p,amount){if(pi===BOT&&amount>0&&bossPid()==='voevoda')amount=Math.round(amount*1.5);if(amount>0&&p.freezeNext){p.freezeNext=false;spawnFl(pi,'❄️ ЗАМОРОЖЕНО!','baseloss');addLog(`❄️ Прирост Базометра ${pn(pi)} заморожен!`,'#3aebff');return;}if(p.superMode){p.base=Math.max(0,Math.min(100,p.base+amount));spawnFl(pi,(amount>0?'+':'')+amount+'% БАЗЫ','base');return;}let _os=getStage(p.base);p.base=Math.max(0,Math.min(100,p.base+amount));if(amount>0)spawnFl(pi,'+'+amount+'% БАЗЫ','base');else if(amount<0)spawnFl(pi,amount+'% БАЗЫ','baseloss');if(amount>0&&getStage(p.base)>_os&&p.base<100){totemEvent('stage');sfx('stage');}if(p.base>=100)triggerSuperGoyda(pi,p);}
+function changeBase(pi,p,amount){if(pi===BOT&&amount>0&&bossPid()==='voevoda')amount=Math.round(amount*1.5);if(_runBattle&&amount>0&&runMut()==='rage')amount=Math.round(amount*1.3);if(amount>0&&p.freezeNext){p.freezeNext=false;spawnFl(pi,'❄️ ЗАМОРОЖЕНО!','baseloss');addLog(`❄️ Прирост Базометра ${pn(pi)} заморожен!`,'#3aebff');return;}if(p.superMode){p.base=Math.max(0,Math.min(100,p.base+amount));spawnFl(pi,(amount>0?'+':'')+amount+'% БАЗЫ','base');return;}let _os=getStage(p.base);p.base=Math.max(0,Math.min(100,p.base+amount));if(amount>0)spawnFl(pi,'+'+amount+'% БАЗЫ','base');else if(amount<0)spawnFl(pi,amount+'% БАЗЫ','baseloss');if(amount>0&&getStage(p.base)>_os&&p.base<100){totemEvent('stage');sfx('stage');}if(p.base>=100)triggerSuperGoyda(pi,p);}
 function triggerSuperGoyda(pi,p){p.superMode=true;p.superTurns=2;p.base=0;spawnSuperOverlay(pi);addLog(`🔥 СВЕРХ-ГОЙДА у ${pn(pi)}! Базометр сброшен. Ярость на 2 хода!`,'#39ff14');sfx('super');totemSay('СВЕРХ!!!',true);totemDance();if(isBot&&pi===HUMAN)pushRecent('вошёл в Сверх-Гойду');if(isBot&&pi===BOT)botReact('super',true);}
 function applyBossTurnStart(){let pid=bossPid();if(!pid||G.turn!==BOT)return;let me=G.players[BOT];if(pid==='holop'){let h=Math.min(8,100-me.hp);if(h>0){me.hp+=h;spawnFl(BOT,'+'+h,'heal');addLog('😴 Холоп подремал и подлечился (+'+h+' ОЗ)','#5eff8b');}}else if(pid==='ratnik'){if(me.sh<2){me.sh++;spawnFl(BOT,'🛡️ +1','block');addLog('⚔️ Ратник встал в стойку (+1 броня)','#00ccff');}}}
 function endTurn(pi){let me=G.players[pi];if(me.superMode)changeBase(pi,me,10);G.turn=1-pi;let next=G.players[G.turn];next.coins++;bumpCoins(G.turn);rollAbilities(next);if(next.superMode){next.superTurns--;if(next.superTurns<0){next.superMode=false;addLog(`⚠️ Режим СВЕРХ-ГОЙДЫ у ${pn(G.turn)} угас!`,'#ffd700');}}
   if(G.turn===BOT)applyBossTurnStart();
+  if(_runBattle)applyRunTurnStart(G.turn);
   // ☠ poison ticks at the start of this player's turn
   if(next.poison>0){let d=next.poison;dealRaw(G.turn,d);addLog(`☠️ Яд жалит ${pn(G.turn)} на ${d}!`,'#7cff5a');next.poison--;}
   if(next.hp<=0){checkWin(G.players[pi],G.players[G.turn],pi);render();if(isOnline){syncState('state');showOnlineOver();}return;}
@@ -1472,6 +1524,7 @@ function checkWin(me,foe,pi){
   else if(foe.hp<=0){G.over=true;ended=true;html=`🏆 ${pn(pi)} ТРИУМФОВАЛ!`;}
   else if(me.hp<=0){G.over=true;ended=true;html=`🏆 ${pn(1-pi)} ТРИУМФОВАЛ!`;}
   if(!ended||isOnline)return; // online handled in showOnlineOver
+  if(_runBattle){resolveRunBattle();return;}
   let res=null,o=null;
   if(isBot){o=botOutcome();res=recordResult('bot',o);let cmpHtml='';if(_campaignIdx>=0){let bossName=(CAMPAIGN[_campaignIdx]||{}).name||'босс';if(o==='win'){if(_campaignIdx===(STATS.campaign||0)){STATS.campaign=(STATS.campaign||0)+1;saveStats();}let last=_campaignIdx>=CAMPAIGN.length-1;cmpHtml=last?'<div class="rank-up-toast" style="color:#ffd24a">👑 ПУТЬ ГОЙДЫ ПРОЙДЕН ДО КОНЦА!</div>':'<div class="rank-up-toast" style="color:#5eff8b">🎬 Босс «'+bossName+'» повержен! Открыт следующий.</div>';}else if(o==='loss'){cmpHtml='<div class="unlock-toast">🎬 «'+bossName+'» устоял. Попробуй снова!</div>';}}html=(o==='win'?'🏆 ВЫ ТРИУМФОВАЛИ!<br><span class="text-sm font-normal">Бот повержен. Гойда абсолютна!</span>':o==='loss'?'💀 ВЫ ПАЛИ!<br><span class="text-sm font-normal">Бот оказался базированнее.</span>':'⚔️ СОВМЕСТНАЯ СМЕРТЬ!')+cmpHtml;showBotThinking(false);renderLobbyStats();setTimeout(()=>{_botReactLast=0;botReact('gg',true,{win:o==='win'});},500);geminiRecap(o==='win');}
   else if(!_resultRecorded){_resultRecorded=true;STATS.games++;saveStats();renderLobbyStats();o=(me.hp<=0&&foe.hp<=0)?'draw':'win';}
@@ -1573,7 +1626,7 @@ function toggleMute(){initSound();sndMuted=!sndMuted;STATS.muted=sndMuted;saveSt
 function startLocalGame(){isOnline=false;isLocal=true;isBot=false;_campaignIdx=-1;window._campaignBoss='';window._campaignPersona='';document.getElementById('lobby').style.display='none';document.getElementById('bottom-bar').classList.remove('hidden');document.getElementById('log-toggle').style.display='block';document.getElementById('bb-lobby').style.display='inline-block';initGame();render();renderDiscard(0);renderDiscard(1);sfx('start');startMusicIfEnabled();resetIdle();showPass(0);}
 const BOT_NAMES={easy:'БОТ-НОВОБРАНЕЦ',warrior:'БОТ-ВОИН',oprichnik:'БОТ-ОПРИЧНИК'};
 function startBotGame(level,isCampaign){isOnline=false;isLocal=false;isBot=true;botLevel=level||'warrior';myIndex=HUMAN;if(!isCampaign){_campaignIdx=-1;window._campaignBoss='';window._campaignPersona='';}document.getElementById('lobby').style.display='none';document.getElementById('bottom-bar').classList.remove('hidden');document.getElementById('log-toggle').style.display='block';document.getElementById('bb-lobby').style.display='inline-block';initGame();addLog(isCampaign?('🎬 ПУТЬ ГОЙДЫ: бой против «'+(window._campaignBoss||'босса')+'»!'):('🤖 Бой против '+BOT_NAMES[botLevel]+'! Ты ходишь первым. ГОЙДА!'),'#ff9eb5');render();renderDiscard(0);renderDiscard(1);sfx('start');startMusicIfEnabled();resetIdle();if(!isCampaign)setTimeout(()=>botReact('greet',true),700);offerMulligan(HUMAN);}
-function backToLobby(force){if(!force&&!confirm('Вернуться в меню? Текущая схватка будет завершена. ГОЙДА?'))return;_intentionalClose=true;_reconnecting=false;clearTimeout(_reconnectTimer);showReconnectBanner(false);_iWantRematch=false;_oppWantsRematch=false;_campaignIdx=-1;window._campaignBoss='';window._campaignPersona='';isOnline=false;isLocal=false;isBot=false;myIndex=-1;gameStarted=false;showBotThinking(false);closeEmoteWheel(true);stopMusic();clearTimeout(_idleTimer);clearTimeout(_stormTimer);_stormTimer=null;document.body.classList.remove('flip-view');if(mqttClient){try{mqttClient.end(true);}catch(e){}mqttClient=null;}document.getElementById('lobby').style.display='flex';document.getElementById('over').style.display='none';document.getElementById('bottom-bar').classList.add('hidden');document.getElementById('log-toggle').style.display='none';document.getElementById('bb-lobby').style.display='none';renderLobbyStats();}
+function backToLobby(force){if(!force&&!confirm('Вернуться в меню? Текущая схватка будет завершена. ГОЙДА?'))return;_intentionalClose=true;_reconnecting=false;clearTimeout(_reconnectTimer);showReconnectBanner(false);_iWantRematch=false;_oppWantsRematch=false;_campaignIdx=-1;window._campaignBoss='';window._campaignPersona='';_runBattle=false;isOnline=false;isLocal=false;isBot=false;myIndex=-1;gameStarted=false;showBotThinking(false);closeEmoteWheel(true);stopMusic();clearTimeout(_idleTimer);clearTimeout(_stormTimer);_stormTimer=null;document.body.classList.remove('flip-view');if(mqttClient){try{mqttClient.end(true);}catch(e){}mqttClient=null;}document.getElementById('lobby').style.display='flex';document.getElementById('over').style.display='none';document.getElementById('bottom-bar').classList.add('hidden');document.getElementById('log-toggle').style.display='none';document.getElementById('bb-lobby').style.display='none';renderLobbyStats();}
 
 // === SIDE PANELS ===
 const BATTLE_CRIES=['ГОЙДА!!!','СЛАВА!','В АТАКУ!','СТОЯТЬ!','ДЕРЖИСЬ!','ЗА ДРОН!','СИЛА!','УДАЧА!','ВПЕРЁД!','НЕ СДАВАЙ!','ОГОНЬ!','ГОЙДА-МАТ!','ЯРОСТЬ!','ПОБЕДА!'];
@@ -1903,6 +1956,138 @@ function botMulligan(){let b=G.players[BOT],atk=['GOYDA','GOYDO_FONK','CRINGE_GO
 
 function toggleLog(){let p=document.getElementById('log-panel'),t=document.getElementById('log-toggle');p.classList.toggle('open');t.style.right=p.classList.contains('open')?'260px':'0';}
 document.getElementById('log-toggle').style.display='none';
+
+// ═══════════════ ПОХОД ГОЙДЫ — roguelike run mode ═══════════════
+const RUN_KEY='goyda_run_v1';
+let RUN=null,_runBattle=false,_runOpts=[];
+function hashStr(s){s=String(s);let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function saveRun(){try{localStorage.setItem(RUN_KEY,JSON.stringify(RUN));}catch(e){}}
+function loadRun(){try{let r=JSON.parse(localStorage.getItem(RUN_KEY));return (r&&r.alive)?r:null;}catch(e){return null;}}
+function clearRun(){RUN=null;try{localStorage.removeItem(RUN_KEY);}catch(e){}}
+
+const RELICS={
+  blade:{ic:'🗡️',name:'Клинок Дрона',desc:'+2 ко всем твоим атакам'},
+  regen:{ic:'💚',name:'Дыхание Дрона',desc:'+5 ОЗ в начале твоего хода'},
+  purse:{ic:'💰',name:'Мошна',desc:'+1 монета в начале твоего хода'},
+  spark:{ic:'🔥',name:'Искра Гойды',desc:'старт боя с +20% Базы'},
+  scroll:{ic:'🃏',name:'Щедрый свиток',desc:'+1 карта в начале боя'},
+  thorns:{ic:'🌵',name:'Тернии предков',desc:'старт боя с шипами'},
+  aegis:{ic:'🛡️',name:'Оберег предков',desc:'старт боя с бронёй'},
+  vamp:{ic:'🩸',name:'Жажда Дрона',desc:'+3 ОЗ когда бьёшь врага'}
+};
+const RELIC_IDS=Object.keys(RELICS);
+const MUTATORS={
+  none:{ic:'•',name:'Без модификатора',desc:'обычные правила'},
+  hard:{ic:'💪',name:'Лютый враг',desc:'враги бьют сильнее (+20%)'},
+  rage:{ic:'⚡',name:'Всеобщая ярость',desc:'Базометр копится быстрее обоим'},
+  blessed:{ic:'🎁',name:'Благословлён',desc:'стартуешь со случайной реликвией'},
+  glass:{ic:'💥',name:'Стеклянный мир',desc:'все бьют сильнее (опаснее обоим)'}
+};
+const MUT_IDS=Object.keys(MUTATORS);
+function hasRelic(id){return _runBattle&&RUN&&RUN.relics&&RUN.relics.indexOf(id)>=0;}
+function runMut(){return (_runBattle&&RUN&&RUN.mutator)||'none';}
+// damage / turn-start hooks used by the battle engine
+function runAtkDmg(pi,dmg){if(!_runBattle||!RUN)return dmg;if(pi===HUMAN){if(hasRelic('blade'))dmg+=2;if(runMut()==='glass')dmg=Math.round(dmg*1.2);}if(pi===BOT){if(runMut()==='hard')dmg=Math.round(dmg*1.2);if(runMut()==='glass')dmg=Math.round(dmg*1.2);}return dmg;}
+function runOnHit(pi,me){if(_runBattle&&pi===HUMAN&&hasRelic('vamp')&&me.hp>0&&me.hp<100){me.hp=Math.min(100,me.hp+3);spawnFl(HUMAN,'🩸+3','heal');}}
+function applyRunTurnStart(turn){if(!_runBattle||!RUN||turn!==HUMAN)return;let me=G.players[HUMAN];if(hasRelic('regen')&&me.hp>0&&me.hp<100){let h=Math.min(5,100-me.hp);me.hp+=h;spawnFl(HUMAN,'💚+'+h,'heal');}if(hasRelic('purse')){me.coins++;bumpCoins(HUMAN);}}
+// deck for a run battle (shared draw pile = the evolving run deck)
+function buildDeckFrom(ids){let d=[];for(let id of ids){let df=DEFS[id];if(!df)continue;d.push({...df,id:id,uid:id+'_'+Math.random()});}for(let i=d.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}return d;}
+function runDeck(){return (_runBattle&&RUN&&RUN.deck&&RUN.deck.length)?buildDeckFrom(RUN.deck):buildDeck();}
+
+// ── map generation ──
+function genMap(rng){const rows=11;let map=[];for(let i=0;i<rows;i++){let depth=i/(rows-1),t;if(i===rows-1)t='boss';else if(i===0)t='battle';else if(i===rows-2)t='rest';else{let r=rng();if(r<0.17)t='event';else if(r<0.32&&i>2)t='elite';else if(r<0.45&&i>1)t='rest';else t='battle';}let level=depth<0.34?'easy':depth<0.7?'warrior':'oprichnik';if(t==='elite'||t==='boss')level='oprichnik';map.push({type:t,level:level,done:false});}return map;}
+function newRun(seed,mutator,day){let base=[];for(let k in DEFS){for(let i=0;i<DEFS[k].cnt;i++)base.push(k);}let rng=mulberry32(seed>>>0);let map=genMap(rng);RUN={seed:seed>>>0,node:0,map:map,hp:100,deck:base,relics:[],mutator:mutator||'none',day:!!day,alive:true,nodesDone:0};if(RUN.mutator==='blessed'){RUN.relics.push(RELIC_IDS[Math.floor(rng()*RELIC_IDS.length)]);}saveRun();document.getElementById('run').style.display='flex';renderRunBody();}
+
+// ── screen + menu ──
+function openRun(){RUN=loadRun();document.getElementById('run').style.display='flex';renderRunBody();}
+function closeRun(){document.getElementById('run').style.display='none';}
+function resumeRun(){RUN=loadRun();if(RUN){renderRunBody();}else renderRunBody();}
+function startNewRun(){let seed=(Math.floor(Math.random()*4294967296))>>>0;let mut=MUT_IDS[Math.floor(Math.random()*MUT_IDS.length)];newRun(seed,mut,false);}
+function startDailyRun(){let d=new Date();let key=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();let seed=hashStr('goyda-daily-'+key);let mut=MUT_IDS[seed%MUT_IDS.length];newRun(seed,mut,true);}
+function abandonRun(){if(!confirm('Бросить текущий поход? Прогресс забега потеряется.'))return;clearRun();sfx('click');renderRunBody();}
+function renderRunBody(){
+  let host=document.getElementById('run-body');if(!host)return;
+  if(!RUN||!RUN.alive){let cont=loadRun();host.innerHTML='<div class="run-menu">'+(cont?'<button class="btn btn-run" onclick="resumeRun()">▶ Продолжить поход</button>':'')+'<button class="btn btn-run" onclick="startNewRun()">🗺️ Новый поход</button>'+'<button class="btn" onclick="startDailyRun()">🗓️ Дневной поход (сид дня)</button>'+'<div class="run-hint">Карта узлов · бои переносят HP · собирай колоду и реликвии «Благословения Дрона». Дойди до финального босса! Реликвии и мутатор делают каждый забег своим.</div></div>';return;}
+  let mut=MUTATORS[RUN.mutator]||MUTATORS.none;
+  let relics=RUN.relics.length?RUN.relics.map(id=>'<span class="run-relic" title="'+RELICS[id].name+': '+RELICS[id].desc+'">'+RELICS[id].ic+'</span>').join(''):'<span class="run-relic-none">пока нет</span>';
+  let h='<div class="run-top"><span>❤️ '+RUN.hp+'/100</span><span>🃏 колода '+RUN.deck.length+'</span><span class="run-mut" title="'+mut.desc+'">'+mut.ic+' '+mut.name+'</span>'+(RUN.day?'<span title="дневной сид">🗓️</span>':'')+'</div>';
+  h+='<div class="run-relics">🩸 Реликвии: '+relics+'</div><div class="run-map">';
+  let icons={battle:'⚔️',elite:'☠️',event:'✨',rest:'🔥',boss:'👑'},labels={battle:'Бой',elite:'Элита',event:'Событие',rest:'Привал',boss:'ФИНАЛЬНЫЙ БОСС'};
+  RUN.map.forEach((n,i)=>{let st=n.done?'done':i===RUN.node?'cur':'lock';h+='<div class="run-node '+st+' '+n.type+'" '+(st==='cur'?'onclick="playNode('+i+')"':'')+'><span class="rn-ic">'+icons[n.type]+'</span><span class="rn-lbl">'+labels[n.type]+'</span><span class="rn-st">'+(st==='done'?'✅':st==='cur'?'◄ идти':'·')+'</span></div>';if(i<RUN.map.length-1)h+='<div class="run-link '+(n.done?'on':'')+'"></div>';});
+  h+='</div><div class="run-foot-btns"><button class="btn" style="font-size:11px;padding:6px 14px" onclick="abandonRun()">🏳️ Бросить поход</button></div>';
+  host.innerHTML=h;
+}
+
+// ── run-modal (choices / events / rewards / results) ──
+function runModal(html){let m=document.getElementById('run-modal');m.querySelector('.run-modal-body').innerHTML=html;m.style.display='flex';}
+function closeRunModal(){document.getElementById('run-modal').style.display='none';}
+function showOptions(title,sub,opts){_runOpts=opts;let h='<div class="run-modal-title">'+title+'</div>'+(sub?'<div class="run-modal-sub">'+sub+'</div>':'')+'<div class="run-opts">';opts.forEach((o,i)=>{h+='<div class="run-opt" onclick="runPick('+i+')"><div class="run-opt-ic">'+o.ic+'</div><div class="run-opt-name">'+o.name+'</div><div class="run-opt-desc">'+o.desc+'</div></div>';});h+='</div>';runModal(h);}
+function runPick(i){let o=_runOpts[i];if(!o)return;closeRunModal();sfx('click');o.pick();}
+
+// ── node dispatch ──
+function playNode(i){if(!RUN||i!==RUN.node)return;let n=RUN.map[i];if(n.type==='battle'||n.type==='elite'||n.type==='boss')startRunBattle(n);else if(n.type==='event')showEvent(n);else if(n.type==='rest')showRest(n);}
+function advanceNode(n){n.done=true;RUN.node++;RUN.nodesDone=(RUN.nodesDone||0)+1;saveRun();renderRunBody();}
+
+// ── run battles (reuse the bot engine) ──
+function startRunBattle(node){
+  _runBattle=true;_campaignIdx=-1;window._campaignBoss='';
+  document.getElementById('run').style.display='none';
+  startBotGame(node.level,false); // initGame() reads _runBattle → uses run deck
+  let me=G.players[HUMAN];me.hp=RUN.hp;
+  if(hasRelic('spark'))me.base=Math.min(100,me.base+20);
+  if(hasRelic('aegis'))me.sh=Math.min(me.sh+1,2);
+  if(hasRelic('thorns'))me.thorns=Math.min((me.thorns||0)+2,6);
+  if(hasRelic('scroll'))draw(me,1);
+  if(node.type==='elite')G.players[BOT].sh=Math.min(G.players[BOT].sh+1,2);
+  if(node.type==='boss')G.players[BOT].re=Math.min(G.players[BOT].re+1,1);
+  let nm=document.getElementById('pname2');if(nm)nm.textContent=(node.type==='boss'?'👑 БОСС ПОХОДА':node.type==='elite'?'☠️ ЭЛИТА':'⚔️ ВРАГ ПОХОДА');
+  let ric=RUN.relics.map(id=>RELICS[id].ic).join('');
+  addLog('🗺️ ПОХОД · '+(node.type==='boss'?'ФИНАЛЬНЫЙ БОЙ!':node.type==='elite'?'элитный бой!':'бой!')+' HP: '+RUN.hp+(ric?(' · реликвии '+ric):''),'#5effb0');
+  render();
+}
+function resolveRunBattle(){
+  if(!_runBattle)return;_runBattle=false;
+  let win=G.players[BOT].hp<=0&&G.players[HUMAN].hp>0;
+  let node=RUN.map[RUN.node];
+  if(win){RUN.hp=Math.max(1,G.players[HUMAN].hp);node.done=true;RUN.node++;RUN.nodesDone=(RUN.nodesDone||0)+1;saveRun();if(node.type==='boss'){endRun(true);return;}showRunReward(node);}
+  else{endRun(false);}
+}
+function showRunReward(node){let steps=[];if(node.type==='elite')steps.push('relic');steps.push('card');runRewardChain(steps);}
+function runRewardChain(steps){if(!steps.length){saveRun();document.getElementById('run').style.display='flex';renderRunBody();return;}let s=steps.shift();if(s==='relic')offerRelic(()=>runRewardChain(steps));else offerCard(()=>runRewardChain(steps));}
+function offerCard(cb){let keys=Object.keys(DEFS);for(let i=keys.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[keys[i],keys[j]]=[keys[j],keys[i]];}let pick=keys.slice(0,3);let opts=pick.map(id=>{let df=DEFS[id];return{ic:df.ic,name:df.n,desc:df.eff,pick:()=>{RUN.deck.push(id);saveRun();cb();}};});opts.push({ic:'⏭️',name:'Пропустить',desc:'не брать свиток',pick:cb});showOptions('🃏 Добыча — возьми свиток в колоду','Колода забега растёт под твой стиль.',opts);}
+function offerRelic(cb){let pool=RELIC_IDS.filter(id=>!RUN.relics.includes(id));if(!pool.length){cb();return;}for(let i=pool.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}let pick=pool.slice(0,Math.min(3,pool.length));showOptions('🩸 Благословение Дрона — выбери реликвию','Действует до конца похода.',pick.map(id=>{let r=RELICS[id];return{ic:r.ic,name:r.name,desc:r.desc,pick:()=>{RUN.relics.push(id);saveRun();cb();}};}));}
+
+// ── events (static dilemmas; AI-narration is a later upgrade) ──
+function evRelic(){let pool=RELIC_IDS.filter(id=>!RUN.relics.includes(id));if(pool.length)RUN.relics.push(pool[Math.floor(Math.random()*pool.length)]);}
+function evCard(){let keys=Object.keys(DEFS);RUN.deck.push(keys[Math.floor(Math.random()*keys.length)]);}
+function evStrongCard(){let strong=['GIPER_GOYD','OPLICH_GOYDA','ABSOLUT_GOYDA','GOYDO_OBEREG'];RUN.deck.push(strong[Math.floor(Math.random()*strong.length)]);}
+const RUN_EVENTS=[
+  {t:'Костёр странника',d:'Седой странник делит с тобой котелок мутного варева.',o:[{ic:'🍲',n:'Поесть',c:'+20 ОЗ',f:()=>{RUN.hp=Math.min(100,RUN.hp+20);}},{ic:'🚶',n:'Уйти',c:'ничего',f:()=>{}}]},
+  {t:'Алтарь Дрона',d:'Каменный идол ждёт подношения.',o:[{ic:'🙏',n:'Помолиться',c:'реликвия',f:evRelic},{ic:'😈',n:'Осквернить',c:'+1 мощная карта',f:evStrongCard}]},
+  {t:'Бродячий торговец',d:'«Отдай кровушку — получишь силу», — хрипит он.',o:[{ic:'🩸',n:'Заплатить 15 ОЗ',c:'реликвия',f:()=>{RUN.hp=Math.max(1,RUN.hp-15);evRelic();}},{ic:'🚷',n:'Отказать',c:'ничего',f:()=>{}}]},
+  {t:'Проклятый свиток',d:'Свиток шепчет запретную Гойду.',o:[{ic:'📜',n:'Взять',c:'+1 карта, −10 ОЗ',f:()=>{RUN.hp=Math.max(1,RUN.hp-10);evCard();}},{ic:'🔥',n:'Сжечь',c:'+10 ОЗ',f:()=>{RUN.hp=Math.min(100,RUN.hp+10);}}]},
+  {t:'Развилка духов',d:'Два пути: риск и покой.',o:[{ic:'🎲',n:'Рискнуть',c:'50%: реликвия / −15 ОЗ',f:()=>{if(Math.random()<0.5)evRelic();else RUN.hp=Math.max(1,RUN.hp-15);}},{ic:'🛏️',n:'Покой',c:'+12 ОЗ',f:()=>{RUN.hp=Math.min(100,RUN.hp+12);}}]},
+  {t:'Кузня Гойды',d:'Горн пышет жаром — закалить оружие или дух?',o:[{ic:'⚒️',n:'Закалить',c:'+1 карта',f:evCard},{ic:'😌',n:'Передохнуть',c:'+15 ОЗ',f:()=>{RUN.hp=Math.min(100,RUN.hp+15);}}]}
+];
+function showEvent(node){let ev=RUN_EVENTS[Math.floor(Math.random()*RUN_EVENTS.length)];showOptions('✨ '+ev.t,ev.d,ev.o.map(o=>({ic:o.ic,name:o.n,desc:o.c,pick:()=>{o.f();advanceNode(node);}})));}
+function showRest(node){showOptions('🔥 Привал','Перевести дух у костра Дрона.',[{ic:'💤',name:'Отдых',desc:'+30 ОЗ',pick:()=>{RUN.hp=Math.min(100,RUN.hp+30);advanceNode(node);}},{ic:'🙏',name:'Молитва Дрону',desc:'случайная реликвия',pick:()=>{evRelic();advanceNode(node);}}]);}
+
+// ── end of run ──
+function endRun(win){
+  let nodes=RUN?(RUN.nodesDone||0):0,day=RUN&&RUN.day;
+  let slava=nodes*8+(win?60:0)+(day?10:0);
+  let old=STATS.slava||0;STATS.slava=old+slava;
+  if(day)STATS.runBest=Math.max(STATS.runBest||0,nodes);
+  saveStats();renderLobbyStats();
+  let unlocked=listNewlyUnlocked(old,STATS.slava);
+  clearRun();
+  sfx(win?'win':'lose');
+  showOptions(win?'👑 ПОХОД ПРОЙДЕН — ТРИУМФ!':'💀 ПОХОД ОБОРВАН',
+    'Узлов пройдено: '+nodes+' · Слава +'+slava+(unlocked.length?(' · Открыто: '+unlocked.map(u=>u.ic).join(' ')):''),
+    [{ic:'🏠',name:'В лобби',desc:'вернуться в меню',pick:()=>{document.getElementById('run').style.display='none';backToLobby(true);}},
+     {ic:'🗺️',name:'Новый забег',desc:'испытать судьбу ещё раз',pick:()=>{document.getElementById('run').style.display='flex';renderRunBody();}}]);
+}
 
 // wire up buttons via addEventListener (avoids onclick global-scope issues)
 document.getElementById('btn-create').addEventListener('click',createRoom);
