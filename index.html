@@ -289,7 +289,7 @@ body.super-mode-active .totem-idol{animation:totemRoar .5s ease-in-out infinite;
 .btn-campaign{background:linear-gradient(135deg,#5a2a0a,#8a3a1a) !important;color:#ffd0a0 !important;box-shadow:0 4px 15px rgba(255,120,40,.22) !important;font-size:12px !important;padding:10px 22px !important;}
 .btn-campaign:hover{box-shadow:0 6px 20px rgba(255,120,40,.45) !important;}
 /* CAMPAIGN */
-#campaign{position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,#180a04 0%,#000 100%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:142;padding:16px;}
+#campaign{position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,#180a04 0%,#000 100%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:170;padding:16px;}
 .cmp-panel{width:100%;max-width:480px;max-height:90vh;display:flex;flex-direction:column;background:rgba(14,6,2,.97);border:1.5px solid rgba(255,150,60,.35);border-radius:16px;box-shadow:0 0 30px rgba(255,120,40,.22);overflow:hidden;}
 .cmp-prog{text-align:center;font-size:12px;color:#ffd24a;font-weight:900;margin:10px 0;letter-spacing:1px;}
 .cmp-boss{display:flex;align-items:center;gap:12px;background:rgba(40,18,6,.8);border:1.5px solid rgba(255,150,60,.2);border-radius:12px;padding:10px 12px;margin:0 12px 8px;transition:all .15s;}
@@ -297,7 +297,8 @@ body.super-mode-active .totem-idol{animation:totemRoar .5s ease-in-out infinite;
 .cmp-boss.cur:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(255,140,40,.4);}
 @keyframes cmpPulse{0%,100%{border-color:rgba(255,174,66,.5);}50%{border-color:rgba(255,210,120,1);}}
 .cmp-boss.lock{opacity:.45;filter:grayscale(70%);}
-.cmp-boss.done{opacity:.8;border-color:rgba(94,255,139,.35);}
+.cmp-boss.done{opacity:.8;border-color:rgba(94,255,139,.35);cursor:pointer;}
+.cmp-boss.done:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(94,255,139,.3);opacity:1;}
 .cmp-ic{font-size:34px;line-height:1;flex-shrink:0;}
 .cmp-info{text-align:left;}
 .cmp-name{font-size:13px;font-weight:900;color:#fff;}
@@ -310,7 +311,7 @@ body.super-mode-active .totem-idol{animation:totemRoar .5s ease-in-out infinite;
 .cl-line b{color:var(--gold-bright);}
 .cl-empty{font-size:11px;color:#7a6a5a;text-align:center;padding:20px;}
 /* TUTORIAL */
-#tutorial{position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,#0a0518 0%,#000 100%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:150;padding:18px;}
+#tutorial{position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,#0a0518 0%,#000 100%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:175;padding:18px;}
 .tut-panel{position:relative;width:100%;max-width:440px;background:rgba(8,3,14,.97);border:1.5px solid rgba(120,200,255,.35);border-radius:18px;box-shadow:0 0 34px rgba(60,160,255,.25);padding:26px 22px 18px;text-align:center;}
 .tut-x{position:absolute;top:8px;right:10px;background:none;border:none;color:#888;font-size:18px;cursor:pointer;font-family:inherit;}
 .tut-x:hover{color:#fff;}
@@ -324,7 +325,7 @@ body.super-mode-active .totem-idol{animation:totemRoar .5s ease-in-out infinite;
 .tut-nav{display:flex;gap:10px;justify-content:center;}
 .tut-skip{margin-top:10px;font-size:9px;color:#5a6a7a;letter-spacing:1px;text-transform:uppercase;cursor:pointer;}
 .tut-skip:hover{color:#9ab;}
-#wardrobe{position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,#0e0518 0%,#000 100%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:140;padding:16px;}
+#wardrobe{position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,#0e0518 0%,#000 100%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:170;padding:16px;}
 .wd-panel{width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;background:rgba(8,3,14,.96);border:1.5px solid rgba(180,120,255,.35);border-radius:16px;box-shadow:0 0 30px rgba(140,60,255,.25);overflow:hidden;}
 .wd-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(180,120,255,.2);}
 .wd-title{font-size:16px;font-weight:900;color:#d8b4ff;letter-spacing:1.5px;text-shadow:0 0 10px rgba(180,120,255,.4);}
@@ -1031,7 +1032,7 @@ const CAMPAIGN=[
 let _campaignIdx=-1;
 function openCampaign(){renderCampaign();document.getElementById('campaign').style.display='flex';}
 function closeCampaign(){document.getElementById('campaign').style.display='none';}
-function renderCampaign(){let host=document.getElementById('campaign-body');if(!host)return;let prog=STATS.campaign||0,done=Math.min(prog,CAMPAIGN.length);let lvl={easy:'Лёгкий',warrior:'Воин',oprichnik:'Опричник'};let html='<div class="cmp-prog">Пройдено боссов: '+done+'/'+CAMPAIGN.length+(done>=CAMPAIGN.length?' — ПУТЬ ЗАВЕРШЁН! 👑':'')+'</div>';CAMPAIGN.forEach((b,i)=>{let st=i<prog?'done':i===prog?'cur':'lock';html+='<div class="cmp-boss '+st+'" '+(st==='cur'?'onclick="startCampaignBattle('+i+')"':'')+'><div class="cmp-ic">'+b.ic+'</div><div class="cmp-info"><div class="cmp-name">'+(i+1)+'. '+b.name+'</div><div class="cmp-sub">'+(st==='done'?'✅ повержен':st==='cur'?'◄ ТВОЙ БОЙ · '+lvl[b.level]:'🔒 закрыто')+'</div></div></div>';});host.innerHTML=html;}
+function renderCampaign(){let host=document.getElementById('campaign-body');if(!host)return;let prog=STATS.campaign||0,done=Math.min(prog,CAMPAIGN.length);let lvl={easy:'Лёгкий',warrior:'Воин',oprichnik:'Опричник'};let html='<div class="cmp-prog">Пройдено боссов: '+done+'/'+CAMPAIGN.length+(done>=CAMPAIGN.length?' — ПУТЬ ЗАВЕРШЁН! 👑':'')+'</div>';CAMPAIGN.forEach((b,i)=>{let st=i<prog?'done':i===prog?'cur':'lock';html+='<div class="cmp-boss '+st+'" '+(st!=='lock'?'onclick="startCampaignBattle('+i+')"':'')+'><div class="cmp-ic">'+b.ic+'</div><div class="cmp-info"><div class="cmp-name">'+(i+1)+'. '+b.name+'</div><div class="cmp-sub">'+(st==='done'?'✅ повержен · нажми, чтобы переиграть':st==='cur'?'◄ ТВОЙ БОЙ · '+lvl[b.level]:'🔒 закрыто')+'</div></div></div>';});host.innerHTML=html;}
 function hideVS(){let vs=document.getElementById('vs-screen');if(!vs)return;clearTimeout(window._vsTimer);vs.classList.remove('show');vs.setAttribute('aria-hidden','true');}
 function showVS(b){
   if(!b)return;let vs=document.getElementById('vs-screen');if(!vs)return;
