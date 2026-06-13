@@ -71,6 +71,9 @@ body.has-arena3d .totem-glow,body.has-arena3d .totem-runes{display:none;}
 .vs-rune{font-weight:900;font-size:46px;color:#fff;text-shadow:0 0 18px rgba(255,90,30,.9),0 2px 6px #000;flex:0 0 auto;opacity:0;}
 #vs-screen.show .vs-rune{animation:vsRune .5s ease-out .32s forwards;}
 @keyframes vsRune{from{opacity:0;transform:scale(2.4) rotate(-14deg);}to{opacity:1;transform:none;}}
+.vs-hint{position:absolute;bottom:11%;left:0;right:0;text-align:center;font-weight:900;font-size:15px;color:#ffe8b5;text-shadow:0 2px 6px #000,0 0 12px rgba(255,170,60,.5);letter-spacing:1px;opacity:0;pointer-events:none;}
+#vs-screen.show .vs-hint{animation:vsHint 1.5s ease-in-out 1s infinite;}
+@keyframes vsHint{0%,100%{opacity:.4;}50%{opacity:1;}}
 @media(max-width:640px){.vs-portrait{width:84px;height:84px;font-size:44px;}.vs-rune{font-size:34px;}.vs-inner{gap:8px;}}
 @keyframes cosmicPulse{0%,100%{opacity:.5;transform:scale(1);}50%{opacity:.85;transform:scale(1.06);}}
 @keyframes shake{0%,100%{transform:translateX(0);}10%,90%{transform:translateX(-12px) translateY(2px);}30%,70%{transform:translateX(10px) translateY(-2px);}50%{transform:translateX(-6px) translateY(3px);}}
@@ -637,7 +640,7 @@ body.fire-wind::after{opacity:.5!important;background:radial-gradient(ellipse at
   <div class="vs-side vs-l"><div class="vs-portrait vs-you">⚔</div><div class="vs-name">ГОЙДА</div><div class="vs-sub">это ты</div></div>
   <div class="vs-rune">VS</div>
   <div class="vs-side vs-r"><div class="vs-portrait vs-foe" id="vs-foe-art">👑</div><div class="vs-name" id="vs-foe-name">Босс</div><div class="vs-sub" id="vs-foe-sub">враг</div></div>
-</div></div>
+</div><div class="vs-hint" id="vs-hint">⚔ нажми, чтобы в бой</div></div>
 <div class="banner banner-l" onclick="hitBanner(this)" title="взмахни знаменем"></div>
 <div class="banner banner-r" onclick="hitBanner(this)" title="взмахни знаменем"></div>
 <div id="conn-badge" style="color:#888">⚡ P2P</div>
@@ -1098,7 +1101,7 @@ function showVS(b){
   vs.setAttribute('aria-hidden','false');
   try{sfx('start');}catch(e){}
   clearTimeout(window._vsTimer);
-  window._vsTimer=setTimeout(hideVS,2400);
+  window._vsTimer=setTimeout(hideVS,6000);
 }
 function bossPid(){return (isBot&&_campaignIdx>=0&&CAMPAIGN[_campaignIdx])?CAMPAIGN[_campaignIdx].id:null;}
 function startCampaignBattle(idx){let b=CAMPAIGN[idx];if(!b)return;_campaignIdx=idx;window._campaignBoss=b.name;window._campaignPersona=b.persona||'';closeCampaign();showVS(b);startBotGame(b.level,true);if(b.id==='batya'){G.players[BOT].sh=Math.min(G.players[BOT].sh+1,2);render();}if(b.passive)addLog('🩸 Пассивка «'+b.name+'»: '+b.passive,'#ffae42');let nm=document.getElementById('pname2');if(nm)nm.textContent='⚔ '+b.ic+' '+b.name;setTimeout(()=>{if(STATS.geminiKey){geminiSay('intro',{boss:b.name,persona:b.persona}).then(t=>spawnEmote(BOT,t||b.intro,b.name));}else spawnEmote(BOT,b.intro,b.name);},900);}
@@ -1825,16 +1828,26 @@ function initMusic(){initSound();if(!actx)return;if(!musicGain){musicGain=actx.c
 function _mNote(freq,dur,type,vol,when){if(!actx)return;let o=actx.createOscillator(),g=actx.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(vol,when);g.gain.exponentialRampToValueAtTime(.001,when+dur);o.connect(g);g.connect(musicGain);o.start(when);o.stop(when+dur+.02);}
 function _mHat(when,vol){if(!actx)return;let len=Math.floor(actx.sampleRate*.05),b=actx.createBuffer(1,len,actx.sampleRate),da=b.getChannelData(0);for(let i=0;i<len;i++)da[i]=(Math.random()*2-1)*(1-i/len);let s=actx.createBufferSource();s.buffer=b;let fl=actx.createBiquadFilter();fl.type='highpass';fl.frequency.value=6000;let g=actx.createGain();g.gain.value=vol;s.connect(fl);fl.connect(g);g.connect(musicGain);s.start(when);}
 const _M_BASS=[55,0,110,55,82.4,0,55,65.4,55,0,110,55,98,82.4,65.4,0];
+const _M_BASS2=[65.4,0,65.4,98,0,82.4,0,110,55,0,82.4,55,73.4,0,98,0];
+const _M_LEAD=[440,523.3,659.3,587.3,523.3,440,392,523.3]; // minor-pentatonic-ish lead
+const _M_PAD=[110,130.8,164.8]; // Am pad roots
+function _mPad(when,dur,vol){if(!actx)return;_M_PAD.forEach((f,i)=>_mNote(f,dur,'triangle',vol*(i===0?1:.6),when));}
 function _musicLoop(){
   if(!_musicPlaying||!actx)return;
   let superM=document.body.classList.contains('super-mode-active');
-  let stepDur=60/(superM?118:100)/2;
+  let lowHP=false;try{lowHP=gameStarted&&G&&G.players&&(G.players[0].hp<30||G.players[1].hp<30);}catch(e){}
+  let intensity=(superM?1:0)+(lowHP?1:0);
+  let stepDur=60/(superM?122:lowHP?108:100)/2;
   let now=actx.currentTime+.06;
-  let f=_M_BASS[_musicStep%16];
+  let bar=(_musicStep>>4)&1;
+  let f=(bar?_M_BASS2:_M_BASS)[_musicStep%16];
   if(f){_mNote(f,stepDur*.92,'square',.13,now);_mNote(f/2,stepDur*.92,'sine',.2,now);}
   if(_musicStep%2===1)_mHat(now,.045);
   if(_musicStep%8===4)_mHat(now,.09);
-  if(superM&&_musicStep%2===0)_mNote(440*Math.pow(2,((_musicStep>>1)%4)/4),stepDur*.5,'triangle',.045,now);
+  if(_musicStep%16===0)_mPad(now,stepDur*14,.028+intensity*.012); // pad chord per bar
+  let leadEvery=intensity>=2?2:intensity===1?4:8; // melody intensifies with the fight
+  if(_musicStep%leadEvery===0){let ln=_M_LEAD[(_musicStep>>1)%_M_LEAD.length];_mNote(ln,stepDur*.7,'triangle',.038+intensity*.02,now);if(intensity>=2)_mNote(ln*2,stepDur*.4,'sine',.02,now+stepDur*.5);}
+  if(superM&&_musicStep%2===0)_mNote(440*Math.pow(2,((_musicStep>>1)%4)/4),stepDur*.5,'triangle',.05,now);
   _musicStep++;
   _musicTimer=setTimeout(_musicLoop,stepDur*1000);
 }
@@ -1959,7 +1972,7 @@ document.getElementById('log-toggle').style.display='none';
 
 // ═══════════════ ПОХОД ГОЙДЫ — roguelike run mode ═══════════════
 const RUN_KEY='goyda_run_v1';
-let RUN=null,_runBattle=false,_runOpts=[];
+let RUN=null,_runBattle=false,_runOpts=[],_evToken=0;
 function hashStr(s){s=String(s);let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 function saveRun(){try{localStorage.setItem(RUN_KEY,JSON.stringify(RUN));}catch(e){}}
@@ -1974,7 +1987,11 @@ const RELICS={
   scroll:{ic:'🃏',name:'Щедрый свиток',desc:'+1 карта в начале боя'},
   thorns:{ic:'🌵',name:'Тернии предков',desc:'старт боя с шипами'},
   aegis:{ic:'🛡️',name:'Оберег предков',desc:'старт боя с бронёй'},
-  vamp:{ic:'🩸',name:'Жажда Дрона',desc:'+3 ОЗ когда бьёшь врага'}
+  vamp:{ic:'🩸',name:'Жажда Дрона',desc:'+3 ОЗ когда бьёшь врага'},
+  crit:{ic:'⚡',name:'Гнев Дрона',desc:'15% шанс удвоить урон атаки'},
+  momentum:{ic:'🌀',name:'Раж',desc:'+4% Базы в начале твоего хода'},
+  venom:{ic:'☠️',name:'Гнилостный дух',desc:'враг стартует с ядом'},
+  coffer:{ic:'🪙',name:'Казна предков',desc:'старт боя с +2 монетами'}
 };
 const RELIC_IDS=Object.keys(RELICS);
 const MUTATORS={
@@ -1988,16 +2005,16 @@ const MUT_IDS=Object.keys(MUTATORS);
 function hasRelic(id){return _runBattle&&RUN&&RUN.relics&&RUN.relics.indexOf(id)>=0;}
 function runMut(){return (_runBattle&&RUN&&RUN.mutator)||'none';}
 // damage / turn-start hooks used by the battle engine
-function runAtkDmg(pi,dmg){if(!_runBattle||!RUN)return dmg;if(pi===HUMAN){if(hasRelic('blade'))dmg+=2;if(runMut()==='glass')dmg=Math.round(dmg*1.2);}if(pi===BOT){if(runMut()==='hard')dmg=Math.round(dmg*1.2);if(runMut()==='glass')dmg=Math.round(dmg*1.2);}return dmg;}
+function runAtkDmg(pi,dmg){if(!_runBattle||!RUN)return dmg;if(pi===HUMAN){if(hasRelic('blade'))dmg+=2;if(hasRelic('crit')&&Math.random()<0.15){dmg*=2;try{spawnFl(BOT,'⚡КРИТ','dmg');}catch(e){}}if(runMut()==='glass')dmg=Math.round(dmg*1.2);}if(pi===BOT){if(runMut()==='hard')dmg=Math.round(dmg*1.2);if(runMut()==='glass')dmg=Math.round(dmg*1.2);}return dmg;}
 function runOnHit(pi,me){if(_runBattle&&pi===HUMAN&&hasRelic('vamp')&&me.hp>0&&me.hp<100){me.hp=Math.min(100,me.hp+3);spawnFl(HUMAN,'🩸+3','heal');}}
-function applyRunTurnStart(turn){if(!_runBattle||!RUN||turn!==HUMAN)return;let me=G.players[HUMAN];if(hasRelic('regen')&&me.hp>0&&me.hp<100){let h=Math.min(5,100-me.hp);me.hp+=h;spawnFl(HUMAN,'💚+'+h,'heal');}if(hasRelic('purse')){me.coins++;bumpCoins(HUMAN);}}
+function applyRunTurnStart(turn){if(!_runBattle||!RUN||turn!==HUMAN)return;let me=G.players[HUMAN];if(hasRelic('regen')&&me.hp>0&&me.hp<100){let h=Math.min(5,100-me.hp);me.hp+=h;spawnFl(HUMAN,'💚+'+h,'heal');}if(hasRelic('purse')){me.coins++;bumpCoins(HUMAN);}if(hasRelic('momentum')&&!me.superMode)changeBase(HUMAN,me,4);}
 // deck for a run battle (shared draw pile = the evolving run deck)
 function buildDeckFrom(ids){let d=[];for(let id of ids){let df=DEFS[id];if(!df)continue;d.push({...df,id:id,uid:id+'_'+Math.random()});}for(let i=d.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}return d;}
 function runDeck(){return (_runBattle&&RUN&&RUN.deck&&RUN.deck.length)?buildDeckFrom(RUN.deck):buildDeck();}
 
 // ── map generation ──
-function genMap(rng){const rows=11;let map=[];for(let i=0;i<rows;i++){let depth=i/(rows-1),t;if(i===rows-1)t='boss';else if(i===0)t='battle';else if(i===rows-2)t='rest';else{let r=rng();if(r<0.17)t='event';else if(r<0.32&&i>2)t='elite';else if(r<0.45&&i>1)t='rest';else t='battle';}let level=depth<0.34?'easy':depth<0.7?'warrior':'oprichnik';if(t==='elite'||t==='boss')level='oprichnik';map.push({type:t,level:level,done:false});}return map;}
-function newRun(seed,mutator,day){let base=[];for(let k in DEFS){for(let i=0;i<DEFS[k].cnt;i++)base.push(k);}let rng=mulberry32(seed>>>0);let map=genMap(rng);RUN={seed:seed>>>0,node:0,map:map,hp:100,deck:base,relics:[],mutator:mutator||'none',day:!!day,alive:true,nodesDone:0};if(RUN.mutator==='blessed'){RUN.relics.push(RELIC_IDS[Math.floor(rng()*RELIC_IDS.length)]);}saveRun();document.getElementById('run').style.display='flex';renderRunBody();}
+function genMap(rng){const rows=11;let map=[];for(let i=0;i<rows;i++){let depth=i/(rows-1),t;if(i===rows-1)t='boss';else if(i===0)t='battle';else if(i===rows-2)t='rest';else{let r=rng();if(r<0.16)t='event';else if(r<0.30&&i>2)t='elite';else if(r<0.42&&i>1)t='rest';else if(r<0.55&&i>2)t='shop';else t='battle';}let level=depth<0.34?'easy':depth<0.7?'warrior':'oprichnik';if(t==='elite'||t==='boss')level='oprichnik';map.push({type:t,level:level,done:false});}return map;}
+function newRun(seed,mutator,day){let base=[];for(let k in DEFS){for(let i=0;i<DEFS[k].cnt;i++)base.push(k);}let rng=mulberry32(seed>>>0);let map=genMap(rng);RUN={seed:seed>>>0,node:0,map:map,hp:100,gold:0,deck:base,relics:[],mutator:mutator||'none',day:!!day,alive:true,nodesDone:0};if(RUN.mutator==='blessed'){RUN.relics.push(RELIC_IDS[Math.floor(rng()*RELIC_IDS.length)]);}saveRun();document.getElementById('run').style.display='flex';renderRunBody();}
 
 // ── screen + menu ──
 function openRun(){RUN=loadRun();document.getElementById('run').style.display='flex';renderRunBody();}
@@ -2011,9 +2028,9 @@ function renderRunBody(){
   if(!RUN||!RUN.alive){let cont=loadRun();host.innerHTML='<div class="run-menu">'+(cont?'<button class="btn btn-run" onclick="resumeRun()">▶ Продолжить поход</button>':'')+'<button class="btn btn-run" onclick="startNewRun()">🗺️ Новый поход</button>'+'<button class="btn" onclick="startDailyRun()">🗓️ Дневной поход (сид дня)</button>'+'<div class="run-hint">Карта узлов · бои переносят HP · собирай колоду и реликвии «Благословения Дрона». Дойди до финального босса! Реликвии и мутатор делают каждый забег своим.</div></div>';return;}
   let mut=MUTATORS[RUN.mutator]||MUTATORS.none;
   let relics=RUN.relics.length?RUN.relics.map(id=>'<span class="run-relic" title="'+RELICS[id].name+': '+RELICS[id].desc+'">'+RELICS[id].ic+'</span>').join(''):'<span class="run-relic-none">пока нет</span>';
-  let h='<div class="run-top"><span>❤️ '+RUN.hp+'/100</span><span>🃏 колода '+RUN.deck.length+'</span><span class="run-mut" title="'+mut.desc+'">'+mut.ic+' '+mut.name+'</span>'+(RUN.day?'<span title="дневной сид">🗓️</span>':'')+'</div>';
+  let h='<div class="run-top"><span>❤️ '+RUN.hp+'/100</span><span>💰 '+(RUN.gold||0)+'</span><span>🃏 '+RUN.deck.length+'</span><span class="run-mut" title="'+mut.desc+'">'+mut.ic+' '+mut.name+'</span>'+(RUN.day?'<span title="дневной сид">🗓️</span>':'')+'</div>';
   h+='<div class="run-relics">🩸 Реликвии: '+relics+'</div><div class="run-map">';
-  let icons={battle:'⚔️',elite:'☠️',event:'✨',rest:'🔥',boss:'👑'},labels={battle:'Бой',elite:'Элита',event:'Событие',rest:'Привал',boss:'ФИНАЛЬНЫЙ БОСС'};
+  let icons={battle:'⚔️',elite:'☠️',event:'✨',rest:'🔥',shop:'🛒',boss:'👑'},labels={battle:'Бой',elite:'Элита',event:'Событие',rest:'Привал',shop:'Лавка Дрона',boss:'ФИНАЛЬНЫЙ БОСС'};
   RUN.map.forEach((n,i)=>{let st=n.done?'done':i===RUN.node?'cur':'lock';h+='<div class="run-node '+st+' '+n.type+'" '+(st==='cur'?'onclick="playNode('+i+')"':'')+'><span class="rn-ic">'+icons[n.type]+'</span><span class="rn-lbl">'+labels[n.type]+'</span><span class="rn-st">'+(st==='done'?'✅':st==='cur'?'◄ идти':'·')+'</span></div>';if(i<RUN.map.length-1)h+='<div class="run-link '+(n.done?'on':'')+'"></div>';});
   h+='</div><div class="run-foot-btns"><button class="btn" style="font-size:11px;padding:6px 14px" onclick="abandonRun()">🏳️ Бросить поход</button></div>';
   host.innerHTML=h;
@@ -2026,7 +2043,7 @@ function showOptions(title,sub,opts){_runOpts=opts;let h='<div class="run-modal-
 function runPick(i){let o=_runOpts[i];if(!o)return;closeRunModal();sfx('click');o.pick();}
 
 // ── node dispatch ──
-function playNode(i){if(!RUN||i!==RUN.node)return;let n=RUN.map[i];if(n.type==='battle'||n.type==='elite'||n.type==='boss')startRunBattle(n);else if(n.type==='event')showEvent(n);else if(n.type==='rest')showRest(n);}
+function playNode(i){if(!RUN||i!==RUN.node)return;let n=RUN.map[i];if(n.type==='battle'||n.type==='elite'||n.type==='boss')startRunBattle(n);else if(n.type==='event')showEvent(n);else if(n.type==='rest')showRest(n);else if(n.type==='shop')showShop(n);}
 function advanceNode(n){n.done=true;RUN.node++;RUN.nodesDone=(RUN.nodesDone||0)+1;saveRun();renderRunBody();}
 
 // ── run battles (reuse the bot engine) ──
@@ -2039,6 +2056,8 @@ function startRunBattle(node){
   if(hasRelic('aegis'))me.sh=Math.min(me.sh+1,2);
   if(hasRelic('thorns'))me.thorns=Math.min((me.thorns||0)+2,6);
   if(hasRelic('scroll'))draw(me,1);
+  if(hasRelic('coffer'))me.coins+=2;
+  if(hasRelic('venom'))G.players[BOT].poison=Math.max(G.players[BOT].poison||0,2);
   if(node.type==='elite')G.players[BOT].sh=Math.min(G.players[BOT].sh+1,2);
   if(node.type==='boss')G.players[BOT].re=Math.min(G.players[BOT].re+1,1);
   let nm=document.getElementById('pname2');if(nm)nm.textContent=(node.type==='boss'?'👑 БОСС ПОХОДА':node.type==='elite'?'☠️ ЭЛИТА':'⚔️ ВРАГ ПОХОДА');
@@ -2050,7 +2069,7 @@ function resolveRunBattle(){
   if(!_runBattle)return;_runBattle=false;
   let win=G.players[BOT].hp<=0&&G.players[HUMAN].hp>0;
   let node=RUN.map[RUN.node];
-  if(win){RUN.hp=Math.max(1,G.players[HUMAN].hp);node.done=true;RUN.node++;RUN.nodesDone=(RUN.nodesDone||0)+1;saveRun();if(node.type==='boss'){endRun(true);return;}showRunReward(node);}
+  if(win){RUN.hp=Math.max(1,G.players[HUMAN].hp);RUN.gold=(RUN.gold||0)+(node.type==='elite'?22:node.type==='boss'?40:12);node.done=true;RUN.node++;RUN.nodesDone=(RUN.nodesDone||0)+1;saveRun();if(node.type==='boss'){endRun(true);return;}showRunReward(node);}
   else{endRun(false);}
 }
 function showRunReward(node){let steps=[];if(node.type==='elite')steps.push('relic');steps.push('card');runRewardChain(steps);}
@@ -2070,8 +2089,14 @@ const RUN_EVENTS=[
   {t:'Развилка духов',d:'Два пути: риск и покой.',o:[{ic:'🎲',n:'Рискнуть',c:'50%: реликвия / −15 ОЗ',f:()=>{if(Math.random()<0.5)evRelic();else RUN.hp=Math.max(1,RUN.hp-15);}},{ic:'🛏️',n:'Покой',c:'+12 ОЗ',f:()=>{RUN.hp=Math.min(100,RUN.hp+12);}}]},
   {t:'Кузня Гойды',d:'Горн пышет жаром — закалить оружие или дух?',o:[{ic:'⚒️',n:'Закалить',c:'+1 карта',f:evCard},{ic:'😌',n:'Передохнуть',c:'+15 ОЗ',f:()=>{RUN.hp=Math.min(100,RUN.hp+15);}}]}
 ];
-function showEvent(node){let ev=RUN_EVENTS[Math.floor(Math.random()*RUN_EVENTS.length)];showOptions('✨ '+ev.t,ev.d,ev.o.map(o=>({ic:o.ic,name:o.n,desc:o.c,pick:()=>{o.f();advanceNode(node);}})));}
-function showRest(node){showOptions('🔥 Привал','Перевести дух у костра Дрона.',[{ic:'💤',name:'Отдых',desc:'+30 ОЗ',pick:()=>{RUN.hp=Math.min(100,RUN.hp+30);advanceNode(node);}},{ic:'🙏',name:'Молитва Дрону',desc:'случайная реликвия',pick:()=>{evRelic();advanceNode(node);}}]);}
+function showEvent(node){let ev=RUN_EVENTS[Math.floor(Math.random()*RUN_EVENTS.length)];let tok=++_evToken;showOptions('✨ '+ev.t,ev.d,ev.o.map(o=>({ic:o.ic,name:o.n,desc:o.c,pick:()=>{o.f();advanceNode(node);}})));if(STATS.geminiKey){geminiEventFlavor(ev).then(t=>{if(t&&tok===_evToken){let s=document.querySelector('#run-modal .run-modal-sub');if(s)s.textContent=t;}}).catch(()=>{});}}
+function showRest(node){showOptions('🔥 Привал','Перевести дух у костра Дрона.',[{ic:'💤',name:'Отдых',desc:'+30 ОЗ',pick:()=>{RUN.hp=Math.min(100,RUN.hp+30);advanceNode(node);}},{ic:'🙏',name:'Молитва Дрону',desc:'случайная реликвия',pick:()=>{evRelic();advanceNode(node);}},{ic:'🗑️',name:'Прополка',desc:'убрать карту из колоды',pick:()=>{showWeed(node);}}]);}
+function showWeed(node){let counts={};RUN.deck.forEach(id=>counts[id]=(counts[id]||0)+1);let ids=Object.keys(counts);let opts=ids.slice(0,8).map(id=>{let d=DEFS[id];return{ic:d.ic,name:d.n+' ×'+counts[id],desc:'убрать одну копию',pick:()=>{let idx=RUN.deck.indexOf(id);if(idx>=0)RUN.deck.splice(idx,1);saveRun();sfx('click');advanceNode(node);}};});opts.push({ic:'↩️',name:'Передумать',desc:'оставить колоду',pick:()=>{showRest(node);}});showOptions('🗑️ Прополка колоды','Убери слабую карту — будешь чаще тянуть сильные.',opts);}
+// ── shop node (spend run gold) ──
+function showShop(node){if(!node.shop){let shop=[];let pool=RELIC_IDS.filter(id=>!RUN.relics.includes(id));if(pool.length)shop.push({kind:'relic',id:pool[Math.floor(Math.random()*pool.length)],cost:26});let keys=Object.keys(DEFS);shop.push({kind:'card',id:keys[Math.floor(Math.random()*keys.length)],cost:15});shop.push({kind:'card',id:keys[Math.floor(Math.random()*keys.length)],cost:15});shop.push({kind:'heal',cost:16});node.shop=shop;saveRun();}renderShop(node);}
+function renderShop(node){let g=RUN.gold||0;let opts=node.shop.map(it=>{let ic,label,desc;if(it.kind==='relic'){let r=RELICS[it.id];ic=r.ic;label=r.name;desc=r.desc;}else if(it.kind==='card'){let d=DEFS[it.id];ic=d.ic;label=d.n;desc=d.eff;}else{ic='❤️';label='Зелье жизни';desc='+25 ОЗ';}let bought=it.bought,aff=!bought&&g>=it.cost;return{ic:ic,name:label+(bought?' ✅':' · '+it.cost+'💰'),desc:bought?'куплено':(aff?desc:'⛔ мало золота · '+desc),pick:()=>{if(bought||g<it.cost){renderShop(node);return;}RUN.gold-=it.cost;it.bought=true;if(it.kind==='relic')RUN.relics.push(it.id);else if(it.kind==='card')RUN.deck.push(it.id);else RUN.hp=Math.min(100,RUN.hp+25);saveRun();sfx('coin');renderShop(node);}};});opts.push({ic:'🚪',name:'Уйти из лавки',desc:'продолжить поход',pick:()=>{advanceNode(node);}});showOptions('🛒 Лавка Дрона','Золото: '+g+'💰 · трать на реликвии, свитки и зелья.',opts);}
+// ── Gemini narration for events (graceful: static text stays if it fails) ──
+async function geminiEventFlavor(ev){let key=STATS.geminiKey;if(!key)return null;if(Date.now()<_geminiBlockUntil)return null;let sys='Ты — рассказчик роглайк-похода по миру меме-игры «ГОЙДА» (славяно-рейв тёмное фэнтези). Опиши сцену атмосферно и живо, на русском, РОВНО 2 коротких предложения, без кавычек и без вариантов ответа.';let prompt='Событие «'+ev.t+'»: '+ev.d+' Перепиши это как атмосферную сцену (2 фразы), сохрани суть.';let body=JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:90,temperature:1.15}});let models=_geminiModel?[_geminiModel].concat(GEMINI_MODELS.filter(m=>m!==_geminiModel)):GEMINI_MODELS.slice();for(let m of models){let res=await _geminiFetch(m,key,body);if(res.text){if(_geminiModel!==m){_geminiModel=m;STATS.geminiModel=m;saveStats();}return _geminiClean(res.text,true);}if(res.status===404||res.status===400){_geminiModel=null;continue;}break;}return null;}
 
 // ── end of run ──
 function endRun(win){
