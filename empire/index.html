@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ГОЙДА-ИМПЕРИЯ — 3D-стратегия</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ysabeau+SC:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./css/theme.css?v=1">
+<link rel="stylesheet" href="./css/hud.css?v=1">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+</head>
+<body>
+<div id="app">
+  <canvas id="c"></canvas>
+
+  <div id="hud">
+    <!-- верхняя панель -->
+    <div id="topbar">
+      <div id="res"></div>
+      <div id="rankbox"></div>
+      <div id="status"></div>
+      <div id="wavebox"></div>
+      <div class="spacer"></div>
+      <button id="superBtn" class="topbtn">СВЕРХ-ГОЙДА</button>
+      <button id="muteBtn" class="topbtn icon">🔊</button>
+    </div>
+
+    <!-- тосты -->
+    <div id="toasts"></div>
+
+    <!-- миникарта -->
+    <div id="mini-wrap"><canvas id="minimap" width="170" height="170"></canvas></div>
+
+    <!-- панель выбора -->
+    <div id="selection"></div>
+
+    <!-- нижняя панель построек + указы -->
+    <div id="bottombar">
+      <div id="buildbtns"></div>
+      <div id="edicts"></div>
+    </div>
+
+    <div id="hint">ЛКМ — выбрать / приказ &nbsp;·&nbsp; ПКМ-таскать — крутить камеру &nbsp;·&nbsp; колесо — зум &nbsp;·&nbsp; WASD — двигать &nbsp;·&nbsp; ПРОБЕЛ — СВЕРХ-ГОЙДА &nbsp;·&nbsp; ESC — отмена</div>
+  </div>
+
+  <!-- слой всплывающего текста -->
+  <div id="floaters"></div>
+
+  <!-- победа/поражение -->
+  <div id="overlay"></div>
+</div>
+
+<script type="module" src="./js/main.js?v=1"></script>
+</body>
+</html>

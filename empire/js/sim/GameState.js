@@ -1,0 +1,217 @@
+// ===== Единый источник правды: ресурсы, сущности, ранги, сейв =====
+import * as THREE from 'three';
+import { GRID_N, STORAGE_KEY } from '../data/config.js';
+import { Grid } from '../world/Grid.js';
+import { BUILDINGS } from '../data/buildings.js';
+import { UNITS } from '../data/units.js';
+import { RANKS } from '../data/ranks.js';
+
+export class GameState {
+  constructor(scene, assets) {
+    this.scene = scene;
+    this.assets = assets;
+    this.grid = new Grid(GRID_N);
+
+    this.resources = { food: 60, wood: 80, stone: 40, gold: 40, faith: 0 };
+    this.cap = { food: 300, wood: 300, stone: 300, gold: 300, faith: 999 };
+
+    this.happiness = 60;
+    this.population = 0;
+    this.popCap = 0;
+    this.rankIndex = 0;
+    this.day = 0;
+    this.starveAccum = 0;
+
+    this.buildings = [];
+    this.units = [];
+    this.nodes = [];
+    this._byId = new Map();
+    this._id = 1;
+
+    this.townhall = null;
+    this.idol = null;             // здание-чудо (когда построено)
+    this.selected = null;
+    this.gameOver = null;         // 'win' | 'lose'
+
+    // флаги/таймеры
+    this.superTimer = 0;          // СВЕРХ-ГОЙДА (сек)
+    this.krioTimer = 0;          // дебафф добычи от Волхва
+    this.threatTimer = 0;         // визуальная тревога
+
+    this.onToast = () => {};      // (text, opts) — назначает main
+    this.onRankUp = () => {};
+  }
+
+  // ---- ресурсы ----
+  canAfford(cost) {
+    for (const k in cost) if ((this.resources[k] || 0) < cost[k]) return false;
+    return true;
+  }
+  spend(cost) {
+    if (!this.canAfford(cost)) return false;
+    for (const k in cost) this.resources[k] -= cost[k];
+    return true;
+  }
+  gain(obj) {
+    for (const k in obj) {
+      if (this.resources[k] === undefined) continue;
+      this.resources[k] = Math.min(this.cap[k] ?? 9999, this.resources[k] + obj[k]);
+    }
+  }
+
+  byId(id) { return this._byId.get(id); }
+  get rank() { return RANKS[this.rankIndex]; }
+
+  // ---- ноды ресурсов ----
+  addNode(kind, gx, gy, amount) {
+    const resType = kind === 'res_tree' ? 'wood' : kind === 'res_stone' ? 'stone' : 'gold';
+    const view = this.assets.get(kind);
+    const { wx, wz } = this.grid.gridToWorld(gx, gy);
+    view.position.set(wx, 0, wz);
+    view.rotation.y = (gx * 1.7 + gy * 0.9) % (Math.PI * 2);
+    this.scene.add(view);
+    const n = { id: this._id++, type: 'node', kind, resType, gx, gy, amount, maxAmount: amount, view, depleted: false };
+    view.userData.entity = n;
+    this.grid.occupy(gx, gy, 1, 1, n.id, { walkable: false });
+    this.nodes.push(n); this._byId.set(n.id, n);
+    return n;
+  }
+
+  removeNode(n) {
+    this.scene.remove(n.view);
+    this.grid.occupy(n.gx, n.gy, 1, 1, null);
+    this.nodes = this.nodes.filter(x => x !== n);
+    this._byId.delete(n.id);
+  }
+
+  // ---- здания ----
+  addBuilding(kind, gx, gy, opts = {}) {
+    const def = BUILDINGS[kind];
+    const view = this.assets.get(def.model);
+    // персональные материалы на каждое здание (иначе общий кэш сделает прозрачными все)
+    view.traverse(o => { if (o.isMesh) o.material = o.material.clone(); });
+    const c = this.grid.footprintCenter(gx, gy, def.w, def.h);
+    view.position.set(c.wx, 0, c.wz);
+    this.scene.add(view);
+    const b = {
+      id: this._id++, type: 'building', kind, def, gx, gy, w: def.w, h: def.h,
+      hp: def.hp, maxHp: def.hp, view,
+      built: opts.built ?? false, buildLeft: opts.built ? 0 : (def.build || 0),
+      trainQueue: [], trainLeft: 0,
+      cx: c.wx, cz: c.wz,
+    };
+    view.userData.entity = b;
+    this.grid.occupy(gx, gy, def.w, def.h, b.id, { walkable: !!def.walkable });
+    this.buildings.push(b); this._byId.set(b.id, b);
+    if (def.unique && kind === 'townhall') this.townhall = b;
+    if (def.wonder) this.idol = b;
+    this._applyBuildVisual(b);
+    return b;
+  }
+
+  _applyBuildVisual(b) {
+    const s = b.built ? 1 : 0.35 + 0.65 * (1 - b.buildLeft / (b.def.build || 1));
+    b.view.scale.setScalar(b.built ? 1 : Math.max(0.2, s));
+    b.view.traverse(o => {
+      if (o.isMesh) {
+        if (!b.built) { o.material = o.material; o.material.transparent = true; o.material.opacity = 0.7; }
+        else if (o.material.transparent && o.material.opacity < 1) { o.material.transparent = false; o.material.opacity = 1; }
+      }
+    });
+  }
+
+  finishBuild(b) {
+    b.built = true; b.buildLeft = 0;
+    b.view.scale.setScalar(1);
+    b.view.traverse(o => { if (o.isMesh && o.material.opacity < 1) { o.material.transparent = false; o.material.opacity = 1; } });
+    this.recomputePop();
+  }
+
+  removeBuilding(b) {
+    this.scene.remove(b.view);
+    this.grid.occupy(b.gx, b.gy, b.w, b.h, null);
+    this.buildings = this.buildings.filter(x => x !== b);
+    this._byId.delete(b.id);
+    if (b === this.townhall) this.townhall = null;
+    if (this.selected === b) this.selected = null;
+    this.recomputePop();
+  }
+
+  buildingsBuilt(kind) { return this.buildings.filter(b => b.built && (kind ? b.kind === kind : true)); }
+  hasBuilt(kind) { return this.buildings.some(b => b.built && b.kind === kind); }
+  drops() { return this.buildings.filter(b => b.built && b.def.drop); }
+
+  // ---- юниты ----
+  addUnit(kind, wx, wz, opts = {}) {
+    const def = UNITS[kind];
+    const view = this.assets.get(def.model);
+    view.position.set(wx, 0, wz);
+    if (opts.tint) view.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setHex(opts.tint); } });
+    if (opts.scale) view.scale.setScalar(opts.scale);
+    this.scene.add(view);
+    const u = {
+      id: this._id++, type: 'unit', kind, def, faction: def.faction, view,
+      x: wx, z: wz, px: wx, pz: wz, dir: 0,
+      hp: (opts.hp ?? def.hp), maxHp: (opts.maxHp ?? def.hp),
+      dmg: def.dmg, speed: def.speed,
+      state: 'idle', path: null, pi: 0, target: null, job: null,
+      carry: 0, carryType: null, gatherT: 0, atkT: 0, bossKey: opts.bossKey || null,
+      barkT: 0,
+    };
+    view.userData.entity = u;
+    this.units.push(u); this._byId.set(u.id, u);
+    if (def.faction === 'ours') this.recomputePop();
+    return u;
+  }
+
+  removeUnit(u) {
+    this.scene.remove(u.view);
+    this.units = this.units.filter(x => x !== u);
+    this._byId.delete(u.id);
+    if (this.selected === u) this.selected = null;
+    if (u.faction === 'ours') this.recomputePop();
+  }
+
+  ours() { return this.units.filter(u => u.faction === 'ours'); }
+  enemies() { return this.units.filter(u => u.faction === 'enemy'); }
+  soldiers() { return this.units.filter(u => u.faction === 'ours' && !u.def.worker); }
+  workers() { return this.units.filter(u => u.faction === 'ours' && u.def.worker); }
+
+  recomputePop() {
+    this.popCap = this.buildings.filter(b => b.built).reduce((s, b) => s + (b.def.pop || 0), 0);
+    this.population = this.ours().length;
+  }
+
+  nearestDrop(x, z) {
+    let best = null, bd = Infinity;
+    for (const b of this.drops()) {
+      const d = (b.cx - x) ** 2 + (b.cz - z) ** 2;
+      if (d < bd) { bd = d; best = b; }
+    }
+    return best;
+  }
+
+  nearestNode(x, z, resType) {
+    let best = null, bd = Infinity;
+    for (const n of this.nodes) {
+      if (n.depleted) continue;
+      if (resType && n.resType !== resType) continue;
+      const w = this.grid.gridToWorld(n.gx, n.gy);
+      const d = (w.wx - x) ** 2 + (w.wz - z) ** 2;
+      if (d < bd) { bd = d; best = n; }
+    }
+    return best;
+  }
+
+  // ---- сейв ----
+  serialize() {
+    return {
+      v: 1, res: this.resources, happiness: this.happiness, rankIndex: this.rankIndex, day: this.day,
+      buildings: this.buildings.map(b => ({ kind: b.kind, gx: b.gx, gy: b.gy, built: b.built, hp: b.hp })),
+      nodes: this.nodes.map(n => ({ kind: n.kind, gx: n.gx, gy: n.gy, amount: n.amount })),
+      units: this.units.filter(u => u.faction === 'ours').map(u => ({ kind: u.kind, x: u.x, z: u.z, hp: u.hp })),
+    };
+  }
+  save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(this.serialize())); } catch (e) {} }
+  static load() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) { return null; } }
+}

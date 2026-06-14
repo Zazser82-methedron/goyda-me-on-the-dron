@@ -1,0 +1,160 @@
+// ===== Движение, бой и ИИ юнитов (свои воины + враги). Воркеры — в Jobs.js =====
+import { TILE } from '../data/config.js';
+import { findPath, nearestAdj } from '../world/Pathfinding.js';
+import { updateWorker } from './Jobs.js';
+import { bark } from '../data/barks.js';
+
+export function tileCenter(state, tx, ty) { const w = state.grid.gridToWorld(tx, ty); return { x: w.wx, z: w.wz }; }
+function dist2(ax, az, bx, bz) { return (ax - bx) ** 2 + (az - bz) ** 2; }
+function bRadius(b) { return Math.max(b.w, b.h) * 0.5 * TILE + 0.3; }
+
+// проложить путь к тайлу (tx,ty); если занят — к ближайшему проходимому соседу
+export function setPath(state, u, tx, ty) {
+  let path = findPath(state.grid, u.gx ?? state.grid.worldToGrid(u.x, u.z).x, u.gy ?? state.grid.worldToGrid(u.x, u.z).y, tx, ty);
+  if (!path) {
+    const g = state.grid.worldToGrid(u.x, u.z);
+    const adj = nearestAdj(state.grid, tx, ty, 1, 1, g.x, g.y);
+    if (adj) path = findPath(state.grid, g.x, g.y, adj.x, adj.y);
+  }
+  u.path = path; u.pi = 0;
+  return !!path;
+}
+
+// проложить путь к зданию (footprint) — к ближайшему соседнему тайлу
+export function setPathToBuilding(state, u, b) {
+  const g = state.grid.worldToGrid(u.x, u.z);
+  const adj = nearestAdj(state.grid, b.gx, b.gy, b.w, b.h, g.x, g.y);
+  if (!adj) { u.path = null; return false; }
+  return setPath(state, u, adj.x, adj.y);
+}
+
+// шаг движения вдоль u.path; 'arrived' | 'moving' | 'noPath'
+export function moveStep(state, u, dt) {
+  if (!u.path) return 'noPath';
+  if (u.pi >= u.path.length) return 'arrived';
+  const node = u.path[u.pi];
+  const c = tileCenter(state, node.x, node.y);
+  const dx = c.x - u.x, dz = c.z - u.z;
+  const d = Math.hypot(dx, dz);
+  const step = u.speed * dt * (state.krioTimer > 0 && u.faction === 'ours' ? 0.6 : 1) * (state.superTimer > 0 && u.faction === 'ours' ? 1.4 : 1);
+  if (d <= step) {
+    u.x = c.x; u.z = c.z; u.pi++;
+  } else {
+    u.x += dx / d * step; u.z += dz / d * step; u.dir = Math.atan2(dx, dz);
+  }
+  const g = state.grid.worldToGrid(u.x, u.z); u.gx = g.x; u.gy = g.y;
+  return u.pi >= u.path.length ? 'arrived' : 'moving';
+}
+
+// урон сущности (юнит/здание). true если уничтожена.
+export function damage(state, target, amt, ctx) {
+  if (!target || target.hp <= 0) return true;
+  target.hp -= amt;
+  if (target.type === 'building' && ctx.flash) ctx.flash(target);
+  if (target.hp <= 0) {
+    if (target.type === 'unit') {
+      if (target.bossKey && ctx.onBossDown) ctx.onBossDown(target);
+      state.removeUnit(target);
+    } else {
+      const wasTown = target === state.townhall;
+      state.removeBuilding(target);
+      if (ctx.toast) ctx.toast('💥 ' + target.def.name + ' разрушен', { bad: true });
+      if (wasTown && ctx.onLose) ctx.onLose();
+    }
+    return true;
+  }
+  return false;
+}
+
+function tryAttack(state, u, target, ctx) {
+  if (u.atkT > 0) return;
+  u.atkT = u.def.atkCd;
+  const bonus = (state.superTimer > 0 && u.faction === 'ours') ? 1.5 : 1;
+  damage(state, target, u.dmg * bonus, ctx);
+  if (ctx.sfx) ctx.sfx(u.faction === 'ours' ? 'hit' : 'hitEnemy');
+  if (u.barkT <= 0 && Math.random() < 0.25) { ctx.bark && ctx.bark(u, bark('attack')); u.barkT = 3; }
+}
+
+function inRange(u, target) {
+  if (target.type === 'unit') return dist2(u.x, u.z, target.x, target.z) <= (u.def.range + 0.3) ** 2;
+  return dist2(u.x, u.z, target.cx, target.cz) <= (u.def.range + bRadius(target)) ** 2;
+}
+
+function nearestEnemyUnit(state, u, maxR) {
+  let best = null, bd = maxR * maxR;
+  for (const e of state.units) {
+    if (e.faction === u.faction || e.hp <= 0) continue;
+    const d = dist2(u.x, u.z, e.x, e.z);
+    if (d < bd) { bd = d; best = e; }
+  }
+  return best;
+}
+
+// ближайшая своя постройка/стена в пределах досягаемости врага
+function nearestOursBuildingInRange(state, u) {
+  let best = null, bd = Infinity;
+  for (const b of state.buildings) {
+    if (b.hp <= 0) continue;
+    const reach = (u.def.range + bRadius(b)) ** 2;
+    const d = dist2(u.x, u.z, b.cx, b.cz);
+    if (d <= reach && d < bd) { bd = d; best = b; }
+  }
+  return best;
+}
+
+function faceTarget(u, tx, tz) { u.dir = Math.atan2(tx - u.x, tz - u.z); }
+
+// ---- свои воины ----
+function updateSoldier(state, u, dt, ctx) {
+  const enemy = nearestEnemyUnit(state, u, 12);
+  if (enemy) {
+    if (inRange(u, enemy)) { faceTarget(u, enemy.x, enemy.z); tryAttack(state, u, enemy, ctx); u.path = null; return; }
+    u.repathT -= dt;
+    if (!u.path || u.repathT <= 0) { setPath(state, u, enemy.gx ?? state.grid.worldToGrid(enemy.x, enemy.z).x, enemy.gy ?? state.grid.worldToGrid(enemy.x, enemy.z).y); u.repathT = 0.5; }
+    moveStep(state, u, dt);
+    return;
+  }
+  if (u.moveOrder) {
+    if (!u.path) { if (!setPath(state, u, u.moveOrder.x, u.moveOrder.y)) { u.moveOrder = null; return; } }
+    if (moveStep(state, u, dt) === 'arrived') { u.moveOrder = null; u.path = null; }
+    return;
+  }
+  // покой — лёгкий дрейф к ратуше, если далеко
+  if (state.townhall) {
+    const d = dist2(u.x, u.z, state.townhall.cx, state.townhall.cz);
+    if (d > 100) { if (!u.path) setPathToBuilding(state, u, state.townhall); moveStep(state, u, dt); return; }
+  }
+  u.path = null;
+}
+
+// ---- враги ----
+function updateEnemy(state, u, dt, ctx) {
+  // что-то своё в пределах удара? — бей
+  const tgtUnit = nearestEnemyUnit(state, u, u.def.range + 0.6);
+  if (tgtUnit && inRange(u, tgtUnit)) { faceTarget(u, tgtUnit.x, tgtUnit.z); tryAttack(state, u, tgtUnit, ctx); u.path = null; return; }
+  const tgtB = nearestOursBuildingInRange(state, u);
+  if (tgtB) { faceTarget(u, tgtB.cx, tgtB.cz); tryAttack(state, u, tgtB, ctx); u.path = null; return; }
+
+  // иначе — марш к цели (идол > ратуша); если рядом солдат — на него
+  const soldier = nearestEnemyUnit(state, u, 6);
+  const obj = state.idol || state.townhall;
+  u.repathT -= dt;
+  if (soldier) {
+    if (!u.path || u.repathT <= 0) { setPath(state, u, soldier.gx ?? state.grid.worldToGrid(soldier.x, soldier.z).x, soldier.gy ?? state.grid.worldToGrid(soldier.x, soldier.z).y); u.repathT = 0.6; }
+  } else if (obj) {
+    if (!u.path || u.repathT <= 0) { setPathToBuilding(state, u, obj); u.repathT = 0.8; }
+  }
+  if (u.path) moveStep(state, u, dt);
+}
+
+export function updateUnits(state, dt, ctx) {
+  for (const u of state.units) {
+    u.px = u.x; u.pz = u.z;
+    if (u.atkT > 0) u.atkT -= dt;
+    if (u.barkT > 0) u.barkT -= dt;
+    if (u.repathT === undefined) u.repathT = 0;
+    if (u.faction === 'enemy') updateEnemy(state, u, dt, ctx);
+    else if (u.def.worker) updateWorker(state, u, dt, ctx);
+    else updateSoldier(state, u, dt, ctx);
+  }
+}
