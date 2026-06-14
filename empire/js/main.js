@@ -27,6 +27,9 @@ import { BUILDINGS } from './data/buildings.js';
 import { RANKS } from './data/ranks.js';
 import { bark } from './data/barks.js';
 import { STORAGE_KEY } from './data/config.js';
+import { getFaction } from './data/factions.js';
+import { getMap } from './data/maps.js';
+import { StartScreen } from './ui/StartScreen.js';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -56,7 +59,7 @@ class Game {
     this.picker = new Picker(this.canvas);
     this.assets = new AssetManager();
     this.state = new GameState(this.scene, this.assets);
-    this.terrain = new TerrainMesh(this.scene, this.state.grid);
+    this.terrain = null;   // строится при выборе карты (buildWorld)
 
     this.toasts = new Toasts(document.getElementById('toasts'));
     this.state.onToast = (t, o) => this.toasts.show(t, o);
@@ -66,6 +69,7 @@ class Game {
     this.selUI = new Selection(this);
     this.minimap = new Minimap(this);
     this.cards = new Cards(this);
+    this.startScreen = new StartScreen(this);
 
     this.buildKind = null;
     this.placing = false;
@@ -101,24 +105,49 @@ class Game {
   }
 
   async boot() {
-    const c = await this.assets.preload(MODELS);
+    this._glb = await this.assets.preload(MODELS);
     const save = GameState.load();
-    let restored = false;
     if (save && save.buildings && save.buildings.length) {
-      try { this._restore(save); restored = true; } catch (e) { console.warn('restore failed', e); }
+      try {
+        this.state.faction = getFaction(save.faction);
+        this.state.mapKey = save.mapKey || 'les';
+        this.buildWorld(getMap(this.state.mapKey));
+        this._restore(save);
+        this._begin(true);
+        return;
+      } catch (e) { console.warn('restore failed', e); }
     }
-    if (!restored) this.initMap();
+    this.startScreen.show();   // новый поход — выбор фракции и земли
+  }
+
+  startWith(fk, mk) {
+    this.state.faction = getFaction(fk);
+    this.state.mapKey = mk;
+    const map = getMap(mk);
+    this.buildWorld(map);
+    this.initMap(map);
+    this._begin(false);
+  }
+
+  buildWorld(map) {
+    this.map = map;
+    this.terrain = new TerrainMesh(this.scene, this.state.grid, map.pal);
+  }
+
+  _begin(restored) {
     this.cameraRig.focus(0, 0);
-    this.toasts.show(restored ? '⚔️ Поход продолжается…' : '🗿 ГОЙДА-ИМПЕРИЯ. Подними державу вокруг ДРОНА!', { big: true, gold: true });
-    if (c > 0) this.toasts.show('Blender-моделей загружено: ' + c);
-    else this.toasts.show('Модели: процедурные плейсхолдеры (Blender GLB подключатся позже)');
+    const f = this.state.faction;
+    this.toasts.show(restored ? '⚔️ Поход продолжается…' : ('🗿 ' + (f ? f.emoji + ' ' + f.name : 'ГОЙДА') + ' · ' + this.map.name + '. ГОЙДА!'), { big: true, gold: true });
+    if (this._glb > 0) this.toasts.show('Blender-моделей: ' + this._glb);
     for (let i = 0; i < 3; i++) CardsSys.drawCard(this.state, this.ctx, true);   // стартовая рука
     this.loop.start();
   }
 
-  initMap() {
+  initMap(map) {
     const g = this.state.grid, c = Math.floor(g.n / 2);
     this.state.edicts = {};
+    const fm = this.state.faction && this.state.faction.mods;
+    if (fm && fm.startGold) this.state.resources.gold += fm.startGold;
     // ратуша 3×3 по центру
     this.state.addBuilding('townhall', c - 1, c - 1, { built: true });
     this.state.recomputePop();
@@ -132,10 +161,11 @@ class Game {
         this.state.addNode(kind, x, y, amount + ri(-10, 10)); n++;
       }
     };
-    // карта 96² — больше ресурсов, рощами вокруг базы и по краям
-    scatter('res_tree', 150, 60, 4);
-    scatter('res_stone', 60, 90, 6);
-    scatter('res_ore', 34, 60, 8);
+    // карта 96² — ресурсы с множителями локации
+    const r = (map && map.res) || { tree: 1, stone: 1, ore: 1 };
+    scatter('res_tree', Math.round(150 * r.tree), 60, 4);
+    scatter('res_stone', Math.round(60 * r.stone), 90, 6);
+    scatter('res_ore', Math.round(34 * r.ore), 60, 8);
     // стартовые ХОЛОПы
     for (let i = 0; i < 4; i++) {
       const adj = nearestAdj(g, c - 1, c - 1, 3, 3, c - 2 + i, c + 2) || { x: c, y: c + 2 };

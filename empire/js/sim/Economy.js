@@ -26,6 +26,9 @@ function onDay(state, ctx) {
   const em = edictMods(state);
   food += em.food; gold += em.gold; faith += em.faith; happyMod += em.happy;
 
+  const fm = state.faction && state.faction.mods;   // бонусы фракции
+  if (fm) { faith *= fm.faithMul || 1; happyMod += fm.happy || 0; }
+
   state.gain({ food, gold, faith });
 
   // расход еды

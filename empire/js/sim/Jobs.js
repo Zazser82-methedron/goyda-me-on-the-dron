@@ -43,7 +43,8 @@ export function updateWorker(state, u, dt, ctx) {
   if (adjacentTo(state, u, node)) {
     u.state = 'gather'; u.path = null;
     if (u.gatherT <= 0) {
-      const rate = Math.min(u.def.gatherRate, node.amount, u.def.carry - u.carry);
+      const gmul = (state.faction && state.faction.mods.gatherMul) || 1;
+      const rate = Math.min(u.def.gatherRate * gmul, node.amount, u.def.carry - u.carry);
       node.amount -= rate; u.carry += rate; u.carryType = node.resType; u.gatherT = 0.8;
       if (ctx.sfx) ctx.sfx('gather');
       const s = Math.max(0.25, node.amount / node.maxAmount);

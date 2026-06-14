@@ -33,6 +33,8 @@ export class GameState {
     this.idol = null;             // здание-чудо (когда построено)
     this.selected = null;
     this.gameOver = null;         // 'win' | 'lose'
+    this.faction = null;          // выбранная фракция
+    this.mapKey = 'les';          // выбранная локация
 
     // флаги/таймеры
     this.superTimer = 0;          // СВЕРХ-ГОЙДА (сек)
@@ -218,6 +220,7 @@ export class GameState {
   serialize() {
     return {
       v: 1, res: this.resources, happiness: this.happiness, rankIndex: this.rankIndex, day: this.day,
+      faction: this.faction ? this.faction.key : 'goyda', mapKey: this.mapKey || 'les',
       buildings: this.buildings.map(b => ({ kind: b.kind, gx: b.gx, gy: b.gy, built: b.built, hp: b.hp })),
       nodes: this.nodes.map(n => ({ kind: n.kind, gx: n.gx, gy: n.gy, amount: n.amount })),
       units: this.units.filter(u => u.faction === 'ours').map(u => ({ kind: u.kind, x: u.x, z: u.z, hp: u.hp })),

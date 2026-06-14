@@ -10,9 +10,10 @@ function jitterColor(hex, amt) {
 }
 
 export class TerrainMesh {
-  constructor(scene, grid) {
+  constructor(scene, grid, pal) {
     this.scene = scene;
     this.grid = grid;
+    this.pal = pal || { a: PAL.grass1, b: PAL.grass2, c: PAL.grass3, dirt: PAL.dirt };
     const n = grid.n;
 
     // тёмная «бездна» под картой
@@ -35,9 +36,9 @@ export class TerrainMesh {
         const { wx, wz } = grid.gridToWorld(x, y);
         // лёгкая «грунтовая» вариация: больше травы к центру, грунт к краям
         const edge = Math.max(Math.abs(x - n / 2), Math.abs(y - n / 2)) / (n / 2);
-        let base = PAL.grass2;
-        if (Math.random() < edge * 0.5) { base = PAL.dirt; t.type = 'dirt'; }
-        else if (Math.random() < 0.12) base = (Math.random() < 0.5 ? PAL.grass1 : PAL.grass3);
+        let base = this.pal.b;
+        if (Math.random() < edge * 0.5) { base = this.pal.dirt; t.type = 'dirt'; }
+        else if (Math.random() < 0.12) base = (Math.random() < 0.5 ? this.pal.a : this.pal.c);
         m.makeTranslation(wx, -0.175, wz);
         this.inst.setMatrixAt(i, m);
         this.inst.setColorAt(i, jitterColor(base, 0.06));
@@ -98,7 +99,7 @@ export class TerrainMesh {
       inst.instanceMatrix.needsUpdate = true;
       if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
     };
-    fill(bushes, bn, PAL.grass2, PAL.grass3, 0.17, 0.6, 1.6);
+    fill(bushes, bn, this.pal.b, this.pal.c, 0.17, 0.6, 1.6);
     fill(rocks, rn, PAL.rock, PAL.rockDk, 0.12, 0.5, 1.4);
     scene.add(bushes); scene.add(rocks);
   }

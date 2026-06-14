@@ -2,6 +2,7 @@
 import { UNITS } from '../data/units.js';
 import { BOSSES } from '../data/bosses.js';
 import { bark } from '../data/barks.js';
+import { hostileFor } from '../data/factions.js';
 
 const MAX_ENEMIES = 70;
 
@@ -50,10 +51,17 @@ function edgePoints(state, count) {
 function spawnWave(state, ctx) {
   if (state.enemies().length > MAX_ENEMIES) { state.nextWaveIn = 12; return; }
   const count = 2 + state.rankIndex + Math.floor((state.waveNum || 0) / 2);
-  for (const p of edgePoints(state, count)) state.addUnit('raider', p.x, p.z, {});
+  const hf = hostileFor(state);
+  const base = UNITS.raider;
+  for (const p of edgePoints(state, count)) {
+    const hp = Math.round(base.hp * hf.raid.hpMul);
+    const u = state.addUnit('raider', p.x, p.z, { tint: hf.raid.tint, hp, maxHp: hp });
+    u.speed = base.speed * hf.raid.speedMul;
+  }
+  if (hf.raid.krio) state.krioTimer = Math.max(state.krioTimer, 8);
   state.threatTimer = 8;
   ctx.sfx && ctx.sfx('raid');
-  ctx.toast && ctx.toast('🚨 НАБЕГ #' + ((state.waveNum || 0) + 1) + '! ' + bark('raid'), { bad: true });
+  ctx.toast && ctx.toast('🚨 НАБЕГ ' + hf.emoji + ' ' + hf.name + ' #' + ((state.waveNum || 0) + 1) + '! ' + bark('raid'), { bad: true });
 }
 
 export function spawnBoss(state, key, ctx) {

@@ -71,8 +71,10 @@ export function queueTrain(state, b, kind, ctx) {
   if (def.needs && !state.hasBuilt(def.needs)) { ctx.toast && ctx.toast('Нужна постройка: ' + BUILDINGS[def.needs].name, { bad: true }); return false; }
   const pending = state.buildings.reduce((s, x) => s + x.trainQueue.length, 0);
   if (state.population + pending >= state.popCap) { ctx.toast && ctx.toast('Нет места — строй ИЗБЫ', { bad: true }); return false; }
-  if (!state.canAfford(def.cost)) { ctx.toast && ctx.toast('Мало ресурсов на ' + def.name, { bad: true }); return false; }
-  state.spend(def.cost);
+  const cmul = (state.faction && state.faction.mods.trainCostMul) || 1;
+  const cost = {}; for (const k in def.cost) cost[k] = Math.max(1, Math.round(def.cost[k] * cmul));
+  if (!state.canAfford(cost)) { ctx.toast && ctx.toast('Мало ресурсов на ' + def.name, { bad: true }); return false; }
+  state.spend(cost);
   if (!b.trainQueue.length) b.trainLeft = trainTime(state, kind);
   b.trainQueue.push(kind);
   ctx.sfx && ctx.sfx('click');
