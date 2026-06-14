@@ -23,6 +23,12 @@ export const BUILDINGS = {
     cost: { wood: 30, stone: 10 }, build: 5, produce: { food: 7 },
     desc: 'Делянка и закрома. +7 ЕДЫ в день. Голод роняет счастье.',
   },
+  roshcha: {
+    kind: 'roshcha', name: 'ЛЕСОПОСАДКА', icon: '🌱', model: 'bld_roshcha',
+    w: 2, h: 2, hp: 140, cat: 'econ', rank: 0,
+    cost: { wood: 25, stone: 10 }, build: 5,
+    desc: 'Сажает деревья вокруг — лес восстанавливается, ДЕРЕВО не кончится.',
+  },
   kuznica: {
     kind: 'kuznica', name: 'КУЗНИЦА', icon: '⚒️', model: 'bld_kuznica',
     w: 1, h: 1, hp: 140, cat: 'mil', rank: 1,
@@ -69,7 +75,7 @@ export const BUILDINGS = {
 };
 
 // порядок в меню постройки
-export const BUILD_ORDER = ['izba', 'ambar', 'kuznica', 'kazarma', 'chastokol', 'gate', 'church', 'market', 'idol'];
+export const BUILD_ORDER = ['izba', 'ambar', 'roshcha', 'kuznica', 'kazarma', 'chastokol', 'gate', 'church', 'market', 'idol'];
 
 export const CATS = {
   econ: { name: 'ХОЗЯЙСТВО', color: '#b8763a' },

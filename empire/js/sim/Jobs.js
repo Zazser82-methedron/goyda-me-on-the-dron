@@ -48,8 +48,11 @@ export function updateWorker(state, u, dt, ctx) {
       if (ctx.sfx) ctx.sfx('gather');
       const s = Math.max(0.25, node.amount / node.maxAmount);
       node.view.scale.setScalar(0.45 + 0.55 * s);
-      if (node.amount <= 0) { node.depleted = true; state.removeNode(node); u.job = null; u.state = 'toDrop'; }
-      else if (u.carry >= u.def.carry) u.state = 'toDrop';
+      if (node.amount <= 0) {
+        if (node.resType === 'wood') { node.depleted = true; node.amount = 0; node.regrow = 0; node.view.scale.setScalar(0.22); } // пень — отрастёт
+        else state.removeNode(node);                                   // камень/золото конечны
+        u.job = null; u.state = 'toDrop';
+      } else if (u.carry >= u.def.carry) u.state = 'toDrop';
       if (u.barkT <= 0 && Math.random() < 0.04) { ctx.bark && ctx.bark(u, bark('work')); u.barkT = 6; }
     }
     return;

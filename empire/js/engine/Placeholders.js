@@ -132,6 +132,19 @@ function market() {
   return g;
 }
 
+// ---- лесопосадка (2×2, сажает деревья) ----
+function roshcha() {
+  const g = new THREE.Group();
+  const soil = mat(PAL.dirt), wd = mat(PAL.woodDk), f1 = mat(PAL.grass3), f2 = mat(PAL.grass2);
+  g.add(box(1.7, 0.16, 1.7, soil, 0, 0.08, 0));
+  for (const [x, z] of [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5], [0, 0]]) {
+    g.add(cyl(0.04, 0.05, 0.3, 4, wd, x, 0.24, z));
+    g.add(cone(0.18, 0.32, 5, Math.random() < 0.5 ? f1 : f2, x, 0.5, z));
+  }
+  for (const [x, z] of [[-0.82, -0.82], [0.82, -0.82], [-0.82, 0.82], [0.82, 0.82]]) g.add(cyl(0.04, 0.04, 0.42, 4, wd, x, 0.21, z));
+  return g;
+}
+
 // ---- частокол (1×1, стена) ----
 function chastokol() {
   const g = new THREE.Group();
@@ -201,7 +214,7 @@ function bossUnit() {
 }
 
 const BUILDERS = {
-  idol_dron: idol, bld_townhall: townhall, bld_izba: izba, bld_ambar: ambar,
+  idol_dron: idol, bld_townhall: townhall, bld_izba: izba, bld_ambar: ambar, bld_roshcha: roshcha,
   bld_kuznica: kuznica, bld_kazarma: kazarma, bld_church: church, bld_market: market,
   bld_chastokol: chastokol, bld_chastokol_gate: chastokolGate,
   res_tree: tree, res_stone: stoneNode, res_ore: oreNode,

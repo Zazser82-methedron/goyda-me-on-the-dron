@@ -49,6 +49,9 @@ export class TerrainMesh {
     if (this.inst.instanceColor) this.inst.instanceColor.needsUpdate = true;
     scene.add(this.inst);
 
+    // декор (кусты + валуны) — чисто визуально, инстансами в 2 draw call
+    this._scatterDecor(scene, grid, n);
+
     // подсветка наведения (квадрат)
     const hl = new THREE.Mesh(
       new THREE.PlaneGeometry(TILE * 0.96, TILE * 0.96),
@@ -69,6 +72,35 @@ export class TerrainMesh {
     );
     this.ghostPlane.rotation.x = -Math.PI / 2;
     this.ghost.add(this.ghostPlane);
+  }
+
+  _scatterDecor(scene, grid, n) {
+    const bushGeo = new THREE.ConeGeometry(0.18, 0.34, 5);
+    const rockGeo = new THREE.IcosahedronGeometry(0.16, 0);
+    const dmat = () => new THREE.MeshStandardMaterial({ color: 0xffffff, flatShading: true, roughness: 1 });
+    const bn = Math.floor(n * n * 0.03), rn = Math.floor(n * n * 0.012);
+    const bushes = new THREE.InstancedMesh(bushGeo, dmat(), bn);
+    const rocks = new THREE.InstancedMesh(rockGeo, dmat(), rn);
+    bushes.castShadow = bushes.receiveShadow = true;
+    rocks.castShadow = rocks.receiveShadow = true;
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+    const fill = (inst, count, cA, cB, yb, sMin, sMax) => {
+      for (let i = 0; i < count; i++) {
+        const gx = 1 + Math.floor(Math.random() * (n - 2)), gy = 1 + Math.floor(Math.random() * (n - 2));
+        const w = grid.gridToWorld(gx, gy);
+        const sc = sMin + Math.random() * (sMax - sMin);
+        p.set(w.wx + (Math.random() - 0.5) * 0.7, yb * sc, w.wz + (Math.random() - 0.5) * 0.7);
+        q.setFromAxisAngle(up, Math.random() * 6.28);
+        s.set(sc, sc * (0.8 + Math.random() * 0.5), sc);
+        m.compose(p, q, s); inst.setMatrixAt(i, m);
+        inst.setColorAt(i, new THREE.Color(Math.random() < 0.5 ? cA : cB).multiplyScalar(0.85 + Math.random() * 0.3));
+      }
+      inst.instanceMatrix.needsUpdate = true;
+      if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
+    };
+    fill(bushes, bn, PAL.grass2, PAL.grass3, 0.17, 0.6, 1.6);
+    fill(rocks, rn, PAL.rock, PAL.rockDk, 0.12, 0.5, 1.4);
+    scene.add(bushes); scene.add(rocks);
   }
 
   setHover(tile) {

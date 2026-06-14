@@ -12,6 +12,7 @@ import * as Economy from './sim/Economy.js';
 import * as BuildSys from './sim/Buildings.js';
 import * as Waves from './sim/Waves.js';
 import * as Tech from './sim/Tech.js';
+import * as Nature from './sim/Nature.js';
 import { updateUnits } from './sim/Units.js';
 import { toggleEdict } from './sim/Edicts.js';
 import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js';
@@ -26,7 +27,7 @@ import { bark } from './data/barks.js';
 import { STORAGE_KEY } from './data/config.js';
 
 const MODELS = [
-  'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_kuznica', 'bld_kazarma',
+  'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
   'bld_chastokol', 'bld_chastokol_gate', 'bld_church', 'bld_market',
   'res_tree', 'res_stone', 'res_ore', 'unit_kholop', 'unit_ratnik', 'unit_oprichnik',
   'enemy_raider', 'enemy_boss',
@@ -274,6 +275,7 @@ class Game {
     updateUnits(this.state, dt, this.ctx);
     Waves.update(this.state, dt, this.ctx);
     Tech.update(this.state, dt, this.ctx);
+    Nature.update(this.state, dt, this.ctx);
   }
 
   // ---------- рендер ----------
@@ -282,15 +284,27 @@ class Game {
     let fdt = (now - this.lastRender) / 1000; if (fdt > 0.1) fdt = 0.1; this.lastRender = now;
     this.cameraRig.update(fdt);
 
-    // интерполяция юнитов
+    // интерполяция + анимация юнитов (рост/ходьба/выпад)
     for (const u of this.state.units) {
       const v = u.view;
-      v.position.x = u.px + (u.x - u.px) * alpha;
-      v.position.z = u.pz + (u.z - u.pz) * alpha;
+      if (u.grow < 1) { u.grow = Math.min(1, u.grow + fdt * 3.5); v.scale.setScalar(u.growMax * (0.25 + 0.75 * u.grow)); }
+      const ix = u.px + (u.x - u.px) * alpha, iz = u.pz + (u.z - u.pz) * alpha;
+      const moving = Math.hypot(u.x - u.px, u.z - u.pz) > 0.0025;
+      let bob = 0, fwd = 0;
+      if (moving) bob = Math.abs(Math.sin(now * 0.016 + u.id * 1.7)) * 0.045;
+      if (u.atkAnim > 0) { u.atkAnim -= fdt; fwd = Math.sin((1 - Math.max(0, u.atkAnim) / 0.2) * Math.PI) * 0.16; }
+      v.position.set(ix + Math.sin(u.dir) * fwd, bob, iz + Math.cos(u.dir) * fwd);
       v.rotation.y = u.dir || 0;
-      const lowHp = u.hp / u.maxHp;
-      if (lowHp < 1) v.position.y = Math.abs(Math.sin(now * 0.02 + u.id)) * 0.02; // лёгкое дрожание раненых
     }
+    // эффекты смерти (падение+уменьшение)
+    for (let i = this.state.fx.length - 1; i >= 0; i--) {
+      const f = this.state.fx[i]; f.life -= fdt;
+      const t = 1 - Math.max(0, f.life) / f.max;
+      if (f.kind === 'death') { f.view.rotation.z = t * 1.5; f.view.position.y = -t * 0.35; f.view.scale.multiplyScalar(0.965); }
+      if (f.life <= 0) { this.scene.remove(f.view); this.state.fx.splice(i, 1); }
+    }
+    // пульс эмиссии идола
+    if (this.state.idol) { const p = 1.4 + Math.sin(now * 0.005) * 0.9; this.state.idol.view.traverse(o => { if (o.isMesh && o.material && o.material.emissiveIntensity > 0) o.material.emissiveIntensity = p; }); }
     // дрожание зданий под уроном
     for (const b of this.state.buildings) {
       if (b._hit > 0) { b._hit -= fdt; const j = b._hit > 0 ? (Math.random() - 0.5) * 0.06 : 0; b.view.position.set(b.cx + j, 0, b.cz + j); }

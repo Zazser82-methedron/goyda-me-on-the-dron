@@ -54,7 +54,7 @@ export function damage(state, target, amt, ctx) {
   if (target.hp <= 0) {
     if (target.type === 'unit') {
       if (target.bossKey && ctx.onBossDown) ctx.onBossDown(target);
-      state.removeUnit(target);
+      state.killUnit(target);
     } else {
       const wasTown = target === state.townhall;
       state.removeBuilding(target);
@@ -69,6 +69,7 @@ export function damage(state, target, amt, ctx) {
 function tryAttack(state, u, target, ctx) {
   if (u.atkT > 0) return;
   u.atkT = u.def.atkCd;
+  u.atkAnim = 0.2;                 // выпад-анимация (render)
   const bonus = (state.superTimer > 0 && u.faction === 'ours') ? 1.5 : 1;
   damage(state, target, u.dmg * bonus, ctx);
   if (ctx.sfx) ctx.sfx(u.faction === 'ours' ? 'hit' : 'hitEnemy');

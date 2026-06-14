@@ -25,6 +25,7 @@ export class GameState {
     this.buildings = [];
     this.units = [];
     this.nodes = [];
+    this.fx = [];                 // визуальные эффекты (смерть/пуф) — анимируются в render
     this._byId = new Map();
     this._id = 1;
 
@@ -147,7 +148,8 @@ export class GameState {
     const view = this.assets.get(def.model);
     view.position.set(wx, 0, wz);
     if (opts.tint) view.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setHex(opts.tint); } });
-    if (opts.scale) view.scale.setScalar(opts.scale);
+    const gm = opts.scale || 1;
+    view.scale.setScalar(gm * 0.25);          // вырастает при спавне (анимация в render)
     this.scene.add(view);
     const u = {
       id: this._id++, type: 'unit', kind, def, faction: def.faction, view,
@@ -156,7 +158,7 @@ export class GameState {
       dmg: def.dmg, speed: def.speed,
       state: 'idle', path: null, pi: 0, target: null, job: null,
       carry: 0, carryType: null, gatherT: 0, atkT: 0, bossKey: opts.bossKey || null,
-      barkT: 0,
+      barkT: 0, grow: 0, growMax: gm, atkAnim: 0, stance: 'aggro',
     };
     view.userData.entity = u;
     this.units.push(u); this._byId.set(u.id, u);
@@ -170,6 +172,15 @@ export class GameState {
     this._byId.delete(u.id);
     if (this.selected === u) this.selected = null;
     if (u.faction === 'ours') this.recomputePop();
+  }
+
+  // смерть с анимацией: убираем из логики, view остаётся для падения (render)
+  killUnit(u) {
+    this.units = this.units.filter(x => x !== u);
+    this._byId.delete(u.id);
+    if (this.selected === u) this.selected = null;
+    if (u.faction === 'ours') this.recomputePop();
+    if (u.view) { u.view.userData.entity = null; this.fx.push({ view: u.view, kind: 'death', life: 0.5, max: 0.5 }); }
   }
 
   ours() { return this.units.filter(u => u.faction === 'ours'); }
