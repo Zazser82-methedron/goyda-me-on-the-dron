@@ -1,8 +1,8 @@
 // ===== Нижняя панель: кнопки построек (призрак-размещение) + указы =====
-import { BUILDINGS, BUILD_ORDER } from '../data/buildings.js?v=5';
-import { RANKS } from '../data/ranks.js?v=5';
-import { RES_LABEL } from '../data/config.js?v=5';
-import { EDICTS } from '../sim/Edicts.js?v=5';
+import { BUILDINGS, BUILD_ORDER } from '../data/buildings.js?v=6';
+import { RANKS } from '../data/ranks.js?v=6';
+import { RES_LABEL } from '../data/config.js?v=6';
+import { EDICTS } from '../sim/Edicts.js?v=6';
 
 export function costStr(cost) {
   const keys = Object.keys(cost || {});

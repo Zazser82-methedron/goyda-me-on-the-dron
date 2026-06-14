@@ -25,16 +25,26 @@ export class Picker {
     this.hasPointer = true;
   }
 
-  // мировая точка пересечения с землёй (или null)
-  groundPoint(camera) {
+  // мировая точка на земле; рельеф учитывается дешёвым ray-march по heightAt (без триангуляции)
+  groundPoint(camera, grid) {
     this.ray.setFromCamera(this.ndc, camera);
-    const hit = this.ray.ray.intersectPlane(this.groundPlane, this._hit);
-    return hit ? this._hit : null;
+    if (!this.ray.ray.intersectPlane(this.groundPlane, this._hit)) return null;
+    if (grid && grid.heights) {
+      const o = this.ray.ray.origin, d = this.ray.ray.direction;
+      for (let i = 0; i < 5; i++) {
+        const h = grid.heightAt(this._hit.x, this._hit.z);
+        if (Math.abs(d.y) < 1e-5) break;
+        const t = (h - o.y) / d.y;
+        if (t < 0) break;
+        this._hit.set(o.x + d.x * t, h, o.z + d.z * t);
+      }
+    }
+    return this._hit;
   }
 
   // тайл под курсором {x,y} или null
   tileUnder(camera, grid) {
-    const p = this.groundPoint(camera);
+    const p = this.groundPoint(camera, grid);
     if (!p) return null;
     const t = grid.worldToGrid(p.x, p.z);
     return grid.inBounds(t.x, t.y) ? t : null;

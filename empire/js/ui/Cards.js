@@ -1,5 +1,5 @@
 // ===== Рука карт в HUD (клик/цифры 1-5 — разыграть) =====
-import { CARDS, RARITY_COLOR } from '../data/cards.js?v=5';
+import { CARDS, RARITY_COLOR } from '../data/cards.js?v=6';
 
 export class Cards {
   constructor(game) { this.game = game; this.el = document.getElementById('cards'); this._sig = ''; }

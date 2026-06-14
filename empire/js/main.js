@@ -1,35 +1,35 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=5';
-import { RTSCamera } from './engine/RTSCamera.js?v=5';
-import { Picker } from './engine/Picker.js?v=5';
-import { Loop } from './engine/Loop.js?v=5';
-import { AssetManager } from './engine/AssetManager.js?v=5';
-import { TerrainMesh } from './world/TerrainMesh.js?v=5';
-import { nearestAdj } from './world/Pathfinding.js?v=5';
-import { GameState } from './sim/GameState.js?v=5';
-import * as Economy from './sim/Economy.js?v=5';
-import * as BuildSys from './sim/Buildings.js?v=5';
-import * as Waves from './sim/Waves.js?v=5';
-import * as Tech from './sim/Tech.js?v=5';
-import * as Nature from './sim/Nature.js?v=5';
-import * as CardsSys from './sim/Cards.js?v=5';
-import { updateUnits } from './sim/Units.js?v=5';
-import { toggleEdict } from './sim/Edicts.js?v=5';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=5';
-import { HUD } from './ui/HUD.js?v=5';
-import { BuildMenu } from './ui/BuildMenu.js?v=5';
-import { Selection } from './ui/Selection.js?v=5';
-import { Minimap } from './ui/Minimap.js?v=5';
-import { Toasts } from './ui/Toasts.js?v=5';
-import { Cards } from './ui/Cards.js?v=5';
-import { BUILDINGS } from './data/buildings.js?v=5';
-import { RANKS } from './data/ranks.js?v=5';
-import { bark } from './data/barks.js?v=5';
-import { STORAGE_KEY } from './data/config.js?v=5';
-import { getFaction } from './data/factions.js?v=5';
-import { getMap } from './data/maps.js?v=5';
-import { StartScreen } from './ui/StartScreen.js?v=5';
+import { Renderer } from './engine/Renderer.js?v=6';
+import { RTSCamera } from './engine/RTSCamera.js?v=6';
+import { Picker } from './engine/Picker.js?v=6';
+import { Loop } from './engine/Loop.js?v=6';
+import { AssetManager } from './engine/AssetManager.js?v=6';
+import { TerrainMesh } from './world/TerrainMesh.js?v=6';
+import { nearestAdj } from './world/Pathfinding.js?v=6';
+import { GameState } from './sim/GameState.js?v=6';
+import * as Economy from './sim/Economy.js?v=6';
+import * as BuildSys from './sim/Buildings.js?v=6';
+import * as Waves from './sim/Waves.js?v=6';
+import * as Tech from './sim/Tech.js?v=6';
+import * as Nature from './sim/Nature.js?v=6';
+import * as CardsSys from './sim/Cards.js?v=6';
+import { updateUnits } from './sim/Units.js?v=6';
+import { toggleEdict } from './sim/Edicts.js?v=6';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=6';
+import { HUD } from './ui/HUD.js?v=6';
+import { BuildMenu } from './ui/BuildMenu.js?v=6';
+import { Selection } from './ui/Selection.js?v=6';
+import { Minimap } from './ui/Minimap.js?v=6';
+import { Toasts } from './ui/Toasts.js?v=6';
+import { Cards } from './ui/Cards.js?v=6';
+import { BUILDINGS } from './data/buildings.js?v=6';
+import { RANKS } from './data/ranks.js?v=6';
+import { bark } from './data/barks.js?v=6';
+import { STORAGE_KEY } from './data/config.js?v=6';
+import { getFaction } from './data/factions.js?v=6';
+import { getMap } from './data/maps.js?v=6';
+import { StartScreen } from './ui/StartScreen.js?v=6';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -111,7 +111,7 @@ class Game {
       this.assets.preload(MODELS).then(c => { this._glb = c; G('models ' + c); }).catch(() => {});
       const save = GameState.load();
       G('save=' + (save && save.buildings ? save.buildings.length : 'none'));
-      if (save && save.buildings && save.buildings.length) {
+      if (save && save.v === 2 && save.buildings && save.buildings.length) {   // старые сейвы (до рельефа) — старт заново
         try {
           this.state.faction = getFaction(save.faction);
           this.state.mapKey = save.mapKey || 'les';
@@ -140,6 +140,7 @@ class Game {
 
   buildWorld(map) {
     this.map = map;
+    this.state.grid.generateTerrain(map.terr, map.key);   // рельеф (высоты/биомы/реки)
     this.terrain = new TerrainMesh(this.scene, this.state.grid, map.pal);
   }
 
@@ -341,28 +342,28 @@ class Game {
       let bob = 0, fwd = 0;
       if (moving) bob = Math.abs(Math.sin(now * 0.016 + u.id * 1.7)) * 0.045;
       if (u.atkAnim > 0) { u.atkAnim -= fdt; fwd = Math.sin((1 - Math.max(0, u.atkAnim) / 0.2) * Math.PI) * 0.16; }
-      v.position.set(ix + Math.sin(u.dir) * fwd, bob, iz + Math.cos(u.dir) * fwd);
+      v.position.set(ix + Math.sin(u.dir) * fwd, this.state.grid.heightAt(ix, iz) + bob, iz + Math.cos(u.dir) * fwd);
       v.rotation.y = u.dir || 0;
     }
     // эффекты смерти (падение+уменьшение)
     for (let i = this.state.fx.length - 1; i >= 0; i--) {
       const f = this.state.fx[i]; f.life -= fdt;
       const t = 1 - Math.max(0, f.life) / f.max;
-      if (f.kind === 'death') { f.view.rotation.z = t * 1.5; f.view.position.y = -t * 0.35; f.view.scale.multiplyScalar(0.965); }
+      if (f.kind === 'death') { f.view.rotation.z = t * 1.5; f.view.position.y = (f.y0 || 0) - t * 0.35; f.view.scale.multiplyScalar(0.965); }
       if (f.life <= 0) { this.scene.remove(f.view); this.state.fx.splice(i, 1); }
     }
     // пульс эмиссии идола
     if (this.state.idol) { const p = 1.4 + Math.sin(now * 0.005) * 0.9; this.state.idol.view.traverse(o => { if (o.isMesh && o.material && o.material.emissiveIntensity > 0) o.material.emissiveIntensity = p; }); }
     // дрожание зданий под уроном
     for (const b of this.state.buildings) {
-      if (b._hit > 0) { b._hit -= fdt; const j = b._hit > 0 ? (Math.random() - 0.5) * 0.06 : 0; b.view.position.set(b.cx + j, 0, b.cz + j); }
+      if (b._hit > 0) { b._hit -= fdt; const j = b._hit > 0 ? (Math.random() - 0.5) * 0.06 : 0; b.view.position.set(b.cx + j, b.cy || 0, b.cz + j); }
     }
     // «сердце» базы — свет
     const s = this.state;
     const pulse = 0.12 + Math.sin(now * 0.004) * 0.05;
     this.rdr.heart.intensity = s.superTimer > 0 ? 2.4 : (s.threatTimer > 0 ? 0.9 : pulse);
     this.rdr.heart.color.setHex(s.superTimer > 0 ? 0xff3020 : (s.threatTimer > 0 ? 0xff5030 : 0xe0392b));
-    if (s.townhall) this.rdr.heart.position.set(s.townhall.cx, 4, s.townhall.cz);
+    if (s.townhall) this.rdr.heart.position.set(s.townhall.cx, (s.townhall.cy || 0) + 4, s.townhall.cz);
 
     // ховер/призрак
     this._updateHover();

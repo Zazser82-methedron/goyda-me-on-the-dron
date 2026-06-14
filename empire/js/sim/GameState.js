@@ -1,11 +1,11 @@
 // ===== Единый источник правды: ресурсы, сущности, ранги, сейв =====
 import * as THREE from 'three';
-import { GRID_N, STORAGE_KEY } from '../data/config.js?v=5';
-import { Grid } from '../world/Grid.js?v=5';
-import { NodeField } from '../world/NodeField.js?v=5';
-import { BUILDINGS } from '../data/buildings.js?v=5';
-import { UNITS } from '../data/units.js?v=5';
-import { RANKS } from '../data/ranks.js?v=5';
+import { GRID_N, STORAGE_KEY } from '../data/config.js?v=6';
+import { Grid } from '../world/Grid.js?v=6';
+import { NodeField } from '../world/NodeField.js?v=6';
+import { BUILDINGS } from '../data/buildings.js?v=6';
+import { UNITS } from '../data/units.js?v=6';
+import { RANKS } from '../data/ranks.js?v=6';
 
 export class GameState {
   constructor(scene, assets) {
@@ -102,14 +102,15 @@ export class GameState {
     // персональные материалы на каждое здание (иначе общий кэш сделает прозрачными все)
     view.traverse(o => { if (o.isMesh) o.material = o.material.clone(); });
     const c = this.grid.footprintCenter(gx, gy, def.w, def.h);
-    view.position.set(c.wx, 0, c.wz);
+    const cy = this.grid.heightAt ? this.grid.heightAt(c.wx, c.wz) : 0;
+    view.position.set(c.wx, cy, c.wz);
     this.scene.add(view);
     const b = {
       id: this._id++, type: 'building', kind, def, gx, gy, w: def.w, h: def.h,
       hp: def.hp, maxHp: def.hp, view,
       built: opts.built ?? false, buildLeft: opts.built ? 0 : (def.build || 0),
       trainQueue: [], trainLeft: 0,
-      cx: c.wx, cz: c.wz,
+      cx: c.wx, cz: c.wz, cy,
     };
     view.userData.entity = b;
     this.grid.occupy(gx, gy, def.w, def.h, b.id, { walkable: !!def.walkable });
@@ -190,7 +191,7 @@ export class GameState {
     this._byId.delete(u.id);
     if (this.selected === u) this.selected = null;
     if (u.faction === 'ours') this.recomputePop();
-    if (u.view) { u.view.userData.entity = null; this.fx.push({ view: u.view, kind: 'death', life: 0.5, max: 0.5 }); }
+    if (u.view) { u.view.userData.entity = null; this.fx.push({ view: u.view, kind: 'death', life: 0.5, max: 0.5, y0: u.view.position.y }); }
   }
 
   ours() { return this.units.filter(u => u.faction === 'ours'); }
@@ -227,7 +228,7 @@ export class GameState {
   // ---- сейв ----
   serialize() {
     return {
-      v: 1, res: this.resources, happiness: this.happiness, rankIndex: this.rankIndex, day: this.day,
+      v: 2, res: this.resources, happiness: this.happiness, rankIndex: this.rankIndex, day: this.day,
       faction: this.faction ? this.faction.key : 'goyda', mapKey: this.mapKey || 'les',
       buildings: this.buildings.map(b => ({ kind: b.kind, gx: b.gx, gy: b.gy, built: b.built, hp: b.hp })),
       nodes: this.nodes.map(n => ({ kind: n.kind, gx: n.gx, gy: n.gy, amount: n.amount })),
