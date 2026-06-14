@@ -1,7 +1,7 @@
 // ===== Поиск пути по сетке: A* (октиль), без срезания углов =====
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
 
-export function findPath(grid, sx, sy, gx, gy, maxIter = 5000) {
+export function findPath(grid, sx, sy, gx, gy, maxIter = 22000) {
   if (sx === gx && sy === gy) return [];
   if (!grid.inBounds(gx, gy)) return null;
   const key = (x, y) => y * grid.n + x;

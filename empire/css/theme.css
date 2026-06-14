@@ -15,10 +15,12 @@ body{
 #hud{ position:absolute; inset:0; pointer-events:none; }
 #hud > *{ pointer-events:auto; }
 
-/* фоновое золотое свечение под сценой */
+/* сумеречное небо под сценой (видно сквозь прозрачный канвас) */
 #app::before{
   content:''; position:absolute; inset:0; z-index:-1; pointer-events:none;
-  background:radial-gradient(circle at 50% 60%, rgba(120,60,10,.35), rgba(6,1,0,1) 70%);
+  background:
+    radial-gradient(ellipse at 50% 80%, rgba(255,205,130,.35), rgba(0,0,0,0) 62%),
+    linear-gradient(180deg, #34466a 0%, #5e607e 40%, #b58c58 72%, #6a4a2a 100%);
 }
 
 button{ font-family:inherit; cursor:pointer; color:var(--text); }
@@ -64,3 +66,10 @@ button{ font-family:inherit; cursor:pointer; color:var(--text); }
   text-transform:uppercase; box-shadow:0 6px 24px rgba(212,160,23,.5); transition:transform .15s;
 }
 .end button:hover{ transform:translateY(-2px) scale(1.04); }
+
+/* перехват фатальных ошибок (диагностика) */
+#errbox{
+  position:fixed; left:10px; bottom:10px; max-width:62vw; display:none; z-index:9999;
+  background:rgba(80,4,4,.94); border:1px solid #ff6060; color:#ffd6d6;
+  padding:9px 13px; border-radius:7px; font:12px/1.45 ui-monospace,monospace; white-space:pre-wrap;
+}

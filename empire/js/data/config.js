@@ -2,35 +2,38 @@
 // 1 единица мира = 1 тайл = 1 единица Blender (конвенция экспорта GLB).
 
 export const TILE = 1;
-export const GRID_N = 40;            // сетка 40×40
+export const GRID_N = 96;            // сетка 96×96 (огромная карта)
 export const GROUND_Y = 0;           // верх тайла на y=0, здания стоят на y=0
 
-// Палитра «Гойды» (hex как в index.html идол-слоя)
+// Палитра «Гойды» — заметно осветлена ради читаемости сцены
 export const PAL = {
   gold:       0xffcc00,
   goldBright: 0xffe680,
-  bg:         0x060100,
+  bg:         0x0c0804,
+  sky:        0x8fa8c8,   // верх неба (CSS-градиент/фон)
+  skyLow:     0xd8b888,   // низ неба у горизонта (тёплый закат)
+  fog:        0x7d7390,   // туман уходит в светлый сумрак, не в черноту
   crimson:    0xe0392b,
   crimsonDk:  0x7a1a12,
-  stone:      0x4a4038,
-  stoneLt:    0x6a5e50,
-  wood:       0x5a3a18,
-  woodDk:     0x3a2410,
-  roof:       0x7a2a1a,
-  thatch:     0x8a6a2a,
-  grass1:     0x2e3a14,
-  grass2:     0x39481c,
-  grass3:     0x445420,
-  dirt:       0x5a4326,
-  rock:       0x6b6b73,
-  rockDk:     0x4a4a52,
-  oreGold:    0xd4a017,
+  stone:      0x6a6052,
+  stoneLt:    0x8a7e6a,
+  wood:       0x7a5226,
+  woodDk:     0x4e3418,
+  roof:       0x9a3a22,
+  thatch:     0xb88e3a,
+  grass1:     0x44602a,
+  grass2:     0x577a32,
+  grass3:     0x6e9440,
+  dirt:       0x7a5e38,
+  rock:       0x8a8a94,
+  rockDk:     0x64646e,
+  oreGold:    0xe6b020,
   faithCyan:  0x00eeff,
   faithPink:  0xff00bb,
   faithGreen: 0x44ff00,
-  skin:       0xc89a6a,
-  cloth:      0x8a6a3a,
-  enemy:      0x401018,
+  skin:       0xd6a878,
+  cloth:      0xa07e44,
+  enemy:      0x5a1822,
   enemyTrim:  0xff2030,
 };
 

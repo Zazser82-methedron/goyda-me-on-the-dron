@@ -32,6 +32,16 @@ const MODELS = [
 ];
 const ri = (a, b) => Math.floor(a + Math.random() * (b - a + 1));
 
+// видимый перехват ошибок (чтобы «чёрный экран» был диагностируем)
+function showFatal(msg) {
+  let b = document.getElementById('errbox');
+  if (!b) { b = document.createElement('div'); b.id = 'errbox'; document.body.appendChild(b); }
+  b.style.display = 'block';
+  b.textContent = '⚠ ОШИБКА: ' + msg;
+}
+window.addEventListener('error', (e) => showFatal((e.message || 'error') + '  @ ' + String(e.filename || '').split('/').pop() + ':' + e.lineno));
+window.addEventListener('unhandledrejection', (e) => showFatal('promise: ' + ((e.reason && e.reason.message) || e.reason)));
+
 class Game {
   constructor() {
     this.canvas = document.getElementById('c');
@@ -116,11 +126,12 @@ class Game {
         this.state.addNode(kind, x, y, amount + ri(-10, 10)); n++;
       }
     };
-    scatter('res_tree', 26, 60, 4);
-    scatter('res_stone', 12, 90, 6);
-    scatter('res_ore', 7, 60, 8);
+    // карта 96² — больше ресурсов, рощами вокруг базы и по краям
+    scatter('res_tree', 150, 60, 4);
+    scatter('res_stone', 60, 90, 6);
+    scatter('res_ore', 34, 60, 8);
     // стартовые ХОЛОПы
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) {
       const adj = nearestAdj(g, c - 1, c - 1, 3, 3, c - 2 + i, c + 2) || { x: c, y: c + 2 };
       const w = g.gridToWorld(adj.x, adj.y);
       this.state.addUnit('kholop', w.wx, w.wz, {});
@@ -210,6 +221,7 @@ class Game {
   enterBuild(kind) { this.buildKind = kind; this.state.selected = null; sfx('click'); }
   train(b, uk) { BuildSys.queueTrain(this.state, b, uk, this.ctx); }
   toggleEdictUI(key) { toggleEdict(this.state, key, this.ctx); }
+  setStance(u, st) { u.stance = st; u.path = null; u.moveOrder = null; sfx('click'); }
 
   activateSuper() {
     const s = this.state;

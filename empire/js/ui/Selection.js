@@ -39,8 +39,15 @@ export class Selection {
       html += `<div class="sel-h">${sel.def.icon} ${sel.def.name}</div>`;
       html += hpBar(sel.hp, sel.maxHp);
       html += `<div class="sel-sub" id="sel-sub"></div>`;
-      if (sel.def.worker) html += `<div class="sel-tag">ЛКМ по ноде — назначить добычу</div>`;
-      else if (sel.faction === 'ours') html += `<div class="sel-tag">ЛКМ по земле — приказ идти</div>`;
+      if (sel.faction === 'ours' && !sel.def.worker) {
+        html += `<div class="sel-stances">
+          <button class="stbtn" data-st="aggro" title="Сами ищут и бьют врага по всей карте">⚔️ Агр</button>
+          <button class="stbtn" data-st="defend" title="Бьют врага у базы, иначе держат рубеж">🛡️ Оборона</button>
+          <button class="stbtn" data-st="hold" title="Стоят на месте, бьют только в упор">✋ Стоять</button></div>`;
+        html += `<div class="sel-tag">ЛКМ по земле — приказ идти</div>`;
+      } else if (sel.def.worker) {
+        html += `<div class="sel-tag">ЛКМ по ноде (🌳🪨🪙) — назначить добычу</div>`;
+      }
     } else if (sel.type === 'node') {
       const lbl = RES_LABEL[sel.resType];
       html += `<div class="sel-h">${lbl.icon} ${lbl.ru}</div>`;
@@ -49,6 +56,14 @@ export class Selection {
     }
     this.el.innerHTML = html;
     this.el.querySelectorAll('.ubtn').forEach(btn => { btn.onclick = () => this.game.train(sel, btn.dataset.u); });
+    const cur = sel.stance || 'aggro';
+    this.el.querySelectorAll('.stbtn').forEach(btn => {
+      if (btn.dataset.st === cur) btn.classList.add('on');
+      btn.onclick = () => {
+        this.game.setStance(sel, btn.dataset.st);
+        this.el.querySelectorAll('.stbtn').forEach(b => b.classList.toggle('on', b.dataset.st === btn.dataset.st));
+      };
+    });
   }
 
   _dynamic(sel) {

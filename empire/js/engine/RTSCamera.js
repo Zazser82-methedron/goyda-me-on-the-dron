@@ -1,16 +1,17 @@
 // ===== RTS-камера: пан по XZ, орбита (ПКМ/Q-E), зум колесом, сглаживание =====
 import * as THREE from 'three';
+import { GRID_N, TILE } from '../data/config.js';
 
 export class RTSCamera {
   constructor(dom) {
     this.dom = dom;
-    this.camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.5, 400);
+    this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.5, 700);
 
     // целевая точка взгляда (на плоскости земли) + сферическое смещение
     this.target = new THREE.Vector3(0, 0, 0);
-    this.radius = 34;
+    this.radius = 52;
     this.azimuth = Math.PI * 0.25;     // поворот вокруг Y
-    this.polar = Math.PI * 0.34;       // наклон (0 = сверху)
+    this.polar = Math.PI * 0.38;       // наклон (0 = сверху)
 
     // сглаженные (визуальные) значения
     this._target = this.target.clone();
@@ -18,11 +19,12 @@ export class RTSCamera {
     this._azimuth = this.azimuth;
     this._polar = this.polar;
 
-    this.minRadius = 8; this.maxRadius = 90;
+    this.minRadius = 8; this.maxRadius = 200;
     this.minPolar = 0.12; this.maxPolar = 1.15;
+    this.limit = GRID_N * TILE * 0.5 + 6;   // предел панорамирования под карту
 
     this.keys = {};
-    this.panSpeed = 26;
+    this.panSpeed = 46;
     this._dragging = false;
     this._lastX = 0; this._lastY = 0;
 
@@ -75,24 +77,27 @@ export class RTSCamera {
   }
 
   update(dt) {
-    // клавиатурный пан
+    // WASD — экранно-относительно: w вперёд (от камеры), s назад, a влево, d вправо
     const k = this.keys;
-    let mx = 0, my = 0;
-    if (k['KeyW'] || k['ArrowUp']) my -= 1;
-    if (k['KeyS'] || k['ArrowDown']) my += 1;
-    if (k['KeyA'] || k['ArrowLeft']) mx -= 1;
-    if (k['KeyD'] || k['ArrowRight']) mx += 1;
-    if (mx || my) {
-      const cos = Math.cos(this.azimuth), sin = Math.sin(this.azimuth);
-      const sp = this.panSpeed * dt * (this.radius / 34);
-      this.target.x += (mx * cos - my * sin) * sp;
-      this.target.z += (mx * sin + my * cos) * sp;
+    let f = 0, r = 0;
+    if (k['KeyW'] || k['ArrowUp']) f += 1;
+    if (k['KeyS'] || k['ArrowDown']) f -= 1;
+    if (k['KeyD'] || k['ArrowRight']) r += 1;
+    if (k['KeyA'] || k['ArrowLeft']) r -= 1;
+    if (f || r) {
+      const az = this.azimuth;
+      // вперёд (в экран, от камеры) и вправо на плоскости земли
+      const fx = -Math.sin(az), fz = -Math.cos(az);
+      const rx = Math.cos(az), rz = -Math.sin(az);
+      const sp = this.panSpeed * dt * (this.radius / 40);
+      this.target.x += (f * fx + r * rx) * sp;
+      this.target.z += (f * fz + r * rz) * sp;
     }
     if (k['KeyQ']) this.azimuth += dt * 1.2;
     if (k['KeyE']) this.azimuth -= dt * 1.2;
 
     // ограничим цель пределами карты (мягко)
-    const lim = 60;
+    const lim = this.limit;
     this.target.x = THREE.MathUtils.clamp(this.target.x, -lim, lim);
     this.target.z = THREE.MathUtils.clamp(this.target.z, -lim, lim);
 

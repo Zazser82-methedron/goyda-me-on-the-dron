@@ -7,12 +7,27 @@ const MAX_ENEMIES = 70;
 
 export function update(state, dt, ctx) {
   if (state.gameOver || !state.townhall) return;
-  if (state.nextWaveIn === undefined) state.nextWaveIn = 40;   // льготная фора в начале
+  // Набеги начинаются ТОЛЬКО когда игроку есть чем обороняться:
+  // построена казарма, ИЛИ достигнут РАТНИК, ИЛИ уже есть воины.
+  const canDefend = state.hasBuilt('kazarma') || state.rankIndex >= 1 || state.soldiers().length > 0;
+  if (!canDefend) { state.nextWaveIn = undefined; return; }
+
+  if (state.nextWaveIn === undefined) {
+    state.nextWaveIn = 28;   // мирная фора после готовности к обороне
+    ctx.toast && ctx.toast('🕊️ Скоро придут набеги — ставь ЧАСТОКОЛ и куй дружину.');
+  }
+
   state.nextWaveIn -= dt;
+  if (!state._warned && state.nextWaveIn <= 6 && state.nextWaveIn > 0) {
+    state._warned = true; state.threatTimer = 6;
+    ctx.sfx && ctx.sfx('raid');
+    ctx.toast && ctx.toast('⚠️ НАБЕГ через ' + Math.ceil(state.nextWaveIn) + 'с! К стенам!', { bad: true });
+  }
   if (state.nextWaveIn <= 0) {
     spawnWave(state, ctx);
     state.waveNum = (state.waveNum || 0) + 1;
-    state.nextWaveIn = Math.max(16, 42 - state.rankIndex * 3 - state.waveNum * 0.4);
+    state._warned = false;
+    state.nextWaveIn = Math.max(22, 60 - state.rankIndex * 4 - state.waveNum * 0.5);
   }
 }
 
@@ -34,7 +49,7 @@ function edgePoints(state, count) {
 
 function spawnWave(state, ctx) {
   if (state.enemies().length > MAX_ENEMIES) { state.nextWaveIn = 12; return; }
-  const count = 2 + state.rankIndex * 2 + Math.floor((state.waveNum || 0) / 2);
+  const count = 2 + state.rankIndex + Math.floor((state.waveNum || 0) / 2);
   for (const p of edgePoints(state, count)) state.addUnit('raider', p.x, p.z, {});
   state.threatTimer = 8;
   ctx.sfx && ctx.sfx('raid');

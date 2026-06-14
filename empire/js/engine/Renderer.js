@@ -4,42 +4,48 @@ import { PAL } from '../data/config.js';
 
 export class Renderer {
   constructor(canvas) {
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+    // alpha:true — сквозь канвас виден CSS-градиент неба
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.05;
+    this.renderer.toneMappingExposure = 1.45;        // заметно ярче
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(PAL.bg);
-    this.scene.fog = new THREE.FogExp2(PAL.bg, 0.012);
+    this.scene.background = null;                     // фон рисует CSS
+    this.scene.fog = new THREE.FogExp2(PAL.fog, 0.0045);  // даль уходит в светлый сумрак
 
-    // Тёплый эмбиент + золотой ключевой свет (как в «Гойде»)
-    this.amb = new THREE.AmbientLight(0x55401e, 1.1);
+    // Полусферический свет неба/земли — ровная читаемая засветка всей сцены
+    this.hemi = new THREE.HemisphereLight(0xcfe0f4, 0x6a5836, 1.45);
+    this.scene.add(this.hemi);
+
+    // Мягкий общий подсвет
+    this.amb = new THREE.AmbientLight(0xb8a888, 0.55);
     this.scene.add(this.amb);
 
-    this.key = new THREE.DirectionalLight(0xffd9a0, 1.6);
-    this.key.position.set(18, 32, 14);
+    // Яркое тёплое «солнце» с тенями
+    this.key = new THREE.DirectionalLight(0xfff2dc, 2.3);
+    this.key.position.set(40, 60, 28);
     this.key.castShadow = true;
     this.key.shadow.mapSize.set(2048, 2048);
-    const d = 30;
+    const d = 60;
     const cam = this.key.shadow.camera;
     cam.left = -d; cam.right = d; cam.top = d; cam.bottom = -d;
-    cam.near = 1; cam.far = 120;
+    cam.near = 1; cam.far = 260; cam.updateProjectionMatrix();
     this.key.shadow.bias = -0.0004;
     this.scene.add(this.key);
     this.scene.add(this.key.target);
 
-    // Холодный контровой подсвет (славянский сумрак)
-    this.rim = new THREE.DirectionalLight(0x2a4a6a, 0.5);
-    this.rim.position.set(-16, 12, -18);
+    // Холодный контровой подсвет
+    this.rim = new THREE.DirectionalLight(0x9ab4d6, 0.6);
+    this.rim.position.set(-30, 22, -34);
     this.scene.add(this.rim);
 
     // Малиновый «дух» у центра — динамически усиливается в СВЕРХ-ГОЙДА
-    this.heart = new THREE.PointLight(PAL.crimson, 0.0, 40, 2);
+    this.heart = new THREE.PointLight(PAL.crimson, 0.4, 60, 2);
     this.heart.position.set(0, 4, 0);
     this.scene.add(this.heart);
 

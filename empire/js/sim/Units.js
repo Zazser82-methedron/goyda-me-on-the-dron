@@ -104,25 +104,40 @@ function nearestOursBuildingInRange(state, u) {
 
 function faceTarget(u, tx, tz) { u.dir = Math.atan2(tx - u.x, tz - u.z); }
 
-// ---- свои воины ----
+// ---- свои воины: стойки aggro (по умолч.) / defend / hold ----
 function updateSoldier(state, u, dt, ctx) {
-  const enemy = nearestEnemyUnit(state, u, 12);
+  const stance = u.stance || 'aggro';
+  const aggroR = stance === 'aggro' ? 9999 : stance === 'defend' ? 22 : 0;
+
+  // 1) ищем врага по стойке и идём на него
+  const enemy = aggroR > 0 ? nearestEnemyUnit(state, u, aggroR) : null;
   if (enemy) {
-    if (inRange(u, enemy)) { faceTarget(u, enemy.x, enemy.z); tryAttack(state, u, enemy, ctx); u.path = null; return; }
+    if (inRange(u, enemy)) { faceTarget(u, enemy.x, enemy.z); tryAttack(state, u, enemy, ctx); u.path = null; u.moveOrder = null; return; }
     u.repathT -= dt;
-    if (!u.path || u.repathT <= 0) { setPath(state, u, enemy.gx ?? state.grid.worldToGrid(enemy.x, enemy.z).x, enemy.gy ?? state.grid.worldToGrid(enemy.x, enemy.z).y); u.repathT = 0.5; }
-    moveStep(state, u, dt);
+    if (!u.path || u.pi >= u.path.length || u.repathT <= 0) {
+      const eg = state.grid.worldToGrid(enemy.x, enemy.z);
+      setPath(state, u, eg.x, eg.y); u.repathT = 0.45;
+    }
+    if (moveStep(state, u, dt) === 'noPath') u.repathT = 0.5;
     return;
   }
+
+  // 2) приказ игрока идти
   if (u.moveOrder) {
     if (!u.path) { if (!setPath(state, u, u.moveOrder.x, u.moveOrder.y)) { u.moveOrder = null; return; } }
     if (moveStep(state, u, dt) === 'arrived') { u.moveOrder = null; u.path = null; }
     return;
   }
-  // покой — лёгкий дрейф к ратуше, если далеко
-  if (state.townhall) {
-    const d = dist2(u.x, u.z, state.townhall.cx, state.townhall.cz);
-    if (d > 100) { if (!u.path) setPathToBuilding(state, u, state.townhall); moveStep(state, u, dt); return; }
+
+  // 3) стойка «стоять» — не двигаемся
+  if (stance === 'hold') { u.path = null; return; }
+
+  // 4) вернуться к точке сбора (ралли/ратуша)
+  const rally = state.rally || (state.townhall ? { x: state.townhall.cx, z: state.townhall.cz } : null);
+  if (rally && dist2(u.x, u.z, rally.x, rally.z) > 49) {
+    if (!u.path) { const g = state.grid.worldToGrid(rally.x, rally.z); setPath(state, u, g.x, g.y); }
+    if (moveStep(state, u, dt) === 'arrived') u.path = null;
+    return;
   }
   u.path = null;
 }
