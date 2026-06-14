@@ -1,16 +1,24 @@
 // ===== Единый источник правды: ресурсы, сущности, ранги, сейв =====
 import * as THREE from 'three';
-import { GRID_N, STORAGE_KEY } from '../data/config.js?v=4';
-import { Grid } from '../world/Grid.js?v=4';
-import { BUILDINGS } from '../data/buildings.js?v=4';
-import { UNITS } from '../data/units.js?v=4';
-import { RANKS } from '../data/ranks.js?v=4';
+import { GRID_N, STORAGE_KEY } from '../data/config.js?v=5';
+import { Grid } from '../world/Grid.js?v=5';
+import { NodeField } from '../world/NodeField.js?v=5';
+import { BUILDINGS } from '../data/buildings.js?v=5';
+import { UNITS } from '../data/units.js?v=5';
+import { RANKS } from '../data/ranks.js?v=5';
 
 export class GameState {
   constructor(scene, assets) {
     this.scene = scene;
     this.assets = assets;
     this.grid = new Grid(GRID_N);
+
+    // инстансные поля ресурсов (1 draw call на тип вместо ~800 объектов)
+    this.fields = {
+      wood: new NodeField(scene, 'res_tree', 700),
+      stone: new NodeField(scene, 'res_stone', 300),
+      gold: new NodeField(scene, 'res_ore', 250),
+    };
 
     this.resources = { food: 60, wood: 80, stone: 40, gold: 40, faith: 0 };
     this.cap = { food: 300, wood: 300, stone: 300, gold: 300, faith: 999 };
@@ -65,26 +73,26 @@ export class GameState {
   byId(id) { return this._byId.get(id); }
   get rank() { return RANKS[this.rankIndex]; }
 
-  // ---- ноды ресурсов ----
+  // ---- ноды ресурсов (инстансные) ----
   addNode(kind, gx, gy, amount) {
     const resType = kind === 'res_tree' ? 'wood' : kind === 'res_stone' ? 'stone' : 'gold';
-    const view = this.assets.get(kind);
+    const field = this.fields[resType];
     const { wx, wz } = this.grid.gridToWorld(gx, gy);
-    view.position.set(wx, 0, wz);
-    view.rotation.y = (gx * 1.7 + gy * 0.9) % (Math.PI * 2);
-    this.scene.add(view);
-    const n = { id: this._id++, type: 'node', kind, resType, gx, gy, amount, maxAmount: amount, view, depleted: false };
-    view.userData.entity = n;
+    const y = this.grid.heightAt ? this.grid.heightAt(wx, wz) : 0;
+    const ry = (gx * 1.7 + gy * 0.9) % (Math.PI * 2);
+    const n = { id: this._id++, type: 'node', kind, resType, gx, gy, amount, maxAmount: amount, depleted: false, field, instIndex: -1 };
+    field.add(n, wx, y, wz, ry, 1);
     this.grid.occupy(gx, gy, 1, 1, n.id, { walkable: false });
     this.nodes.push(n); this._byId.set(n.id, n);
     return n;
   }
 
   removeNode(n) {
-    this.scene.remove(n.view);
+    if (n.field) n.field.remove(n);
     this.grid.occupy(n.gx, n.gy, 1, 1, null);
     this.nodes = this.nodes.filter(x => x !== n);
     this._byId.delete(n.id);
+    if (this.selected === n) this.selected = null;
   }
 
   // ---- здания ----

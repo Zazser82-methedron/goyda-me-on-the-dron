@@ -1,7 +1,7 @@
 // ===== Цикл добытчика: к ноде → добыча → к складу → сдача =====
-import { setPath, setPathToBuilding, moveStep } from './Units.js?v=4';
-import { RES_LABEL } from '../data/config.js?v=4';
-import { bark } from '../data/barks.js?v=4';
+import { setPath, setPathToBuilding, moveStep } from './Units.js?v=5';
+import { RES_LABEL } from '../data/config.js?v=5';
+import { bark } from '../data/barks.js?v=5';
 
 function adjacentTo(state, u, ent) {
   const g = state.grid.worldToGrid(u.x, u.z);
@@ -48,9 +48,9 @@ export function updateWorker(state, u, dt, ctx) {
       node.amount -= rate; u.carry += rate; u.carryType = node.resType; u.gatherT = 0.8;
       if (ctx.sfx) ctx.sfx('gather');
       const s = Math.max(0.25, node.amount / node.maxAmount);
-      node.view.scale.setScalar(0.45 + 0.55 * s);
+      node.field.setScale(node, 0.45 + 0.55 * s);
       if (node.amount <= 0) {
-        if (node.resType === 'wood') { node.depleted = true; node.amount = 0; node.regrow = 0; node.view.scale.setScalar(0.22); } // пень — отрастёт
+        if (node.resType === 'wood') { node.depleted = true; node.amount = 0; node.regrow = 0; node.field.setScale(node, 0.22); } // пень — отрастёт
         else state.removeNode(node);                                   // камень/золото конечны
         u.job = null; u.state = 'toDrop';
       } else if (u.carry >= u.def.carry) u.state = 'toDrop';

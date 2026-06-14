@@ -1,6 +1,6 @@
 // ===== Three.js рендерер, сцена, свет, туман — настроение идол-слоя «Гойды» =====
 import * as THREE from 'three';
-import { PAL } from '../data/config.js?v=4';
+import { PAL } from '../data/config.js?v=5';
 
 export class Renderer {
   constructor(canvas) {
@@ -28,13 +28,13 @@ export class Renderer {
 
     // Яркое тёплое «солнце» с тенями
     this.key = new THREE.DirectionalLight(0xfff2dc, 2.3);
-    this.key.position.set(40, 60, 28);
+    this.key.position.set(40, 64, 28);
     this.key.castShadow = true;
-    this.key.shadow.mapSize.set(2048, 2048);
-    const d = 60;
+    this.key.shadow.mapSize.set(1024, 1024);
+    const d = 36;
     const cam = this.key.shadow.camera;
     cam.left = -d; cam.right = d; cam.top = d; cam.bottom = -d;
-    cam.near = 1; cam.far = 260; cam.updateProjectionMatrix();
+    cam.near = 1; cam.far = 200; cam.updateProjectionMatrix();
     this.key.shadow.bias = -0.0004;
     this.scene.add(this.key);
     this.scene.add(this.key.target);
@@ -55,6 +55,13 @@ export class Renderer {
   resize() {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     if (this.onResize) this.onResize(window.innerWidth, window.innerHeight);
+  }
+
+  // тень следует за камерой — маленький frustum (крупная карта 96² не тормозит)
+  updateShadow(tx, tz) {
+    this.key.position.set(tx + 36, 64, tz + 26);
+    this.key.target.position.set(tx, 0, tz);
+    this.key.target.updateMatrixWorld();
   }
 
   render(camera) { this.renderer.render(this.scene, camera); }

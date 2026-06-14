@@ -40,12 +40,20 @@ export class Picker {
     return grid.inBounds(t.x, t.y) ? t : null;
   }
 
-  // первая сущность из списка pickables (Object3D с userData.entity)
-  entityUnder(camera, pickables) {
-    if (!pickables || !pickables.length) return null;
+  // ближайшая сущность: pickables (Object3D с userData.entity) + инстансные поля нод
+  entityUnder(camera, pickables, fields) {
     this.ray.setFromCamera(this.ndc, camera);
-    const hits = this.ray.intersectObjects(pickables, true);
+    const targets = pickables ? pickables.slice() : [];
+    if (fields) for (const f of fields) targets.push(f.inst);
+    if (!targets.length) return null;
+    const hits = this.ray.intersectObjects(targets, true);
     for (const h of hits) {
+      if (h.object.isInstancedMesh && h.instanceId != null) {
+        const f = fields && fields.find(ff => ff.inst === h.object);
+        const node = f && f.nodeAt(h.instanceId);
+        if (node) return node;
+        continue;
+      }
       let o = h.object;
       while (o) { if (o.userData && o.userData.entity) return o.userData.entity; o = o.parent; }
     }

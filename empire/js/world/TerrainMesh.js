@@ -1,6 +1,6 @@
 // ===== Земля: инстансированные тайлы + подсветка наведения + призрак постройки =====
 import * as THREE from 'three';
-import { TILE, PAL } from '../data/config.js?v=4';
+import { TILE, PAL } from '../data/config.js?v=5';
 
 function jitterColor(hex, amt) {
   const c = new THREE.Color(hex);
@@ -82,8 +82,8 @@ export class TerrainMesh {
     const bn = Math.floor(n * n * 0.03), rn = Math.floor(n * n * 0.012);
     const bushes = new THREE.InstancedMesh(bushGeo, dmat(), bn);
     const rocks = new THREE.InstancedMesh(rockGeo, dmat(), rn);
-    bushes.castShadow = bushes.receiveShadow = true;
-    rocks.castShadow = rocks.receiveShadow = true;
+    bushes.castShadow = false; bushes.receiveShadow = false;   // декор без теней (перф)
+    rocks.castShadow = false; rocks.receiveShadow = false;
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
     const fill = (inst, count, cA, cB, yb, sMin, sMax) => {
       for (let i = 0; i < count; i++) {

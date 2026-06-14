@@ -1,35 +1,35 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=4';
-import { RTSCamera } from './engine/RTSCamera.js?v=4';
-import { Picker } from './engine/Picker.js?v=4';
-import { Loop } from './engine/Loop.js?v=4';
-import { AssetManager } from './engine/AssetManager.js?v=4';
-import { TerrainMesh } from './world/TerrainMesh.js?v=4';
-import { nearestAdj } from './world/Pathfinding.js?v=4';
-import { GameState } from './sim/GameState.js?v=4';
-import * as Economy from './sim/Economy.js?v=4';
-import * as BuildSys from './sim/Buildings.js?v=4';
-import * as Waves from './sim/Waves.js?v=4';
-import * as Tech from './sim/Tech.js?v=4';
-import * as Nature from './sim/Nature.js?v=4';
-import * as CardsSys from './sim/Cards.js?v=4';
-import { updateUnits } from './sim/Units.js?v=4';
-import { toggleEdict } from './sim/Edicts.js?v=4';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=4';
-import { HUD } from './ui/HUD.js?v=4';
-import { BuildMenu } from './ui/BuildMenu.js?v=4';
-import { Selection } from './ui/Selection.js?v=4';
-import { Minimap } from './ui/Minimap.js?v=4';
-import { Toasts } from './ui/Toasts.js?v=4';
-import { Cards } from './ui/Cards.js?v=4';
-import { BUILDINGS } from './data/buildings.js?v=4';
-import { RANKS } from './data/ranks.js?v=4';
-import { bark } from './data/barks.js?v=4';
-import { STORAGE_KEY } from './data/config.js?v=4';
-import { getFaction } from './data/factions.js?v=4';
-import { getMap } from './data/maps.js?v=4';
-import { StartScreen } from './ui/StartScreen.js?v=4';
+import { Renderer } from './engine/Renderer.js?v=5';
+import { RTSCamera } from './engine/RTSCamera.js?v=5';
+import { Picker } from './engine/Picker.js?v=5';
+import { Loop } from './engine/Loop.js?v=5';
+import { AssetManager } from './engine/AssetManager.js?v=5';
+import { TerrainMesh } from './world/TerrainMesh.js?v=5';
+import { nearestAdj } from './world/Pathfinding.js?v=5';
+import { GameState } from './sim/GameState.js?v=5';
+import * as Economy from './sim/Economy.js?v=5';
+import * as BuildSys from './sim/Buildings.js?v=5';
+import * as Waves from './sim/Waves.js?v=5';
+import * as Tech from './sim/Tech.js?v=5';
+import * as Nature from './sim/Nature.js?v=5';
+import * as CardsSys from './sim/Cards.js?v=5';
+import { updateUnits } from './sim/Units.js?v=5';
+import { toggleEdict } from './sim/Edicts.js?v=5';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=5';
+import { HUD } from './ui/HUD.js?v=5';
+import { BuildMenu } from './ui/BuildMenu.js?v=5';
+import { Selection } from './ui/Selection.js?v=5';
+import { Minimap } from './ui/Minimap.js?v=5';
+import { Toasts } from './ui/Toasts.js?v=5';
+import { Cards } from './ui/Cards.js?v=5';
+import { BUILDINGS } from './data/buildings.js?v=5';
+import { RANKS } from './data/ranks.js?v=5';
+import { bark } from './data/barks.js?v=5';
+import { STORAGE_KEY } from './data/config.js?v=5';
+import { getFaction } from './data/factions.js?v=5';
+import { getMap } from './data/maps.js?v=5';
+import { StartScreen } from './ui/StartScreen.js?v=5';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -249,13 +249,12 @@ class Game {
   _pickables() {
     const a = [];
     for (const b of this.state.buildings) a.push(b.view);
-    for (const n of this.state.nodes) a.push(n.view);
     for (const u of this.state.units) a.push(u.view);
     return a;
   }
 
   _selectOrOrder() {
-    const ent = this.picker.entityUnder(this.camera, this._pickables());
+    const ent = this.picker.entityUnder(this.camera, this._pickables(), Object.values(this.state.fields));
     const sel = this.state.selected;
     if (ent) {
       if (sel && sel.type === 'unit' && sel.def.worker && ent.type === 'node') {
@@ -331,6 +330,7 @@ class Game {
     const now = performance.now();
     let fdt = (now - this.lastRender) / 1000; if (fdt > 0.1) fdt = 0.1; this.lastRender = now;
     this.cameraRig.update(fdt);
+    this.rdr.updateShadow(this.cameraRig.target.x, this.cameraRig.target.z);
 
     // интерполяция + анимация юнитов (рост/ходьба/выпад)
     for (const u of this.state.units) {
