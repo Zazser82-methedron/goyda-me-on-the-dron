@@ -105,19 +105,28 @@ class Game {
   }
 
   async boot() {
-    this._glb = await this.assets.preload(MODELS);
-    const save = GameState.load();
-    if (save && save.buildings && save.buildings.length) {
-      try {
-        this.state.faction = getFaction(save.faction);
-        this.state.mapKey = save.mapKey || 'les';
-        this.buildWorld(getMap(this.state.mapKey));
-        this._restore(save);
-        this._begin(true);
-        return;
-      } catch (e) { console.warn('restore failed', e); }
-    }
-    this.startScreen.show();   // новый поход — выбор фракции и земли
+    const G = window.__gboot || function () {};
+    try {
+      // модели грузятся в фоне — не блокируют запуск (есть плейсхолдеры)
+      this.assets.preload(MODELS).then(c => { this._glb = c; G('models ' + c); }).catch(() => {});
+      const save = GameState.load();
+      G('save=' + (save && save.buildings ? save.buildings.length : 'none'));
+      if (save && save.buildings && save.buildings.length) {
+        try {
+          this.state.faction = getFaction(save.faction);
+          this.state.mapKey = save.mapKey || 'les';
+          this.buildWorld(getMap(this.state.mapKey));
+          this._restore(save);
+          G('restored'); this._begin(true); return;
+        } catch (e) {
+          console.warn('restore failed', e);
+          try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
+          G('restore-failed');
+        }
+      }
+      G('startscreen');
+      this.startScreen.show();
+    } catch (e) { showFatal('boot: ' + ((e && e.stack) || e)); }
   }
 
   startWith(fk, mk) {
@@ -140,6 +149,7 @@ class Game {
     this.toasts.show(restored ? '⚔️ Поход продолжается…' : ('🗿 ' + (f ? f.emoji + ' ' + f.name : 'ГОЙДА') + ' · ' + this.map.name + '. ГОЙДА!'), { big: true, gold: true });
     if (this._glb > 0) this.toasts.show('Blender-моделей: ' + this._glb);
     for (let i = 0; i < 3; i++) CardsSys.drawCard(this.state, this.ctx, true);   // стартовая рука
+    window.__gboot && window.__gboot('loop ' + (restored ? 'restore' : 'new'));
     this.loop.start();
   }
 
@@ -317,6 +327,7 @@ class Game {
 
   // ---------- рендер ----------
   render(alpha) {
+    if (!this._rendered) { this._rendered = true; window.__gboot && window.__gboot('RENDERING ✓'); }
     const now = performance.now();
     let fdt = (now - this.lastRender) / 1000; if (fdt > 0.1) fdt = 0.1; this.lastRender = now;
     this.cameraRig.update(fdt);

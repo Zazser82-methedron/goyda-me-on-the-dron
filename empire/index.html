@@ -4,10 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ГОЙДА-ИМПЕРИЯ — 3D-стратегия</title>
+<script>
+/* ранний перехват ошибок — срабатывает ДО модулей, ловит и ошибки линковки/загрузки */
+(function () {
+  function box(msg) {
+    var b = document.getElementById('errbox');
+    if (!b) { b = document.createElement('div'); b.id = 'errbox'; b.style.cssText = 'position:fixed;left:8px;bottom:8px;max-width:72vw;z-index:99999;background:rgba(90,0,0,.95);color:#ffd6d6;font:12px/1.45 monospace;padding:10px 14px;border:1px solid #f66;border-radius:6px;white-space:pre-wrap'; (document.body || document.documentElement).appendChild(b); }
+    b.style.display = 'block'; b.textContent = '⚠ ' + msg;
+  }
+  window.addEventListener('error', function (e) { box((e.message || e.type) + '  @ ' + String(e.filename || '').split('/').pop() + ':' + (e.lineno || '')); });
+  window.addEventListener('unhandledrejection', function (e) { box('promise: ' + ((e.reason && (e.reason.stack || e.reason.message)) || e.reason)); });
+  window.__gboot = function (s) { var d = document.getElementById('bootlog'); if (!d) { d = document.createElement('div'); d.id = 'bootlog'; d.style.cssText = 'position:fixed;left:8px;top:54px;z-index:99998;color:#9fef9f;font:11px monospace;opacity:.65'; (document.body || document.documentElement).appendChild(d); } d.textContent = 'boot: ' + s; };
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Ysabeau+SC:wght@400;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./css/theme.css?v=1">
-<link rel="stylesheet" href="./css/hud.css?v=1">
+<link rel="stylesheet" href="./css/theme.css?v=2">
+<link rel="stylesheet" href="./css/hud.css?v=2">
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
@@ -63,6 +76,6 @@
   <div id="overlay"></div>
 </div>
 
-<script type="module" src="./js/main.js?v=1"></script>
+<script type="module" src="./js/main.js?v=2"></script>
 </body>
 </html>
