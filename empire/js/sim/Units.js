@@ -169,6 +169,11 @@ export function updateUnits(state, dt, ctx) {
     if (u.atkT > 0) u.atkT -= dt;
     if (u.barkT > 0) u.barkT -= dt;
     if (u.repathT === undefined) u.repathT = 0;
+    if (u.poisonT > 0) {                              // ☠ ГОЙДО-ЯД
+      u.poisonT -= dt; u._poiT = (u._poiT || 0) + dt;
+      if (u._poiT >= 1) { u._poiT = 0; u.hp -= (u.poisonDmg || 5); if (u.hp <= 0) { state.killUnit(u); continue; } }
+    }
+    if (u.stunT > 0) { u.stunT -= dt; u.path = null; continue; }   // ❄ КРИО — стоит
     if (u.faction === 'enemy') updateEnemy(state, u, dt, ctx);
     else if (u.def.worker) updateWorker(state, u, dt, ctx);
     else updateSoldier(state, u, dt, ctx);

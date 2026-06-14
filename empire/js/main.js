@@ -13,6 +13,7 @@ import * as BuildSys from './sim/Buildings.js';
 import * as Waves from './sim/Waves.js';
 import * as Tech from './sim/Tech.js';
 import * as Nature from './sim/Nature.js';
+import * as CardsSys from './sim/Cards.js';
 import { updateUnits } from './sim/Units.js';
 import { toggleEdict } from './sim/Edicts.js';
 import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js';
@@ -21,6 +22,7 @@ import { BuildMenu } from './ui/BuildMenu.js';
 import { Selection } from './ui/Selection.js';
 import { Minimap } from './ui/Minimap.js';
 import { Toasts } from './ui/Toasts.js';
+import { Cards } from './ui/Cards.js';
 import { BUILDINGS } from './data/buildings.js';
 import { RANKS } from './data/ranks.js';
 import { bark } from './data/barks.js';
@@ -63,6 +65,7 @@ class Game {
     this.menu = new BuildMenu(this);
     this.selUI = new Selection(this);
     this.minimap = new Minimap(this);
+    this.cards = new Cards(this);
 
     this.buildKind = null;
     this.placing = false;
@@ -87,7 +90,7 @@ class Game {
       flash: (b) => { b._hit = 0.18; },
       onLose: () => this.end('lose'),
       onWin: () => this.end('win'),
-      onRankUp: () => {},
+      onRankUp: () => { CardsSys.drawCard(this.state, this.ctx); },
       spawnBoss: (key) => Waves.spawnBoss(this.state, key, this.ctx),
       onBossDown: (boss) => {
         this.state.gain({ gold: 60, faith: 25 });
@@ -109,6 +112,7 @@ class Game {
     this.toasts.show(restored ? '⚔️ Поход продолжается…' : '🗿 ГОЙДА-ИМПЕРИЯ. Подними державу вокруг ДРОНА!', { big: true, gold: true });
     if (c > 0) this.toasts.show('Blender-моделей загружено: ' + c);
     else this.toasts.show('Модели: процедурные плейсхолдеры (Blender GLB подключатся позже)');
+    for (let i = 0; i < 3; i++) CardsSys.drawCard(this.state, this.ctx, true);   // стартовая рука
     this.loop.start();
   }
 
@@ -174,6 +178,7 @@ class Game {
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Escape') { this.buildKind = null; this.terrain.hideGhost(); this.state.selected = null; }
       else if (e.code === 'Space') { e.preventDefault(); this.activateSuper(); }
+      else if (/^Digit[1-5]$/.test(e.code)) { this.playCard(parseInt(e.code.slice(5), 10) - 1); }
     });
     document.getElementById('superBtn').onclick = () => this.activateSuper();
     const mb = document.getElementById('muteBtn');
@@ -232,6 +237,7 @@ class Game {
   train(b, uk) { BuildSys.queueTrain(this.state, b, uk, this.ctx); }
   toggleEdictUI(key) { toggleEdict(this.state, key, this.ctx); }
   setStance(u, st) { u.stance = st; u.path = null; u.moveOrder = null; sfx('click'); }
+  playCard(idx) { CardsSys.playCard(this.state, idx, this.ctx); }
 
   activateSuper() {
     const s = this.state;
@@ -276,6 +282,7 @@ class Game {
     Waves.update(this.state, dt, this.ctx);
     Tech.update(this.state, dt, this.ctx);
     Nature.update(this.state, dt, this.ctx);
+    CardsSys.update(this.state, dt, this.ctx);
   }
 
   // ---------- рендер ----------
@@ -321,7 +328,7 @@ class Game {
     this.rdr.render(this.camera);
 
     this._uiT += fdt;
-    if (this._uiT > 0.1) { this.hud.update(); this.menu.update(); this.selUI.update(); this._uiT = 0; }
+    if (this._uiT > 0.1) { this.hud.update(); this.menu.update(); this.selUI.update(); this.cards.update(); this._uiT = 0; }
     this.minimap.update(fdt);
   }
 

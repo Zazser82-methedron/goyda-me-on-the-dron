@@ -103,6 +103,24 @@
 }
 #minimap{ display:block; border-radius:5px; image-rendering:pixelated; cursor:pointer; }
 
+/* рука карт-способностей */
+#cards{
+  position:absolute; left:50%; bottom:100px; transform:translateX(-50%);
+  display:flex; gap:7px; z-index:42; pointer-events:auto;
+}
+.card{
+  position:relative; width:78px; height:96px; background:linear-gradient(180deg,#1c0f06,#0c0703);
+  border:2px solid #888; border-radius:9px; color:var(--text); display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:3px; padding:6px 4px; transition:transform .12s, box-shadow .12s;
+  box-shadow:0 4px 14px rgba(0,0,0,.6);
+}
+.card:hover{ transform:translateY(-6px) scale(1.05); box-shadow:0 10px 22px rgba(0,0,0,.7); }
+.card.poor{ opacity:.45; filter:grayscale(.5); }
+.card .c-emoji{ font-size:26px; line-height:1; }
+.card .c-name{ font-size:8.5px; font-weight:900; text-align:center; line-height:1.05; letter-spacing:.2px; }
+.card .c-cost{ font-size:11px; font-weight:900; color:var(--cyan); }
+.card .c-key{ position:absolute; top:3px; left:5px; font-size:10px; font-weight:900; opacity:.6; }
+
 /* подсказка */
 #hint{
   position:absolute; bottom:4px; left:50%; transform:translateX(-50%); font-size:11px; opacity:.55;
