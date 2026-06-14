@@ -1,5 +1,5 @@
 // ===== Сетка мира: тайлы, преобразование координат, занятость =====
-import { TILE, GRID_N } from '../data/config.js';
+import { TILE, GRID_N } from '../data/config.js?v=3';
 
 export class Grid {
   constructor(n = GRID_N) {

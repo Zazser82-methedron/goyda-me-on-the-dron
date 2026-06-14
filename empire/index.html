@@ -9,7 +9,7 @@
 (function () {
   function box(msg) {
     var b = document.getElementById('errbox');
-    if (!b) { b = document.createElement('div'); b.id = 'errbox'; b.style.cssText = 'position:fixed;left:8px;bottom:8px;max-width:72vw;z-index:99999;background:rgba(90,0,0,.95);color:#ffd6d6;font:12px/1.45 monospace;padding:10px 14px;border:1px solid #f66;border-radius:6px;white-space:pre-wrap'; (document.body || document.documentElement).appendChild(b); }
+    if (!b) { b = document.createElement('div'); b.id = 'errbox'; b.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:99999;background:rgba(120,0,0,.97);color:#fff;font:13px/1.5 monospace;padding:10px 14px;white-space:pre-wrap;max-height:45vh;overflow:auto'; (document.body || document.documentElement).appendChild(b); }
     b.style.display = 'block'; b.textContent = '⚠ ' + msg;
   }
   window.addEventListener('error', function (e) { box((e.message || e.type) + '  @ ' + String(e.filename || '').split('/').pop() + ':' + (e.lineno || '')); });
@@ -19,8 +19,8 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Ysabeau+SC:wght@400;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./css/theme.css?v=2">
-<link rel="stylesheet" href="./css/hud.css?v=2">
+<link rel="stylesheet" href="./css/theme.css?v=3">
+<link rel="stylesheet" href="./css/hud.css?v=3">
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
@@ -76,6 +76,6 @@
   <div id="overlay"></div>
 </div>
 
-<script type="module" src="./js/main.js?v=2"></script>
+<script type="module" src="./js/main.js?v=3"></script>
 </body>
 </html>

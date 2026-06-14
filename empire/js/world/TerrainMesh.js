@@ -1,6 +1,6 @@
 // ===== Земля: инстансированные тайлы + подсветка наведения + призрак постройки =====
 import * as THREE from 'three';
-import { TILE, PAL } from '../data/config.js';
+import { TILE, PAL } from '../data/config.js?v=3';
 
 function jitterColor(hex, amt) {
   const c = new THREE.Color(hex);
