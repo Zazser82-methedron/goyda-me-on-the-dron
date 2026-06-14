@@ -23,6 +23,7 @@ import { Toasts } from './ui/Toasts.js';
 import { BUILDINGS } from './data/buildings.js';
 import { RANKS } from './data/ranks.js';
 import { bark } from './data/barks.js';
+import { STORAGE_KEY } from './data/config.js';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_kuznica', 'bld_kazarma',
@@ -177,6 +178,14 @@ class Game {
     const mb = document.getElementById('muteBtn');
     mb.textContent = isMuted() ? '🔇' : '🔊';
     mb.onclick = () => { const m = toggleMute(); mb.textContent = m ? '🔇' : '🔊'; if (!m) sfx('click'); };
+    const rb = document.getElementById('restartBtn');
+    if (rb) rb.onclick = () => this.restart();
+  }
+
+  restart() {
+    if (!confirm('Начать игру ЗАНОВО? Текущий поход будет потерян.')) return;
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    location.reload();
   }
 
   _placeAt(silent) {
