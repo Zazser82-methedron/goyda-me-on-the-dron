@@ -1,6 +1,6 @@
 // ===== RTS-камера: пан по XZ, орбита (ПКМ/Q-E), зум колесом, сглаживание =====
 import * as THREE from 'three';
-import { GRID_N, TILE } from '../data/config.js?v=3';
+import { GRID_N, TILE } from '../data/config.js?v=4';
 
 export class RTSCamera {
   constructor(dom) {
@@ -109,12 +109,12 @@ export class RTSCamera {
     this._polar += (this.polar - this._polar) * s;
 
     // позиция камеры из сферических координат
-    const r = this._radius, ph = this._polar, th = this._azimuth;
+    const rad = this._radius, ph = this._polar, th = this._azimuth;
     const sinp = Math.sin(ph);
     this.camera.position.set(
-      this._target.x + r * sinp * Math.sin(th),
-      this._target.y + r * Math.cos(ph),
-      this._target.z + r * sinp * Math.cos(th),
+      this._target.x + rad * sinp * Math.sin(th),
+      this._target.y + rad * Math.cos(ph),
+      this._target.z + rad * sinp * Math.cos(th),
     );
     this.camera.lookAt(this._target);
   }

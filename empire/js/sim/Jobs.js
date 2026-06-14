@@ -1,7 +1,7 @@
 // ===== Цикл добытчика: к ноде → добыча → к складу → сдача =====
-import { setPath, setPathToBuilding, moveStep } from './Units.js?v=3';
-import { RES_LABEL } from '../data/config.js?v=3';
-import { bark } from '../data/barks.js?v=3';
+import { setPath, setPathToBuilding, moveStep } from './Units.js?v=4';
+import { RES_LABEL } from '../data/config.js?v=4';
+import { bark } from '../data/barks.js?v=4';
 
 function adjacentTo(state, u, ent) {
   const g = state.grid.worldToGrid(u.x, u.z);
