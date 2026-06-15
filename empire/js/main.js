@@ -1,36 +1,36 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=10';
-import { RTSCamera } from './engine/RTSCamera.js?v=10';
-import { Picker } from './engine/Picker.js?v=10';
-import { Loop } from './engine/Loop.js?v=10';
-import { AssetManager } from './engine/AssetManager.js?v=10';
-import { TerrainMesh } from './world/TerrainMesh.js?v=10';
-import { Fog } from './world/Fog.js?v=10';
-import { WorldBase } from './world/WorldBase.js?v=10';
-import { nearestAdj } from './world/Pathfinding.js?v=10';
-import { GameState } from './sim/GameState.js?v=10';
-import * as Economy from './sim/Economy.js?v=10';
-import * as BuildSys from './sim/Buildings.js?v=10';
-import * as Waves from './sim/Waves.js?v=10';
-import * as Tech from './sim/Tech.js?v=10';
-import * as Nature from './sim/Nature.js?v=10';
-import * as Relics from './sim/Relics.js?v=10';
-import { updateUnits } from './sim/Units.js?v=10';
-import { toggleEdict } from './sim/Edicts.js?v=10';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=10';
-import { HUD } from './ui/HUD.js?v=10';
-import { BuildMenu } from './ui/BuildMenu.js?v=10';
-import { Selection } from './ui/Selection.js?v=10';
-import { Minimap } from './ui/Minimap.js?v=10';
-import { Toasts } from './ui/Toasts.js?v=10';
-import { BUILDINGS } from './data/buildings.js?v=10';
-import { RANKS } from './data/ranks.js?v=10';
-import { bark } from './data/barks.js?v=10';
-import { STORAGE_KEY } from './data/config.js?v=10';
-import { getFaction } from './data/factions.js?v=10';
-import { getMap } from './data/maps.js?v=10';
-import { StartScreen } from './ui/StartScreen.js?v=10';
+import { Renderer } from './engine/Renderer.js?v=11';
+import { RTSCamera } from './engine/RTSCamera.js?v=11';
+import { Picker } from './engine/Picker.js?v=11';
+import { Loop } from './engine/Loop.js?v=11';
+import { AssetManager } from './engine/AssetManager.js?v=11';
+import { TerrainMesh } from './world/TerrainMesh.js?v=11';
+import { Fog } from './world/Fog.js?v=11';
+import { WorldBase } from './world/WorldBase.js?v=11';
+import { nearestAdj } from './world/Pathfinding.js?v=11';
+import { GameState } from './sim/GameState.js?v=11';
+import * as Economy from './sim/Economy.js?v=11';
+import * as BuildSys from './sim/Buildings.js?v=11';
+import * as Waves from './sim/Waves.js?v=11';
+import * as Tech from './sim/Tech.js?v=11';
+import * as Nature from './sim/Nature.js?v=11';
+import * as Relics from './sim/Relics.js?v=11';
+import { updateUnits, damage } from './sim/Units.js?v=11';
+import { toggleEdict } from './sim/Edicts.js?v=11';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=11';
+import { HUD } from './ui/HUD.js?v=11';
+import { BuildMenu } from './ui/BuildMenu.js?v=11';
+import { Selection } from './ui/Selection.js?v=11';
+import { Minimap } from './ui/Minimap.js?v=11';
+import { Toasts } from './ui/Toasts.js?v=11';
+import { BUILDINGS } from './data/buildings.js?v=11';
+import { RANKS } from './data/ranks.js?v=11';
+import { bark } from './data/barks.js?v=11';
+import { STORAGE_KEY } from './data/config.js?v=11';
+import { getFaction } from './data/factions.js?v=11';
+import { getMap } from './data/maps.js?v=11';
+import { StartScreen } from './ui/StartScreen.js?v=11';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -77,6 +77,7 @@ class Game {
     this._ghostModels = {};
     this.lastRender = performance.now();
     this._uiT = 0;
+    this.tracers = [];
     this.floaters = document.getElementById('floaters');
 
     this.ctx = this._makeCtx();
@@ -92,6 +93,7 @@ class Game {
       bark: (u, text) => this.float(u.x, u.z, text, '#ffe8b5', 1.4),
       float: (x, z, t, c) => this.float(x, z, t, c, 0.6),
       flash: (b) => { b._hit = 0.18; },
+      tracer: (u, t) => this.spawnTracer(u, t),
       onLose: () => this.end('lose'),
       onWin: () => this.end('win'),
       onRankUp: () => {},
@@ -323,6 +325,27 @@ class Game {
     setTimeout(() => d.remove(), 1150);
   }
 
+  // снаряд шамана: летит к цели, наносит урон по прилёту
+  spawnTracer(u, t) {
+    if (!this._tracerGeo) this._tracerGeo = new THREE.SphereGeometry(0.14, 6, 5);
+    const m = new THREE.Mesh(this._tracerGeo, new THREE.MeshBasicMaterial({ color: 0xff5cf0 }));
+    m.position.set(u.x, this.state.grid.heightAt(u.x, u.z) + 0.6, u.z);
+    this.scene.add(m);
+    this.tracers.push({ m, target: t, dmg: u.dmg, speed: 16 });
+  }
+  updateTracers(fdt) {
+    for (let i = this.tracers.length - 1; i >= 0; i--) {
+      const tr = this.tracers[i], t = tr.target;
+      const tx = t.x ?? t.cx, tz = t.z ?? t.cz;
+      if (!t || (t.hp ?? 0) <= 0 || tx === undefined) { this.scene.remove(tr.m); this.tracers.splice(i, 1); continue; }
+      const ty = this.state.grid.heightAt(tx, tz) + 0.5;
+      const dx = tx - tr.m.position.x, dy = ty - tr.m.position.y, dz = tz - tr.m.position.z;
+      const d = Math.hypot(dx, dy, dz), step = tr.speed * fdt;
+      if (d <= step + 0.4) { damage(this.state, t, tr.dmg, this.ctx); this.scene.remove(tr.m); this.tracers.splice(i, 1); }
+      else tr.m.position.set(tr.m.position.x + dx / d * step, tr.m.position.y + dy / d * step, tr.m.position.z + dz / d * step);
+    }
+  }
+
   end(kind) {
     if (this.state.gameOver) return;
     this.state.gameOver = kind;
@@ -399,6 +422,7 @@ class Game {
     this._uiT += fdt;
     if (this._uiT > 0.1) { this.hud.update(); this.menu.update(); this.selUI.update(); this._uiT = 0; }
     this.minimap.update(fdt);
+    this.updateTracers(fdt);
   }
 
   _updateHover() {

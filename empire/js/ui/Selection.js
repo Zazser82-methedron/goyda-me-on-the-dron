@@ -1,7 +1,7 @@
 // ===== Панель выбранной сущности: HP, тренировка, инфо =====
-import { UNITS } from '../data/units.js?v=10';
-import { RES_LABEL } from '../data/config.js?v=10';
-import { costStr } from './BuildMenu.js?v=10';
+import { UNITS } from '../data/units.js?v=11';
+import { RES_LABEL } from '../data/config.js?v=11';
+import { costStr } from './BuildMenu.js?v=11';
 
 function hpBar(hp, max) {
   const p = Math.max(0, Math.min(1, hp / max));

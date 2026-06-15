@@ -1,8 +1,8 @@
 // ===== Набеги (Fortnite-слой): волны врагов + именованные боссы =====
-import { UNITS } from '../data/units.js?v=10';
-import { BOSSES } from '../data/bosses.js?v=10';
-import { bark } from '../data/barks.js?v=10';
-import { hostileFor } from '../data/factions.js?v=10';
+import { UNITS } from '../data/units.js?v=11';
+import { BOSSES } from '../data/bosses.js?v=11';
+import { bark } from '../data/barks.js?v=11';
+import { hostileFor } from '../data/factions.js?v=11';
 
 const MAX_ENEMIES = 70;
 
@@ -61,15 +61,24 @@ function edgePoints(state, count) {
   return res;
 }
 
+function pickRaider(rank) {
+  const r = Math.random();
+  if (rank >= 2 && r < 0.14) return 'raider_shaman';
+  if (rank >= 1 && r < 0.36) return 'raider_heavy';
+  if (r < 0.6) return 'raider_fast';
+  return 'raider';
+}
+
 function spawnWave(state, ctx) {
   if (state.enemies().length > MAX_ENEMIES) { state.nextWaveIn = 12; return; }
   const count = 2 + state.rankIndex + Math.floor((state.waveNum || 0) / 2);
   const hf = hostileFor(state);
-  const base = UNITS.raider;
   for (const p of edgePoints(state, count)) {
-    const hp = Math.round(base.hp * hf.raid.hpMul);
-    const u = state.addUnit('raider', p.x, p.z, { tint: hf.raid.tint, hp, maxHp: hp });
-    u.speed = base.speed * hf.raid.speedMul;
+    const kind = pickRaider(state.rankIndex);
+    const def = UNITS[kind];
+    const hp = Math.round(def.hp * hf.raid.hpMul);
+    const u = state.addUnit(kind, p.x, p.z, { tint: def.tint || hf.raid.tint, hp, maxHp: hp, scale: def.scale || 1 });
+    u.speed = def.speed * hf.raid.speedMul;
   }
   if (hf.raid.krio) state.krioTimer = Math.max(state.krioTimer, 8);
   state.threatTimer = 8;

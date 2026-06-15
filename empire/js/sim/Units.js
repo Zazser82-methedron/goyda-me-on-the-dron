@@ -1,8 +1,8 @@
 // ===== Движение, бой и ИИ юнитов (свои воины + враги). Воркеры — в Jobs.js =====
-import { TILE } from '../data/config.js?v=10';
-import { findPath, nearestAdj } from '../world/Pathfinding.js?v=10';
-import { updateWorker } from './Jobs.js?v=10';
-import { bark } from '../data/barks.js?v=10';
+import { TILE } from '../data/config.js?v=11';
+import { findPath, nearestAdj } from '../world/Pathfinding.js?v=11';
+import { updateWorker } from './Jobs.js?v=11';
+import { bark } from '../data/barks.js?v=11';
 
 export function tileCenter(state, tx, ty) { const w = state.grid.gridToWorld(tx, ty); return { x: w.wx, z: w.wz }; }
 function dist2(ax, az, bx, bz) { return (ax - bx) ** 2 + (az - bz) ** 2; }
@@ -143,23 +143,44 @@ function updateSoldier(state, u, dt, ctx) {
   u.path = null;
 }
 
-// ---- враги ----
+function nearestOurUnit(state, u, maxR, workerOnly) {
+  let best = null, bd = maxR * maxR;
+  for (const e of state.units) {
+    if (e.faction !== 'ours' || e.hp <= 0) continue;
+    if (workerOnly && !e.def.worker) continue;
+    const d = dist2(u.x, u.z, e.x, e.z); if (d < bd) { bd = d; best = e; }
+  }
+  return best;
+}
+
+// ---- враги (архетипы: обычный / ловкач-flank / верзила-siege / шаман-ranged-kite) ----
 function updateEnemy(state, u, dt, ctx) {
-  // что-то своё в пределах удара? — бей
+  const style = u.def.raidStyle;
+  // дальнобойный шаман — стреляет издали, кайтит
+  if (u.def.ranged) {
+    const t = nearestEnemyUnit(state, u, u.def.range) || nearestOursBuildingInRange(state, u);
+    if (t) {
+      faceTarget(u, t.x ?? t.cx, t.z ?? t.cz);
+      if (u.atkT <= 0) { u.atkT = u.def.atkCd; u.atkAnim = 0.2; if (ctx.tracer) ctx.tracer(u, t); }
+      const close = nearestEnemyUnit(state, u, 3);
+      if (close) { u.dir = Math.atan2(u.x - close.x, u.z - close.z); u.x += Math.sin(u.dir) * u.speed * dt * 0.6; u.z += Math.cos(u.dir) * u.speed * dt * 0.6; const g = state.grid.worldToGrid(u.x, u.z); u.gx = g.x; u.gy = g.y; }
+      u.path = null; return;
+    }
+  }
+  // удар в упор
   const tgtUnit = nearestEnemyUnit(state, u, u.def.range + 0.6);
   if (tgtUnit && inRange(u, tgtUnit)) { faceTarget(u, tgtUnit.x, tgtUnit.z); tryAttack(state, u, tgtUnit, ctx); u.path = null; return; }
   const tgtB = nearestOursBuildingInRange(state, u);
   if (tgtB) { faceTarget(u, tgtB.cx, tgtB.cz); tryAttack(state, u, tgtB, ctx); u.path = null; return; }
 
-  // иначе — марш к цели (идол > ратуша); если рядом солдат — на него
-  const soldier = nearestEnemyUnit(state, u, 6);
+  // марш к цели по стилю
   const obj = state.idol || state.townhall;
+  let goalUnit = null;
+  if (style === 'flank') goalUnit = nearestOurUnit(state, u, 32, true);     // ловкач → добытчики
+  else if (style !== 'siege') goalUnit = nearestEnemyUnit(state, u, 6);     // обычные → ближний солдат
   u.repathT -= dt;
-  if (soldier) {
-    if (!u.path || u.repathT <= 0) { setPath(state, u, soldier.gx ?? state.grid.worldToGrid(soldier.x, soldier.z).x, soldier.gy ?? state.grid.worldToGrid(soldier.x, soldier.z).y); u.repathT = 0.6; }
-  } else if (obj) {
-    if (!u.path || u.repathT <= 0) { setPathToBuilding(state, u, obj); u.repathT = 0.8; }
-  }
+  if (goalUnit) { if (!u.path || u.repathT <= 0) { const g = state.grid.worldToGrid(goalUnit.x, goalUnit.z); setPath(state, u, g.x, g.y); u.repathT = 0.6; } }
+  else if (obj) { if (!u.path || u.repathT <= 0) { setPathToBuilding(state, u, obj); u.repathT = 0.8; } }
   if (u.path) moveStep(state, u, dt);
 }
 
@@ -178,5 +199,22 @@ export function updateUnits(state, dt, ctx) {
     if (u.faction === 'enemy') updateEnemy(state, u, dt, ctx);
     else if (u.def.worker) updateWorker(state, u, dt, ctx);
     else updateSoldier(state, u, dt, ctx);
+
+    // анти-застревание: нет прогресса при попытке двигаться → репас, потом нудж к свободному тайлу
+    const mv = Math.hypot(u.x - u.px, u.z - u.pz);
+    if ((u.path && u.pi < u.path.length) || u.moveOrder) {
+      if (mv < 0.003) u.stuckT = (u.stuckT || 0) + dt; else u.stuckT = 0;
+      if (u.stuckT > 1.3) {
+        u.path = null; u.stuckT = 0; u._stuckN = (u._stuckN || 0) + 1;
+        if (u._stuckN >= 2) {
+          u._stuckN = 0;
+          const gx = u.gx ?? state.grid.worldToGrid(u.x, u.z).x, gy = u.gy ?? state.grid.worldToGrid(u.x, u.z).y;
+          const adj = nearestAdj(state.grid, gx, gy, 1, 1, gx, gy);
+          if (adj) { const w = state.grid.gridToWorld(adj.x, adj.y); u.x = w.wx; u.z = w.wz; }
+          if (u.def.worker) u.job = null;
+          u.moveOrder = null;
+        }
+      }
+    } else u.stuckT = 0;
   }
 }
