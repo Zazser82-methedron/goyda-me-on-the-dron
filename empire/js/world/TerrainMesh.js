@@ -1,6 +1,6 @@
 // ===== Земля: единый меш-рельеф (1 draw call) + вода + декор + ховер/призрак =====
 import * as THREE from 'three';
-import { TILE, PAL } from '../data/config.js?v=22';
+import { TILE, PAL } from '../data/config.js?v=23';
 
 export class TerrainMesh {
   constructor(scene, grid, pal) {
@@ -39,7 +39,8 @@ export class TerrainMesh {
     geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
     geo.setIndex(new THREE.BufferAttribute(idx, 1));
     geo.computeVertexNormals();
-    const mat = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.97, metalness: 0 });
+    // envMapIntensity низкий — IBL не должен пересвечивать светлые биомы (песок/снег выгорали)
+    const mat = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.99, metalness: 0, envMapIntensity: 0.3 });
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.receiveShadow = true; this.mesh.castShadow = false;
     scene.add(this.mesh);
@@ -80,9 +81,9 @@ export class TerrainMesh {
   _cornerColor(out, h, T) {
     const p = this.pal;
     if (h < T.water) out.setHex(0x4a4030);                       // подводный грунт
-    else if (h > (T.snow ?? 2.7)) out.setHex(0xe8eef4);          // снег
+    else if (h > (T.snow ?? 2.7)) out.setHex(0xd2d9e4);          // снег (притушен, не выгорает)
     else if (h > (T.rock ?? 1.7)) out.setHex(PAL.rock);          // камень
-    else if (h < (T.sand ?? -0.15)) out.setHex(0xcab277);        // песок
+    else if (h < (T.sand ?? -0.15)) out.setHex(0xb49a62);        // песок (темнее — не светится)
     else out.setHex(Math.random() < 0.5 ? p.b : p.c);           // трава/лес
     out.multiplyScalar(0.9 + Math.random() * 0.2);
     return out;

@@ -1,6 +1,6 @@
 // ===== Three.js рендерер, сцена, свет, туман — настроение идол-слоя «Гойды» =====
 import * as THREE from 'three';
-import { PAL } from '../data/config.js?v=22';
+import { PAL } from '../data/config.js?v=23';
 
 export class Renderer {
   constructor(canvas) {
@@ -83,7 +83,8 @@ export class Renderer {
       composer.setPixelRatio(this.renderer.getPixelRatio());
       composer.setSize(w, h);
       composer.addPass(new RenderPass(this.scene, camera));
-      this.bloom = new UnrealBloomPass(new THREE.Vector2(w, h), 0.55, 0.4, 0.9);   // сила/радиус/порог
+      // порог высокий → светятся только эмиссивные (идолы/огни/солнце), а НЕ яркий песок/снег
+      this.bloom = new UnrealBloomPass(new THREE.Vector2(w, h), 0.5, 0.4, 1.25);   // сила/радиус/порог
       composer.addPass(this.bloom);
       composer.addPass(new OutputPass());
       composer.addPass(new SMAAPass(w, h));
