@@ -1,36 +1,37 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=11';
-import { RTSCamera } from './engine/RTSCamera.js?v=11';
-import { Picker } from './engine/Picker.js?v=11';
-import { Loop } from './engine/Loop.js?v=11';
-import { AssetManager } from './engine/AssetManager.js?v=11';
-import { TerrainMesh } from './world/TerrainMesh.js?v=11';
-import { Fog } from './world/Fog.js?v=11';
-import { WorldBase } from './world/WorldBase.js?v=11';
-import { nearestAdj } from './world/Pathfinding.js?v=11';
-import { GameState } from './sim/GameState.js?v=11';
-import * as Economy from './sim/Economy.js?v=11';
-import * as BuildSys from './sim/Buildings.js?v=11';
-import * as Waves from './sim/Waves.js?v=11';
-import * as Tech from './sim/Tech.js?v=11';
-import * as Nature from './sim/Nature.js?v=11';
-import * as Relics from './sim/Relics.js?v=11';
-import { updateUnits, damage } from './sim/Units.js?v=11';
-import { toggleEdict } from './sim/Edicts.js?v=11';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=11';
-import { HUD } from './ui/HUD.js?v=11';
-import { BuildMenu } from './ui/BuildMenu.js?v=11';
-import { Selection } from './ui/Selection.js?v=11';
-import { Minimap } from './ui/Minimap.js?v=11';
-import { Toasts } from './ui/Toasts.js?v=11';
-import { BUILDINGS } from './data/buildings.js?v=11';
-import { RANKS } from './data/ranks.js?v=11';
-import { bark } from './data/barks.js?v=11';
-import { STORAGE_KEY } from './data/config.js?v=11';
-import { getFaction } from './data/factions.js?v=11';
-import { getMap } from './data/maps.js?v=11';
-import { StartScreen } from './ui/StartScreen.js?v=11';
+import { Renderer } from './engine/Renderer.js?v=12';
+import { RTSCamera } from './engine/RTSCamera.js?v=12';
+import { Picker } from './engine/Picker.js?v=12';
+import { Loop } from './engine/Loop.js?v=12';
+import { AssetManager } from './engine/AssetManager.js?v=12';
+import { TerrainMesh } from './world/TerrainMesh.js?v=12';
+import { Fog } from './world/Fog.js?v=12';
+import { WorldBase } from './world/WorldBase.js?v=12';
+import { nearestAdj } from './world/Pathfinding.js?v=12';
+import { GameState } from './sim/GameState.js?v=12';
+import * as Economy from './sim/Economy.js?v=12';
+import * as BuildSys from './sim/Buildings.js?v=12';
+import * as Waves from './sim/Waves.js?v=12';
+import * as Tech from './sim/Tech.js?v=12';
+import * as Nature from './sim/Nature.js?v=12';
+import * as Relics from './sim/Relics.js?v=12';
+import * as Camps from './sim/Camps.js?v=12';
+import { updateUnits, damage } from './sim/Units.js?v=12';
+import { toggleEdict } from './sim/Edicts.js?v=12';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=12';
+import { HUD } from './ui/HUD.js?v=12';
+import { BuildMenu } from './ui/BuildMenu.js?v=12';
+import { Selection } from './ui/Selection.js?v=12';
+import { Minimap } from './ui/Minimap.js?v=12';
+import { Toasts } from './ui/Toasts.js?v=12';
+import { BUILDINGS } from './data/buildings.js?v=12';
+import { RANKS } from './data/ranks.js?v=12';
+import { bark } from './data/barks.js?v=12';
+import { STORAGE_KEY } from './data/config.js?v=12';
+import { getFaction } from './data/factions.js?v=12';
+import { getMap } from './data/maps.js?v=12';
+import { StartScreen } from './ui/StartScreen.js?v=12';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -187,6 +188,7 @@ class Game {
       const w = g.gridToWorld(adj.x, adj.y);
       this.state.addUnit('kholop', w.wx, w.wz, {});
     }
+    Camps.spawnCamps(this.state, 4);   // вражьи станы по углам
   }
 
   _restore(s) {
@@ -261,6 +263,7 @@ class Game {
     const a = [];
     for (const b of this.state.buildings) a.push(b.view);
     for (const u of this.state.units) a.push(u.view);
+    for (const c of this.state.camps) a.push(c.view);
     return a;
   }
 
@@ -291,6 +294,11 @@ class Game {
       const g = this.state.grid.worldToGrid(ent.x, ent.z);
       sel.moveOrder = { x: g.x, y: g.y }; sel.path = null;
       sfx('click'); this.float(sel.x, sel.z, 'В атаку!', '#ff8a8a', 1.4); return;
+    }
+    // снести вражий стан (для воина)
+    if (ent && ent.type === 'camp' && !sel.def.worker) {
+      sel.targetCampId = ent.id; sel.moveOrder = null; sel.path = null;
+      sfx('click'); this.float(sel.x, sel.z, 'Снести стан!', '#ff8a8a', 1.4); return;
     }
     // идти на указанную точку (любой свой юнит — куда скажешь)
     const t = this.picker.tileUnder(this.camera, this.state.grid);
@@ -371,6 +379,7 @@ class Game {
     Tech.update(this.state, dt, this.ctx);
     Nature.update(this.state, dt, this.ctx);
     Relics.update(this.state, dt, this.ctx);
+    Camps.update(this.state, dt, this.ctx);
   }
 
   // ---------- рендер ----------
@@ -408,6 +417,7 @@ class Game {
     for (const b of this.state.buildings) {
       if (b._hit > 0) { b._hit -= fdt; const j = b._hit > 0 ? (Math.random() - 0.5) * 0.06 : 0; b.view.position.set(b.cx + j, b.cy || 0, b.cz + j); }
     }
+    for (const cp of this.state.camps) { const t = this.state.grid.get(cp.gx, cp.gy); cp.view.visible = !t || t.explored; }   // станы видны только разведанными
     // «сердце» базы — свет
     const s = this.state;
     const pulse = 0.12 + Math.sin(now * 0.004) * 0.05;

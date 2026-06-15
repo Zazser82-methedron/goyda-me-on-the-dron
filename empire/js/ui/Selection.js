@@ -1,7 +1,7 @@
 // ===== Панель выбранной сущности: HP, тренировка, инфо =====
-import { UNITS } from '../data/units.js?v=11';
-import { RES_LABEL } from '../data/config.js?v=11';
-import { costStr } from './BuildMenu.js?v=11';
+import { UNITS } from '../data/units.js?v=12';
+import { RES_LABEL } from '../data/config.js?v=12';
+import { costStr } from './BuildMenu.js?v=12';
 
 function hpBar(hp, max) {
   const p = Math.max(0, Math.min(1, hp / max));
@@ -53,6 +53,11 @@ export class Selection {
       html += `<div class="sel-h">${lbl.icon} ${lbl.ru}</div>`;
       html += hpBar(sel.amount, sel.maxAmount);
       html += `<div class="sel-sub" id="sel-sub"></div>`;
+    } else if (sel.type === 'camp') {
+      html += `<div class="sel-h">🏴 ВРАЖИЙ СТАН</div>`;
+      html += hpBar(sel.hp, sel.maxHp);
+      html += `<div class="sel-sub" id="sel-sub"></div>`;
+      html += `<div class="sel-tag">ПКМ воином по стану — снести. Спавнит набеги!</div>`;
     }
     this.el.innerHTML = html;
     this.el.querySelectorAll('.ubtn').forEach(btn => { btn.onclick = () => this.game.train(sel, btn.dataset.u); });

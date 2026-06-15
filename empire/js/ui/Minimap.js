@@ -43,7 +43,8 @@ export class Minimap {
     }
     ctx.putImageData(img, 0, 0);
     for (const n of s.nodes) { const t = g.get(n.gx, n.gy); if (!t || !t.explored) continue; ctx.fillStyle = n.resType === 'wood' ? '#3a6a1e' : n.resType === 'stone' ? '#c0c0cc' : '#ffcc00'; ctx.fillRect(n.gx * sc, n.gy * sc, Math.max(1.5, sc), Math.max(1.5, sc)); }
-    for (const b of s.buildings) { const t = g.get(b.gx, b.gy); if (!t || !t.explored) continue; ctx.fillStyle = b === s.townhall ? '#ffcc00' : (b.def.wonder ? '#ff00bb' : (b.def.wall ? '#7a5a2a' : '#e0b070')); ctx.fillRect(b.gx * sc, b.gy * sc, Math.max(2, b.w * sc), Math.max(2, b.h * sc)); }
+    for (const b of s.buildings) { const t = g.get(b.gx, b.gy); if (!t || !t.explored) continue; ctx.fillStyle = b === s.townhall ? '#ffcc00' : (b.def.wonder ? '#ff00bb' : (b.def.cat === 'relic' ? '#cc44ff' : (b.def.wall ? '#7a5a2a' : '#e0b070'))); ctx.fillRect(b.gx * sc, b.gy * sc, Math.max(2, b.w * sc), Math.max(2, b.h * sc)); }
+    for (const cp of s.camps) { const t = g.get(cp.gx, cp.gy); if (!t || !t.explored) continue; ctx.fillStyle = '#ff2a2a'; ctx.fillRect(cp.gx * sc, cp.gy * sc, Math.max(2, cp.w * sc), Math.max(2, cp.h * sc)); }
     for (const u of s.units) { const gg = g.worldToGrid(u.x, u.z); const t = g.get(gg.x, gg.y); if (!t || !t.explored) continue; if (u.faction === 'enemy' && !t.visible) continue; ctx.fillStyle = u.faction === 'enemy' ? (u.bossKey ? '#ff00bb' : '#ff3030') : (u.def.worker ? '#8effa0' : '#00eeff'); ctx.fillRect(gg.x * sc - 1, gg.y * sc - 1, 2.5, 2.5); }
     const cam = this.game.cameraRig.target, cg = g.worldToGrid(cam.x, cam.z);
     ctx.strokeStyle = 'rgba(255,236,180,.7)'; ctx.lineWidth = 1;

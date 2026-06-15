@@ -1,11 +1,11 @@
 // ===== Единый источник правды: ресурсы, сущности, ранги, сейв =====
 import * as THREE from 'three';
-import { GRID_N, STORAGE_KEY } from '../data/config.js?v=11';
-import { Grid } from '../world/Grid.js?v=11';
-import { NodeField } from '../world/NodeField.js?v=11';
-import { BUILDINGS } from '../data/buildings.js?v=11';
-import { UNITS } from '../data/units.js?v=11';
-import { RANKS } from '../data/ranks.js?v=11';
+import { GRID_N, STORAGE_KEY } from '../data/config.js?v=12';
+import { Grid } from '../world/Grid.js?v=12';
+import { NodeField } from '../world/NodeField.js?v=12';
+import { BUILDINGS } from '../data/buildings.js?v=12';
+import { UNITS } from '../data/units.js?v=12';
+import { RANKS } from '../data/ranks.js?v=12';
 
 export class GameState {
   constructor(scene, assets) {
@@ -33,6 +33,7 @@ export class GameState {
     this.buildings = [];
     this.units = [];
     this.nodes = [];
+    this.camps = [];              // вражьи станы (спавнят набеги, можно сносить)
     this.fx = [];                 // визуальные эффекты (смерть/пуф) — анимируются в render
     this._byId = new Map();
     this._id = 1;
@@ -94,6 +95,27 @@ export class GameState {
     this._byId.delete(n.id);
     if (this.selected === n) this.selected = null;
   }
+
+  // ---- вражьи станы ----
+  addCamp(gx, gy) {
+    const view = this.assets.get('enemy_camp');
+    const c = this.grid.footprintCenter(gx, gy, 2, 2);
+    const cy = this.grid.heightAt ? this.grid.heightAt(c.wx, c.wz) : 0;
+    view.position.set(c.wx, cy, c.wz);
+    this.scene.add(view);
+    const camp = { id: this._id++, type: 'camp', gx, gy, w: 2, h: 2, hp: 320, maxHp: 320, view, cx: c.wx, cz: c.wz, cy, spawnT: 0 };
+    view.userData.entity = camp;
+    this.grid.occupy(gx, gy, 2, 2, camp.id, { walkable: false });
+    this.camps.push(camp);
+    return camp;
+  }
+  removeCamp(camp) {
+    this.scene.remove(camp.view);
+    this.grid.occupy(camp.gx, camp.gy, 2, 2, null);
+    this.camps = this.camps.filter(x => x !== camp);
+    if (this.selected === camp) this.selected = null;
+  }
+  campById(id) { return this.camps.find(c => c.id === id); }
 
   // ---- здания ----
   addBuilding(kind, gx, gy, opts = {}) {

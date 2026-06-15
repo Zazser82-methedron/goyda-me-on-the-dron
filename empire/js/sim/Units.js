@@ -1,8 +1,8 @@
 // ===== Движение, бой и ИИ юнитов (свои воины + враги). Воркеры — в Jobs.js =====
-import { TILE } from '../data/config.js?v=11';
-import { findPath, nearestAdj } from '../world/Pathfinding.js?v=11';
-import { updateWorker } from './Jobs.js?v=11';
-import { bark } from '../data/barks.js?v=11';
+import { TILE } from '../data/config.js?v=12';
+import { findPath, nearestAdj } from '../world/Pathfinding.js?v=12';
+import { updateWorker } from './Jobs.js?v=12';
+import { bark } from '../data/barks.js?v=12';
 
 export function tileCenter(state, tx, ty) { const w = state.grid.gridToWorld(tx, ty); return { x: w.wx, z: w.wz }; }
 function dist2(ax, az, bx, bz) { return (ax - bx) ** 2 + (az - bz) ** 2; }
@@ -105,35 +105,66 @@ function nearestOursBuildingInRange(state, u) {
 
 function faceTarget(u, tx, tz) { u.dir = Math.atan2(tx - u.x, tz - u.z); }
 
-// ---- свои воины: стойки aggro (по умолч.) / defend / hold ----
+function campInRange(u, camp) { return dist2(u.x, u.z, camp.cx, camp.cz) <= (u.def.range + 1.3) ** 2; }
+function nearestCamp(state, u, maxR) {
+  let best = null, bd = maxR * maxR;
+  for (const c of state.camps) { const d = dist2(u.x, u.z, c.cx, c.cz); if (d < bd) { bd = d; best = c; } }
+  return best;
+}
+function attackCamp(state, u, camp, ctx) {
+  if (u.atkT > 0) return;
+  u.atkT = u.def.atkCd; u.atkAnim = 0.2;
+  camp.hp -= u.dmg * (state.superTimer > 0 ? 1.5 : 1);
+  if (ctx.sfx) ctx.sfx('hit');
+  if (camp.hp <= 0) { state.removeCamp(camp); state.gain({ gold: 45, faith: 22 }); ctx.toast && ctx.toast('🏴 Стан снесён! +45🪙 +22☩', { gold: true }); }
+}
+
+// ---- свои воины: стойки aggro / defend / hold; сносят станы ----
 function updateSoldier(state, u, dt, ctx) {
   const stance = u.stance || 'aggro';
   const aggroR = stance === 'aggro' ? 9999 : stance === 'defend' ? 22 : 0;
 
-  // 1) ищем врага по стойке и идём на него
+  // 1) враг по стойке
   const enemy = aggroR > 0 ? nearestEnemyUnit(state, u, aggroR) : null;
   if (enemy) {
     if (inRange(u, enemy)) { faceTarget(u, enemy.x, enemy.z); tryAttack(state, u, enemy, ctx); u.path = null; u.moveOrder = null; return; }
     u.repathT -= dt;
-    if (!u.path || u.pi >= u.path.length || u.repathT <= 0) {
-      const eg = state.grid.worldToGrid(enemy.x, enemy.z);
-      setPath(state, u, eg.x, eg.y); u.repathT = 0.45;
-    }
+    if (!u.path || u.pi >= u.path.length || u.repathT <= 0) { const eg = state.grid.worldToGrid(enemy.x, enemy.z); setPath(state, u, eg.x, eg.y); u.repathT = 0.45; }
     if (moveStep(state, u, dt) === 'noPath') u.repathT = 0.5;
     return;
   }
 
-  // 2) приказ игрока идти
+  // 2) приказ снести стан (ПКМ по стану)
+  if (u.targetCampId) {
+    const camp = state.campById(u.targetCampId);
+    if (!camp) u.targetCampId = null;
+    else {
+      if (campInRange(u, camp)) { faceTarget(u, camp.cx, camp.cz); attackCamp(state, u, camp, ctx); u.path = null; }
+      else { u.repathT -= dt; if (!u.path || u.repathT <= 0) { setPathToBuilding(state, u, camp); u.repathT = 0.6; } moveStep(state, u, dt); }
+      return;
+    }
+  }
+
+  // 3) приказ идти
   if (u.moveOrder) {
     if (!u.path) { if (!setPath(state, u, u.moveOrder.x, u.moveOrder.y)) { u.moveOrder = null; return; } }
     if (moveStep(state, u, dt) === 'arrived') { u.moveOrder = null; u.path = null; }
     return;
   }
 
-  // 3) стойка «стоять» — не двигаемся
   if (stance === 'hold') { u.path = null; return; }
 
-  // 4) вернуться к точке сбора (ралли/ратуша)
+  // 4) оппортунистично сносим близкий стан (агрессия)
+  if (stance === 'aggro') {
+    const camp = nearestCamp(state, u, 14);
+    if (camp) {
+      if (campInRange(u, camp)) { faceTarget(u, camp.cx, camp.cz); attackCamp(state, u, camp, ctx); u.path = null; }
+      else { u.repathT -= dt; if (!u.path || u.repathT <= 0) { setPathToBuilding(state, u, camp); u.repathT = 0.7; } moveStep(state, u, dt); }
+      return;
+    }
+  }
+
+  // 5) ралли
   const rally = state.rally || (state.townhall ? { x: state.townhall.cx, z: state.townhall.cz } : null);
   if (rally && dist2(u.x, u.z, rally.x, rally.z) > 49) {
     if (!u.path) { const g = state.grid.worldToGrid(rally.x, rally.z); setPath(state, u, g.x, g.y); }

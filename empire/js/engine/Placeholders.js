@@ -2,7 +2,7 @@
 // Стиль повторяет идол-слой «Гойды»: flatShading, гекс-формы, эмиссивные руны.
 // Origin КАЖДОЙ модели — в центре основания (низ на y=0), модель растёт вверх.
 import * as THREE from 'three';
-import { PAL } from '../data/config.js?v=11';
+import { PAL } from '../data/config.js?v=12';
 
 const _mats = {};
 function mat(color, o = {}) {
@@ -228,8 +228,22 @@ function relicIdol(col) {
   };
 }
 
+// ---- вражий стан (2×2): тёмные шатры, тотем-череп, костёр ----
+function enemyCamp() {
+  const g = new THREE.Group();
+  const wd = mat(PAL.woodDk), dk = mat(PAL.enemy), bone = mat(0xd8d0c0), fire = mat(0x200800, { emissive: 0xff5010, emi: 1.8 });
+  g.add(cone(0.7, 1.0, 6, dk, -0.5, 0.5, -0.5));
+  g.add(cone(0.6, 0.85, 6, dk, 0.55, 0.42, 0.4));
+  g.add(cyl(0.07, 0.08, 1.6, 5, wd, 0, 0.8, 0.6));
+  g.add(sph(0.22, bone, 0, 1.65, 0.6));
+  g.add(box(0.4, 0.16, 0.4, fire, 0, 0.08, -0.3));
+  for (const [x, z] of [[-0.85, -0.85], [0.85, -0.85], [-0.85, 0.85], [0.85, 0.85]]) g.add(cyl(0.08, 0.09, 0.7, 5, wd, x, 0.35, z));
+  return g;
+}
+
 const BUILDERS = {
   idol_dron: idol, bld_townhall: townhall, bld_izba: izba, bld_ambar: ambar, bld_roshcha: roshcha,
+  enemy_camp: enemyCamp,
   bld_kuznica: kuznica, bld_kazarma: kazarma, bld_church: church, bld_market: market,
   bld_chastokol: chastokol, bld_chastokol_gate: chastokolGate,
   res_tree: tree, res_stone: stoneNode, res_ore: oreNode,

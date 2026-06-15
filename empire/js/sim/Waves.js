@@ -1,8 +1,8 @@
 // ===== Набеги (Fortnite-слой): волны врагов + именованные боссы =====
-import { UNITS } from '../data/units.js?v=11';
-import { BOSSES } from '../data/bosses.js?v=11';
-import { bark } from '../data/barks.js?v=11';
-import { hostileFor } from '../data/factions.js?v=11';
+import { UNITS } from '../data/units.js?v=12';
+import { BOSSES } from '../data/bosses.js?v=12';
+import { bark } from '../data/barks.js?v=12';
+import { hostileFor } from '../data/factions.js?v=12';
 
 const MAX_ENEMIES = 70;
 
