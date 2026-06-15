@@ -74,14 +74,15 @@
 }
 #buildbtns{ display:flex; gap:6px; flex-wrap:wrap; max-width:72vw; }
 .bbtn{
-  width:84px; min-height:66px; background:var(--panel); border:1.5px solid var(--panel-br);
+  width:84px; min-height:66px; background:#190b03; border:1.5px solid var(--panel-br);
   border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
-  padding:6px 4px; transition:all .15s; position:relative;
+  padding:6px 4px; transition:border-color .15s, transform .12s, filter .15s, box-shadow .15s; position:relative;
 }
 .bbtn:hover{ border-color:var(--gold); transform:translateY(-2px); }
 .bbtn.active{ border-color:var(--gold); background:#2a1604; box-shadow:0 0 12px rgba(255,204,0,.5); }
-.bbtn.locked{ opacity:.4; filter:grayscale(.7); }
-.bbtn.poor{ opacity:.6; }
+/* непрозрачно (фон не «просвечивает» движущуюся 3D-сцену) → не мигает; затемнение через filter, не opacity */
+.bbtn.locked{ filter:grayscale(.75) brightness(.5); }
+.bbtn.poor{ filter:brightness(.62); }
 .bbtn .bi{ font-size:22px; line-height:1; }
 .bbtn .bn{ font-size:9px; font-weight:900; letter-spacing:.3px; text-align:center; line-height:1.05; }
 .bbtn .bc{ font-size:9px; opacity:.9; }

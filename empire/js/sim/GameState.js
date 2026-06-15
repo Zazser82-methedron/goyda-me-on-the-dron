@@ -1,11 +1,11 @@
 // ===== Единый источник правды: ресурсы, сущности, ранги, сейв =====
 import * as THREE from 'three';
-import { GRID_N, STORAGE_KEY } from '../data/config.js?v=26';
-import { Grid } from '../world/Grid.js?v=26';
-import { NodeField } from '../world/NodeField.js?v=26';
-import { BUILDINGS } from '../data/buildings.js?v=26';
-import { UNITS } from '../data/units.js?v=26';
-import { RANKS } from '../data/ranks.js?v=26';
+import { GRID_N, STORAGE_KEY } from '../data/config.js?v=27';
+import { Grid } from '../world/Grid.js?v=27';
+import { NodeField } from '../world/NodeField.js?v=27';
+import { BUILDINGS } from '../data/buildings.js?v=27';
+import { UNITS } from '../data/units.js?v=27';
+import { RANKS } from '../data/ranks.js?v=27';
 
 export class GameState {
   constructor(scene, assets) {
