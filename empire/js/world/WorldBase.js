@@ -1,6 +1,6 @@
 // ===== Мир-плита на слонах и черепахе в океане (лор «плоской земли») =====
 import * as THREE from 'three';
-import { TILE } from '../data/config.js?v=14';
+import { TILE } from '../data/config.js?v=15';
 
 const _m = {};
 function matStd(c, o = {}) { const k = c + '|' + (o.r ?? 1); if (!_m[k]) _m[k] = new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: o.r ?? 1, metalness: o.m ?? 0 }); return _m[k]; }
@@ -79,6 +79,51 @@ export class WorldBase {
     this.ocean = ocean;
     this.group.add(ocean);
 
+    // ---- водопады с края «плоской земли» (анимированные) ----
+    this._buildWaterfalls(top, ww);
+
     scene.add(this.group);
+  }
+
+  // кольцо водопадов по краям плиты: вертикальные плоскости со скроллящейся текстурой струй
+  _buildWaterfalls(top, ww) {
+    const cv = document.createElement('canvas'); cv.width = 64; cv.height = 256;
+    const x = cv.getContext('2d');
+    x.fillStyle = 'rgba(150,225,255,0.0)'; x.fillRect(0, 0, 64, 256);
+    // вертикальные струи + затухание книзу
+    for (let i = 0; i < 22; i++) {
+      const px = Math.floor(Math.random() * 64), wd = 1 + Math.random() * 3;
+      const a = 0.35 + Math.random() * 0.4;
+      const g = x.createLinearGradient(0, 0, 0, 256);
+      g.addColorStop(0, 'rgba(225,248,255,' + a + ')');
+      g.addColorStop(0.6, 'rgba(170,228,255,' + (a * 0.7) + ')');
+      g.addColorStop(1, 'rgba(150,220,255,0)');
+      x.fillStyle = g; x.fillRect(px, 0, wd, 256);
+    }
+    // лёгкие горизонтальные рябь-полоски
+    x.fillStyle = 'rgba(255,255,255,0.10)';
+    for (let j = 0; j < 256; j += 14) x.fillRect(0, j, 64, 2);
+    const tex = new THREE.CanvasTexture(cv);
+    tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(6, 3); tex.magFilter = THREE.LinearFilter;
+    this._fallTex = tex;
+
+    const H = ww * 0.7, mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, side: THREE.DoubleSide, opacity: 0.92, fog: false });
+    const half = ww / 2, yC = top + 0.4 - H / 2;
+    const edges = [
+      { x: 0, z: half, ry: 0 },
+      { x: 0, z: -half, ry: Math.PI },
+      { x: half, z: 0, ry: Math.PI / 2 },
+      { x: -half, z: 0, ry: -Math.PI / 2 },
+    ];
+    for (const e of edges) {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(ww, H), mat);
+      m.position.set(e.x, yC, e.z); m.rotation.y = e.ry;
+      m.renderOrder = 8; this.group.add(m);
+    }
+  }
+
+  update(dt) {
+    if (this._fallTex) { this._fallTex.offset.y -= dt * 0.9; if (this._fallTex.offset.y < -10) this._fallTex.offset.y += 10; }
   }
 }

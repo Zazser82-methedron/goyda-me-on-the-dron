@@ -1,37 +1,37 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=14';
-import { RTSCamera } from './engine/RTSCamera.js?v=14';
-import { Picker } from './engine/Picker.js?v=14';
-import { Loop } from './engine/Loop.js?v=14';
-import { AssetManager } from './engine/AssetManager.js?v=14';
-import { TerrainMesh } from './world/TerrainMesh.js?v=14';
-import { Fog } from './world/Fog.js?v=14';
-import { WorldBase } from './world/WorldBase.js?v=14';
-import { nearestAdj } from './world/Pathfinding.js?v=14';
-import { GameState } from './sim/GameState.js?v=14';
-import * as Economy from './sim/Economy.js?v=14';
-import * as BuildSys from './sim/Buildings.js?v=14';
-import * as Waves from './sim/Waves.js?v=14';
-import * as Tech from './sim/Tech.js?v=14';
-import * as Nature from './sim/Nature.js?v=14';
-import * as Relics from './sim/Relics.js?v=14';
-import * as Camps from './sim/Camps.js?v=14';
-import { updateUnits, damage } from './sim/Units.js?v=14';
-import { toggleEdict } from './sim/Edicts.js?v=14';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=14';
-import { HUD } from './ui/HUD.js?v=14';
-import { BuildMenu } from './ui/BuildMenu.js?v=14';
-import { Selection } from './ui/Selection.js?v=14';
-import { Minimap } from './ui/Minimap.js?v=14';
-import { Toasts } from './ui/Toasts.js?v=14';
-import { BUILDINGS } from './data/buildings.js?v=14';
-import { RANKS } from './data/ranks.js?v=14';
-import { bark } from './data/barks.js?v=14';
-import { STORAGE_KEY } from './data/config.js?v=14';
-import { getFaction } from './data/factions.js?v=14';
-import { getMap } from './data/maps.js?v=14';
-import { StartScreen } from './ui/StartScreen.js?v=14';
+import { Renderer } from './engine/Renderer.js?v=15';
+import { RTSCamera } from './engine/RTSCamera.js?v=15';
+import { Picker } from './engine/Picker.js?v=15';
+import { Loop } from './engine/Loop.js?v=15';
+import { AssetManager } from './engine/AssetManager.js?v=15';
+import { TerrainMesh } from './world/TerrainMesh.js?v=15';
+import { Fog } from './world/Fog.js?v=15';
+import { WorldBase } from './world/WorldBase.js?v=15';
+import { nearestAdj } from './world/Pathfinding.js?v=15';
+import { GameState } from './sim/GameState.js?v=15';
+import * as Economy from './sim/Economy.js?v=15';
+import * as BuildSys from './sim/Buildings.js?v=15';
+import * as Waves from './sim/Waves.js?v=15';
+import * as Tech from './sim/Tech.js?v=15';
+import * as Nature from './sim/Nature.js?v=15';
+import * as Relics from './sim/Relics.js?v=15';
+import * as Camps from './sim/Camps.js?v=15';
+import { updateUnits, damage } from './sim/Units.js?v=15';
+import { toggleEdict } from './sim/Edicts.js?v=15';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=15';
+import { HUD } from './ui/HUD.js?v=15';
+import { BuildMenu } from './ui/BuildMenu.js?v=15';
+import { Selection } from './ui/Selection.js?v=15';
+import { Minimap } from './ui/Minimap.js?v=15';
+import { Toasts } from './ui/Toasts.js?v=15';
+import { BUILDINGS } from './data/buildings.js?v=15';
+import { RANKS } from './data/ranks.js?v=15';
+import { bark } from './data/barks.js?v=15';
+import { STORAGE_KEY } from './data/config.js?v=15';
+import { getFaction } from './data/factions.js?v=15';
+import { getMap } from './data/maps.js?v=15';
+import { StartScreen } from './ui/StartScreen.js?v=15';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -152,13 +152,57 @@ class Game {
 
   _addNeonSun() {
     const ww = this.state.grid.n;
-    const sun = new THREE.Mesh(new THREE.IcosahedronGeometry(ww * 0.16, 1), new THREE.MeshBasicMaterial({ color: 0xff2cc0 }));
-    sun.position.set(-ww * 0.55, ww * 0.4, -ww * 0.85); this.scene.add(sun);
-    const halo = new THREE.PointLight(0xff44cc, 1.6, ww * 3.5, 1.4); halo.position.copy(sun.position); this.scene.add(halo);
-    const dir = new THREE.DirectionalLight(0xcc66ff, 0.7); dir.position.copy(sun.position); this.scene.add(dir);
-    if (this.scene.fog) this.scene.fog.color.setHex(0x3a2452);
-    this.rdr.hemi.color.setHex(0xffaad0); this.rdr.hemi.groundColor.setHex(0x402a5a);
-    this._neonSun = sun;
+
+    // --- полосатое ретровейв-солнце (градиент оранж→розовый + горизонтальные прорези) ---
+    const sc = document.createElement('canvas'); sc.width = sc.height = 256;
+    const sx = sc.getContext('2d');
+    const grad = sx.createLinearGradient(0, 30, 0, 226);
+    grad.addColorStop(0, '#ffe07a'); grad.addColorStop(0.34, '#ff9a3c');
+    grad.addColorStop(0.62, '#ff4d8d'); grad.addColorStop(1, '#b81e6b');
+    sx.save(); sx.beginPath(); sx.arc(128, 128, 100, 0, Math.PI * 2); sx.clip();
+    sx.fillStyle = grad; sx.fillRect(0, 0, 256, 256);
+    sx.globalCompositeOperation = 'destination-out';     // прорези в нижней половине
+    let yy = 138, gap = 5;
+    for (let i = 0; i < 10; i++) { sx.fillRect(0, yy, 256, gap); yy += gap + Math.max(3, 13 - i * 0.9); gap += 1.1; }
+    sx.restore();
+    const sunTex = new THREE.CanvasTexture(sc); sunTex.magFilter = THREE.LinearFilter;
+    const sun = new THREE.Mesh(new THREE.PlaneGeometry(ww * 0.62, ww * 0.62),
+      new THREE.MeshBasicMaterial({ map: sunTex, transparent: true, depthWrite: false, fog: false }));
+    sun.position.set(-ww * 0.22, ww * 0.34, -ww * 1.5);
+    sun.renderOrder = -5; this.scene.add(sun);
+
+    // --- неон-сетка позади солнца (вертикальная стена-бэкдроп) ---
+    const gc = document.createElement('canvas'); gc.width = gc.height = 256;
+    const gx = gc.getContext('2d');
+    gx.strokeStyle = 'rgba(255,46,192,0.85)'; gx.lineWidth = 2;
+    for (let i = 0; i <= 256; i += 24) { gx.beginPath(); gx.moveTo(i, 128); gx.lineTo(i, 256); gx.stroke(); }
+    for (let j = 132; j <= 256; j += 18) { gx.beginPath(); gx.moveTo(0, j); gx.lineTo(256, j); gx.stroke(); }
+    gx.strokeStyle = 'rgba(64,224,255,0.5)';
+    for (let j = 132; j <= 256; j += 36) { gx.beginPath(); gx.moveTo(0, j); gx.lineTo(256, j); gx.stroke(); }
+    const gridTex = new THREE.CanvasTexture(gc); gridTex.magFilter = THREE.LinearFilter;
+    const grid = new THREE.Mesh(new THREE.PlaneGeometry(ww * 2.4, ww * 1.2),
+      new THREE.MeshBasicMaterial({ map: gridTex, transparent: true, opacity: 0.5, depthWrite: false, fog: false }));
+    grid.position.set(-ww * 0.22, ww * 0.18, -ww * 1.55);
+    grid.renderOrder = -6; this.scene.add(grid);
+
+    // --- звёздное небо ---
+    const N = 320, sp = new Float32Array(N * 3);
+    for (let i = 0; i < N; i++) {
+      const a = Math.random() * Math.PI * 2, e = Math.random() * 0.5 + 0.05, r = ww * (1.6 + Math.random() * 0.8);
+      sp[i * 3] = Math.cos(a) * Math.cos(e) * r;
+      sp[i * 3 + 1] = Math.sin(e) * r * 1.1 + ww * 0.15;
+      sp[i * 3 + 2] = Math.sin(a) * Math.cos(e) * r - ww * 0.4;
+    }
+    const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(sp, 3));
+    const stars = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xfff0ff, size: ww * 0.012, sizeAttenuation: true, transparent: true, opacity: 0.9, fog: false }));
+    this.scene.add(stars);
+
+    // свет/туман в ретровейв-палитру
+    const halo = new THREE.PointLight(0xff5aa0, 1.5, ww * 3.5, 1.4); halo.position.copy(sun.position); this.scene.add(halo);
+    const dir = new THREE.DirectionalLight(0xff8a5a, 0.7); dir.position.copy(sun.position); this.scene.add(dir);
+    if (this.scene.fog) this.scene.fog.color.setHex(0x2a1838);
+    this.rdr.hemi.color.setHex(0xffb0d0); this.rdr.hemi.groundColor.setHex(0x3a2050);
+    this._neon = { sun, grid, stars };
   }
 
   _begin(restored) {
@@ -428,6 +472,14 @@ class Game {
     }
     // пульс эмиссии идола
     if (this.state.idol) { const p = 1.4 + Math.sin(now * 0.005) * 0.9; this.state.idol.view.traverse(o => { if (o.isMesh && o.material && o.material.emissiveIntensity > 0) o.material.emissiveIntensity = p; }); }
+    // ретровейв-солнце смотрит на камеру + лёгкий пульс
+    if (this._neon) {
+      this._neon.sun.quaternion.copy(this.camera.quaternion);
+      this._neon.grid.quaternion.copy(this.camera.quaternion);
+      this._neon.sun.scale.setScalar(1 + Math.sin(now * 0.0012) * 0.025);
+    }
+    // анимация водопадов с края мира
+    if (this.worldBase && this.worldBase.update) this.worldBase.update(fdt);
     // дрожание зданий под уроном
     for (const b of this.state.buildings) {
       if (b._hit > 0) { b._hit -= fdt; const j = b._hit > 0 ? (Math.random() - 0.5) * 0.06 : 0; b.view.position.set(b.cx + j, b.cy || 0, b.cz + j); }

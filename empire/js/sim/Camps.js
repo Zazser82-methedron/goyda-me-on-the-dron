@@ -1,6 +1,6 @@
 // ===== Вражьи станы: спавнят набеги, можно сносить =====
-import { nearestAdj } from '../world/Pathfinding.js?v=14';
-import { UNITS } from '../data/units.js?v=14';
+import { nearestAdj } from '../world/Pathfinding.js?v=15';
+import { UNITS } from '../data/units.js?v=15';
 
 const SPAWN_EVERY = 32;
 
