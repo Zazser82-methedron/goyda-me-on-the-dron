@@ -1,8 +1,8 @@
 // ===== Движение, бой и ИИ юнитов (свои воины + враги). Воркеры — в Jobs.js =====
-import { TILE } from '../data/config.js?v=17';
-import { findPath, nearestAdj } from '../world/Pathfinding.js?v=17';
-import { updateWorker } from './Jobs.js?v=17';
-import { bark } from '../data/barks.js?v=17';
+import { TILE } from '../data/config.js?v=18';
+import { findPath, nearestAdj } from '../world/Pathfinding.js?v=18';
+import { updateWorker } from './Jobs.js?v=18';
+import { bark } from '../data/barks.js?v=18';
 
 export function tileCenter(state, tx, ty) { const w = state.grid.gridToWorld(tx, ty); return { x: w.wx, z: w.wz }; }
 function dist2(ax, az, bx, bz) { return (ax - bx) ** 2 + (az - bz) ** 2; }
@@ -70,7 +70,8 @@ function tryAttack(state, u, target, ctx) {
   if (u.atkT > 0) return;
   u.atkT = u.def.atkCd;
   u.atkAnim = 0.2;                 // выпад-анимация (render)
-  const bonus = (state.superTimer > 0 && u.faction === 'ours') ? 1.5 : 1;
+  let bonus = (state.superTimer > 0 && u.faction === 'ours') ? 1.5 : 1;
+  if (u.faction === 'ours' && state.research) bonus *= state.research.dmgMul;   // исследование «СЕЧА»
   damage(state, target, u.dmg * bonus, ctx);
   if (ctx.sfx) ctx.sfx(u.faction === 'ours' ? 'hit' : 'hitEnemy');
   if (u.barkT <= 0 && Math.random() < 0.25) { ctx.bark && ctx.bark(u, bark('attack')); u.barkT = 3; }

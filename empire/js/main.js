@@ -1,38 +1,41 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=17';
-import { RTSCamera } from './engine/RTSCamera.js?v=17';
-import { Picker } from './engine/Picker.js?v=17';
-import { Loop } from './engine/Loop.js?v=17';
-import { AssetManager } from './engine/AssetManager.js?v=17';
-import { TerrainMesh } from './world/TerrainMesh.js?v=17';
-import { Fog } from './world/Fog.js?v=17';
-import { WorldBase } from './world/WorldBase.js?v=17';
-import { nearestAdj } from './world/Pathfinding.js?v=17';
-import { GameState } from './sim/GameState.js?v=17';
-import * as Economy from './sim/Economy.js?v=17';
-import * as BuildSys from './sim/Buildings.js?v=17';
-import * as Waves from './sim/Waves.js?v=17';
-import * as Tech from './sim/Tech.js?v=17';
-import * as Nature from './sim/Nature.js?v=17';
-import * as Relics from './sim/Relics.js?v=17';
-import * as Camps from './sim/Camps.js?v=17';
-import * as Wildlife from './sim/Wildlife.js?v=17';
-import { updateUnits, damage } from './sim/Units.js?v=17';
-import { toggleEdict } from './sim/Edicts.js?v=17';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=17';
-import { HUD } from './ui/HUD.js?v=17';
-import { BuildMenu } from './ui/BuildMenu.js?v=17';
-import { Selection } from './ui/Selection.js?v=17';
-import { Minimap } from './ui/Minimap.js?v=17';
-import { Toasts } from './ui/Toasts.js?v=17';
-import { BUILDINGS } from './data/buildings.js?v=17';
-import { RANKS } from './data/ranks.js?v=17';
-import { bark } from './data/barks.js?v=17';
-import { STORAGE_KEY } from './data/config.js?v=17';
-import { getFaction } from './data/factions.js?v=17';
-import { getMap } from './data/maps.js?v=17';
-import { StartScreen } from './ui/StartScreen.js?v=17';
+import { Renderer } from './engine/Renderer.js?v=18';
+import { RTSCamera } from './engine/RTSCamera.js?v=18';
+import { Picker } from './engine/Picker.js?v=18';
+import { Loop } from './engine/Loop.js?v=18';
+import { AssetManager } from './engine/AssetManager.js?v=18';
+import { TerrainMesh } from './world/TerrainMesh.js?v=18';
+import { Fog } from './world/Fog.js?v=18';
+import { WorldBase } from './world/WorldBase.js?v=18';
+import { Sky } from './world/Sky.js?v=18';
+import { nearestAdj } from './world/Pathfinding.js?v=18';
+import { GameState } from './sim/GameState.js?v=18';
+import * as Economy from './sim/Economy.js?v=18';
+import * as BuildSys from './sim/Buildings.js?v=18';
+import * as Waves from './sim/Waves.js?v=18';
+import * as Tech from './sim/Tech.js?v=18';
+import * as Nature from './sim/Nature.js?v=18';
+import * as Relics from './sim/Relics.js?v=18';
+import * as Camps from './sim/Camps.js?v=18';
+import * as Wildlife from './sim/Wildlife.js?v=18';
+import * as Research from './sim/Research.js?v=18';
+import { updateUnits, damage } from './sim/Units.js?v=18';
+import { toggleEdict } from './sim/Edicts.js?v=18';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=18';
+import { HUD } from './ui/HUD.js?v=18';
+import { BuildMenu } from './ui/BuildMenu.js?v=18';
+import { Selection } from './ui/Selection.js?v=18';
+import { Minimap } from './ui/Minimap.js?v=18';
+import { ResearchPanel } from './ui/Research.js?v=18';
+import { Toasts } from './ui/Toasts.js?v=18';
+import { BUILDINGS } from './data/buildings.js?v=18';
+import { RANKS } from './data/ranks.js?v=18';
+import { bark } from './data/barks.js?v=18';
+import { STORAGE_KEY } from './data/config.js?v=18';
+import { getFaction } from './data/factions.js?v=18';
+import { getMap } from './data/maps.js?v=18';
+import { StartScreen } from './ui/StartScreen.js?v=18';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -71,6 +74,7 @@ class Game {
     this.menu = new BuildMenu(this);
     this.selUI = new Selection(this);
     this.minimap = new Minimap(this);
+    this.researchUI = new ResearchPanel(this);
     this.startScreen = new StartScreen(this);
 
     this.buildKind = null;
@@ -149,6 +153,7 @@ class Game {
     this.fog = new Fog(this.scene, this.state.grid);       // туман войны
     this.worldBase = new WorldBase(this.scene, this.state.grid);   // плита на слонах+черепахе
     if (map.key === 'neon') this._addNeonSun();
+    else this.sky = new Sky(this.scene, this.rdr);                 // суточный цикл + погода (кроме неона)
     Wildlife.spawn(this.state);   // дичь бродит по карте (охота)
   }
 
@@ -296,6 +301,8 @@ class Game {
     mb.onclick = () => { const m = toggleMute(); mb.textContent = m ? '🔇' : '🔊'; if (!m) sfx('click'); };
     const fb = document.getElementById('fogBtn');
     if (fb) fb.onclick = () => { const on = this.fog ? this.fog.toggle() : false; fb.classList.toggle('on', on); fb.title = on ? 'Туман войны: ВКЛ' : 'Туман войны: ВЫКЛ'; sfx('click'); };
+    const tb = document.getElementById('techBtn');
+    if (tb) tb.onclick = () => { const open = this.researchUI.toggle(); tb.classList.toggle('on', open); sfx('click'); };
     const rb = document.getElementById('restartBtn');
     if (rb) rb.onclick = () => this.restart();
     const lb = document.getElementById('lobbyBtn');
@@ -381,6 +388,7 @@ class Game {
   train(b, uk) { BuildSys.queueTrain(this.state, b, uk, this.ctx); }
   toggleEdictUI(key) { toggleEdict(this.state, key, this.ctx); }
   setStance(u, st) { u.stance = st; u.path = null; u.moveOrder = null; sfx('click'); }
+  research(key) { Research.buy(this.state, key, this.ctx); this.researchUI.refresh(); this.hud.update(); }
 
   activateSuper() {
     const s = this.state;
@@ -501,6 +509,8 @@ class Game {
     }
     // анимация водопадов с края мира
     if (this.worldBase && this.worldBase.update) this.worldBase.update(fdt);
+    // суточный цикл день/ночь + погода (дождь/снег)
+    if (this.sky) this.sky.update(fdt, this.cameraRig.target, this.map.key, now);
     // дрожание зданий под уроном
     for (const b of this.state.buildings) {
       if (b._hit > 0) { b._hit -= fdt; const j = b._hit > 0 ? (Math.random() - 0.5) * 0.06 : 0; b.view.position.set(b.cx + j, b.cy || 0, b.cz + j); }

@@ -1,11 +1,11 @@
 // ===== Единый источник правды: ресурсы, сущности, ранги, сейв =====
 import * as THREE from 'three';
-import { GRID_N, STORAGE_KEY } from '../data/config.js?v=17';
-import { Grid } from '../world/Grid.js?v=17';
-import { NodeField } from '../world/NodeField.js?v=17';
-import { BUILDINGS } from '../data/buildings.js?v=17';
-import { UNITS } from '../data/units.js?v=17';
-import { RANKS } from '../data/ranks.js?v=17';
+import { GRID_N, STORAGE_KEY } from '../data/config.js?v=18';
+import { Grid } from '../world/Grid.js?v=18';
+import { NodeField } from '../world/NodeField.js?v=18';
+import { BUILDINGS } from '../data/buildings.js?v=18';
+import { UNITS } from '../data/units.js?v=18';
+import { RANKS } from '../data/ranks.js?v=18';
 
 export class GameState {
   constructor(scene, assets) {
@@ -22,6 +22,9 @@ export class GameState {
 
     this.resources = { food: 70, wood: 80, stone: 70, iron: 0, gold: 45, gems: 0, faith: 15 };
     this.cap = { food: 400, wood: 400, stone: 400, iron: 300, gold: 400, gems: 150, faith: 999 };
+
+    // исследования (древо технологий) — множители/бонусы
+    this.research = { done: {}, gatherMul: 1, dmgMul: 1, hpMul: 1, spdMul: 1, popBonus: 0, foodDay: 0, goldDay: 0, faithDay: 0 };
 
     this.happiness = 60;
     this.population = 0;
@@ -217,11 +220,15 @@ export class GameState {
     const gm = opts.scale || 1;
     view.scale.setScalar(gm * 0.25);          // вырастает при спавне (анимация в render)
     this.scene.add(view);
+    // бонусы исследований применяются к НОВЫМ своим воинам (HP/скорость)
+    let hp = (opts.hp ?? def.hp), maxHp = (opts.maxHp ?? def.hp), speed = def.speed;
+    const R = this.research;
+    if (R && def.faction === 'ours' && !def.worker) { hp = Math.round(hp * R.hpMul); maxHp = Math.round(maxHp * R.hpMul); speed *= R.spdMul; }
     const u = {
       id: this._id++, type: 'unit', kind, def, faction: def.faction, view,
       x: wx, z: wz, px: wx, pz: wz, dir: 0,
-      hp: (opts.hp ?? def.hp), maxHp: (opts.maxHp ?? def.hp),
-      dmg: def.dmg, speed: def.speed,
+      hp, maxHp,
+      dmg: def.dmg, speed,
       state: 'idle', path: null, pi: 0, target: null, job: null,
       carry: 0, carryType: null, gatherT: 0, atkT: 0, bossKey: opts.bossKey || null,
       barkT: 0, grow: 0, growMax: gm, atkAnim: 0, stance: 'aggro',
@@ -255,7 +262,8 @@ export class GameState {
   workers() { return this.units.filter(u => u.faction === 'ours' && u.def.worker); }
 
   recomputePop() {
-    this.popCap = this.buildings.filter(b => b.built).reduce((s, b) => s + (b.def.pop || 0), 0);
+    this.popCap = this.buildings.filter(b => b.built).reduce((s, b) => s + (b.def.pop || 0), 0)
+      + (this.research ? this.research.popBonus : 0);
     this.population = this.ours().length;
   }
 

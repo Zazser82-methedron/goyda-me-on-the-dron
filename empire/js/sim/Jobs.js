@@ -1,7 +1,7 @@
 // ===== Цикл добытчика: к ноде → добыча → к складу → сдача =====
-import { setPath, setPathToBuilding, moveStep } from './Units.js?v=17';
-import { RES_LABEL } from '../data/config.js?v=17';
-import { bark } from '../data/barks.js?v=17';
+import { setPath, setPathToBuilding, moveStep } from './Units.js?v=18';
+import { RES_LABEL } from '../data/config.js?v=18';
+import { bark } from '../data/barks.js?v=18';
 
 function adjacentTo(state, u, ent) {
   const g = state.grid.worldToGrid(u.x, u.z);
@@ -53,7 +53,7 @@ export function updateWorker(state, u, dt, ctx) {
   if (adjacentTo(state, u, node)) {
     u.state = 'gather'; u.path = null;
     if (u.gatherT <= 0) {
-      const gmul = (state.faction && state.faction.mods.gatherMul) || 1;
+      const gmul = ((state.faction && state.faction.mods.gatherMul) || 1) * (state.research ? state.research.gatherMul : 1);
       const rate = Math.min(u.def.gatherRate * gmul, node.amount, u.def.carry - u.carry);
       node.amount -= rate; u.carry += rate; u.carryType = node.resType; u.gatherT = 0.8;
       if (ctx.sfx) ctx.sfx('gather');
