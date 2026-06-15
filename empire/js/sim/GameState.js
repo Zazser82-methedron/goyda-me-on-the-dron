@@ -1,11 +1,11 @@
 // ===== Единый источник правды: ресурсы, сущности, ранги, сейв =====
 import * as THREE from 'three';
-import { GRID_N, STORAGE_KEY } from '../data/config.js?v=6';
-import { Grid } from '../world/Grid.js?v=6';
-import { NodeField } from '../world/NodeField.js?v=6';
-import { BUILDINGS } from '../data/buildings.js?v=6';
-import { UNITS } from '../data/units.js?v=6';
-import { RANKS } from '../data/ranks.js?v=6';
+import { GRID_N, STORAGE_KEY } from '../data/config.js?v=7';
+import { Grid } from '../world/Grid.js?v=7';
+import { NodeField } from '../world/NodeField.js?v=7';
+import { BUILDINGS } from '../data/buildings.js?v=7';
+import { UNITS } from '../data/units.js?v=7';
+import { RANKS } from '../data/ranks.js?v=7';
 
 export class GameState {
   constructor(scene, assets) {
@@ -20,8 +20,8 @@ export class GameState {
       gold: new NodeField(scene, 'res_ore', 250),
     };
 
-    this.resources = { food: 60, wood: 80, stone: 40, gold: 40, faith: 0 };
-    this.cap = { food: 300, wood: 300, stone: 300, gold: 300, faith: 999 };
+    this.resources = { food: 70, wood: 80, stone: 70, gold: 45, faith: 15 };
+    this.cap = { food: 400, wood: 400, stone: 400, gold: 400, faith: 999 };
 
     this.happiness = 60;
     this.population = 0;

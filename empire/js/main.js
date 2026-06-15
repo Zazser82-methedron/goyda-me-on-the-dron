@@ -1,35 +1,35 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=6';
-import { RTSCamera } from './engine/RTSCamera.js?v=6';
-import { Picker } from './engine/Picker.js?v=6';
-import { Loop } from './engine/Loop.js?v=6';
-import { AssetManager } from './engine/AssetManager.js?v=6';
-import { TerrainMesh } from './world/TerrainMesh.js?v=6';
-import { nearestAdj } from './world/Pathfinding.js?v=6';
-import { GameState } from './sim/GameState.js?v=6';
-import * as Economy from './sim/Economy.js?v=6';
-import * as BuildSys from './sim/Buildings.js?v=6';
-import * as Waves from './sim/Waves.js?v=6';
-import * as Tech from './sim/Tech.js?v=6';
-import * as Nature from './sim/Nature.js?v=6';
-import * as CardsSys from './sim/Cards.js?v=6';
-import { updateUnits } from './sim/Units.js?v=6';
-import { toggleEdict } from './sim/Edicts.js?v=6';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=6';
-import { HUD } from './ui/HUD.js?v=6';
-import { BuildMenu } from './ui/BuildMenu.js?v=6';
-import { Selection } from './ui/Selection.js?v=6';
-import { Minimap } from './ui/Minimap.js?v=6';
-import { Toasts } from './ui/Toasts.js?v=6';
-import { Cards } from './ui/Cards.js?v=6';
-import { BUILDINGS } from './data/buildings.js?v=6';
-import { RANKS } from './data/ranks.js?v=6';
-import { bark } from './data/barks.js?v=6';
-import { STORAGE_KEY } from './data/config.js?v=6';
-import { getFaction } from './data/factions.js?v=6';
-import { getMap } from './data/maps.js?v=6';
-import { StartScreen } from './ui/StartScreen.js?v=6';
+import { Renderer } from './engine/Renderer.js?v=7';
+import { RTSCamera } from './engine/RTSCamera.js?v=7';
+import { Picker } from './engine/Picker.js?v=7';
+import { Loop } from './engine/Loop.js?v=7';
+import { AssetManager } from './engine/AssetManager.js?v=7';
+import { TerrainMesh } from './world/TerrainMesh.js?v=7';
+import { nearestAdj } from './world/Pathfinding.js?v=7';
+import { GameState } from './sim/GameState.js?v=7';
+import * as Economy from './sim/Economy.js?v=7';
+import * as BuildSys from './sim/Buildings.js?v=7';
+import * as Waves from './sim/Waves.js?v=7';
+import * as Tech from './sim/Tech.js?v=7';
+import * as Nature from './sim/Nature.js?v=7';
+import * as CardsSys from './sim/Cards.js?v=7';
+import { updateUnits } from './sim/Units.js?v=7';
+import { toggleEdict } from './sim/Edicts.js?v=7';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=7';
+import { HUD } from './ui/HUD.js?v=7';
+import { BuildMenu } from './ui/BuildMenu.js?v=7';
+import { Selection } from './ui/Selection.js?v=7';
+import { Minimap } from './ui/Minimap.js?v=7';
+import { Toasts } from './ui/Toasts.js?v=7';
+import { Cards } from './ui/Cards.js?v=7';
+import { BUILDINGS } from './data/buildings.js?v=7';
+import { RANKS } from './data/ranks.js?v=7';
+import { bark } from './data/barks.js?v=7';
+import { STORAGE_KEY } from './data/config.js?v=7';
+import { getFaction } from './data/factions.js?v=7';
+import { getMap } from './data/maps.js?v=7';
+import { StartScreen } from './ui/StartScreen.js?v=7';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -164,19 +164,20 @@ class Game {
     this.state.recomputePop();
     // ресурсы вокруг (подальше от центра)
     const far = (x, y, r) => Math.max(Math.abs(x - c), Math.abs(y - c)) > r;
-    const scatter = (kind, count, amount, minR) => {
+    const scatter = (kind, count, amount, minR, biomes) => {
       let n = 0, t = 0;
-      while (n < count && t < count * 40) {
+      while (n < count && t < count * 50) {
         t++; const x = ri(2, g.n - 3), y = ri(2, g.n - 3);
         if (!far(x, y, minR) || !g.canPlace(x, y, 1, 1)) continue;
+        if (biomes && !biomes.includes(g.get(x, y).biome)) continue;
         this.state.addNode(kind, x, y, amount + ri(-10, 10)); n++;
       }
     };
-    // карта 96² — ресурсы с множителями локации
+    // ресурсы по биомам: деревья в зелени, камень/золото в скалах
     const r = (map && map.res) || { tree: 1, stone: 1, ore: 1 };
-    scatter('res_tree', Math.round(150 * r.tree), 60, 4);
-    scatter('res_stone', Math.round(60 * r.stone), 90, 6);
-    scatter('res_ore', Math.round(34 * r.ore), 60, 8);
+    scatter('res_tree', Math.round(150 * r.tree), 60, 4, ['grass', 'forest']);
+    scatter('res_stone', Math.round(90 * r.stone), 110, 5, ['grass', 'rock', 'sand']);
+    scatter('res_ore', Math.round(40 * r.ore), 70, 7, ['rock', 'grass']);
     // стартовые ХОЛОПы
     for (let i = 0; i < 4; i++) {
       const adj = nearestAdj(g, c - 1, c - 1, 3, 3, c - 2 + i, c + 2) || { x: c, y: c + 2 };
@@ -205,11 +206,16 @@ class Game {
     const cv = this.canvas;
     cv.addEventListener('pointerdown', (e) => {
       resumeAudio();
-      if (e.button !== 0) return;
       this.picker.setFromEvent(e);
-      this._keepBuild = e.shiftKey;
-      if (this.buildKind) { this.placing = true; this._placeAt(); }
-      else this._selectOrOrder();
+      if (e.button === 0) {            // ЛКМ — выбор / постройка
+        this._keepBuild = e.shiftKey;
+        if (this.buildKind) { this.placing = true; this._placeAt(); }
+        else this._select();
+      } else if (e.button === 2) {     // ПКМ — команда (или отмена стройки)
+        e.preventDefault();
+        if (this.buildKind) { this.buildKind = null; this.terrain.hideGhost(); }
+        else this._command();
+      }
     });
     cv.addEventListener('pointermove', (e) => {
       this.picker.setFromEvent(e);
@@ -227,6 +233,8 @@ class Game {
     mb.onclick = () => { const m = toggleMute(); mb.textContent = m ? '🔇' : '🔊'; if (!m) sfx('click'); };
     const rb = document.getElementById('restartBtn');
     if (rb) rb.onclick = () => this.restart();
+    const lb = document.getElementById('lobbyBtn');
+    if (lb) lb.onclick = () => { if (confirm('Выйти в меню ГОЙДЫ? Поход сохранится.')) location.href = '../'; };
   }
 
   restart() {
@@ -254,23 +262,41 @@ class Game {
     return a;
   }
 
-  _selectOrOrder() {
-    const ent = this.picker.entityUnder(this.camera, this._pickables(), Object.values(this.state.fields));
-    const sel = this.state.selected;
+  _entUnder() { return this.picker.entityUnder(this.camera, this._pickables(), Object.values(this.state.fields)); }
+
+  // ЛКМ — только выбор
+  _select() {
+    const ent = this._entUnder();
+    this.state.selected = ent || null;
     if (ent) {
-      if (sel && sel.type === 'unit' && sel.def.worker && ent.type === 'node') {
-        sel.job = ent.id; sel.jobType = ent.resType; sel.path = null; sel.state = 'toNode';
-        this.toasts.show('🧑‍🌾 ХОЛОП → добыча ' + ent.resType); sfx('click'); return;
-      }
-      this.state.selected = ent; sfx('click');
+      sfx('click');
       if (ent.type === 'unit' && ent.faction === 'ours') this.float(ent.x, ent.z, bark('select'), '#ffe8b5', 1.4);
-      return;
     }
+  }
+
+  // ПКМ — команда выбранному своему юниту (двигаться / рубить / в атаку)
+  _command() {
+    const sel = this.state.selected;
+    if (!(sel && sel.type === 'unit' && sel.faction === 'ours')) return;
+    const ent = this._entUnder();
+    // рубить ресурс (для добытчика)
+    if (ent && ent.type === 'node' && sel.def.worker) {
+      sel.job = ent.id; sel.jobType = ent.resType; sel.manualIdle = false; sel.moveOrder = null; sel.path = null; sel.state = 'toNode';
+      sfx('click'); this.float(sel.x, sel.z, 'Иду рубить!', '#9effd0', 1.4); return;
+    }
+    // в атаку на врага (для воина)
+    if (ent && ent.type === 'unit' && ent.faction === 'enemy' && !sel.def.worker) {
+      const g = this.state.grid.worldToGrid(ent.x, ent.z);
+      sel.moveOrder = { x: g.x, y: g.y }; sel.path = null;
+      sfx('click'); this.float(sel.x, sel.z, 'В атаку!', '#ff8a8a', 1.4); return;
+    }
+    // идти на указанную точку (любой свой юнит — куда скажешь)
     const t = this.picker.tileUnder(this.camera, this.state.grid);
-    if (sel && sel.type === 'unit' && sel.faction === 'ours' && !sel.def.worker && t) {
-      sel.moveOrder = { x: t.x, y: t.y }; sel.path = null; this.float(sel.x, sel.z, 'Идём!', '#9effd0', 1.4); sfx('click'); return;
+    if (t) {
+      sel.moveOrder = { x: t.x, y: t.y }; sel.path = null;
+      if (sel.def.worker) { sel.job = null; sel.manualIdle = true; }
+      sfx('click'); this.float(sel.x, sel.z, 'Идём!', '#9effd0', 1.4);
     }
-    this.state.selected = null;
   }
 
   enterBuild(kind) { this.buildKind = kind; this.state.selected = null; sfx('click'); }
@@ -389,7 +415,11 @@ class Game {
       } else this.terrain.hideGhost();
       this.terrain.setHover(null);
     } else {
-      this.terrain.setHover(tile);
+      // подсветка зависит от того, что под курсором: ресурс — циан, свой юнит — зелёный, иначе золото
+      const ent = this._entUnder();
+      if (ent && ent.type === 'node') this.terrain.setHover(this.state.grid.get(ent.gx, ent.gy), 0x00eeff);
+      else if (ent && ent.type === 'unit' && ent.faction === 'ours') this.terrain.setHover(tile, 0x5eff8b);
+      else this.terrain.setHover(tile, 0xffcc00);
       this.terrain.hideGhost();
     }
   }

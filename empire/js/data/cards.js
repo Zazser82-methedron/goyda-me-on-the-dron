@@ -1,6 +1,6 @@
 // ===== Карты-архетипы «Гойды» как разыгрываемые способности =====
 // cost — ВЕРА. effect(state, ctx) — мгновенный эффект.
-import { nearestAdj } from '../world/Pathfinding.js?v=6';
+import { nearestAdj } from '../world/Pathfinding.js?v=7';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 

@@ -1,7 +1,7 @@
 // ===== Панель выбранной сущности: HP, тренировка, инфо =====
-import { UNITS } from '../data/units.js?v=6';
-import { RES_LABEL } from '../data/config.js?v=6';
-import { costStr } from './BuildMenu.js?v=6';
+import { UNITS } from '../data/units.js?v=7';
+import { RES_LABEL } from '../data/config.js?v=7';
+import { costStr } from './BuildMenu.js?v=7';
 
 function hpBar(hp, max) {
   const p = Math.max(0, Math.min(1, hp / max));
@@ -44,9 +44,9 @@ export class Selection {
           <button class="stbtn" data-st="aggro" title="Сами ищут и бьют врага по всей карте">⚔️ Агр</button>
           <button class="stbtn" data-st="defend" title="Бьют врага у базы, иначе держат рубеж">🛡️ Оборона</button>
           <button class="stbtn" data-st="hold" title="Стоят на месте, бьют только в упор">✋ Стоять</button></div>`;
-        html += `<div class="sel-tag">ЛКМ по земле — приказ идти</div>`;
+        html += `<div class="sel-tag">ПКМ — идти куда укажешь / в атаку</div>`;
       } else if (sel.def.worker) {
-        html += `<div class="sel-tag">ЛКМ по ноде (🌳🪨🪙) — назначить добычу</div>`;
+        html += `<div class="sel-tag">ПКМ по ресурсу 🌳🪨🪙 — рубить · ПКМ по земле — идти</div>`;
       }
     } else if (sel.type === 'node') {
       const lbl = RES_LABEL[sel.resType];

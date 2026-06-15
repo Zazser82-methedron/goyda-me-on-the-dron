@@ -1,5 +1,5 @@
 // ===== Рука карт-способностей: набор, добор, розыгрыш =====
-import { CARDS } from '../data/cards.js?v=6';
+import { CARDS } from '../data/cards.js?v=7';
 
 const HAND_MAX = 5;
 const DRAW_EVERY = 32;   // сек — автодобор карты

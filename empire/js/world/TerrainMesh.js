@@ -1,6 +1,6 @@
 // ===== Земля: единый меш-рельеф (1 draw call) + вода + декор + ховер/призрак =====
 import * as THREE from 'three';
-import { TILE, PAL } from '../data/config.js?v=6';
+import { TILE, PAL } from '../data/config.js?v=7';
 
 export class TerrainMesh {
   constructor(scene, grid, pal) {
@@ -123,10 +123,11 @@ export class TerrainMesh {
     scene.add(bushes); scene.add(rocks);
   }
 
-  setHover(tile) {
+  setHover(tile, color) {
     if (!tile) { this.hover.visible = false; return; }
     const { wx, wz } = this.grid.gridToWorld(tile.x, tile.y);
     this.hover.position.set(wx, this.grid.heightAt(wx, wz) + 0.05, wz);
+    if (color !== undefined) this.hover.material.color.setHex(color);
     this.hover.visible = true;
   }
 

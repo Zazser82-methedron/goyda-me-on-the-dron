@@ -7,7 +7,7 @@ export const BUILDINGS = {
   townhall: {
     kind: 'townhall', name: 'ПАЛАТЫ ГОЙДЫ', icon: '🏰', model: 'bld_townhall',
     w: 3, h: 3, hp: 800, cat: 'core', rank: 0, unique: true, drop: true,
-    cost: {}, build: 0, pop: 5, produce: { faith: 1 },
+    cost: {}, build: 0, pop: 5, produce: { faith: 2 },
     trains: ['kholop'],
     desc: 'Сердце державы. Сюда несут добычу, здесь куют ХОЛОПов. Падёт — конец.',
   },

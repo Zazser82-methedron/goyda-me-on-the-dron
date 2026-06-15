@@ -19,8 +19,8 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Ysabeau+SC:wght@400;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./css/theme.css?v=6">
-<link rel="stylesheet" href="./css/hud.css?v=6">
+<link rel="stylesheet" href="./css/theme.css?v=7">
+<link rel="stylesheet" href="./css/hud.css?v=7">
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
@@ -41,6 +41,7 @@
       <div id="wavebox"></div>
       <div class="spacer"></div>
       <button id="superBtn" class="topbtn">СВЕРХ-ГОЙДА</button>
+      <button id="lobbyBtn" class="topbtn icon" title="Выйти в меню ГОЙДЫ">🏠</button>
       <button id="restartBtn" class="topbtn icon" title="Начать игру заново">↻</button>
       <button id="muteBtn" class="topbtn icon">🔊</button>
     </div>
@@ -63,7 +64,7 @@
       <div id="edicts"></div>
     </div>
 
-    <div id="hint"><b>W</b> вперёд <b>A</b> влево <b>S</b> назад <b>D</b> вправо &nbsp;·&nbsp; ЛКМ — выбрать/приказ &nbsp;·&nbsp; ПКМ-таскать — поворот &nbsp;·&nbsp; колесо — зум &nbsp;·&nbsp; ПРОБЕЛ — СВЕРХ-ГОЙДА &nbsp;·&nbsp; 1-5 — карты &nbsp;·&nbsp; ESC — отмена</div>
+    <div id="hint"><b>W A S D</b> — двигать &nbsp;·&nbsp; <b>ЛКМ</b> — выбрать &nbsp;·&nbsp; <b>ПКМ</b> — приказ (идти/рубить/в атаку) &nbsp;·&nbsp; <b>СКМ-таскать</b> — поворот &nbsp;·&nbsp; колесо — зум &nbsp;·&nbsp; ПРОБЕЛ — СВЕРХ-ГОЙДА &nbsp;·&nbsp; ESC — отмена</div>
   </div>
 
   <!-- слой всплывающего текста -->
@@ -76,6 +77,6 @@
   <div id="overlay"></div>
 </div>
 
-<script type="module" src="./js/main.js?v=6"></script>
+<script type="module" src="./js/main.js?v=7"></script>
 </body>
 </html>

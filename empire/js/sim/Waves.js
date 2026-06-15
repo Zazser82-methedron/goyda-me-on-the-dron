@@ -1,8 +1,8 @@
 // ===== Набеги (Fortnite-слой): волны врагов + именованные боссы =====
-import { UNITS } from '../data/units.js?v=6';
-import { BOSSES } from '../data/bosses.js?v=6';
-import { bark } from '../data/barks.js?v=6';
-import { hostileFor } from '../data/factions.js?v=6';
+import { UNITS } from '../data/units.js?v=7';
+import { BOSSES } from '../data/bosses.js?v=7';
+import { bark } from '../data/barks.js?v=7';
+import { hostileFor } from '../data/factions.js?v=7';
 
 const MAX_ENEMIES = 70;
 
@@ -32,19 +32,32 @@ export function update(state, dt, ctx) {
   }
 }
 
-function edgePoints(state, count) {
-  const n = state.grid.n, res = [];
-  const edge = Math.floor(Math.random() * 4);
-  for (let i = 0; i < count; i++) {
-    const t = Math.floor(Math.random() * n);
-    let gx, gy;
-    if (edge === 0) { gx = t; gy = 0; }
-    else if (edge === 1) { gx = t; gy = n - 1; }
-    else if (edge === 2) { gx = 0; gy = t; }
-    else { gx = n - 1; gy = t; }
-    const w = state.grid.gridToWorld(gx, gy);
-    res.push({ x: w.wx + (Math.random() - 0.5) * 0.5, z: w.wz + (Math.random() - 0.5) * 0.5 });
+// первая ПРОХОДИМАЯ (суша) клетка от края внутрь — враги не спавнятся в воде
+function landFromEdge(state, edge, t) {
+  const g = state.grid, n = g.n;
+  let gx, gy, dx = 0, dy = 0;
+  if (edge === 0) { gx = t; gy = 0; dy = 1; }
+  else if (edge === 1) { gx = t; gy = n - 1; dy = -1; }
+  else if (edge === 2) { gx = 0; gy = t; dx = 1; }
+  else { gx = n - 1; gy = t; dx = -1; }
+  for (let step = 0; step < n; step++) {
+    const tile = g.get(gx, gy);
+    if (tile && tile.walkable) { const w = g.gridToWorld(gx, gy); return { x: w.wx, z: w.wz }; }
+    gx += dx; gy += dy;
+    if (!g.inBounds(gx, gy)) break;
   }
+  return null;
+}
+
+function edgePoints(state, count) {
+  const res = [];
+  let guard = 0;
+  while (res.length < count && guard < count * 10) {
+    guard++;
+    const p = landFromEdge(state, Math.floor(Math.random() * 4), Math.floor(Math.random() * state.grid.n));
+    if (p) res.push({ x: p.x + (Math.random() - 0.5) * 0.4, z: p.z + (Math.random() - 0.5) * 0.4 });
+  }
+  if (!res.length) { const w = state.grid.gridToWorld(3, 3); res.push({ x: w.wx, z: w.wz }); }
   return res;
 }
 

@@ -1,6 +1,6 @@
 // ===== RTS-камера: пан по XZ, орбита (ПКМ/Q-E), зум колесом, сглаживание =====
 import * as THREE from 'three';
-import { GRID_N, TILE } from '../data/config.js?v=6';
+import { GRID_N, TILE } from '../data/config.js?v=7';
 
 export class RTSCamera {
   constructor(dom) {
@@ -36,9 +36,9 @@ export class RTSCamera {
     dom.addEventListener('contextmenu', e => e.preventDefault());
 
     dom.addEventListener('pointerdown', (e) => {
-      // ПКМ (2) или СКМ (1) — орбита/пан
-      if (e.button === 2 || e.button === 1) {
-        this._dragging = e.button === 2 ? 'rotate' : 'pan';
+      if (e.button === 1) {   // СКМ — орбита камеры (ПКМ свободна под команды)
+        e.preventDefault();
+        this._dragging = 'rotate';
         this._lastX = e.clientX; this._lastY = e.clientY;
         dom.setPointerCapture(e.pointerId);
       }
@@ -47,12 +47,8 @@ export class RTSCamera {
       if (!this._dragging) return;
       const dx = e.clientX - this._lastX, dy = e.clientY - this._lastY;
       this._lastX = e.clientX; this._lastY = e.clientY;
-      if (this._dragging === 'rotate') {
-        this.azimuth -= dx * 0.006;
-        this.polar = THREE.MathUtils.clamp(this.polar - dy * 0.005, this.minPolar, this.maxPolar);
-      } else {
-        this._panBy(-dx, -dy, 0.04);
-      }
+      this.azimuth -= dx * 0.006;
+      this.polar = THREE.MathUtils.clamp(this.polar - dy * 0.005, this.minPolar, this.maxPolar);
     });
     const end = (e) => { if (this._dragging) { this._dragging = false; try { dom.releasePointerCapture(e.pointerId); } catch (_) {} } };
     dom.addEventListener('pointerup', end);
