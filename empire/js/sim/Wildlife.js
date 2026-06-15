@@ -1,5 +1,5 @@
 // ===== Дичь и охота: звери бродят/убегают, наши юниты их добывают (еда + шкуры) =====
-import { ANIMALS } from '../data/animals.js?v=24';
+import { ANIMALS } from '../data/animals.js?v=25';
 
 const COUNT = 14;        // желаемое поголовье на карте
 const RESPAWN = 26;      // сек между респаунами (до COUNT)

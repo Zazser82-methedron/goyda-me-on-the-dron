@@ -1,41 +1,41 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=24';
-import { RTSCamera } from './engine/RTSCamera.js?v=24';
-import { Picker } from './engine/Picker.js?v=24';
-import { Loop } from './engine/Loop.js?v=24';
-import { AssetManager } from './engine/AssetManager.js?v=24';
-import { TerrainMesh } from './world/TerrainMesh.js?v=24';
-import { WorldBase } from './world/WorldBase.js?v=24';
-import { Sky } from './world/Sky.js?v=24';
+import { Renderer } from './engine/Renderer.js?v=25';
+import { RTSCamera } from './engine/RTSCamera.js?v=25';
+import { Picker } from './engine/Picker.js?v=25';
+import { Loop } from './engine/Loop.js?v=25';
+import { AssetManager } from './engine/AssetManager.js?v=25';
+import { TerrainMesh } from './world/TerrainMesh.js?v=25';
+import { WorldBase } from './world/WorldBase.js?v=25';
+import { Sky } from './world/Sky.js?v=25';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=24';
-import { GameState } from './sim/GameState.js?v=24';
-import * as Economy from './sim/Economy.js?v=24';
-import * as BuildSys from './sim/Buildings.js?v=24';
-import * as Waves from './sim/Waves.js?v=24';
-import * as Tech from './sim/Tech.js?v=24';
-import * as Nature from './sim/Nature.js?v=24';
-import * as Relics from './sim/Relics.js?v=24';
-import * as Camps from './sim/Camps.js?v=24';
-import * as Wildlife from './sim/Wildlife.js?v=24';
-import * as Research from './sim/Research.js?v=24';
-import { updateUnits, damage } from './sim/Units.js?v=24';
-import { toggleEdict } from './sim/Edicts.js?v=24';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=24';
-import { HUD } from './ui/HUD.js?v=24';
-import { BuildMenu } from './ui/BuildMenu.js?v=24';
-import { Selection } from './ui/Selection.js?v=24';
-import { Minimap } from './ui/Minimap.js?v=24';
-import { ResearchPanel } from './ui/Research.js?v=24';
-import { Toasts } from './ui/Toasts.js?v=24';
-import { BUILDINGS } from './data/buildings.js?v=24';
-import { RANKS } from './data/ranks.js?v=24';
-import { bark } from './data/barks.js?v=24';
-import { STORAGE_KEY } from './data/config.js?v=24';
-import { getFaction } from './data/factions.js?v=24';
-import { getMap } from './data/maps.js?v=24';
-import { StartScreen } from './ui/StartScreen.js?v=24';
+import { nearestAdj } from './world/Pathfinding.js?v=25';
+import { GameState } from './sim/GameState.js?v=25';
+import * as Economy from './sim/Economy.js?v=25';
+import * as BuildSys from './sim/Buildings.js?v=25';
+import * as Waves from './sim/Waves.js?v=25';
+import * as Tech from './sim/Tech.js?v=25';
+import * as Nature from './sim/Nature.js?v=25';
+import * as Relics from './sim/Relics.js?v=25';
+import * as Camps from './sim/Camps.js?v=25';
+import * as Wildlife from './sim/Wildlife.js?v=25';
+import * as Research from './sim/Research.js?v=25';
+import { updateUnits, damage } from './sim/Units.js?v=25';
+import { toggleEdict } from './sim/Edicts.js?v=25';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=25';
+import { HUD } from './ui/HUD.js?v=25';
+import { BuildMenu } from './ui/BuildMenu.js?v=25';
+import { Selection } from './ui/Selection.js?v=25';
+import { Minimap } from './ui/Minimap.js?v=25';
+import { ResearchPanel } from './ui/Research.js?v=25';
+import { Toasts } from './ui/Toasts.js?v=25';
+import { BUILDINGS } from './data/buildings.js?v=25';
+import { RANKS } from './data/ranks.js?v=25';
+import { bark } from './data/barks.js?v=25';
+import { STORAGE_KEY } from './data/config.js?v=25';
+import { getFaction } from './data/factions.js?v=25';
+import { getMap } from './data/maps.js?v=25';
+import { StartScreen } from './ui/StartScreen.js?v=25';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -378,7 +378,7 @@ class Game {
   train(b, uk) { BuildSys.queueTrain(this.state, b, uk, this.ctx); }
   toggleEdictUI(key) { toggleEdict(this.state, key, this.ctx); }
   setStance(u, st) { u.stance = st; u.path = null; u.moveOrder = null; sfx('click'); }
-  research(key) { Research.buy(this.state, key, this.ctx); this.researchUI.refresh(); this.hud.update(); }
+  research(key) { Research.buy(this.state, key, this.ctx); this.researchUI.refresh(); this.menu.update(); this.hud.update(); }
 
   activateSuper() {
     const s = this.state;

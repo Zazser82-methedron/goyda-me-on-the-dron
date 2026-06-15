@@ -1,8 +1,9 @@
 // ===== Нижняя панель: кнопки построек (призрак-размещение) + указы =====
-import { BUILDINGS, BUILD_ORDER } from '../data/buildings.js?v=24';
-import { RANKS } from '../data/ranks.js?v=24';
-import { RES_LABEL } from '../data/config.js?v=24';
-import { EDICTS } from '../sim/Edicts.js?v=24';
+import { BUILDINGS, BUILD_ORDER } from '../data/buildings.js?v=25';
+import { RANKS } from '../data/ranks.js?v=25';
+import { RES_LABEL } from '../data/config.js?v=25';
+import { EDICTS } from '../sim/Edicts.js?v=25';
+import { TECHS } from '../data/tech.js?v=25';
 
 export function costStr(cost) {
   const keys = Object.keys(cost || {});
@@ -29,7 +30,9 @@ export class BuildMenu {
       b.innerHTML = `<span class="bi">${d.icon}</span><span class="bn">${d.name}</span><span class="bc">${costStr(d.cost)}</span>`;
       b.title = d.desc;
       b.onclick = () => {
-        if ((d.rank || 0) > this.game.state.rankIndex) { this.game.toasts.show('Откроется в ранге ' + RANKS[d.rank].name, { bad: true }); return; }
+        const s = this.game.state;
+        if ((d.rank || 0) > s.rankIndex) { this.game.toasts.show('Откроется в ранге ' + RANKS[d.rank].name, { bad: true }); return; }
+        if (d.requiresTech && !(s.research && s.research.done[d.requiresTech])) { this.game.toasts.show('Изучите технологию: ' + TECHS[d.requiresTech].name, { bad: true }); return; }
         this.game.enterBuild(kind);
       };
       this.btnsEl.appendChild(b);
@@ -55,7 +58,8 @@ export class BuildMenu {
     const s = this.game.state;
     for (const kind of BUILD_ORDER) {
       const d = BUILDINGS[kind], b = this._btn[kind];
-      const locked = (d.rank || 0) > s.rankIndex;
+      const techLock = d.requiresTech && !(s.research && s.research.done[d.requiresTech]);
+      const locked = (d.rank || 0) > s.rankIndex || techLock;
       const poor = !s.canAfford(d.cost);
       b.classList.toggle('locked', locked);
       b.classList.toggle('poor', !locked && poor);

@@ -2,7 +2,7 @@
 // Стиль повторяет идол-слой «Гойды»: flatShading, гекс-формы, эмиссивные руны.
 // Origin КАЖДОЙ модели — в центре основания (низ на y=0), модель растёт вверх.
 import * as THREE from 'three';
-import { PAL } from '../data/config.js?v=24';
+import { PAL } from '../data/config.js?v=25';
 
 const _mats = {};
 function mat(color, o = {}) {
@@ -335,11 +335,38 @@ function boar() {
   return g;
 }
 
+// ---- обсерватория (2×2): башня + купол + телескоп ----
+function observatory() {
+  const g = new THREE.Group();
+  const wall = mat(PAL.stoneLt), st = mat(PAL.stone), dome = mat(0x9aa6b2, { metal: 0.5, rough: 0.35 });
+  const lens = mat(0x081018, { emissive: PAL.faithCyan, emi: 2.0 });
+  g.add(cyl(0.75, 0.82, 1.0, 10, wall, 0, 0.5, 0));
+  g.add(cyl(0.86, 0.86, 0.12, 10, st, 0, 1.05, 0));
+  g.add(sph(0.72, dome, 0, 1.5, 0));
+  g.add(box(0.18, 0.7, 0.06, mat(0x10141c), 0, 1.55, 0.66));     // прорезь купола
+  const tube = cyl(0.07, 0.07, 0.6, 6, st, 0, 1.62, 0.5); tube.rotation.x = 0.6; g.add(tube);
+  g.add(sph(0.09, lens, 0, 1.82, 0.78));
+  return g;
+}
+
+// ---- сторожевая башня (1×1): зубцы + жаровня ----
+function tower() {
+  const g = new THREE.Group();
+  const st = mat(PAL.stone), dk = mat(PAL.rockDk), wd = mat(PAL.woodDk);
+  const fire = mat(0x200800, { emissive: 0xff6010, emi: 2.0 });
+  g.add(cyl(0.3, 0.36, 1.6, 8, st, 0, 0.8, 0));
+  g.add(cyl(0.37, 0.37, 0.1, 8, dk, 0, 1.6, 0));
+  for (let i = 0; i < 6; i++) { const a = i / 6 * 6.283; g.add(box(0.12, 0.18, 0.12, dk, Math.cos(a) * 0.32, 1.68, Math.sin(a) * 0.32)); }
+  g.add(box(0.22, 0.18, 0.22, fire, 0, 1.78, 0));
+  g.add(box(0.16, 0.3, 0.05, wd, 0, 0.15, 0.34));
+  return g;
+}
+
 const BUILDERS = {
   idol_dron: idol, bld_townhall: townhall, bld_izba: izba, bld_ambar: ambar, bld_roshcha: roshcha,
   enemy_camp: enemyCamp,
   bld_kuznica: kuznica, bld_kazarma: kazarma, bld_church: church, bld_market: market,
-  bld_ferma: ferma, bld_rudnik: rudnik, bld_zhila: zhila,
+  bld_ferma: ferma, bld_rudnik: rudnik, bld_zhila: zhila, bld_observatory: observatory, bld_tower: tower,
   bld_chastokol: chastokol, bld_chastokol_gate: chastokolGate,
   res_tree: tree, res_stone: stoneNode, res_ore: oreNode,
   unit_kholop: kholop, unit_ratnik: ratnik, unit_oprichnik: oprichnik, unit_bogatyr: bogatyr,

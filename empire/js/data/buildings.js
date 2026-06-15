@@ -65,6 +65,19 @@ export const BUILDINGS = {
     cost: { wood: 40, stone: 20, gold: 10 }, build: 6, produce: { gold: 5, happy: 1 },
     desc: 'Торговые ряды. +5 золота в день и точка сдачи.',
   },
+  observatory: {
+    kind: 'observatory', name: 'ОБСЕРВАТОРИЯ', icon: '🔭', model: 'bld_observatory',
+    w: 2, h: 2, hp: 240, cat: 'faith', rank: 2,
+    cost: { wood: 50, stone: 60, gold: 40, gems: 5 }, build: 8, produce: { faith: 5, happy: 1 },
+    desc: 'Открывает ВЫСШИЕ исследования 🔬 (СЕЧА/ЗАКАЛ/ФОРТИФИКАЦИЯ) и +5 ВЕРЫ в день.',
+  },
+  tower: {
+    kind: 'tower', name: 'СТОРОЖЕВАЯ БАШНЯ', icon: '🗼', model: 'bld_tower',
+    w: 1, h: 1, hp: 340, cat: 'def', rank: 2, requiresTech: 'fortifikaciya',
+    cost: { wood: 40, stone: 60, iron: 10 }, build: 6,
+    aura: { radius: 7, tick: 1.0, effect: 'aoe', power: 14 },
+    desc: 'Бьёт врагов в радиусе. Нужна технология ФОРТИФИКАЦИЯ (через обсерваторию).',
+  },
   ferma: {
     kind: 'ferma', name: 'ФЕРМА', icon: '🌻', model: 'bld_ferma',
     w: 2, h: 2, hp: 150, cat: 'econ', rank: 0,
@@ -149,7 +162,7 @@ export const BUILDINGS = {
 };
 
 // порядок в меню постройки
-export const BUILD_ORDER = ['izba', 'ambar', 'ferma', 'roshcha', 'rudnik', 'zhila', 'kuznica', 'kazarma', 'chastokol', 'gate', 'church', 'market',
+export const BUILD_ORDER = ['izba', 'ambar', 'ferma', 'roshcha', 'rudnik', 'zhila', 'kuznica', 'kazarma', 'chastokol', 'gate', 'tower', 'church', 'observatory', 'market',
   'rel_shipo', 'rel_krio', 'rel_obereg', 'rel_giper', 'rel_goydushka', 'rel_zlato', 'rel_fonk', 'rel_vera', 'rel_samotsvet', 'idol'];
 
 export const CATS = {

@@ -7,8 +7,10 @@ export const TECHS = {
   plodovitost: { name: 'ПЛОДОВИТОСТЬ', icon: '👥', rank: 1, cost: { food: 60, faith: 20 },    apply: { popBonus: 4 },     desc: '+4 к лимиту народа' },
   bronya:   { name: 'БРОНЯ',         icon: '🛡️', rank: 1, cost: { iron: 20, stone: 40 },       apply: { hpMul: 0.25 },     desc: '+25% HP новым воинам' },
   dogmat:   { name: 'ДОГМАТ',        icon: '☩',  rank: 2, cost: { faith: 30, gold: 20 },       apply: { faithDay: 3 },     desc: '+3 ВЕРЫ в день' },
-  secha:    { name: 'СЕЧА',          icon: '⚔️', rank: 2, cost: { iron: 25, gold: 30 },         apply: { dmgMul: 0.20 },    desc: '+20% урона воинов' },
-  zakal:    { name: 'ЗАКАЛ',         icon: '🏃', rank: 2, cost: { iron: 15, food: 30 },         apply: { spdMul: 0.12 },    desc: '+12% скорости новым воинам' },
+  // ВЫСШИЕ исследования — требуют ОБСЕРВАТОРИЮ
+  secha:    { name: 'СЕЧА',          icon: '⚔️', rank: 2, requiresBuilding: 'observatory', cost: { iron: 25, gold: 30 }, apply: { dmgMul: 0.20 }, desc: '+20% урона воинов' },
+  zakal:    { name: 'ЗАКАЛ',         icon: '🏃', rank: 2, requiresBuilding: 'observatory', cost: { iron: 15, food: 30 }, apply: { spdMul: 0.12 }, desc: '+12% скорости новым воинам' },
+  fortifikaciya: { name: 'ФОРТИФИКАЦИЯ', icon: '🗼', rank: 2, requiresBuilding: 'observatory', cost: { stone: 60, iron: 20 }, apply: {}, unlocksBuilding: 'tower', desc: 'Открывает СТОРОЖЕВУЮ БАШНЮ (бьёт врагов).' },
 };
 
-export const TECH_ORDER = ['strada', 'zhnivo', 'lihva', 'plodovitost', 'bronya', 'dogmat', 'secha', 'zakal'];
+export const TECH_ORDER = ['strada', 'zhnivo', 'lihva', 'plodovitost', 'bronya', 'dogmat', 'secha', 'zakal', 'fortifikaciya'];

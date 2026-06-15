@@ -1,6 +1,7 @@
 // ===== Панель исследований (древо технологий) =====
-import { TECHS, TECH_ORDER } from '../data/tech.js?v=24';
-import { costStr } from './BuildMenu.js?v=24';
+import { TECHS, TECH_ORDER } from '../data/tech.js?v=25';
+import { BUILDINGS } from '../data/buildings.js?v=25';
+import { costStr } from './BuildMenu.js?v=25';
 
 export class ResearchPanel {
   constructor(game) {
@@ -23,13 +24,16 @@ export class ResearchPanel {
     for (const k of TECH_ORDER) {
       const t = TECHS[k];
       const done = R.done && R.done[k];
-      const locked = (t.rank || 0) > s.rankIndex;
+      const rankLock = (t.rank || 0) > s.rankIndex;
+      const bldLock = t.requiresBuilding && !s.hasBuilt(t.requiresBuilding);
+      const locked = rankLock || bldLock;
       const poor = !done && !locked && !s.canAfford(t.cost);
       const cls = done ? 'done' : locked ? 'locked' : poor ? 'poor' : '';
+      const costLbl = done ? '✓ изучено' : bldLock ? '🔒 ' + BUILDINGS[t.requiresBuilding].icon : rankLock ? '🔒 ранг ' + t.rank : costStr(t.cost);
       html += `<button class="rsbtn ${cls}" data-t="${k}" ${done || locked ? 'disabled' : ''}>
         <span class="rs-ic">${t.icon}</span>
         <span class="rs-mid"><b>${t.name}</b><i>${t.desc}</i></span>
-        <span class="rs-cost">${done ? '✓ изучено' : (locked ? '🔒 ранг ' + t.rank : costStr(t.cost))}</span></button>`;
+        <span class="rs-cost">${costLbl}</span></button>`;
     }
     html += '</div><div class="rs-hint">Каждая технология — один раз навсегда.</div>';
     this.el.innerHTML = html;
