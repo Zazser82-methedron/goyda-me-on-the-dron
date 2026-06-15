@@ -1,9 +1,9 @@
 // ===== Нижняя панель: кнопки построек (призрак-размещение) + указы =====
-import { BUILDINGS, BUILD_ORDER } from '../data/buildings.js?v=25';
-import { RANKS } from '../data/ranks.js?v=25';
-import { RES_LABEL } from '../data/config.js?v=25';
-import { EDICTS } from '../sim/Edicts.js?v=25';
-import { TECHS } from '../data/tech.js?v=25';
+import { BUILDINGS, BUILD_ORDER } from '../data/buildings.js?v=26';
+import { RANKS } from '../data/ranks.js?v=26';
+import { RES_LABEL } from '../data/config.js?v=26';
+import { EDICTS } from '../sim/Edicts.js?v=26';
+import { TECHS } from '../data/tech.js?v=26';
 
 export function costStr(cost) {
   const keys = Object.keys(cost || {});
@@ -60,9 +60,14 @@ export class BuildMenu {
       const d = BUILDINGS[kind], b = this._btn[kind];
       const techLock = d.requiresTech && !(s.research && s.research.done[d.requiresTech]);
       const locked = (d.rank || 0) > s.rankIndex || techLock;
-      const poor = !s.canAfford(d.cost);
+      // антидребезг доступности: ресурсы скачут у границы цены (добытчики сбрасывают рывками) →
+      // меняем «бедную» подсветку, только если состояние держится несколько тиков (≈0.4с), иначе мигает.
+      const afford = s.canAfford(d.cost);
+      if (b._affShow === undefined) { b._affShow = afford; b._affCnt = 0; }
+      if (afford === b._affShow) b._affCnt = 0;
+      else if (++b._affCnt >= 4) { b._affShow = afford; b._affCnt = 0; }
       b.classList.toggle('locked', locked);
-      b.classList.toggle('poor', !locked && poor);
+      b.classList.toggle('poor', !locked && !b._affShow);
       b.classList.toggle('active', this.game.buildKind === kind);
     }
     for (const e of EDICTS) this._ed[e.key].classList.toggle('on', !!(s.edicts && s.edicts[e.key]));
