@@ -32,6 +32,8 @@
   transition:all .15s; text-transform:uppercase;
 }
 .topbtn.icon{ padding:7px 10px; font-size:15px; }
+#fogBtn.on{ border-color:var(--gold); box-shadow:inset 0 0 6px rgba(255,204,0,.35); }
+#fogBtn:not(.on){ opacity:.45; }
 .topbtn:hover{ border-color:var(--gold); background:#200802; }
 #superBtn.ready{ background:linear-gradient(135deg,#aa6a00,var(--gold)); color:#000; box-shadow:0 0 16px rgba(255,204,0,.6); animation:pulseGold 1.2s ease-in-out infinite; }
 #superBtn.active{ background:linear-gradient(135deg,var(--red),#ff5030); color:#fff; box-shadow:0 0 18px rgba(255,40,30,.7); }

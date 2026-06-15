@@ -2,7 +2,7 @@
 // Стиль повторяет идол-слой «Гойды»: flatShading, гекс-формы, эмиссивные руны.
 // Origin КАЖДОЙ модели — в центре основания (низ на y=0), модель растёт вверх.
 import * as THREE from 'three';
-import { PAL } from '../data/config.js?v=13';
+import { PAL } from '../data/config.js?v=14';
 
 const _mats = {};
 function mat(color, o = {}) {

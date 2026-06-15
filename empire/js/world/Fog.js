@@ -1,6 +1,6 @@
 // ===== Туман войны: видимость вокруг своих + оверлей-меш по рельефу =====
 import * as THREE from 'three';
-import { TILE } from '../data/config.js?v=13';
+import { TILE } from '../data/config.js?v=14';
 
 export class Fog {
   constructor(scene, grid) {
@@ -41,8 +41,13 @@ export class Fog {
     scene.add(this.mesh);
 
     this._t = 0;
-    this._fill(255);  // старт: всё в тумане
+    this.enabled = true;          // тумблер (кнопка 🌫️)
+    this.UNSEEN = 188;            // мягче, чем глухая чернота 255
+    this._fill(this.UNSEEN);      // старт: всё в (мягком) тумане
   }
+
+  // вкл/выкл оверлей; тайлы не трогаем — разведанное остаётся видимым
+  toggle() { this.enabled = !this.enabled; this.mesh.visible = this.enabled; return this.enabled; }
 
   _fill(a) {
     const n = this.grid.n;
@@ -51,34 +56,40 @@ export class Fog {
     this.tex.needsUpdate = true;
   }
 
-  // пересчёт видимости + перерисовка (троттлинг ~4/сек)
+  // разведываем диски вокруг своих; разведанное НАВСЕГДА видно (не гасим обратно).
+  // перерисовываем канвас только когда открылись новые тайлы — дёшево в лейте.
   update(state, dt) {
-    this._t += dt; if (this._t < 0.25) return; this._t = 0;
+    if (!this.enabled) return;
+    this._t += dt; if (this._t < 0.3) return; this._t = 0;
     const g = this.grid, n = g.n;
-    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) g.tiles[y][x].visible = false;
+    let dirty = false;
     const stamp = (cx, cy, r) => {
       const r2 = r * r;
       for (let y = Math.max(0, cy - r); y <= Math.min(n - 1, cy + r); y++) {
         for (let x = Math.max(0, cx - r); x <= Math.min(n - 1, cx + r); x++) {
           const dx = x - cx, dy = y - cy;
-          if (dx * dx + dy * dy <= r2) { const t = g.tiles[y][x]; t.visible = true; t.explored = true; }
+          if (dx * dx + dy * dy <= r2) {
+            const t = g.tiles[y][x]; t.visible = true;
+            if (!t.explored) { t.explored = true; dirty = true; }
+          }
         }
       }
     };
-    for (const b of state.buildings) stamp(b.gx + (b.w >> 1), b.gy + (b.h >> 1), b.kind === 'townhall' ? 14 : (b.kind === 'idol' ? 16 : 9));
-    for (const u of state.units) if (u.faction === 'ours') { const gp = g.worldToGrid(u.x, u.z); stamp(gp.x, gp.y, 7); }
-    this._redraw();
+    // радиусы обзора заметно больше — туман уже не давит
+    for (const b of state.buildings) stamp(b.gx + (b.w >> 1), b.gy + (b.h >> 1), b.kind === 'townhall' ? 20 : (b.kind === 'idol' ? 22 : 13));
+    for (const u of state.units) if (u.faction === 'ours') { const gp = g.worldToGrid(u.x, u.z); stamp(gp.x, gp.y, 11); }
+    if (dirty) this._redraw();
   }
 
   _redraw() {
-    const g = this.grid, n = g.n;
+    const g = this.grid, n = g.n, u = this.UNSEEN;
     const img = this.cctx.createImageData(n, n);
     const d = img.data;
     for (let y = 0; y < n; y++) {
       for (let x = 0; x < n; x++) {
         const t = g.tiles[y][x]; const i = (y * n + x) * 4;
         d[i] = 7; d[i + 1] = 5; d[i + 2] = 16;
-        d[i + 3] = t.visible ? 0 : t.explored ? 120 : 255;
+        d[i + 3] = t.explored ? 0 : u;   // разведано → прозрачно навсегда; иначе мягкий туман
       }
     }
     this.cctx.putImageData(img, 0, 0);

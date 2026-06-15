@@ -1,37 +1,37 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=13';
-import { RTSCamera } from './engine/RTSCamera.js?v=13';
-import { Picker } from './engine/Picker.js?v=13';
-import { Loop } from './engine/Loop.js?v=13';
-import { AssetManager } from './engine/AssetManager.js?v=13';
-import { TerrainMesh } from './world/TerrainMesh.js?v=13';
-import { Fog } from './world/Fog.js?v=13';
-import { WorldBase } from './world/WorldBase.js?v=13';
-import { nearestAdj } from './world/Pathfinding.js?v=13';
-import { GameState } from './sim/GameState.js?v=13';
-import * as Economy from './sim/Economy.js?v=13';
-import * as BuildSys from './sim/Buildings.js?v=13';
-import * as Waves from './sim/Waves.js?v=13';
-import * as Tech from './sim/Tech.js?v=13';
-import * as Nature from './sim/Nature.js?v=13';
-import * as Relics from './sim/Relics.js?v=13';
-import * as Camps from './sim/Camps.js?v=13';
-import { updateUnits, damage } from './sim/Units.js?v=13';
-import { toggleEdict } from './sim/Edicts.js?v=13';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=13';
-import { HUD } from './ui/HUD.js?v=13';
-import { BuildMenu } from './ui/BuildMenu.js?v=13';
-import { Selection } from './ui/Selection.js?v=13';
-import { Minimap } from './ui/Minimap.js?v=13';
-import { Toasts } from './ui/Toasts.js?v=13';
-import { BUILDINGS } from './data/buildings.js?v=13';
-import { RANKS } from './data/ranks.js?v=13';
-import { bark } from './data/barks.js?v=13';
-import { STORAGE_KEY } from './data/config.js?v=13';
-import { getFaction } from './data/factions.js?v=13';
-import { getMap } from './data/maps.js?v=13';
-import { StartScreen } from './ui/StartScreen.js?v=13';
+import { Renderer } from './engine/Renderer.js?v=14';
+import { RTSCamera } from './engine/RTSCamera.js?v=14';
+import { Picker } from './engine/Picker.js?v=14';
+import { Loop } from './engine/Loop.js?v=14';
+import { AssetManager } from './engine/AssetManager.js?v=14';
+import { TerrainMesh } from './world/TerrainMesh.js?v=14';
+import { Fog } from './world/Fog.js?v=14';
+import { WorldBase } from './world/WorldBase.js?v=14';
+import { nearestAdj } from './world/Pathfinding.js?v=14';
+import { GameState } from './sim/GameState.js?v=14';
+import * as Economy from './sim/Economy.js?v=14';
+import * as BuildSys from './sim/Buildings.js?v=14';
+import * as Waves from './sim/Waves.js?v=14';
+import * as Tech from './sim/Tech.js?v=14';
+import * as Nature from './sim/Nature.js?v=14';
+import * as Relics from './sim/Relics.js?v=14';
+import * as Camps from './sim/Camps.js?v=14';
+import { updateUnits, damage } from './sim/Units.js?v=14';
+import { toggleEdict } from './sim/Edicts.js?v=14';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=14';
+import { HUD } from './ui/HUD.js?v=14';
+import { BuildMenu } from './ui/BuildMenu.js?v=14';
+import { Selection } from './ui/Selection.js?v=14';
+import { Minimap } from './ui/Minimap.js?v=14';
+import { Toasts } from './ui/Toasts.js?v=14';
+import { BUILDINGS } from './data/buildings.js?v=14';
+import { RANKS } from './data/ranks.js?v=14';
+import { bark } from './data/barks.js?v=14';
+import { STORAGE_KEY } from './data/config.js?v=14';
+import { getFaction } from './data/factions.js?v=14';
+import { getMap } from './data/maps.js?v=14';
+import { StartScreen } from './ui/StartScreen.js?v=14';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -236,6 +236,7 @@ class Game {
     });
     cv.addEventListener('pointermove', (e) => {
       this.picker.setFromEvent(e);
+      this._pointerMoved = true;
       if (this.placing && this.buildKind && BUILDINGS[this.buildKind].wall) this._placeAt(true);
     });
     window.addEventListener('pointerup', () => { this.placing = false; });
@@ -247,6 +248,8 @@ class Game {
     const mb = document.getElementById('muteBtn');
     mb.textContent = isMuted() ? '🔇' : '🔊';
     mb.onclick = () => { const m = toggleMute(); mb.textContent = m ? '🔇' : '🔊'; if (!m) sfx('click'); };
+    const fb = document.getElementById('fogBtn');
+    if (fb) fb.onclick = () => { const on = this.fog ? this.fog.toggle() : false; fb.classList.toggle('on', on); fb.title = on ? 'Туман войны: ВКЛ' : 'Туман войны: ВЫКЛ'; sfx('click'); };
     const rb = document.getElementById('restartBtn');
     if (rb) rb.onclick = () => this.restart();
     const lb = document.getElementById('lobbyBtn');
@@ -414,7 +417,7 @@ class Game {
       if (u.atkAnim > 0) { u.atkAnim -= fdt; fwd = Math.sin((1 - Math.max(0, u.atkAnim) / 0.2) * Math.PI) * 0.16; }
       v.position.set(ix + Math.sin(u.dir) * fwd, this.state.grid.heightAt(ix, iz) + bob, iz + Math.cos(u.dir) * fwd);
       v.rotation.y = u.dir || 0;
-      if (u.faction === 'enemy') { const gp = this.state.grid.worldToGrid(u.x, u.z); const t = this.state.grid.get(gp.x, gp.y); v.visible = !t || t.visible; }   // прячем врага в тумане
+      if (u.faction === 'enemy') { const gp = this.state.grid.worldToGrid(u.x, u.z); const t = this.state.grid.get(gp.x, gp.y); v.visible = !this.fog || !this.fog.enabled || !t || t.visible; }   // прячем врага в тумане
     }
     // эффекты смерти (падение+уменьшение)
     for (let i = this.state.fx.length - 1; i >= 0; i--) {
@@ -429,7 +432,7 @@ class Game {
     for (const b of this.state.buildings) {
       if (b._hit > 0) { b._hit -= fdt; const j = b._hit > 0 ? (Math.random() - 0.5) * 0.06 : 0; b.view.position.set(b.cx + j, b.cy || 0, b.cz + j); }
     }
-    for (const cp of this.state.camps) { const t = this.state.grid.get(cp.gx, cp.gy); cp.view.visible = !t || t.explored; }   // станы видны только разведанными
+    for (const cp of this.state.camps) { const t = this.state.grid.get(cp.gx, cp.gy); cp.view.visible = !this.fog || !this.fog.enabled || !t || t.explored; }   // станы видны только разведанными
     // «сердце» базы — свет
     const s = this.state;
     const pulse = 0.12 + Math.sin(now * 0.004) * 0.05;
@@ -462,8 +465,11 @@ class Game {
       } else this.terrain.hideGhost();
       this.terrain.setHover(null);
     } else {
-      // подсветка зависит от того, что под курсором: ресурс — циан, свой юнит — зелёный, иначе золото
-      const ent = this._entUnder();
+      // подсветка зависит от того, что под курсором: ресурс — циан, свой юнит — зелёный, иначе золото.
+      // райкаст по сущностям дорогой в лейте → считаем только когда курсор сдвинулся (иначе берём кэш)
+      this._hf = (this._hf || 0) + 1;
+      if (this._pointerMoved || (this._hf & 7) === 0) { this._hoverEnt = this._entUnder(); this._pointerMoved = false; }
+      const ent = this._hoverEnt;
       if (ent && ent.type === 'node') this.terrain.setHover(this.state.grid.get(ent.gx, ent.gy), 0x00eeff);
       else if (ent && ent.type === 'unit' && ent.faction === 'ours') this.terrain.setHover(tile, 0x5eff8b);
       else this.terrain.setHover(tile, 0xffcc00);
