@@ -1,36 +1,37 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=8';
-import { RTSCamera } from './engine/RTSCamera.js?v=8';
-import { Picker } from './engine/Picker.js?v=8';
-import { Loop } from './engine/Loop.js?v=8';
-import { AssetManager } from './engine/AssetManager.js?v=8';
-import { TerrainMesh } from './world/TerrainMesh.js?v=8';
-import { Fog } from './world/Fog.js?v=8';
-import { nearestAdj } from './world/Pathfinding.js?v=8';
-import { GameState } from './sim/GameState.js?v=8';
-import * as Economy from './sim/Economy.js?v=8';
-import * as BuildSys from './sim/Buildings.js?v=8';
-import * as Waves from './sim/Waves.js?v=8';
-import * as Tech from './sim/Tech.js?v=8';
-import * as Nature from './sim/Nature.js?v=8';
-import * as CardsSys from './sim/Cards.js?v=8';
-import { updateUnits } from './sim/Units.js?v=8';
-import { toggleEdict } from './sim/Edicts.js?v=8';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=8';
-import { HUD } from './ui/HUD.js?v=8';
-import { BuildMenu } from './ui/BuildMenu.js?v=8';
-import { Selection } from './ui/Selection.js?v=8';
-import { Minimap } from './ui/Minimap.js?v=8';
-import { Toasts } from './ui/Toasts.js?v=8';
-import { Cards } from './ui/Cards.js?v=8';
-import { BUILDINGS } from './data/buildings.js?v=8';
-import { RANKS } from './data/ranks.js?v=8';
-import { bark } from './data/barks.js?v=8';
-import { STORAGE_KEY } from './data/config.js?v=8';
-import { getFaction } from './data/factions.js?v=8';
-import { getMap } from './data/maps.js?v=8';
-import { StartScreen } from './ui/StartScreen.js?v=8';
+import { Renderer } from './engine/Renderer.js?v=9';
+import { RTSCamera } from './engine/RTSCamera.js?v=9';
+import { Picker } from './engine/Picker.js?v=9';
+import { Loop } from './engine/Loop.js?v=9';
+import { AssetManager } from './engine/AssetManager.js?v=9';
+import { TerrainMesh } from './world/TerrainMesh.js?v=9';
+import { Fog } from './world/Fog.js?v=9';
+import { WorldBase } from './world/WorldBase.js?v=9';
+import { nearestAdj } from './world/Pathfinding.js?v=9';
+import { GameState } from './sim/GameState.js?v=9';
+import * as Economy from './sim/Economy.js?v=9';
+import * as BuildSys from './sim/Buildings.js?v=9';
+import * as Waves from './sim/Waves.js?v=9';
+import * as Tech from './sim/Tech.js?v=9';
+import * as Nature from './sim/Nature.js?v=9';
+import * as CardsSys from './sim/Cards.js?v=9';
+import { updateUnits } from './sim/Units.js?v=9';
+import { toggleEdict } from './sim/Edicts.js?v=9';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=9';
+import { HUD } from './ui/HUD.js?v=9';
+import { BuildMenu } from './ui/BuildMenu.js?v=9';
+import { Selection } from './ui/Selection.js?v=9';
+import { Minimap } from './ui/Minimap.js?v=9';
+import { Toasts } from './ui/Toasts.js?v=9';
+import { Cards } from './ui/Cards.js?v=9';
+import { BUILDINGS } from './data/buildings.js?v=9';
+import { RANKS } from './data/ranks.js?v=9';
+import { bark } from './data/barks.js?v=9';
+import { STORAGE_KEY } from './data/config.js?v=9';
+import { getFaction } from './data/factions.js?v=9';
+import { getMap } from './data/maps.js?v=9';
+import { StartScreen } from './ui/StartScreen.js?v=9';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -144,6 +145,7 @@ class Game {
     this.state.grid.generateTerrain(map.terr, map.key);   // рельеф (высоты/биомы/реки)
     this.terrain = new TerrainMesh(this.scene, this.state.grid, map.pal);
     this.fog = new Fog(this.scene, this.state.grid);       // туман войны
+    this.worldBase = new WorldBase(this.scene, this.state.grid);   // плита на слонах+черепахе
   }
 
   _begin(restored) {

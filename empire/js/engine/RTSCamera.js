@@ -1,6 +1,6 @@
 // ===== RTS-камера: пан по XZ, орбита (ПКМ/Q-E), зум колесом, сглаживание =====
 import * as THREE from 'three';
-import { GRID_N, TILE } from '../data/config.js?v=8';
+import { GRID_N, TILE } from '../data/config.js?v=9';
 
 export class RTSCamera {
   constructor(dom) {
@@ -20,7 +20,7 @@ export class RTSCamera {
     this._polar = this.polar;
 
     this.minRadius = 8; this.maxRadius = 200;
-    this.minPolar = 0.12; this.maxPolar = 1.15;
+    this.minPolar = 0.12; this.maxPolar = 1.42;   // ниже наклон — видно край мира и слонов
     this.limit = GRID_N * TILE * 0.5 + 6;   // предел панорамирования под карту
 
     this.keys = {};
