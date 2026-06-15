@@ -5,6 +5,7 @@
   position:absolute; top:0; left:0; right:0; height:48px; display:flex; align-items:center; gap:14px;
   padding:0 12px; background:linear-gradient(180deg,rgba(10,4,1,.95),rgba(10,4,1,.4));
   border-bottom:1.5px solid var(--panel-br); z-index:50; font-size:14px; flex-wrap:nowrap; overflow:hidden;
+  transform:translateZ(0); will-change:transform;
 }
 #res{ display:flex; gap:10px; }
 .chip{ display:inline-flex; align-items:center; gap:4px; font-weight:900; font-size:15px; }
@@ -71,8 +72,10 @@
 #bottombar{
   position:absolute; left:0; right:0; bottom:24px; display:flex; gap:10px; align-items:flex-end;
   padding:0 12px; z-index:40; flex-wrap:wrap;
+  transform:translateZ(0); will-change:transform;   /* свой GPU-слой → не перерисовывается с канвасом (анти-мерцание) */
 }
 #buildbtns{ display:flex; gap:6px; flex-wrap:wrap; max-width:72vw; }
+.bbtn{ backface-visibility:hidden; }
 .bbtn{
   width:84px; min-height:66px; background:#190b03; border:1.5px solid var(--panel-br);
   border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;

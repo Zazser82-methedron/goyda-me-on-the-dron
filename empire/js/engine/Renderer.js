@@ -1,11 +1,12 @@
 // ===== Three.js рендерер, сцена, свет, туман — настроение идол-слоя «Гойды» =====
 import * as THREE from 'three';
-import { PAL } from '../data/config.js?v=27';
+import { PAL } from '../data/config.js?v=28';
 
 export class Renderer {
   constructor(canvas) {
-    // alpha:true — сквозь канвас виден CSS-градиент неба
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+    // alpha:false — канвас НЕПРОЗРАЧНЫЙ (небо рисует scene.background). Прозрачный канвас под
+    // пост-обработкой заставлял HUD-панели мерцать при перерисовке поверх канваса.
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
