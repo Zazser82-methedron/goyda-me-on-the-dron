@@ -1,47 +1,49 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=18';
-import { RTSCamera } from './engine/RTSCamera.js?v=18';
-import { Picker } from './engine/Picker.js?v=18';
-import { Loop } from './engine/Loop.js?v=18';
-import { AssetManager } from './engine/AssetManager.js?v=18';
-import { TerrainMesh } from './world/TerrainMesh.js?v=18';
-import { Fog } from './world/Fog.js?v=18';
-import { WorldBase } from './world/WorldBase.js?v=18';
-import { Sky } from './world/Sky.js?v=18';
-import { nearestAdj } from './world/Pathfinding.js?v=18';
-import { GameState } from './sim/GameState.js?v=18';
-import * as Economy from './sim/Economy.js?v=18';
-import * as BuildSys from './sim/Buildings.js?v=18';
-import * as Waves from './sim/Waves.js?v=18';
-import * as Tech from './sim/Tech.js?v=18';
-import * as Nature from './sim/Nature.js?v=18';
-import * as Relics from './sim/Relics.js?v=18';
-import * as Camps from './sim/Camps.js?v=18';
-import * as Wildlife from './sim/Wildlife.js?v=18';
-import * as Research from './sim/Research.js?v=18';
-import { updateUnits, damage } from './sim/Units.js?v=18';
-import { toggleEdict } from './sim/Edicts.js?v=18';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=18';
-import { HUD } from './ui/HUD.js?v=18';
-import { BuildMenu } from './ui/BuildMenu.js?v=18';
-import { Selection } from './ui/Selection.js?v=18';
-import { Minimap } from './ui/Minimap.js?v=18';
-import { ResearchPanel } from './ui/Research.js?v=18';
-import { Toasts } from './ui/Toasts.js?v=18';
-import { BUILDINGS } from './data/buildings.js?v=18';
-import { RANKS } from './data/ranks.js?v=18';
-import { bark } from './data/barks.js?v=18';
-import { STORAGE_KEY } from './data/config.js?v=18';
-import { getFaction } from './data/factions.js?v=18';
-import { getMap } from './data/maps.js?v=18';
-import { StartScreen } from './ui/StartScreen.js?v=18';
+import { Renderer } from './engine/Renderer.js?v=19';
+import { RTSCamera } from './engine/RTSCamera.js?v=19';
+import { Picker } from './engine/Picker.js?v=19';
+import { Loop } from './engine/Loop.js?v=19';
+import { AssetManager } from './engine/AssetManager.js?v=19';
+import { TerrainMesh } from './world/TerrainMesh.js?v=19';
+import { Fog } from './world/Fog.js?v=19';
+import { WorldBase } from './world/WorldBase.js?v=19';
+import { Sky } from './world/Sky.js?v=19';
+import { nearestAdj } from './world/Pathfinding.js?v=19';
+import { GameState } from './sim/GameState.js?v=19';
+import * as Economy from './sim/Economy.js?v=19';
+import * as BuildSys from './sim/Buildings.js?v=19';
+import * as Waves from './sim/Waves.js?v=19';
+import * as Tech from './sim/Tech.js?v=19';
+import * as Nature from './sim/Nature.js?v=19';
+import * as Relics from './sim/Relics.js?v=19';
+import * as Camps from './sim/Camps.js?v=19';
+import * as Wildlife from './sim/Wildlife.js?v=19';
+import * as Research from './sim/Research.js?v=19';
+import { updateUnits, damage } from './sim/Units.js?v=19';
+import { toggleEdict } from './sim/Edicts.js?v=19';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=19';
+import { HUD } from './ui/HUD.js?v=19';
+import { BuildMenu } from './ui/BuildMenu.js?v=19';
+import { Selection } from './ui/Selection.js?v=19';
+import { Minimap } from './ui/Minimap.js?v=19';
+import { ResearchPanel } from './ui/Research.js?v=19';
+import { Toasts } from './ui/Toasts.js?v=19';
+import { BUILDINGS } from './data/buildings.js?v=19';
+import { RANKS } from './data/ranks.js?v=19';
+import { bark } from './data/barks.js?v=19';
+import { STORAGE_KEY } from './data/config.js?v=19';
+import { getFaction } from './data/factions.js?v=19';
+import { getMap } from './data/maps.js?v=19';
+import { StartScreen } from './ui/StartScreen.js?v=19';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
   'bld_chastokol', 'bld_chastokol_gate', 'bld_church', 'bld_market',
   'res_tree', 'res_stone', 'res_ore', 'unit_kholop', 'unit_ratnik', 'unit_oprichnik',
   'enemy_raider', 'enemy_boss', 'enemy_camp',
+  // детальные идолы-реликвии (каждый со своим силуэтом, Blender GLB)
+  'idol_krio', 'idol_giper', 'idol_shipo', 'idol_obereg', 'idol_food', 'idol_gold', 'idol_fonk', 'idol_vera', 'idol_samotsvet',
 ];
 const ri = (a, b) => Math.floor(a + Math.random() * (b - a + 1));
 
