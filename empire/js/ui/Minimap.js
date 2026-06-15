@@ -51,7 +51,7 @@ export class Minimap {
 
   draw() {
     const s = this.game.state, g = s.grid, w = this.cv.width, sc = w / g.n, ctx = this.ctx;
-    const fogOff = !!(this.game.fog && !this.game.fog.enabled);
+    const fogOff = !this.game.fog || !this.game.fog.enabled;   // тумана нет → показываем всё
     const seen = (t) => t && (t.explored || fogOff);
     if (this.bgT > 0.9) { this._drawBg(fogOff); this.bgT = 0; }
     ctx.drawImage(this.bg, 0, 0);

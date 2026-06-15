@@ -127,7 +127,7 @@
 
 /* миникарта */
 #mini-wrap{
-  position:absolute; left:12px; bottom:120px; padding:5px; background:var(--panel);
+  position:absolute; right:12px; top:56px; padding:5px; background:var(--panel);
   border:1.5px solid var(--panel-br); border-radius:9px; z-index:45; box-shadow:0 8px 24px rgba(0,0,0,.6);
 }
 #minimap{ display:block; border-radius:5px; image-rendering:pixelated; cursor:pointer; }

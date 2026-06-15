@@ -1,6 +1,6 @@
 // ===== Мир-плита на слонах и черепахе в океане (лор «плоской земли») =====
 import * as THREE from 'three';
-import { TILE } from '../data/config.js?v=19';
+import { TILE } from '../data/config.js?v=20';
 
 const _m = {};
 function matStd(c, o = {}) { const k = c + '|' + (o.r ?? 1); if (!_m[k]) _m[k] = new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: o.r ?? 1, metalness: o.m ?? 0 }); return _m[k]; }
@@ -85,31 +85,29 @@ export class WorldBase {
     scene.add(this.group);
   }
 
-  // кольцо водопадов по краям плиты: вертикальные плоскости со скроллящейся текстурой струй
+  // короткие водопады у самой кромки: струи с пеной сверху, тают книзу (не «стеклянный куб»)
   _buildWaterfalls(top, ww) {
-    const cv = document.createElement('canvas'); cv.width = 64; cv.height = 256;
+    const cv = document.createElement('canvas'); cv.width = 64; cv.height = 128;
     const x = cv.getContext('2d');
-    x.fillStyle = 'rgba(150,225,255,0.0)'; x.fillRect(0, 0, 64, 256);
-    // вертикальные струи + затухание книзу
-    for (let i = 0; i < 22; i++) {
-      const px = Math.floor(Math.random() * 64), wd = 1 + Math.random() * 3;
-      const a = 0.35 + Math.random() * 0.4;
-      const g = x.createLinearGradient(0, 0, 0, 256);
-      g.addColorStop(0, 'rgba(225,248,255,' + a + ')');
-      g.addColorStop(0.6, 'rgba(170,228,255,' + (a * 0.7) + ')');
-      g.addColorStop(1, 'rgba(150,220,255,0)');
-      x.fillStyle = g; x.fillRect(px, 0, wd, 256);
+    // вертикальные струйки: пена сверху → прозрачно книзу
+    for (let i = 0; i < 28; i++) {
+      const px = Math.floor(Math.random() * 64), wd = 1 + Math.random() * 2.2;
+      const a = 0.4 + Math.random() * 0.4;
+      const g = x.createLinearGradient(0, 0, 0, 128);
+      g.addColorStop(0, 'rgba(255,255,255,' + Math.min(1, a + 0.3) + ')');   // пена-гребень
+      g.addColorStop(0.3, 'rgba(214,242,255,' + a + ')');
+      g.addColorStop(1, 'rgba(170,220,255,0)');                              // тает книзу
+      x.fillStyle = g; x.fillRect(px, 0, wd, 128);
     }
-    // лёгкие горизонтальные рябь-полоски
-    x.fillStyle = 'rgba(255,255,255,0.10)';
-    for (let j = 0; j < 256; j += 14) x.fillRect(0, j, 64, 2);
     const tex = new THREE.CanvasTexture(cv);
     tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(6, 3); tex.magFilter = THREE.LinearFilter;
+    tex.repeat.set(10, 1); tex.magFilter = THREE.LinearFilter;
     this._fallTex = tex;
 
-    const H = ww * 0.7, mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, side: THREE.DoubleSide, opacity: 0.92, fog: false });
-    const half = ww / 2, yC = top + 0.4 - H / 2;
+    const H = ww * 0.2;   // короткий каскад, не на всю высоту
+    const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, side: THREE.DoubleSide, opacity: 0.5, fog: false });
+    const foamMat = new THREE.MeshBasicMaterial({ color: 0xeaf6ff, transparent: true, opacity: 0.7, depthWrite: false, fog: false });
+    const half = ww / 2, yTop = top + 0.25, yC = yTop - H / 2;
     const edges = [
       { x: 0, z: half, ry: 0 },
       { x: 0, z: -half, ry: Math.PI },
@@ -118,12 +116,14 @@ export class WorldBase {
     ];
     for (const e of edges) {
       const m = new THREE.Mesh(new THREE.PlaneGeometry(ww, H), mat);
-      m.position.set(e.x, yC, e.z); m.rotation.y = e.ry;
-      m.renderOrder = 8; this.group.add(m);
+      m.position.set(e.x, yC, e.z); m.rotation.y = e.ry; m.renderOrder = 8; this.group.add(m);
+      // пенный гребень по кромке
+      const foam = new THREE.Mesh(new THREE.BoxGeometry(ww, 0.22, 0.45), foamMat);
+      foam.position.set(e.x, yTop, e.z); foam.rotation.y = e.ry; this.group.add(foam);
     }
   }
 
   update(dt) {
-    if (this._fallTex) { this._fallTex.offset.y -= dt * 0.9; if (this._fallTex.offset.y < -10) this._fallTex.offset.y += 10; }
+    if (this._fallTex) { this._fallTex.offset.y -= dt * 0.7; if (this._fallTex.offset.y < -10) this._fallTex.offset.y += 10; }
   }
 }

@@ -1,6 +1,6 @@
 // ===== Земля: единый меш-рельеф (1 draw call) + вода + декор + ховер/призрак =====
 import * as THREE from 'three';
-import { TILE, PAL } from '../data/config.js?v=19';
+import { TILE, PAL } from '../data/config.js?v=20';
 
 export class TerrainMesh {
   constructor(scene, grid, pal) {
@@ -121,6 +121,23 @@ export class TerrainMesh {
     fill(bushes, bn, this.pal.b, this.pal.c, 0.17, 0.6, 1.6);
     fill(rocks, rn, PAL.rock, PAL.rockDk, 0.12, 0.5, 1.4);
     scene.add(bushes); scene.add(rocks);
+
+    // ---- эмиссивные «огни» (факелы/жаровни) — засветятся с пост-обработкой (bloom) ----
+    const flameGeo = new THREE.ConeGeometry(0.12, 0.42, 5);
+    const flameMat = new THREE.MeshStandardMaterial({ color: 0xff9030, emissive: 0xff5810, emissiveIntensity: 1.7, flatShading: true, roughness: 1 });
+    const fn = Math.floor(n * n * 0.0035);
+    const flames = new THREE.InstancedMesh(flameGeo, flameMat, fn);
+    flames.castShadow = flames.receiveShadow = false; flames.frustumCulled = false;
+    fill(flames, fn, 0xff9030, 0xffb840, 0.22, 0.7, 1.3);
+    scene.add(flames);
+
+    // ---- цветы (яркие пятна на траве) ----
+    const flowerGeo = new THREE.ConeGeometry(0.07, 0.18, 4);
+    const fln = Math.floor(n * n * 0.02);
+    const flowers = new THREE.InstancedMesh(flowerGeo, dmat(), fln);
+    flowers.castShadow = flowers.receiveShadow = false; flowers.frustumCulled = false;
+    fill(flowers, fln, 0xff6ec7, 0xffe24a, 0.1, 0.6, 1.2);
+    scene.add(flowers);
   }
 
   setHover(tile, color) {

@@ -1,6 +1,6 @@
 // ===== Сетка мира: тайлы, координаты, занятость, рельеф =====
-import { TILE, GRID_N } from '../data/config.js?v=19';
-import { makeNoise, fbm, hashSeed } from './Noise.js?v=19';
+import { TILE, GRID_N } from '../data/config.js?v=20';
+import { makeNoise, fbm, hashSeed } from './Noise.js?v=20';
 
 export class Grid {
   constructor(n = GRID_N) {
@@ -83,13 +83,14 @@ export class Grid {
     for (let cy = 0; cy <= n; cy++) {
       for (let cx = 0; cx <= n; cx++) {
         const nx = cx / n, ny = cy / n;
-        let h = fbm(noise, nx * 4.5, ny * 4.5, 5) * T.amp;
+        // площе и плавнее: крупнее волны (зум 3.0), меньше октав (4) — холмы вместо «лумпов»
+        let h = fbm(noise, nx * 3.0, ny * 3.0, 4) * T.amp;
         const r = Math.abs(fbm(noise, nx * 2.2 + 31.7, ny * 2.2 + 11.3, 3));   // русла рек
         if (r < T.river) h = Math.min(h, T.water - 0.5);
         this.heights[cy * (n + 1) + cx] = h;
       }
     }
-    this.flattenCenter(7, 0.35);   // ровная база в центре
+    this.flattenCenter(16, 0.3);   // широкая ровная площадка под стройку (как Тропико)
     const H = (cx, cy) => this.heights[cy * (n + 1) + cx];
     for (let y = 0; y < n; y++) {
       for (let x = 0; x < n; x++) {

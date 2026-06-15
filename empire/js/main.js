@@ -1,41 +1,41 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=19';
-import { RTSCamera } from './engine/RTSCamera.js?v=19';
-import { Picker } from './engine/Picker.js?v=19';
-import { Loop } from './engine/Loop.js?v=19';
-import { AssetManager } from './engine/AssetManager.js?v=19';
-import { TerrainMesh } from './world/TerrainMesh.js?v=19';
-import { Fog } from './world/Fog.js?v=19';
-import { WorldBase } from './world/WorldBase.js?v=19';
-import { Sky } from './world/Sky.js?v=19';
-import { nearestAdj } from './world/Pathfinding.js?v=19';
-import { GameState } from './sim/GameState.js?v=19';
-import * as Economy from './sim/Economy.js?v=19';
-import * as BuildSys from './sim/Buildings.js?v=19';
-import * as Waves from './sim/Waves.js?v=19';
-import * as Tech from './sim/Tech.js?v=19';
-import * as Nature from './sim/Nature.js?v=19';
-import * as Relics from './sim/Relics.js?v=19';
-import * as Camps from './sim/Camps.js?v=19';
-import * as Wildlife from './sim/Wildlife.js?v=19';
-import * as Research from './sim/Research.js?v=19';
-import { updateUnits, damage } from './sim/Units.js?v=19';
-import { toggleEdict } from './sim/Edicts.js?v=19';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=19';
-import { HUD } from './ui/HUD.js?v=19';
-import { BuildMenu } from './ui/BuildMenu.js?v=19';
-import { Selection } from './ui/Selection.js?v=19';
-import { Minimap } from './ui/Minimap.js?v=19';
-import { ResearchPanel } from './ui/Research.js?v=19';
-import { Toasts } from './ui/Toasts.js?v=19';
-import { BUILDINGS } from './data/buildings.js?v=19';
-import { RANKS } from './data/ranks.js?v=19';
-import { bark } from './data/barks.js?v=19';
-import { STORAGE_KEY } from './data/config.js?v=19';
-import { getFaction } from './data/factions.js?v=19';
-import { getMap } from './data/maps.js?v=19';
-import { StartScreen } from './ui/StartScreen.js?v=19';
+import { Renderer } from './engine/Renderer.js?v=20';
+import { RTSCamera } from './engine/RTSCamera.js?v=20';
+import { Picker } from './engine/Picker.js?v=20';
+import { Loop } from './engine/Loop.js?v=20';
+import { AssetManager } from './engine/AssetManager.js?v=20';
+import { TerrainMesh } from './world/TerrainMesh.js?v=20';
+import { WorldBase } from './world/WorldBase.js?v=20';
+import { Sky } from './world/Sky.js?v=20';
+// Туман войны убран по просьбе игрока (Fog.js больше не используется)
+import { nearestAdj } from './world/Pathfinding.js?v=20';
+import { GameState } from './sim/GameState.js?v=20';
+import * as Economy from './sim/Economy.js?v=20';
+import * as BuildSys from './sim/Buildings.js?v=20';
+import * as Waves from './sim/Waves.js?v=20';
+import * as Tech from './sim/Tech.js?v=20';
+import * as Nature from './sim/Nature.js?v=20';
+import * as Relics from './sim/Relics.js?v=20';
+import * as Camps from './sim/Camps.js?v=20';
+import * as Wildlife from './sim/Wildlife.js?v=20';
+import * as Research from './sim/Research.js?v=20';
+import { updateUnits, damage } from './sim/Units.js?v=20';
+import { toggleEdict } from './sim/Edicts.js?v=20';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=20';
+import { HUD } from './ui/HUD.js?v=20';
+import { BuildMenu } from './ui/BuildMenu.js?v=20';
+import { Selection } from './ui/Selection.js?v=20';
+import { Minimap } from './ui/Minimap.js?v=20';
+import { ResearchPanel } from './ui/Research.js?v=20';
+import { Toasts } from './ui/Toasts.js?v=20';
+import { BUILDINGS } from './data/buildings.js?v=20';
+import { RANKS } from './data/ranks.js?v=20';
+import { bark } from './data/barks.js?v=20';
+import { STORAGE_KEY } from './data/config.js?v=20';
+import { getFaction } from './data/factions.js?v=20';
+import { getMap } from './data/maps.js?v=20';
+import { StartScreen } from './ui/StartScreen.js?v=20';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -152,7 +152,6 @@ class Game {
     this.map = map;
     this.state.grid.generateTerrain(map.terr, map.key);   // рельеф (высоты/биомы/реки)
     this.terrain = new TerrainMesh(this.scene, this.state.grid, map.pal);
-    this.fog = new Fog(this.scene, this.state.grid);       // туман войны
     this.worldBase = new WorldBase(this.scene, this.state.grid);   // плита на слонах+черепахе
     if (map.key === 'neon') this._addNeonSun();
     else this.sky = new Sky(this.scene, this.rdr);                 // суточный цикл + погода (кроме неона)
@@ -180,20 +179,6 @@ class Game {
     sun.position.set(-ww * 0.22, ww * 0.34, -ww * 1.5);
     sun.renderOrder = -5; this.scene.add(sun);
 
-    // --- неон-сетка позади солнца (вертикальная стена-бэкдроп) ---
-    const gc = document.createElement('canvas'); gc.width = gc.height = 256;
-    const gx = gc.getContext('2d');
-    gx.strokeStyle = 'rgba(255,46,192,0.85)'; gx.lineWidth = 2;
-    for (let i = 0; i <= 256; i += 24) { gx.beginPath(); gx.moveTo(i, 128); gx.lineTo(i, 256); gx.stroke(); }
-    for (let j = 132; j <= 256; j += 18) { gx.beginPath(); gx.moveTo(0, j); gx.lineTo(256, j); gx.stroke(); }
-    gx.strokeStyle = 'rgba(64,224,255,0.5)';
-    for (let j = 132; j <= 256; j += 36) { gx.beginPath(); gx.moveTo(0, j); gx.lineTo(256, j); gx.stroke(); }
-    const gridTex = new THREE.CanvasTexture(gc); gridTex.magFilter = THREE.LinearFilter;
-    const grid = new THREE.Mesh(new THREE.PlaneGeometry(ww * 2.4, ww * 1.2),
-      new THREE.MeshBasicMaterial({ map: gridTex, transparent: true, opacity: 0.5, depthWrite: false, fog: false }));
-    grid.position.set(-ww * 0.22, ww * 0.18, -ww * 1.55);
-    grid.renderOrder = -6; this.scene.add(grid);
-
     // --- звёздное небо ---
     const N = 320, sp = new Float32Array(N * 3);
     for (let i = 0; i < N; i++) {
@@ -211,7 +196,7 @@ class Game {
     const dir = new THREE.DirectionalLight(0xff8a5a, 0.7); dir.position.copy(sun.position); this.scene.add(dir);
     if (this.scene.fog) this.scene.fog.color.setHex(0x2a1838);
     this.rdr.hemi.color.setHex(0xffb0d0); this.rdr.hemi.groundColor.setHex(0x3a2050);
-    this._neon = { sun, grid, stars };
+    this._neon = { sun, stars };
   }
 
   _begin(restored) {
@@ -301,8 +286,6 @@ class Game {
     const mb = document.getElementById('muteBtn');
     mb.textContent = isMuted() ? '🔇' : '🔊';
     mb.onclick = () => { const m = toggleMute(); mb.textContent = m ? '🔇' : '🔊'; if (!m) sfx('click'); };
-    const fb = document.getElementById('fogBtn');
-    if (fb) fb.onclick = () => { const on = this.fog ? this.fog.toggle() : false; fb.classList.toggle('on', on); fb.title = on ? 'Туман войны: ВКЛ' : 'Туман войны: ВЫКЛ'; sfx('click'); };
     const tb = document.getElementById('techBtn');
     if (tb) tb.onclick = () => { const open = this.researchUI.toggle(); tb.classList.toggle('on', open); sfx('click'); };
     const rb = document.getElementById('restartBtn');
@@ -506,7 +489,6 @@ class Game {
     // ретровейв-солнце смотрит на камеру + лёгкий пульс
     if (this._neon) {
       this._neon.sun.quaternion.copy(this.camera.quaternion);
-      this._neon.grid.quaternion.copy(this.camera.quaternion);
       this._neon.sun.scale.setScalar(1 + Math.sin(now * 0.0012) * 0.025);
     }
     // анимация водопадов с края мира
