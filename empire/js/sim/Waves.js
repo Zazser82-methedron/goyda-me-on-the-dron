@@ -1,10 +1,19 @@
 // ===== Набеги (Fortnite-слой): волны врагов + именованные боссы =====
-import { UNITS } from '../data/units.js?v=23';
-import { BOSSES } from '../data/bosses.js?v=23';
-import { bark } from '../data/barks.js?v=23';
-import { hostileFor } from '../data/factions.js?v=23';
+import { UNITS } from '../data/units.js?v=24';
+import { BOSSES } from '../data/bosses.js?v=24';
+import { bark } from '../data/barks.js?v=24';
+import { hostileFor } from '../data/factions.js?v=24';
+import { floodReachable } from '../world/Pathfinding.js?v=24';
 
 const MAX_ENEMIES = 56;   // мягкий потолок: меньше тормозов в лейте, угроза сохраняется
+
+// связная с базой суша (кэш) — спавним только там, откуда реально можно дойти до ратуши
+export function reachSet(state) {
+  if (state._reach) return state._reach;
+  const th = state.townhall; if (!th) return null;
+  state._reach = floodReachable(state.grid, th.gx + (th.w >> 1), th.gy + (th.h >> 1));
+  return state._reach;
+}
 
 export function update(state, dt, ctx) {
   if (state.gameOver || !state.townhall) return;
@@ -28,12 +37,13 @@ export function update(state, dt, ctx) {
     spawnWave(state, ctx);
     state.waveNum = (state.waveNum || 0) + 1;
     state._warned = false;
-    state.nextWaveIn = Math.max(22, 60 - state.rankIndex * 4 - state.waveNum * 0.5);
+    // волны реже и плавнее — игра дольше и спокойнее
+    state.nextWaveIn = Math.max(38, 85 - state.rankIndex * 3 - state.waveNum * 0.3);
   }
 }
 
-// первая ПРОХОДИМАЯ (суша) клетка от края внутрь — враги не спавнятся в воде
-function landFromEdge(state, edge, t) {
+// первая клетка от края внутрь, которая ПРОХОДИМА и СВЯЗАНА с базой (не остров за водой)
+function landFromEdge(state, edge, t, reach) {
   const g = state.grid, n = g.n;
   let gx, gy, dx = 0, dy = 0;
   if (edge === 0) { gx = t; gy = 0; dy = 1; }
@@ -42,7 +52,7 @@ function landFromEdge(state, edge, t) {
   else { gx = n - 1; gy = t; dx = -1; }
   for (let step = 0; step < n; step++) {
     const tile = g.get(gx, gy);
-    if (tile && tile.walkable) { const w = g.gridToWorld(gx, gy); return { x: w.wx, z: w.wz }; }
+    if (tile && tile.walkable && (!reach || reach.has(gy * n + gx))) { const w = g.gridToWorld(gx, gy); return { x: w.wx, z: w.wz }; }
     gx += dx; gy += dy;
     if (!g.inBounds(gx, gy)) break;
   }
@@ -51,13 +61,17 @@ function landFromEdge(state, edge, t) {
 
 function edgePoints(state, count) {
   const res = [];
+  const reach = reachSet(state);
   let guard = 0;
-  while (res.length < count && guard < count * 10) {
+  while (res.length < count && guard < count * 14) {
     guard++;
-    const p = landFromEdge(state, Math.floor(Math.random() * 4), Math.floor(Math.random() * state.grid.n));
+    const p = landFromEdge(state, Math.floor(Math.random() * 4), Math.floor(Math.random() * state.grid.n), reach);
     if (p) res.push({ x: p.x + (Math.random() - 0.5) * 0.4, z: p.z + (Math.random() - 0.5) * 0.4 });
   }
-  if (!res.length) { const w = state.grid.gridToWorld(3, 3); res.push({ x: w.wx, z: w.wz }); }
+  if (!res.length) {   // запас: тайл рядом с ратушей (точно достижим)
+    const th = state.townhall, c = th ? state.grid.gridToWorld(th.gx, th.gy - 2) : state.grid.gridToWorld(3, 3);
+    res.push({ x: c.wx, z: c.wz });
+  }
   return res;
 }
 

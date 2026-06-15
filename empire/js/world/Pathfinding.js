@@ -47,6 +47,25 @@ export function findPath(grid, sx, sy, gx, gy, maxIter = 22000) {
   return null;
 }
 
+// BFS по ПРИРОДНОЙ проходимости (baseWalkable): связная суша от точки (gx,gy).
+// Нужен, чтобы враги/станы спавнились только там, откуда есть путь к базе (а не на острове за водой).
+export function floodReachable(grid, sx, sy) {
+  const n = grid.n, start = sy * n + sx, seen = new Set([start]), q = [start];
+  while (q.length) {
+    const cur = q.pop(), cx = cur % n, cy = (cur - cx) / n;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = cx + dx, ny = cy + dy;
+      if (nx < 0 || ny < 0 || nx >= n || ny >= n) continue;
+      const k = ny * n + nx;
+      if (seen.has(k)) continue;
+      const t = grid.tiles[ny][nx];
+      if (t.baseWalkable === false) continue;   // вода/обрыв — стоп
+      seen.add(k); q.push(k);
+    }
+  }
+  return seen;
+}
+
 // ближайший к (fromX,fromY) проходимый тайл, соседний с footprint (gx,gy,w,h)
 export function nearestAdj(grid, gx, gy, w, h, fromX, fromY) {
   const cands = [];

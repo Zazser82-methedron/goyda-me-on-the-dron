@@ -86,7 +86,7 @@ export const BUILDINGS = {
   idol: {
     kind: 'idol', name: 'ИДОЛ ДРОН (ЧУДО)', icon: '🗿', model: 'idol_dron',
     w: 3, h: 3, hp: 1500, cat: 'wonder', rank: 4, unique: true, wonder: true,
-    cost: { wood: 200, stone: 300, gold: 250, faith: 150 }, build: 40,
+    cost: { wood: 260, stone: 400, gold: 320, gems: 30, faith: 200 }, build: 55,
     produce: { faith: 8 },
     desc: 'ЧУДО. Достроишь — пробудишь ДРОНА и станешь АБСОЛЮТОМ ГОЙДЫ. Победа.',
   },

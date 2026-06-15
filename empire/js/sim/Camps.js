@@ -1,14 +1,14 @@
 // ===== Вражьи станы: спавнят набеги, можно сносить =====
-import { nearestAdj } from '../world/Pathfinding.js?v=23';
-import { UNITS } from '../data/units.js?v=23';
+import { nearestAdj, floodReachable } from '../world/Pathfinding.js?v=24';
+import { UNITS } from '../data/units.js?v=24';
 
 const SPAWN_EVERY = 32;
 
-function findSpot(g, cx, cy, radius) {
+function findSpot(g, cx, cy, radius, reach) {
   for (let r = 0; r <= radius; r++) {
     for (let a = 0; a < 12; a++) {
       const x = cx + Math.round(Math.cos(a / 12 * 6.2832) * r), y = cy + Math.round(Math.sin(a / 12 * 6.2832) * r);
-      if (g.canPlace(x, y, 2, 2)) return { x, y };
+      if (g.canPlace(x, y, 2, 2) && (!reach || reach.has(y * g.n + x))) return { x, y };
     }
   }
   return null;
@@ -16,11 +16,15 @@ function findSpot(g, cx, cy, radius) {
 
 export function spawnCamps(state, count) {
   const g = state.grid, n = g.n;
+  // станы — только на суше, связанной с базой (иначе их набеги не дойдут)
+  const th = state.townhall;
+  const reach = th ? floodReachable(g, th.gx + (th.w >> 1), th.gy + (th.h >> 1)) : null;
+  if (reach && !state._reach) state._reach = reach;
   const corners = [[12, 12], [n - 14, 12], [12, n - 14], [n - 14, n - 14], [Math.floor(n / 2), 12], [12, Math.floor(n / 2)]];
   let placed = 0;
   for (const [cx, cy] of corners) {
     if (placed >= count) break;
-    const s = findSpot(g, cx, cy, 9);
+    const s = findSpot(g, cx, cy, 12, reach);
     if (s) { state.addCamp(s.x, s.y); placed++; }
   }
   if (placed) state._hadCamps = true;
