@@ -1,43 +1,43 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=12';
-import { RTSCamera } from './engine/RTSCamera.js?v=12';
-import { Picker } from './engine/Picker.js?v=12';
-import { Loop } from './engine/Loop.js?v=12';
-import { AssetManager } from './engine/AssetManager.js?v=12';
-import { TerrainMesh } from './world/TerrainMesh.js?v=12';
-import { Fog } from './world/Fog.js?v=12';
-import { WorldBase } from './world/WorldBase.js?v=12';
-import { nearestAdj } from './world/Pathfinding.js?v=12';
-import { GameState } from './sim/GameState.js?v=12';
-import * as Economy from './sim/Economy.js?v=12';
-import * as BuildSys from './sim/Buildings.js?v=12';
-import * as Waves from './sim/Waves.js?v=12';
-import * as Tech from './sim/Tech.js?v=12';
-import * as Nature from './sim/Nature.js?v=12';
-import * as Relics from './sim/Relics.js?v=12';
-import * as Camps from './sim/Camps.js?v=12';
-import { updateUnits, damage } from './sim/Units.js?v=12';
-import { toggleEdict } from './sim/Edicts.js?v=12';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=12';
-import { HUD } from './ui/HUD.js?v=12';
-import { BuildMenu } from './ui/BuildMenu.js?v=12';
-import { Selection } from './ui/Selection.js?v=12';
-import { Minimap } from './ui/Minimap.js?v=12';
-import { Toasts } from './ui/Toasts.js?v=12';
-import { BUILDINGS } from './data/buildings.js?v=12';
-import { RANKS } from './data/ranks.js?v=12';
-import { bark } from './data/barks.js?v=12';
-import { STORAGE_KEY } from './data/config.js?v=12';
-import { getFaction } from './data/factions.js?v=12';
-import { getMap } from './data/maps.js?v=12';
-import { StartScreen } from './ui/StartScreen.js?v=12';
+import { Renderer } from './engine/Renderer.js?v=13';
+import { RTSCamera } from './engine/RTSCamera.js?v=13';
+import { Picker } from './engine/Picker.js?v=13';
+import { Loop } from './engine/Loop.js?v=13';
+import { AssetManager } from './engine/AssetManager.js?v=13';
+import { TerrainMesh } from './world/TerrainMesh.js?v=13';
+import { Fog } from './world/Fog.js?v=13';
+import { WorldBase } from './world/WorldBase.js?v=13';
+import { nearestAdj } from './world/Pathfinding.js?v=13';
+import { GameState } from './sim/GameState.js?v=13';
+import * as Economy from './sim/Economy.js?v=13';
+import * as BuildSys from './sim/Buildings.js?v=13';
+import * as Waves from './sim/Waves.js?v=13';
+import * as Tech from './sim/Tech.js?v=13';
+import * as Nature from './sim/Nature.js?v=13';
+import * as Relics from './sim/Relics.js?v=13';
+import * as Camps from './sim/Camps.js?v=13';
+import { updateUnits, damage } from './sim/Units.js?v=13';
+import { toggleEdict } from './sim/Edicts.js?v=13';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=13';
+import { HUD } from './ui/HUD.js?v=13';
+import { BuildMenu } from './ui/BuildMenu.js?v=13';
+import { Selection } from './ui/Selection.js?v=13';
+import { Minimap } from './ui/Minimap.js?v=13';
+import { Toasts } from './ui/Toasts.js?v=13';
+import { BUILDINGS } from './data/buildings.js?v=13';
+import { RANKS } from './data/ranks.js?v=13';
+import { bark } from './data/barks.js?v=13';
+import { STORAGE_KEY } from './data/config.js?v=13';
+import { getFaction } from './data/factions.js?v=13';
+import { getMap } from './data/maps.js?v=13';
+import { StartScreen } from './ui/StartScreen.js?v=13';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
   'bld_chastokol', 'bld_chastokol_gate', 'bld_church', 'bld_market',
   'res_tree', 'res_stone', 'res_ore', 'unit_kholop', 'unit_ratnik', 'unit_oprichnik',
-  'enemy_raider', 'enemy_boss',
+  'enemy_raider', 'enemy_boss', 'enemy_camp',
 ];
 const ri = (a, b) => Math.floor(a + Math.random() * (b - a + 1));
 
@@ -147,6 +147,18 @@ class Game {
     this.terrain = new TerrainMesh(this.scene, this.state.grid, map.pal);
     this.fog = new Fog(this.scene, this.state.grid);       // туман войны
     this.worldBase = new WorldBase(this.scene, this.state.grid);   // плита на слонах+черепахе
+    if (map.key === 'neon') this._addNeonSun();
+  }
+
+  _addNeonSun() {
+    const ww = this.state.grid.n;
+    const sun = new THREE.Mesh(new THREE.IcosahedronGeometry(ww * 0.16, 1), new THREE.MeshBasicMaterial({ color: 0xff2cc0 }));
+    sun.position.set(-ww * 0.55, ww * 0.4, -ww * 0.85); this.scene.add(sun);
+    const halo = new THREE.PointLight(0xff44cc, 1.6, ww * 3.5, 1.4); halo.position.copy(sun.position); this.scene.add(halo);
+    const dir = new THREE.DirectionalLight(0xcc66ff, 0.7); dir.position.copy(sun.position); this.scene.add(dir);
+    if (this.scene.fog) this.scene.fog.color.setHex(0x3a2452);
+    this.rdr.hemi.color.setHex(0xffaad0); this.rdr.hemi.groundColor.setHex(0x402a5a);
+    this._neonSun = sun;
   }
 
   _begin(restored) {
