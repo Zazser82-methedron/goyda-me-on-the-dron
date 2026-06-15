@@ -1,8 +1,8 @@
 // ===== Движение, бой и ИИ юнитов (свои воины + враги). Воркеры — в Jobs.js =====
-import { TILE } from '../data/config.js?v=9';
-import { findPath, nearestAdj } from '../world/Pathfinding.js?v=9';
-import { updateWorker } from './Jobs.js?v=9';
-import { bark } from '../data/barks.js?v=9';
+import { TILE } from '../data/config.js?v=10';
+import { findPath, nearestAdj } from '../world/Pathfinding.js?v=10';
+import { updateWorker } from './Jobs.js?v=10';
+import { bark } from '../data/barks.js?v=10';
 
 export function tileCenter(state, tx, ty) { const w = state.grid.gridToWorld(tx, ty); return { x: w.wx, z: w.wz }; }
 function dist2(ax, az, bx, bz) { return (ax - bx) ** 2 + (az - bz) ** 2; }
@@ -36,7 +36,7 @@ export function moveStep(state, u, dt) {
   const c = tileCenter(state, node.x, node.y);
   const dx = c.x - u.x, dz = c.z - u.z;
   const d = Math.hypot(dx, dz);
-  const step = u.speed * dt * (state.krioTimer > 0 && u.faction === 'ours' ? 0.6 : 1) * (state.superTimer > 0 && u.faction === 'ours' ? 1.4 : 1);
+  const step = u.speed * dt * (state.krioTimer > 0 && u.faction === 'ours' ? 0.6 : 1) * (state.superTimer > 0 && u.faction === 'ours' ? 1.4 : 1) * (u.slowT > 0 ? 0.5 : 1);
   if (d <= step) {
     u.x = c.x; u.z = c.z; u.pi++;
   } else {
@@ -173,7 +173,8 @@ export function updateUnits(state, dt, ctx) {
       u.poisonT -= dt; u._poiT = (u._poiT || 0) + dt;
       if (u._poiT >= 1) { u._poiT = 0; u.hp -= (u.poisonDmg || 5); if (u.hp <= 0) { state.killUnit(u); continue; } }
     }
-    if (u.stunT > 0) { u.stunT -= dt; u.path = null; continue; }   // ❄ КРИО — стоит
+    if (u.slowT > 0) u.slowT -= dt;                                // ❄ замедление от КРИО-идола
+    if (u.stunT > 0) { u.stunT -= dt; u.path = null; continue; }   // оглушение — стоит
     if (u.faction === 'enemy') updateEnemy(state, u, dt, ctx);
     else if (u.def.worker) updateWorker(state, u, dt, ctx);
     else updateSoldier(state, u, dt, ctx);

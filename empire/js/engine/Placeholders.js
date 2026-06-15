@@ -2,7 +2,7 @@
 // Стиль повторяет идол-слой «Гойды»: flatShading, гекс-формы, эмиссивные руны.
 // Origin КАЖДОЙ модели — в центре основания (низ на y=0), модель растёт вверх.
 import * as THREE from 'three';
-import { PAL } from '../data/config.js?v=9';
+import { PAL } from '../data/config.js?v=10';
 
 const _mats = {};
 function mat(color, o = {}) {
@@ -213,6 +213,21 @@ function bossUnit() {
   return g;
 }
 
+// ---- идол-реликвия (тотем со светящимся кристаллом цвета эффекта) ----
+function relicIdol(col) {
+  return () => {
+    const g = new THREE.Group();
+    const st = mat(PAL.stone, { rough: 0.95 });
+    const crystal = mat(0x120810, { emissive: col, emi: 2.4, rough: 0.3 });
+    g.add(box(0.5, 0.18, 0.5, st, 0, 0.09, 0));
+    g.add(cyl(0.16, 0.24, 0.7, 6, st, 0, 0.5, 0));
+    g.add(box(0.36, 0.34, 0.36, st, 0, 0.96, 0));
+    g.add(box(0.42, 0.07, 0.42, mat(PAL.gold, { metal: 0.85, rough: 0.3 }), 0, 1.14, 0));
+    const cr = new THREE.Mesh(new THREE.OctahedronGeometry(0.2, 0), crystal); cr.position.set(0, 1.4, 0); cr.castShadow = true; g.add(cr);
+    return g;
+  };
+}
+
 const BUILDERS = {
   idol_dron: idol, bld_townhall: townhall, bld_izba: izba, bld_ambar: ambar, bld_roshcha: roshcha,
   bld_kuznica: kuznica, bld_kazarma: kazarma, bld_church: church, bld_market: market,
@@ -220,6 +235,9 @@ const BUILDERS = {
   res_tree: tree, res_stone: stoneNode, res_ore: oreNode,
   unit_kholop: kholop, unit_ratnik: ratnik, unit_oprichnik: oprichnik,
   enemy_raider: raider, enemy_boss: bossUnit,
+  idol_krio: relicIdol(0x00eeff), idol_giper: relicIdol(0xff3020), idol_shipo: relicIdol(0x66ff44),
+  idol_obereg: relicIdol(0xffcc00), idol_food: relicIdol(0x88ff66), idol_gold: relicIdol(0xffd040),
+  idol_fonk: relicIdol(0xff00bb), idol_vera: relicIdol(0x00eeff),
 };
 
 export function buildPlaceholder(name) {

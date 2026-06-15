@@ -1,6 +1,6 @@
 // ===== Земля: единый меш-рельеф (1 draw call) + вода + декор + ховер/призрак =====
 import * as THREE from 'three';
-import { TILE, PAL } from '../data/config.js?v=9';
+import { TILE, PAL } from '../data/config.js?v=10';
 
 export class TerrainMesh {
   constructor(scene, grid, pal) {

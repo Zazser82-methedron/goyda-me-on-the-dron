@@ -60,6 +60,7 @@
 .cat-econ{ border-bottom:3px solid #6a4a18; }
 .cat-def{ border-bottom:3px solid #4a4a52; }
 .cat-faith{ border-bottom:3px solid #0a6a7a; }
+.cat-relic{ border-bottom:3px solid #8a3aa8; }
 .cat-wonder{ border-bottom:3px solid var(--gold); }
 
 #edicts{ display:flex; flex-direction:column; gap:4px; background:var(--panel); border:1.5px solid var(--panel-br); border-radius:8px; padding:6px; }

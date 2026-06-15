@@ -1,11 +1,11 @@
 // ===== Единый источник правды: ресурсы, сущности, ранги, сейв =====
 import * as THREE from 'three';
-import { GRID_N, STORAGE_KEY } from '../data/config.js?v=9';
-import { Grid } from '../world/Grid.js?v=9';
-import { NodeField } from '../world/NodeField.js?v=9';
-import { BUILDINGS } from '../data/buildings.js?v=9';
-import { UNITS } from '../data/units.js?v=9';
-import { RANKS } from '../data/ranks.js?v=9';
+import { GRID_N, STORAGE_KEY } from '../data/config.js?v=10';
+import { Grid } from '../world/Grid.js?v=10';
+import { NodeField } from '../world/NodeField.js?v=10';
+import { BUILDINGS } from '../data/buildings.js?v=10';
+import { UNITS } from '../data/units.js?v=10';
+import { RANKS } from '../data/ranks.js?v=10';
 
 export class GameState {
   constructor(scene, assets) {
@@ -118,6 +118,14 @@ export class GameState {
     if (def.unique && kind === 'townhall') this.townhall = b;
     if (def.wonder) this.idol = b;
     this._applyBuildVisual(b);
+    if (def.aura) {   // кольцо радиуса ауры реликвии
+      const rg = new THREE.Mesh(
+        new THREE.RingGeometry(def.aura.radius - 0.25, def.aura.radius, 40),
+        new THREE.MeshBasicMaterial({ color: 0xcc66ff, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false })
+      );
+      rg.rotation.x = -Math.PI / 2; rg.position.set(c.wx, cy + 0.08, c.wz);
+      this.scene.add(rg); b._ring = rg;
+    }
     return b;
   }
 
@@ -141,6 +149,7 @@ export class GameState {
 
   removeBuilding(b) {
     this.scene.remove(b.view);
+    if (b._ring) this.scene.remove(b._ring);
     this.grid.occupy(b.gx, b.gy, b.w, b.h, null);
     this.buildings = this.buildings.filter(x => x !== b);
     this._byId.delete(b.id);

@@ -1,37 +1,36 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=9';
-import { RTSCamera } from './engine/RTSCamera.js?v=9';
-import { Picker } from './engine/Picker.js?v=9';
-import { Loop } from './engine/Loop.js?v=9';
-import { AssetManager } from './engine/AssetManager.js?v=9';
-import { TerrainMesh } from './world/TerrainMesh.js?v=9';
-import { Fog } from './world/Fog.js?v=9';
-import { WorldBase } from './world/WorldBase.js?v=9';
-import { nearestAdj } from './world/Pathfinding.js?v=9';
-import { GameState } from './sim/GameState.js?v=9';
-import * as Economy from './sim/Economy.js?v=9';
-import * as BuildSys from './sim/Buildings.js?v=9';
-import * as Waves from './sim/Waves.js?v=9';
-import * as Tech from './sim/Tech.js?v=9';
-import * as Nature from './sim/Nature.js?v=9';
-import * as CardsSys from './sim/Cards.js?v=9';
-import { updateUnits } from './sim/Units.js?v=9';
-import { toggleEdict } from './sim/Edicts.js?v=9';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=9';
-import { HUD } from './ui/HUD.js?v=9';
-import { BuildMenu } from './ui/BuildMenu.js?v=9';
-import { Selection } from './ui/Selection.js?v=9';
-import { Minimap } from './ui/Minimap.js?v=9';
-import { Toasts } from './ui/Toasts.js?v=9';
-import { Cards } from './ui/Cards.js?v=9';
-import { BUILDINGS } from './data/buildings.js?v=9';
-import { RANKS } from './data/ranks.js?v=9';
-import { bark } from './data/barks.js?v=9';
-import { STORAGE_KEY } from './data/config.js?v=9';
-import { getFaction } from './data/factions.js?v=9';
-import { getMap } from './data/maps.js?v=9';
-import { StartScreen } from './ui/StartScreen.js?v=9';
+import { Renderer } from './engine/Renderer.js?v=10';
+import { RTSCamera } from './engine/RTSCamera.js?v=10';
+import { Picker } from './engine/Picker.js?v=10';
+import { Loop } from './engine/Loop.js?v=10';
+import { AssetManager } from './engine/AssetManager.js?v=10';
+import { TerrainMesh } from './world/TerrainMesh.js?v=10';
+import { Fog } from './world/Fog.js?v=10';
+import { WorldBase } from './world/WorldBase.js?v=10';
+import { nearestAdj } from './world/Pathfinding.js?v=10';
+import { GameState } from './sim/GameState.js?v=10';
+import * as Economy from './sim/Economy.js?v=10';
+import * as BuildSys from './sim/Buildings.js?v=10';
+import * as Waves from './sim/Waves.js?v=10';
+import * as Tech from './sim/Tech.js?v=10';
+import * as Nature from './sim/Nature.js?v=10';
+import * as Relics from './sim/Relics.js?v=10';
+import { updateUnits } from './sim/Units.js?v=10';
+import { toggleEdict } from './sim/Edicts.js?v=10';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=10';
+import { HUD } from './ui/HUD.js?v=10';
+import { BuildMenu } from './ui/BuildMenu.js?v=10';
+import { Selection } from './ui/Selection.js?v=10';
+import { Minimap } from './ui/Minimap.js?v=10';
+import { Toasts } from './ui/Toasts.js?v=10';
+import { BUILDINGS } from './data/buildings.js?v=10';
+import { RANKS } from './data/ranks.js?v=10';
+import { bark } from './data/barks.js?v=10';
+import { STORAGE_KEY } from './data/config.js?v=10';
+import { getFaction } from './data/factions.js?v=10';
+import { getMap } from './data/maps.js?v=10';
+import { StartScreen } from './ui/StartScreen.js?v=10';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -70,7 +69,6 @@ class Game {
     this.menu = new BuildMenu(this);
     this.selUI = new Selection(this);
     this.minimap = new Minimap(this);
-    this.cards = new Cards(this);
     this.startScreen = new StartScreen(this);
 
     this.buildKind = null;
@@ -96,7 +94,7 @@ class Game {
       flash: (b) => { b._hit = 0.18; },
       onLose: () => this.end('lose'),
       onWin: () => this.end('win'),
-      onRankUp: () => { CardsSys.drawCard(this.state, this.ctx); },
+      onRankUp: () => {},
       spawnBoss: (key) => Waves.spawnBoss(this.state, key, this.ctx),
       onBossDown: (boss) => {
         this.state.gain({ gold: 60, faith: 25 });
@@ -153,7 +151,6 @@ class Game {
     const f = this.state.faction;
     this.toasts.show(restored ? '⚔️ Поход продолжается…' : ('🗿 ' + (f ? f.emoji + ' ' + f.name : 'ГОЙДА') + ' · ' + this.map.name + '. ГОЙДА!'), { big: true, gold: true });
     if (this._glb > 0) this.toasts.show('Blender-моделей: ' + this._glb);
-    for (let i = 0; i < 3; i++) CardsSys.drawCard(this.state, this.ctx, true);   // стартовая рука
     window.__gboot && window.__gboot('loop ' + (restored ? 'restore' : 'new'));
     this.loop.start();
   }
@@ -229,7 +226,6 @@ class Game {
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Escape') { this.buildKind = null; this.terrain.hideGhost(); this.state.selected = null; }
       else if (e.code === 'Space') { e.preventDefault(); this.activateSuper(); }
-      else if (/^Digit[1-5]$/.test(e.code)) { this.playCard(parseInt(e.code.slice(5), 10) - 1); }
     });
     document.getElementById('superBtn').onclick = () => this.activateSuper();
     const mb = document.getElementById('muteBtn');
@@ -307,7 +303,6 @@ class Game {
   train(b, uk) { BuildSys.queueTrain(this.state, b, uk, this.ctx); }
   toggleEdictUI(key) { toggleEdict(this.state, key, this.ctx); }
   setStance(u, st) { u.stance = st; u.path = null; u.moveOrder = null; sfx('click'); }
-  playCard(idx) { CardsSys.playCard(this.state, idx, this.ctx); }
 
   activateSuper() {
     const s = this.state;
@@ -352,7 +347,7 @@ class Game {
     Waves.update(this.state, dt, this.ctx);
     Tech.update(this.state, dt, this.ctx);
     Nature.update(this.state, dt, this.ctx);
-    CardsSys.update(this.state, dt, this.ctx);
+    Relics.update(this.state, dt, this.ctx);
   }
 
   // ---------- рендер ----------
@@ -402,7 +397,7 @@ class Game {
     this.rdr.render(this.camera);
 
     this._uiT += fdt;
-    if (this._uiT > 0.1) { this.hud.update(); this.menu.update(); this.selUI.update(); this.cards.update(); this._uiT = 0; }
+    if (this._uiT > 0.1) { this.hud.update(); this.menu.update(); this.selUI.update(); this._uiT = 0; }
     this.minimap.update(fdt);
   }
 

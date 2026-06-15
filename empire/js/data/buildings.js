@@ -72,15 +72,67 @@ export const BUILDINGS = {
     produce: { faith: 8 },
     desc: 'ЧУДО. Достроишь — пробудишь ДРОНА и станешь АБСОЛЮТОМ ГОЙДЫ. Победа.',
   },
+
+  // ===== ИДОЛЫ-РЕЛИКВИИ (архетипы «Гойды» как 3D-постройки с аурой) =====
+  rel_krio: {
+    kind: 'rel_krio', name: 'КРИО-ИДОЛ', icon: '❄️', model: 'idol_krio',
+    w: 1, h: 1, hp: 160, cat: 'relic', rank: 2, build: 5,
+    cost: { stone: 60, faith: 25 }, aura: { radius: 8, tick: 1.0, effect: 'slow', power: 0.5 },
+    desc: 'Замораживает врагов рядом — идут вдвое медленнее.',
+  },
+  rel_giper: {
+    kind: 'rel_giper', name: 'ГИПЕР-ИДОЛ', icon: '💥', model: 'idol_giper',
+    w: 1, h: 1, hp: 180, cat: 'relic', rank: 3, build: 6,
+    cost: { stone: 80, gold: 40, faith: 40 }, aura: { radius: 7, tick: 1.1, effect: 'aoe', power: 16 },
+    desc: 'Бьёт молнией по врагам в радиусе.',
+  },
+  rel_shipo: {
+    kind: 'rel_shipo', name: 'ШИПО-ИДОЛ', icon: '🌵', model: 'idol_shipo',
+    w: 1, h: 1, hp: 150, cat: 'relic', rank: 1, build: 4,
+    cost: { stone: 45, faith: 18 }, aura: { radius: 5, tick: 0.9, effect: 'aoe', power: 8 },
+    desc: 'Шипы рвут набег рядом — дешёвая оборона.',
+  },
+  rel_obereg: {
+    kind: 'rel_obereg', name: 'ИДОЛ-ОБЕРЕГ', icon: '🔰', model: 'idol_obereg',
+    w: 1, h: 1, hp: 200, cat: 'relic', rank: 2, build: 5,
+    cost: { stone: 55, gold: 20, faith: 22 }, aura: { radius: 9, tick: 1.0, effect: 'heal', power: 7 },
+    desc: 'Чинит постройки в радиусе.',
+  },
+  rel_goydushka: {
+    kind: 'rel_goydushka', name: 'ИДОЛ-GOYDUSHKA', icon: '🍲', model: 'idol_food',
+    w: 1, h: 1, hp: 140, cat: 'relic', rank: 1, build: 4,
+    cost: { wood: 30, faith: 14 }, produce: { food: 6, happy: 2 },
+    desc: 'Кормит округу: +6 ЕДЫ и +счастье в день.',
+  },
+  rel_zlato: {
+    kind: 'rel_zlato', name: 'ЗЛАТО-ИДОЛ', icon: '🪙', model: 'idol_gold',
+    w: 1, h: 1, hp: 160, cat: 'relic', rank: 2, build: 5,
+    cost: { stone: 40, gold: 20, faith: 16 }, produce: { gold: 6 },
+    desc: 'Источает золото: +6 золота в день.',
+  },
+  rel_fonk: {
+    kind: 'rel_fonk', name: 'ФОНК-ИДОЛ', icon: '🎶', model: 'idol_fonk',
+    w: 1, h: 1, hp: 140, cat: 'relic', rank: 1, build: 4,
+    cost: { wood: 25, faith: 12 }, produce: { happy: 6, faith: 1 },
+    desc: 'Народ ликует: +счастье и немного ВЕРЫ.',
+  },
+  rel_vera: {
+    kind: 'rel_vera', name: 'ИДОЛ ВЕРЫ', icon: '☩', model: 'idol_vera',
+    w: 1, h: 1, hp: 180, cat: 'relic', rank: 2, build: 5,
+    cost: { stone: 50, gold: 25, faith: 20 }, produce: { faith: 7 },
+    desc: 'Столп веры: +7 ВЕРЫ в день — быстрее эпохи.',
+  },
 };
 
 // порядок в меню постройки
-export const BUILD_ORDER = ['izba', 'ambar', 'roshcha', 'kuznica', 'kazarma', 'chastokol', 'gate', 'church', 'market', 'idol'];
+export const BUILD_ORDER = ['izba', 'ambar', 'roshcha', 'kuznica', 'kazarma', 'chastokol', 'gate', 'church', 'market',
+  'rel_shipo', 'rel_krio', 'rel_obereg', 'rel_giper', 'rel_goydushka', 'rel_zlato', 'rel_fonk', 'rel_vera', 'idol'];
 
 export const CATS = {
   econ: { name: 'ХОЗЯЙСТВО', color: '#b8763a' },
   mil: { name: 'ВОЙСКО', color: '#e0392b' },
   def: { name: 'ОБОРОНА', color: '#9aa0aa' },
   faith: { name: 'ВЕРА', color: '#00eeff' },
+  relic: { name: 'ИДОЛЫ', color: '#cc44ff' },
   wonder: { name: 'ЧУДО', color: '#ffcc00' },
 };
