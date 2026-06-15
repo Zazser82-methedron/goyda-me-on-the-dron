@@ -1,7 +1,7 @@
 // ===== Панель выбранной сущности: HP, тренировка, инфо =====
-import { UNITS } from '../data/units.js?v=15';
-import { RES_LABEL } from '../data/config.js?v=15';
-import { costStr } from './BuildMenu.js?v=15';
+import { UNITS } from '../data/units.js?v=16';
+import { RES_LABEL } from '../data/config.js?v=16';
+import { costStr } from './BuildMenu.js?v=16';
 
 function hpBar(hp, max) {
   const p = Math.max(0, Math.min(1, hp / max));
@@ -92,7 +92,9 @@ export class Selection {
 function produceStr(p) {
   const parts = [];
   if (p.food) parts.push('🍞+' + p.food);
+  if (p.iron) parts.push('⛓️+' + p.iron);
   if (p.gold) parts.push('🪙+' + p.gold);
+  if (p.gems) parts.push('💎+' + p.gems);
   if (p.faith) parts.push('☩+' + p.faith);
   if (p.happy) parts.push('😊+' + p.happy);
   return parts.join(' ') + '/день';

@@ -19,6 +19,12 @@ export const UNITS = {
     trainAt: 'kazarma', trainTime: 9, cost: { food: 15, gold: 35 }, needs: 'kuznica', rank: 2,
     desc: 'Элита. Чёрно-багряная гроза набегов.',
   },
+  bogatyr: {
+    kind: 'bogatyr', name: 'БОГАТЫРЬ', icon: '🛡️', model: 'unit_bogatyr', faction: 'ours',
+    hp: 240, speed: 2.0, dmg: 26, range: 1.45, atkCd: 1.0,
+    trainAt: 'kazarma', trainTime: 12, cost: { food: 20, iron: 12 }, needs: 'rudnik', rank: 2,
+    desc: 'Тяжёлый витязь на ЖЕЛЕЗЕ ⛓️. Стена дружины — много HP и урона.',
+  },
   raider: {
     kind: 'raider', name: 'НАБЕЖЧИК', icon: '👹', model: 'enemy_raider', faction: 'enemy',
     hp: 55, speed: 2.0, dmg: 7, range: 1.2, atkCd: 1.1,

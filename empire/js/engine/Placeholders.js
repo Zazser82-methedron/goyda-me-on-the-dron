@@ -2,7 +2,7 @@
 // Стиль повторяет идол-слой «Гойды»: flatShading, гекс-формы, эмиссивные руны.
 // Origin КАЖДОЙ модели — в центре основания (низ на y=0), модель растёт вверх.
 import * as THREE from 'three';
-import { PAL } from '../data/config.js?v=15';
+import { PAL } from '../data/config.js?v=16';
 
 const _mats = {};
 function mat(color, o = {}) {
@@ -241,17 +241,87 @@ function enemyCamp() {
   return g;
 }
 
+// ---- ферма (2×2, еда): борозды + подсолнухи + кочаны ----
+function ferma() {
+  const g = new THREE.Group();
+  const soil = mat(PAL.dirt), wd = mat(PAL.woodDk), leaf = mat(PAL.grass3), stalk = mat(0x6a7a30);
+  const petal = mat(0xffcc00, { emissive: 0xffcc00, emi: 0.25 }), seed = mat(0x5a3a14);
+  g.add(box(1.7, 0.14, 1.7, soil, 0, 0.07, 0));
+  for (let i = -2; i <= 2; i++) g.add(box(1.5, 0.05, 0.1, wd, 0, 0.15, i * 0.32));
+  for (const [x, z] of [[-0.6, -0.6], [0.6, -0.55], [-0.55, 0.6], [0.55, 0.6]]) {
+    g.add(cyl(0.03, 0.04, 0.6, 4, stalk, x, 0.45, z));
+    g.add(sph(0.13, seed, x, 0.8, z));
+    for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; g.add(box(0.1, 0.02, 0.05, petal, x + Math.cos(a) * 0.16, 0.8, z + Math.sin(a) * 0.16)); }
+  }
+  for (const [x, z] of [[0, 0], [-0.3, 0.2], [0.3, -0.2]]) g.add(sph(0.1, leaf, x, 0.2, z));
+  return g;
+}
+
+// ---- рудник (2×2, железо): скальный холм + рама входа + вагонетка ----
+function rudnik() {
+  const g = new THREE.Group();
+  const rk = mat(PAL.rock), rd = mat(PAL.rockDk), wd = mat(PAL.wood), wdk = mat(PAL.woodDk);
+  const iron = mat(0xb8bcc4, { metal: 0.7, rough: 0.45, emissive: 0x223040, emi: 0.2 });
+  g.add(sph(0.7, rk, 0, 0.4, -0.2)); g.add(sph(0.5, rd, 0.5, 0.3, 0.1)); g.add(sph(0.45, rk, -0.5, 0.3, 0.2));
+  g.add(box(0.1, 0.8, 0.1, wdk, -0.32, 0.4, 0.55)); g.add(box(0.1, 0.8, 0.1, wdk, 0.32, 0.4, 0.55));
+  g.add(box(0.85, 0.12, 0.12, wd, 0, 0.82, 0.55));
+  g.add(box(0.5, 0.6, 0.08, mat(0x0a0a0c), 0, 0.32, 0.6));
+  g.add(box(0.3, 0.18, 0.22, wdk, 0.55, 0.12, 0.6));
+  g.add(sph(0.09, iron, 0.55, 0.26, 0.6)); g.add(sph(0.07, iron, 0.62, 0.24, 0.55));
+  const pick = cyl(0.02, 0.02, 0.5, 4, wd, -0.6, 0.45, 0.5); pick.rotation.z = 0.5; g.add(pick);
+  return g;
+}
+
+// ---- самоцветная жила (2×2): скала + светящиеся кристаллы ----
+function zhila() {
+  const g = new THREE.Group();
+  const rk = mat(PAL.rock), rd = mat(PAL.rockDk);
+  g.add(sph(0.6, rk, 0, 0.35, 0)); g.add(sph(0.45, rd, 0.45, 0.25, 0.2)); g.add(sph(0.4, rk, -0.4, 0.28, -0.2));
+  const cols = [0xff7ce6, 0x66e0ff, 0x9b6bff, 0x66ffcc]; let i = 0;
+  for (const [x, y, z, s] of [[0, 0.7, 0, 0.2], [0.35, 0.5, 0.2, 0.14], [-0.3, 0.55, -0.15, 0.16], [0.15, 0.45, -0.35, 0.12], [-0.35, 0.42, 0.3, 0.12]]) {
+    const gem = mat(0x120814, { emissive: cols[i % cols.length], emi: 2.2, rough: 0.2, metal: 0.3 });
+    const c = new THREE.Mesh(new THREE.OctahedronGeometry(s, 0), gem); c.position.set(x, y, z); c.castShadow = true; g.add(c); i++;
+  }
+  return g;
+}
+
+// ---- самоцветный идол (1×1, реликвия): тотем + кластер гранёных камней ----
+function idolSamotsvet() {
+  const g = new THREE.Group();
+  const st = mat(PAL.stone, { rough: 0.95 });
+  g.add(box(0.5, 0.18, 0.5, st, 0, 0.09, 0));
+  g.add(cyl(0.18, 0.26, 0.7, 6, st, 0, 0.5, 0));
+  g.add(box(0.4, 0.36, 0.4, st, 0, 1.0, 0));
+  g.add(box(0.46, 0.07, 0.46, mat(PAL.gold, { metal: 0.85, rough: 0.3 }), 0, 1.2, 0));
+  const cols = [0xff7ce6, 0x66e0ff, 0x9b6bff]; let i = 0;
+  for (const [x, y, z, s] of [[0, 1.5, 0, 0.22], [0.16, 1.42, 0.05, 0.13], [-0.14, 1.44, -0.06, 0.12], [0.04, 1.62, -0.1, 0.1]]) {
+    const gem = mat(0x120814, { emissive: cols[i % 3], emi: 2.6, rough: 0.2, metal: 0.3 });
+    const c = new THREE.Mesh(new THREE.OctahedronGeometry(s, 0), gem); c.position.set(x, y, z); c.castShadow = true; g.add(c); i++;
+  }
+  return g;
+}
+
+// ---- богатырь (тяжёлый витязь со щитом) ----
+function bogatyr() {
+  const g = humanoid({ cloth: PAL.stoneLt, acc: PAL.gold, spear: true, helmet: true, cape: true, scale: 1.3 });
+  const steel = mat(0x9aa0aa, { metal: 0.8, rough: 0.4 });
+  const shield = cyl(0.2, 0.2, 0.05, 8, steel, -0.26, 0.42, 0.06); shield.rotation.x = Math.PI / 2; g.add(shield);
+  g.add(box(0.07, 0.07, 0.07, mat(PAL.crimson), -0.26, 0.42, 0.09));
+  return g;
+}
+
 const BUILDERS = {
   idol_dron: idol, bld_townhall: townhall, bld_izba: izba, bld_ambar: ambar, bld_roshcha: roshcha,
   enemy_camp: enemyCamp,
   bld_kuznica: kuznica, bld_kazarma: kazarma, bld_church: church, bld_market: market,
+  bld_ferma: ferma, bld_rudnik: rudnik, bld_zhila: zhila,
   bld_chastokol: chastokol, bld_chastokol_gate: chastokolGate,
   res_tree: tree, res_stone: stoneNode, res_ore: oreNode,
-  unit_kholop: kholop, unit_ratnik: ratnik, unit_oprichnik: oprichnik,
+  unit_kholop: kholop, unit_ratnik: ratnik, unit_oprichnik: oprichnik, unit_bogatyr: bogatyr,
   enemy_raider: raider, enemy_boss: bossUnit,
   idol_krio: relicIdol(0x00eeff), idol_giper: relicIdol(0xff3020), idol_shipo: relicIdol(0x66ff44),
   idol_obereg: relicIdol(0xffcc00), idol_food: relicIdol(0x88ff66), idol_gold: relicIdol(0xffd040),
-  idol_fonk: relicIdol(0xff00bb), idol_vera: relicIdol(0x00eeff),
+  idol_fonk: relicIdol(0xff00bb), idol_vera: relicIdol(0x00eeff), idol_samotsvet: idolSamotsvet,
 };
 
 export function buildPlaceholder(name) {

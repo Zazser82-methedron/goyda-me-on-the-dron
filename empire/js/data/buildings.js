@@ -38,8 +38,8 @@ export const BUILDINGS = {
   kazarma: {
     kind: 'kazarma', name: 'КАЗАРМА', icon: '⚔️', model: 'bld_kazarma',
     w: 2, h: 2, hp: 260, cat: 'mil', rank: 1,
-    cost: { wood: 40, stone: 30 }, build: 7, trains: ['ratnik', 'oprichnik'],
-    desc: 'Куёт воинов: РАТНИКИ и (с кузницей) ОПРИЧНИКИ.',
+    cost: { wood: 40, stone: 30 }, build: 7, trains: ['ratnik', 'oprichnik', 'bogatyr'],
+    desc: 'Куёт воинов: РАТНИКИ, ОПРИЧНИКИ (с кузницей) и БОГАТЫРИ (на железе).',
   },
   chastokol: {
     kind: 'chastokol', name: 'ЧАСТОКОЛ', icon: '🪵', model: 'bld_chastokol',
@@ -64,6 +64,24 @@ export const BUILDINGS = {
     w: 2, h: 2, hp: 200, cat: 'econ', rank: 2, drop: true,
     cost: { wood: 40, stone: 20, gold: 10 }, build: 6, produce: { gold: 5, happy: 1 },
     desc: 'Торговые ряды. +5 золота в день и точка сдачи.',
+  },
+  ferma: {
+    kind: 'ferma', name: 'ФЕРМА', icon: '🌻', model: 'bld_ferma',
+    w: 2, h: 2, hp: 150, cat: 'econ', rank: 0,
+    cost: { wood: 25 }, build: 4, produce: { food: 10, happy: 1 },
+    desc: 'Поля и грядки. +10 ЕДЫ в день — кормит растущий народ.',
+  },
+  rudnik: {
+    kind: 'rudnik', name: 'РУДНИК', icon: '⛏️', model: 'bld_rudnik',
+    w: 2, h: 2, hp: 220, cat: 'econ', rank: 1,
+    cost: { wood: 30, stone: 25 }, build: 6, produce: { iron: 4 },
+    desc: 'Добывает ЖЕЛЕЗО ⛓️ — нужно для БОГАТЫРЕЙ и тяжёлой брони.',
+  },
+  zhila: {
+    kind: 'zhila', name: 'САМОЦВЕТНАЯ ЖИЛА', icon: '💎', model: 'bld_zhila',
+    w: 2, h: 2, hp: 240, cat: 'econ', rank: 2,
+    cost: { wood: 30, stone: 40, gold: 20 }, build: 7, produce: { gems: 2 },
+    desc: 'Гранит самоцветы 💎 — топливо для мощных идолов и чуда.',
   },
   idol: {
     kind: 'idol', name: 'ИДОЛ ДРОН (ЧУДО)', icon: '🗿', model: 'idol_dron',
@@ -122,11 +140,17 @@ export const BUILDINGS = {
     cost: { stone: 50, gold: 25, faith: 20 }, produce: { faith: 7 },
     desc: 'Столп веры: +7 ВЕРЫ в день — быстрее эпохи.',
   },
+  rel_samotsvet: {
+    kind: 'rel_samotsvet', name: 'САМОЦВЕТНЫЙ ИДОЛ', icon: '💠', model: 'idol_samotsvet',
+    w: 1, h: 1, hp: 210, cat: 'relic', rank: 3, build: 7,
+    cost: { stone: 60, gems: 8, faith: 30 }, aura: { radius: 9, tick: 0.95, effect: 'aoe', power: 22 },
+    desc: 'Гранёный идол на самоцветах 💎 — бьёт самой мощной аурой по набегу.',
+  },
 };
 
 // порядок в меню постройки
-export const BUILD_ORDER = ['izba', 'ambar', 'roshcha', 'kuznica', 'kazarma', 'chastokol', 'gate', 'church', 'market',
-  'rel_shipo', 'rel_krio', 'rel_obereg', 'rel_giper', 'rel_goydushka', 'rel_zlato', 'rel_fonk', 'rel_vera', 'idol'];
+export const BUILD_ORDER = ['izba', 'ambar', 'ferma', 'roshcha', 'rudnik', 'zhila', 'kuznica', 'kazarma', 'chastokol', 'gate', 'church', 'market',
+  'rel_shipo', 'rel_krio', 'rel_obereg', 'rel_giper', 'rel_goydushka', 'rel_zlato', 'rel_fonk', 'rel_vera', 'rel_samotsvet', 'idol'];
 
 export const CATS = {
   econ: { name: 'ХОЗЯЙСТВО', color: '#b8763a' },

@@ -43,13 +43,15 @@ export const SIM_DT = 1 / SIM_HZ;    // 0.1 c
 export const DAY_TICKS = 80;         // 1 «день» = 80 тиков = 8 секунд
 
 // Ресурсы (ключи + подписи)
-export const RES = ['food', 'wood', 'stone', 'gold', 'faith'];
+export const RES = ['food', 'wood', 'stone', 'iron', 'gold', 'gems', 'faith'];
 export const RES_LABEL = {
-  food:  { ru: 'ЕДА',     icon: '🍞', color: '#e8c060' },
-  wood:  { ru: 'ДЕРЕВО',  icon: '🪵', color: '#b8763a' },
-  stone: { ru: 'КАМЕНЬ',  icon: '🪨', color: '#b9b9c4' },
-  gold:  { ru: 'ЗОЛОТО',  icon: '🪙', color: '#ffcc00' },
-  faith: { ru: 'ВЕРА',    icon: '☩',  color: '#00eeff' },
+  food:  { ru: 'ЕДА',       icon: '🍞', color: '#e8c060' },
+  wood:  { ru: 'ДЕРЕВО',    icon: '🪵', color: '#b8763a' },
+  stone: { ru: 'КАМЕНЬ',    icon: '🪨', color: '#b9b9c4' },
+  iron:  { ru: 'ЖЕЛЕЗО',    icon: '⛓️', color: '#c8cdd6' },
+  gold:  { ru: 'ЗОЛОТО',    icon: '🪙', color: '#ffcc00' },
+  gems:  { ru: 'САМОЦВЕТЫ', icon: '💎', color: '#ff7ce6' },
+  faith: { ru: 'ВЕРА',      icon: '☩',  color: '#00eeff' },
 };
 
 export const STORAGE_KEY = 'GOYDA_EMPIRE_SAVE_v1';

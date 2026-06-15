@@ -1,6 +1,6 @@
 // ===== Экономика: производство/расход в день, счастье, ВЕРА, таймеры =====
-import { SIM_DT, DAY_TICKS } from '../data/config.js?v=15';
-import { edictMods } from './Edicts.js?v=15';
+import { SIM_DT, DAY_TICKS } from '../data/config.js?v=16';
+import { edictMods } from './Edicts.js?v=16';
 
 const DAY_SECONDS = DAY_TICKS * SIM_DT;   // 8 сек
 const FOOD_PER_POP = 1;
@@ -18,18 +18,21 @@ export function update(state, dt, ctx) {
 
 function onDay(state, ctx) {
   const built = state.buildings.filter(b => b.built);
-  let food = 0, gold = 0, faith = 0, happyMod = 0;
+  // суммируем производство по всем ресурсным ключам (включая железо/самоцветы)
+  const prod = { food: 0, wood: 0, stone: 0, iron: 0, gold: 0, gems: 0, faith: 0 };
+  let happyMod = 0;
   for (const b of built) {
     const p = b.def.produce; if (!p) continue;
-    food += p.food || 0; gold += p.gold || 0; faith += p.faith || 0; happyMod += p.happy || 0;
+    for (const k in p) { if (k === 'happy') happyMod += p.happy; else if (prod[k] !== undefined) prod[k] += p[k]; }
   }
   const em = edictMods(state);
-  food += em.food; gold += em.gold; faith += em.faith; happyMod += em.happy;
+  prod.food += em.food; prod.gold += em.gold; prod.faith += em.faith; happyMod += em.happy;
 
   const fm = state.faction && state.faction.mods;   // бонусы фракции
-  if (fm) { faith *= fm.faithMul || 1; happyMod += fm.happy || 0; }
+  if (fm) { prod.faith *= fm.faithMul || 1; happyMod += fm.happy || 0; }
 
-  state.gain({ food, gold, faith });
+  const food = prod.food;   // для баланса счастья/голода ниже
+  state.gain(prod);
 
   // расход еды
   const cons = state.population * FOOD_PER_POP * em.foodConsMul;
