@@ -1,6 +1,6 @@
 // ===== Three.js рендерер, сцена, свет, туман — настроение идол-слоя «Гойды» =====
 import * as THREE from 'three';
-import { PAL } from '../data/config.js?v=20';
+import { PAL } from '../data/config.js?v=21';
 
 export class Renderer {
   constructor(canvas) {
@@ -10,13 +10,15 @@ export class Renderer {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.45;        // заметно ярче
+    this.renderer.toneMappingExposure = 1.25;        // фильмовый тон + место под bloom
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     this.scene = new THREE.Scene();
-    this.scene.background = null;                     // фон рисует CSS
+    // непрозрачный градиент-небо в сцене (нужно для пост-обработки) — заменяет CSS-фон
+    this.scene.background = this._skyBg(PAL.sky, PAL.skyLow);
     this.scene.fog = new THREE.FogExp2(PAL.fog, 0.0045);  // даль уходит в светлый сумрак
+    this.fxEnabled = false; this.composer = null;
 
     // Полусферический свет неба/земли — ровная читаемая засветка всей сцены
     this.hemi = new THREE.HemisphereLight(0xcfe0f4, 0x6a5836, 1.45);
@@ -52,8 +54,47 @@ export class Renderer {
     window.addEventListener('resize', () => this.resize());
   }
 
+  // вертикальный градиент-небо как CanvasTexture
+  _skyBg(top, low) {
+    const c = document.createElement('canvas'); c.width = 16; c.height = 256;
+    const x = c.getContext('2d');
+    const g = x.createLinearGradient(0, 0, 0, 256);
+    const hex = (h) => '#' + ('000000' + (h >>> 0).toString(16)).slice(-6);
+    g.addColorStop(0, hex(top)); g.addColorStop(1, hex(low));
+    x.fillStyle = g; x.fillRect(0, 0, 16, 256);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }
+  setSky(top, low) { if (this.scene.background && this.scene.background.dispose) this.scene.background.dispose(); this.scene.background = this._skyBg(top, low); }
+
+  // пост-обработка: bloom + SMAA + тонмаппинг. Ленивая динамическая загрузка с фолбэком —
+  // если аддоны не подгрузятся, игра рендерится обычным путём (без чёрного экрана).
+  async setupComposer(camera) {
+    try {
+      const [{ EffectComposer }, { RenderPass }, { UnrealBloomPass }, { OutputPass }, { SMAAPass }] = await Promise.all([
+        import('three/addons/postprocessing/EffectComposer.js'),
+        import('three/addons/postprocessing/RenderPass.js'),
+        import('three/addons/postprocessing/UnrealBloomPass.js'),
+        import('three/addons/postprocessing/OutputPass.js'),
+        import('three/addons/postprocessing/SMAAPass.js'),
+      ]);
+      const w = window.innerWidth, h = window.innerHeight;
+      const composer = new EffectComposer(this.renderer);
+      composer.setPixelRatio(this.renderer.getPixelRatio());
+      composer.setSize(w, h);
+      composer.addPass(new RenderPass(this.scene, camera));
+      this.bloom = new UnrealBloomPass(new THREE.Vector2(w, h), 0.55, 0.4, 0.9);   // сила/радиус/порог
+      composer.addPass(this.bloom);
+      composer.addPass(new OutputPass());
+      composer.addPass(new SMAAPass(w, h));
+      this.composer = composer; this._camera = camera; this.fxEnabled = true;
+      window.__gboot && window.__gboot('postfx ✓');
+    } catch (e) { console.warn('postfx disabled', e); this.composer = null; this.fxEnabled = false; }
+  }
+
   resize() {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+    if (this.composer) this.composer.setSize(window.innerWidth, window.innerHeight);
     if (this.onResize) this.onResize(window.innerWidth, window.innerHeight);
   }
 
@@ -64,5 +105,8 @@ export class Renderer {
     this.key.target.updateMatrixWorld();
   }
 
-  render(camera) { this.renderer.render(this.scene, camera); }
+  render(camera) {
+    if (this.fxEnabled && this.composer) this.composer.render();
+    else this.renderer.render(this.scene, camera);
+  }
 }

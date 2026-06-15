@@ -1,41 +1,41 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=20';
-import { RTSCamera } from './engine/RTSCamera.js?v=20';
-import { Picker } from './engine/Picker.js?v=20';
-import { Loop } from './engine/Loop.js?v=20';
-import { AssetManager } from './engine/AssetManager.js?v=20';
-import { TerrainMesh } from './world/TerrainMesh.js?v=20';
-import { WorldBase } from './world/WorldBase.js?v=20';
-import { Sky } from './world/Sky.js?v=20';
+import { Renderer } from './engine/Renderer.js?v=21';
+import { RTSCamera } from './engine/RTSCamera.js?v=21';
+import { Picker } from './engine/Picker.js?v=21';
+import { Loop } from './engine/Loop.js?v=21';
+import { AssetManager } from './engine/AssetManager.js?v=21';
+import { TerrainMesh } from './world/TerrainMesh.js?v=21';
+import { WorldBase } from './world/WorldBase.js?v=21';
+import { Sky } from './world/Sky.js?v=21';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=20';
-import { GameState } from './sim/GameState.js?v=20';
-import * as Economy from './sim/Economy.js?v=20';
-import * as BuildSys from './sim/Buildings.js?v=20';
-import * as Waves from './sim/Waves.js?v=20';
-import * as Tech from './sim/Tech.js?v=20';
-import * as Nature from './sim/Nature.js?v=20';
-import * as Relics from './sim/Relics.js?v=20';
-import * as Camps from './sim/Camps.js?v=20';
-import * as Wildlife from './sim/Wildlife.js?v=20';
-import * as Research from './sim/Research.js?v=20';
-import { updateUnits, damage } from './sim/Units.js?v=20';
-import { toggleEdict } from './sim/Edicts.js?v=20';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=20';
-import { HUD } from './ui/HUD.js?v=20';
-import { BuildMenu } from './ui/BuildMenu.js?v=20';
-import { Selection } from './ui/Selection.js?v=20';
-import { Minimap } from './ui/Minimap.js?v=20';
-import { ResearchPanel } from './ui/Research.js?v=20';
-import { Toasts } from './ui/Toasts.js?v=20';
-import { BUILDINGS } from './data/buildings.js?v=20';
-import { RANKS } from './data/ranks.js?v=20';
-import { bark } from './data/barks.js?v=20';
-import { STORAGE_KEY } from './data/config.js?v=20';
-import { getFaction } from './data/factions.js?v=20';
-import { getMap } from './data/maps.js?v=20';
-import { StartScreen } from './ui/StartScreen.js?v=20';
+import { nearestAdj } from './world/Pathfinding.js?v=21';
+import { GameState } from './sim/GameState.js?v=21';
+import * as Economy from './sim/Economy.js?v=21';
+import * as BuildSys from './sim/Buildings.js?v=21';
+import * as Waves from './sim/Waves.js?v=21';
+import * as Tech from './sim/Tech.js?v=21';
+import * as Nature from './sim/Nature.js?v=21';
+import * as Relics from './sim/Relics.js?v=21';
+import * as Camps from './sim/Camps.js?v=21';
+import * as Wildlife from './sim/Wildlife.js?v=21';
+import * as Research from './sim/Research.js?v=21';
+import { updateUnits, damage } from './sim/Units.js?v=21';
+import { toggleEdict } from './sim/Edicts.js?v=21';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=21';
+import { HUD } from './ui/HUD.js?v=21';
+import { BuildMenu } from './ui/BuildMenu.js?v=21';
+import { Selection } from './ui/Selection.js?v=21';
+import { Minimap } from './ui/Minimap.js?v=21';
+import { ResearchPanel } from './ui/Research.js?v=21';
+import { Toasts } from './ui/Toasts.js?v=21';
+import { BUILDINGS } from './data/buildings.js?v=21';
+import { RANKS } from './data/ranks.js?v=21';
+import { bark } from './data/barks.js?v=21';
+import { STORAGE_KEY } from './data/config.js?v=21';
+import { getFaction } from './data/factions.js?v=21';
+import { getMap } from './data/maps.js?v=21';
+import { StartScreen } from './ui/StartScreen.js?v=21';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -90,6 +90,7 @@ class Game {
 
     this.ctx = this._makeCtx();
     this.rdr.onResize = (w, h) => this.cameraRig.resize(w, h);
+    this.rdr.setupComposer(this.camera);   // пост-обработка (bloom/SMAA/тонмаппинг), ленивая + фолбэк
     this._input();
     this.loop = new Loop((dt) => this.tick(dt), (a) => this.render(a));
   }
@@ -195,6 +196,7 @@ class Game {
     const halo = new THREE.PointLight(0xff5aa0, 1.5, ww * 3.5, 1.4); halo.position.copy(sun.position); this.scene.add(halo);
     const dir = new THREE.DirectionalLight(0xff8a5a, 0.7); dir.position.copy(sun.position); this.scene.add(dir);
     if (this.scene.fog) this.scene.fog.color.setHex(0x2a1838);
+    this.rdr.setSky(0x241250, 0x6a2c54);   // тёмно-фиолетовое ретровейв-небо
     this.rdr.hemi.color.setHex(0xffb0d0); this.rdr.hemi.groundColor.setHex(0x3a2050);
     this._neon = { sun, stars };
   }
@@ -288,6 +290,8 @@ class Game {
     mb.onclick = () => { const m = toggleMute(); mb.textContent = m ? '🔇' : '🔊'; if (!m) sfx('click'); };
     const tb = document.getElementById('techBtn');
     if (tb) tb.onclick = () => { const open = this.researchUI.toggle(); tb.classList.toggle('on', open); sfx('click'); };
+    const xb = document.getElementById('fxBtn');
+    if (xb) xb.onclick = () => { this.rdr.fxEnabled = !this.rdr.fxEnabled && !!this.rdr.composer; xb.classList.toggle('on', this.rdr.fxEnabled); sfx('click'); };
     const rb = document.getElementById('restartBtn');
     if (rb) rb.onclick = () => this.restart();
     const lb = document.getElementById('lobbyBtn');
