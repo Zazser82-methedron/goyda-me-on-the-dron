@@ -1,6 +1,6 @@
 // ===== Мир-плита на слонах и черепахе в океане (лор «плоской земли») =====
 import * as THREE from 'three';
-import { TILE } from '../data/config.js?v=21';
+import { TILE } from '../data/config.js?v=22';
 
 const _m = {};
 function matStd(c, o = {}) { const k = c + '|' + (o.r ?? 1); if (!_m[k]) _m[k] = new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: o.r ?? 1, metalness: o.m ?? 0 }); return _m[k]; }
@@ -72,7 +72,8 @@ export class WorldBase {
     // ---- океан ----
     const ocean = new THREE.Mesh(
       new THREE.PlaneGeometry(ww * 4, ww * 4, 1, 1),
-      new THREE.MeshStandardMaterial({ color: 0x1c4a6a, transparent: true, opacity: 0.9, roughness: 0.25, metalness: 0.2 })
+      // зеркальный океан — отражает IBL-небо/окружение
+      new THREE.MeshStandardMaterial({ color: 0x163e5c, transparent: true, opacity: 0.94, roughness: 0.08, metalness: 0.7, envMapIntensity: 1.3 })
     );
     ocean.rotation.x = -Math.PI / 2;
     ocean.position.y = turTop - tS - ww * 0.12;

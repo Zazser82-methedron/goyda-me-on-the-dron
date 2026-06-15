@@ -1,6 +1,6 @@
 // ===== Земля: единый меш-рельеф (1 draw call) + вода + декор + ховер/призрак =====
 import * as THREE from 'three';
-import { TILE, PAL } from '../data/config.js?v=21';
+import { TILE, PAL } from '../data/config.js?v=22';
 
 export class TerrainMesh {
   constructor(scene, grid, pal) {
@@ -48,7 +48,8 @@ export class TerrainMesh {
     const ww = n * TILE;
     this.water = new THREE.Mesh(
       new THREE.PlaneGeometry(ww, ww, 1, 1),
-      new THREE.MeshStandardMaterial({ color: 0x2c5e7e, transparent: true, opacity: 0.72, roughness: 0.18, metalness: 0.1, depthWrite: false })
+      // отражает IBL-окружение → читается как настоящая вода
+      new THREE.MeshStandardMaterial({ color: 0x2a5874, transparent: true, opacity: 0.82, roughness: 0.12, metalness: 0.55, depthWrite: false, envMapIntensity: 1.2 })
     );
     this.water.rotation.x = -Math.PI / 2;
     this.water.position.y = (grid.water ?? -0.5) - 0.02;

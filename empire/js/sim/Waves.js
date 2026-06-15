@@ -1,8 +1,8 @@
 // ===== Набеги (Fortnite-слой): волны врагов + именованные боссы =====
-import { UNITS } from '../data/units.js?v=21';
-import { BOSSES } from '../data/bosses.js?v=21';
-import { bark } from '../data/barks.js?v=21';
-import { hostileFor } from '../data/factions.js?v=21';
+import { UNITS } from '../data/units.js?v=22';
+import { BOSSES } from '../data/bosses.js?v=22';
+import { bark } from '../data/barks.js?v=22';
+import { hostileFor } from '../data/factions.js?v=22';
 
 const MAX_ENEMIES = 56;   // мягкий потолок: меньше тормозов в лейте, угроза сохраняется
 

@@ -1,6 +1,6 @@
 // ===== Three.js рендерер, сцена, свет, туман — настроение идол-слоя «Гойды» =====
 import * as THREE from 'three';
-import { PAL } from '../data/config.js?v=21';
+import { PAL } from '../data/config.js?v=22';
 
 export class Renderer {
   constructor(canvas) {
@@ -90,6 +90,19 @@ export class Renderer {
       this.composer = composer; this._camera = camera; this.fxEnabled = true;
       window.__gboot && window.__gboot('postfx ✓');
     } catch (e) { console.warn('postfx disabled', e); this.composer = null; this.fxEnabled = false; }
+  }
+
+  // IBL-окружение (отражения/мягкий свет для PBR) из процедурного RoomEnvironment — без внешних файлов
+  async setupEnvironment() {
+    try {
+      const { RoomEnvironment } = await import('three/addons/environments/RoomEnvironment.js');
+      const pmrem = new THREE.PMREMGenerator(this.renderer);
+      this.scene.environment = pmrem.fromScene(new RoomEnvironment(this.renderer), 0.04).texture;
+      // компенсируем добавленный IBL-свет, чтобы общая яркость не подскочила
+      this.hemi.intensity = 1.05; this.amb.intensity = 0.32;
+      this.envReady = true;
+      window.__gboot && window.__gboot('env ✓');
+    } catch (e) { console.warn('env disabled', e); }
   }
 
   resize() {

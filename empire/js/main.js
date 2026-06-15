@@ -1,41 +1,41 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=21';
-import { RTSCamera } from './engine/RTSCamera.js?v=21';
-import { Picker } from './engine/Picker.js?v=21';
-import { Loop } from './engine/Loop.js?v=21';
-import { AssetManager } from './engine/AssetManager.js?v=21';
-import { TerrainMesh } from './world/TerrainMesh.js?v=21';
-import { WorldBase } from './world/WorldBase.js?v=21';
-import { Sky } from './world/Sky.js?v=21';
+import { Renderer } from './engine/Renderer.js?v=22';
+import { RTSCamera } from './engine/RTSCamera.js?v=22';
+import { Picker } from './engine/Picker.js?v=22';
+import { Loop } from './engine/Loop.js?v=22';
+import { AssetManager } from './engine/AssetManager.js?v=22';
+import { TerrainMesh } from './world/TerrainMesh.js?v=22';
+import { WorldBase } from './world/WorldBase.js?v=22';
+import { Sky } from './world/Sky.js?v=22';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=21';
-import { GameState } from './sim/GameState.js?v=21';
-import * as Economy from './sim/Economy.js?v=21';
-import * as BuildSys from './sim/Buildings.js?v=21';
-import * as Waves from './sim/Waves.js?v=21';
-import * as Tech from './sim/Tech.js?v=21';
-import * as Nature from './sim/Nature.js?v=21';
-import * as Relics from './sim/Relics.js?v=21';
-import * as Camps from './sim/Camps.js?v=21';
-import * as Wildlife from './sim/Wildlife.js?v=21';
-import * as Research from './sim/Research.js?v=21';
-import { updateUnits, damage } from './sim/Units.js?v=21';
-import { toggleEdict } from './sim/Edicts.js?v=21';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=21';
-import { HUD } from './ui/HUD.js?v=21';
-import { BuildMenu } from './ui/BuildMenu.js?v=21';
-import { Selection } from './ui/Selection.js?v=21';
-import { Minimap } from './ui/Minimap.js?v=21';
-import { ResearchPanel } from './ui/Research.js?v=21';
-import { Toasts } from './ui/Toasts.js?v=21';
-import { BUILDINGS } from './data/buildings.js?v=21';
-import { RANKS } from './data/ranks.js?v=21';
-import { bark } from './data/barks.js?v=21';
-import { STORAGE_KEY } from './data/config.js?v=21';
-import { getFaction } from './data/factions.js?v=21';
-import { getMap } from './data/maps.js?v=21';
-import { StartScreen } from './ui/StartScreen.js?v=21';
+import { nearestAdj } from './world/Pathfinding.js?v=22';
+import { GameState } from './sim/GameState.js?v=22';
+import * as Economy from './sim/Economy.js?v=22';
+import * as BuildSys from './sim/Buildings.js?v=22';
+import * as Waves from './sim/Waves.js?v=22';
+import * as Tech from './sim/Tech.js?v=22';
+import * as Nature from './sim/Nature.js?v=22';
+import * as Relics from './sim/Relics.js?v=22';
+import * as Camps from './sim/Camps.js?v=22';
+import * as Wildlife from './sim/Wildlife.js?v=22';
+import * as Research from './sim/Research.js?v=22';
+import { updateUnits, damage } from './sim/Units.js?v=22';
+import { toggleEdict } from './sim/Edicts.js?v=22';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=22';
+import { HUD } from './ui/HUD.js?v=22';
+import { BuildMenu } from './ui/BuildMenu.js?v=22';
+import { Selection } from './ui/Selection.js?v=22';
+import { Minimap } from './ui/Minimap.js?v=22';
+import { ResearchPanel } from './ui/Research.js?v=22';
+import { Toasts } from './ui/Toasts.js?v=22';
+import { BUILDINGS } from './data/buildings.js?v=22';
+import { RANKS } from './data/ranks.js?v=22';
+import { bark } from './data/barks.js?v=22';
+import { STORAGE_KEY } from './data/config.js?v=22';
+import { getFaction } from './data/factions.js?v=22';
+import { getMap } from './data/maps.js?v=22';
+import { StartScreen } from './ui/StartScreen.js?v=22';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -91,6 +91,7 @@ class Game {
     this.ctx = this._makeCtx();
     this.rdr.onResize = (w, h) => this.cameraRig.resize(w, h);
     this.rdr.setupComposer(this.camera);   // пост-обработка (bloom/SMAA/тонмаппинг), ленивая + фолбэк
+    this.rdr.setupEnvironment();           // IBL-отражения для PBR (вода/металл/идолы)
     this._input();
     this.loop = new Loop((dt) => this.tick(dt), (a) => this.render(a));
   }
