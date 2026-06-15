@@ -1,6 +1,6 @@
 // ===== Сетка мира: тайлы, координаты, занятость, рельеф =====
-import { TILE, GRID_N } from '../data/config.js?v=7';
-import { makeNoise, fbm, hashSeed } from './Noise.js?v=7';
+import { TILE, GRID_N } from '../data/config.js?v=8';
+import { makeNoise, fbm, hashSeed } from './Noise.js?v=8';
 
 export class Grid {
   constructor(n = GRID_N) {
@@ -16,6 +16,7 @@ export class Grid {
           occupiedBy: null,
           walkable: true, buildable: true,
           baseWalkable: true, baseBuildable: true,   // природная проходимость (вода/обрыв = false)
+          explored: false, visible: false,           // туман войны
         });
       }
       this.tiles.push(row);

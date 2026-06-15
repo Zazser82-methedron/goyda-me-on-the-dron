@@ -1,35 +1,36 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=7';
-import { RTSCamera } from './engine/RTSCamera.js?v=7';
-import { Picker } from './engine/Picker.js?v=7';
-import { Loop } from './engine/Loop.js?v=7';
-import { AssetManager } from './engine/AssetManager.js?v=7';
-import { TerrainMesh } from './world/TerrainMesh.js?v=7';
-import { nearestAdj } from './world/Pathfinding.js?v=7';
-import { GameState } from './sim/GameState.js?v=7';
-import * as Economy from './sim/Economy.js?v=7';
-import * as BuildSys from './sim/Buildings.js?v=7';
-import * as Waves from './sim/Waves.js?v=7';
-import * as Tech from './sim/Tech.js?v=7';
-import * as Nature from './sim/Nature.js?v=7';
-import * as CardsSys from './sim/Cards.js?v=7';
-import { updateUnits } from './sim/Units.js?v=7';
-import { toggleEdict } from './sim/Edicts.js?v=7';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=7';
-import { HUD } from './ui/HUD.js?v=7';
-import { BuildMenu } from './ui/BuildMenu.js?v=7';
-import { Selection } from './ui/Selection.js?v=7';
-import { Minimap } from './ui/Minimap.js?v=7';
-import { Toasts } from './ui/Toasts.js?v=7';
-import { Cards } from './ui/Cards.js?v=7';
-import { BUILDINGS } from './data/buildings.js?v=7';
-import { RANKS } from './data/ranks.js?v=7';
-import { bark } from './data/barks.js?v=7';
-import { STORAGE_KEY } from './data/config.js?v=7';
-import { getFaction } from './data/factions.js?v=7';
-import { getMap } from './data/maps.js?v=7';
-import { StartScreen } from './ui/StartScreen.js?v=7';
+import { Renderer } from './engine/Renderer.js?v=8';
+import { RTSCamera } from './engine/RTSCamera.js?v=8';
+import { Picker } from './engine/Picker.js?v=8';
+import { Loop } from './engine/Loop.js?v=8';
+import { AssetManager } from './engine/AssetManager.js?v=8';
+import { TerrainMesh } from './world/TerrainMesh.js?v=8';
+import { Fog } from './world/Fog.js?v=8';
+import { nearestAdj } from './world/Pathfinding.js?v=8';
+import { GameState } from './sim/GameState.js?v=8';
+import * as Economy from './sim/Economy.js?v=8';
+import * as BuildSys from './sim/Buildings.js?v=8';
+import * as Waves from './sim/Waves.js?v=8';
+import * as Tech from './sim/Tech.js?v=8';
+import * as Nature from './sim/Nature.js?v=8';
+import * as CardsSys from './sim/Cards.js?v=8';
+import { updateUnits } from './sim/Units.js?v=8';
+import { toggleEdict } from './sim/Edicts.js?v=8';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=8';
+import { HUD } from './ui/HUD.js?v=8';
+import { BuildMenu } from './ui/BuildMenu.js?v=8';
+import { Selection } from './ui/Selection.js?v=8';
+import { Minimap } from './ui/Minimap.js?v=8';
+import { Toasts } from './ui/Toasts.js?v=8';
+import { Cards } from './ui/Cards.js?v=8';
+import { BUILDINGS } from './data/buildings.js?v=8';
+import { RANKS } from './data/ranks.js?v=8';
+import { bark } from './data/barks.js?v=8';
+import { STORAGE_KEY } from './data/config.js?v=8';
+import { getFaction } from './data/factions.js?v=8';
+import { getMap } from './data/maps.js?v=8';
+import { StartScreen } from './ui/StartScreen.js?v=8';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -142,6 +143,7 @@ class Game {
     this.map = map;
     this.state.grid.generateTerrain(map.terr, map.key);   // рельеф (высоты/биомы/реки)
     this.terrain = new TerrainMesh(this.scene, this.state.grid, map.pal);
+    this.fog = new Fog(this.scene, this.state.grid);       // туман войны
   }
 
   _begin(restored) {
@@ -358,6 +360,7 @@ class Game {
     let fdt = (now - this.lastRender) / 1000; if (fdt > 0.1) fdt = 0.1; this.lastRender = now;
     this.cameraRig.update(fdt);
     this.rdr.updateShadow(this.cameraRig.target.x, this.cameraRig.target.z);
+    if (this.fog) this.fog.update(this.state, fdt);
 
     // интерполяция + анимация юнитов (рост/ходьба/выпад)
     for (const u of this.state.units) {
@@ -370,6 +373,7 @@ class Game {
       if (u.atkAnim > 0) { u.atkAnim -= fdt; fwd = Math.sin((1 - Math.max(0, u.atkAnim) / 0.2) * Math.PI) * 0.16; }
       v.position.set(ix + Math.sin(u.dir) * fwd, this.state.grid.heightAt(ix, iz) + bob, iz + Math.cos(u.dir) * fwd);
       v.rotation.y = u.dir || 0;
+      if (u.faction === 'enemy') { const gp = this.state.grid.worldToGrid(u.x, u.z); const t = this.state.grid.get(gp.x, gp.y); v.visible = !t || t.visible; }   // прячем врага в тумане
     }
     // эффекты смерти (падение+уменьшение)
     for (let i = this.state.fx.length - 1; i >= 0; i--) {
