@@ -2,7 +2,7 @@
 // Стиль повторяет идол-слой «Гойды»: flatShading, гекс-формы, эмиссивные руны.
 // Origin КАЖДОЙ модели — в центре основания (низ на y=0), модель растёт вверх.
 import * as THREE from 'three';
-import { PAL } from '../data/config.js?v=16';
+import { PAL } from '../data/config.js?v=17';
 
 const _mats = {};
 function mat(color, o = {}) {
@@ -310,6 +310,31 @@ function bogatyr() {
   return g;
 }
 
+// ---- дичь ----
+function deer() {
+  const g = new THREE.Group();
+  const body = mat(0x9a6a3a), dark = mat(0x6a4622), light = mat(0xc8a060), antler = mat(0xd8cbb0);
+  g.add(box(0.6, 0.32, 0.26, body, 0, 0.55, 0));
+  for (const [x, z] of [[-0.22, -0.09], [0.22, -0.09], [-0.22, 0.09], [0.22, 0.09]]) g.add(cyl(0.04, 0.04, 0.45, 4, dark, x, 0.22, z));
+  const neck = cyl(0.07, 0.09, 0.32, 5, body, 0.3, 0.78, 0); neck.rotation.z = -0.5; g.add(neck);
+  g.add(box(0.2, 0.16, 0.14, light, 0.42, 0.92, 0));
+  const a1 = cone(0.03, 0.22, 4, antler, 0.46, 1.08, 0.05); a1.rotation.z = 0.3; g.add(a1);
+  const a2 = cone(0.03, 0.22, 4, antler, 0.46, 1.08, -0.05); a2.rotation.z = 0.3; g.add(a2);
+  g.add(box(0.05, 0.1, 0.05, light, -0.32, 0.6, 0));
+  return g;
+}
+function boar() {
+  const g = new THREE.Group();
+  const body = mat(0x3a2e26), dark = mat(0x241c16), tusk = mat(0xe8e0cc);
+  g.add(box(0.62, 0.34, 0.3, body, 0, 0.4, 0));
+  g.add(box(0.3, 0.28, 0.26, dark, 0.18, 0.46, 0));
+  for (const [x, z] of [[-0.2, -0.1], [0.2, -0.1], [-0.2, 0.1], [0.2, 0.1]]) g.add(cyl(0.04, 0.05, 0.3, 4, dark, x, 0.15, z));
+  g.add(box(0.18, 0.16, 0.18, body, 0.46, 0.42, 0));
+  g.add(box(0.08, 0.08, 0.14, dark, 0.56, 0.4, 0));
+  g.add(cone(0.02, 0.1, 4, tusk, 0.54, 0.36, 0.07)); g.add(cone(0.02, 0.1, 4, tusk, 0.54, 0.36, -0.07));
+  return g;
+}
+
 const BUILDERS = {
   idol_dron: idol, bld_townhall: townhall, bld_izba: izba, bld_ambar: ambar, bld_roshcha: roshcha,
   enemy_camp: enemyCamp,
@@ -318,6 +343,7 @@ const BUILDERS = {
   bld_chastokol: chastokol, bld_chastokol_gate: chastokolGate,
   res_tree: tree, res_stone: stoneNode, res_ore: oreNode,
   unit_kholop: kholop, unit_ratnik: ratnik, unit_oprichnik: oprichnik, unit_bogatyr: bogatyr,
+  animal_deer: deer, animal_boar: boar,
   enemy_raider: raider, enemy_boss: bossUnit,
   idol_krio: relicIdol(0x00eeff), idol_giper: relicIdol(0xff3020), idol_shipo: relicIdol(0x66ff44),
   idol_obereg: relicIdol(0xffcc00), idol_food: relicIdol(0x88ff66), idol_gold: relicIdol(0xffd040),

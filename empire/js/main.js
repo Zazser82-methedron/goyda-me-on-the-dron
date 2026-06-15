@@ -1,37 +1,38 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=16';
-import { RTSCamera } from './engine/RTSCamera.js?v=16';
-import { Picker } from './engine/Picker.js?v=16';
-import { Loop } from './engine/Loop.js?v=16';
-import { AssetManager } from './engine/AssetManager.js?v=16';
-import { TerrainMesh } from './world/TerrainMesh.js?v=16';
-import { Fog } from './world/Fog.js?v=16';
-import { WorldBase } from './world/WorldBase.js?v=16';
-import { nearestAdj } from './world/Pathfinding.js?v=16';
-import { GameState } from './sim/GameState.js?v=16';
-import * as Economy from './sim/Economy.js?v=16';
-import * as BuildSys from './sim/Buildings.js?v=16';
-import * as Waves from './sim/Waves.js?v=16';
-import * as Tech from './sim/Tech.js?v=16';
-import * as Nature from './sim/Nature.js?v=16';
-import * as Relics from './sim/Relics.js?v=16';
-import * as Camps from './sim/Camps.js?v=16';
-import { updateUnits, damage } from './sim/Units.js?v=16';
-import { toggleEdict } from './sim/Edicts.js?v=16';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=16';
-import { HUD } from './ui/HUD.js?v=16';
-import { BuildMenu } from './ui/BuildMenu.js?v=16';
-import { Selection } from './ui/Selection.js?v=16';
-import { Minimap } from './ui/Minimap.js?v=16';
-import { Toasts } from './ui/Toasts.js?v=16';
-import { BUILDINGS } from './data/buildings.js?v=16';
-import { RANKS } from './data/ranks.js?v=16';
-import { bark } from './data/barks.js?v=16';
-import { STORAGE_KEY } from './data/config.js?v=16';
-import { getFaction } from './data/factions.js?v=16';
-import { getMap } from './data/maps.js?v=16';
-import { StartScreen } from './ui/StartScreen.js?v=16';
+import { Renderer } from './engine/Renderer.js?v=17';
+import { RTSCamera } from './engine/RTSCamera.js?v=17';
+import { Picker } from './engine/Picker.js?v=17';
+import { Loop } from './engine/Loop.js?v=17';
+import { AssetManager } from './engine/AssetManager.js?v=17';
+import { TerrainMesh } from './world/TerrainMesh.js?v=17';
+import { Fog } from './world/Fog.js?v=17';
+import { WorldBase } from './world/WorldBase.js?v=17';
+import { nearestAdj } from './world/Pathfinding.js?v=17';
+import { GameState } from './sim/GameState.js?v=17';
+import * as Economy from './sim/Economy.js?v=17';
+import * as BuildSys from './sim/Buildings.js?v=17';
+import * as Waves from './sim/Waves.js?v=17';
+import * as Tech from './sim/Tech.js?v=17';
+import * as Nature from './sim/Nature.js?v=17';
+import * as Relics from './sim/Relics.js?v=17';
+import * as Camps from './sim/Camps.js?v=17';
+import * as Wildlife from './sim/Wildlife.js?v=17';
+import { updateUnits, damage } from './sim/Units.js?v=17';
+import { toggleEdict } from './sim/Edicts.js?v=17';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=17';
+import { HUD } from './ui/HUD.js?v=17';
+import { BuildMenu } from './ui/BuildMenu.js?v=17';
+import { Selection } from './ui/Selection.js?v=17';
+import { Minimap } from './ui/Minimap.js?v=17';
+import { Toasts } from './ui/Toasts.js?v=17';
+import { BUILDINGS } from './data/buildings.js?v=17';
+import { RANKS } from './data/ranks.js?v=17';
+import { bark } from './data/barks.js?v=17';
+import { STORAGE_KEY } from './data/config.js?v=17';
+import { getFaction } from './data/factions.js?v=17';
+import { getMap } from './data/maps.js?v=17';
+import { StartScreen } from './ui/StartScreen.js?v=17';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -148,6 +149,7 @@ class Game {
     this.fog = new Fog(this.scene, this.state.grid);       // туман войны
     this.worldBase = new WorldBase(this.scene, this.state.grid);   // плита на слонах+черепахе
     if (map.key === 'neon') this._addNeonSun();
+    Wildlife.spawn(this.state);   // дичь бродит по карте (охота)
   }
 
   _addNeonSun() {
@@ -323,6 +325,7 @@ class Game {
     for (const b of this.state.buildings) a.push(b.view);
     for (const u of this.state.units) a.push(u.view);
     for (const c of this.state.camps) a.push(c.view);
+    for (const an of this.state.animals) a.push(an.view);
     return a;
   }
 
@@ -345,24 +348,30 @@ class Game {
     const ent = this._entUnder();
     // рубить ресурс (для добытчика)
     if (ent && ent.type === 'node' && sel.def.worker) {
-      sel.job = ent.id; sel.jobType = ent.resType; sel.manualIdle = false; sel.moveOrder = null; sel.path = null; sel.state = 'toNode';
+      sel.huntId = null; sel.job = ent.id; sel.jobType = ent.resType; sel.manualIdle = false; sel.moveOrder = null; sel.path = null; sel.state = 'toNode';
       sfx('click'); this.float(sel.x, sel.z, 'Иду рубить!', '#9effd0', 1.4); return;
+    }
+    // охота на зверя (любой свой юнит)
+    if (ent && ent.type === 'animal') {
+      sel.huntId = ent.id; sel.moveOrder = null; sel.path = null; sel._huntTx = null;
+      if (sel.def.worker) { sel.job = null; sel.manualIdle = true; }
+      sfx('click'); this.float(sel.x, sel.z, 'На охоту! ' + ent.def.icon, '#ffe08a', 1.4); return;
     }
     // в атаку на врага (для воина)
     if (ent && ent.type === 'unit' && ent.faction === 'enemy' && !sel.def.worker) {
       const g = this.state.grid.worldToGrid(ent.x, ent.z);
-      sel.moveOrder = { x: g.x, y: g.y }; sel.path = null;
+      sel.huntId = null; sel.moveOrder = { x: g.x, y: g.y }; sel.path = null;
       sfx('click'); this.float(sel.x, sel.z, 'В атаку!', '#ff8a8a', 1.4); return;
     }
     // снести вражий стан (для воина)
     if (ent && ent.type === 'camp' && !sel.def.worker) {
-      sel.targetCampId = ent.id; sel.moveOrder = null; sel.path = null;
+      sel.huntId = null; sel.targetCampId = ent.id; sel.moveOrder = null; sel.path = null;
       sfx('click'); this.float(sel.x, sel.z, 'Снести стан!', '#ff8a8a', 1.4); return;
     }
     // идти на указанную точку (любой свой юнит — куда скажешь)
     const t = this.picker.tileUnder(this.camera, this.state.grid);
     if (t) {
-      sel.moveOrder = { x: t.x, y: t.y }; sel.path = null;
+      sel.huntId = null; sel.moveOrder = { x: t.x, y: t.y }; sel.path = null;
       if (sel.def.worker) { sel.job = null; sel.manualIdle = true; }
       sfx('click'); this.float(sel.x, sel.z, 'Идём!', '#9effd0', 1.4);
     }
@@ -439,6 +448,7 @@ class Game {
     Nature.update(this.state, dt, this.ctx);
     Relics.update(this.state, dt, this.ctx);
     Camps.update(this.state, dt, this.ctx);
+    Wildlife.update(this.state, dt, this.ctx);
   }
 
   // ---------- рендер ----------
@@ -462,6 +472,17 @@ class Game {
       v.position.set(ix + Math.sin(u.dir) * fwd, this.state.grid.heightAt(ix, iz) + bob, iz + Math.cos(u.dir) * fwd);
       v.rotation.y = u.dir || 0;
       if (u.faction === 'enemy') { const gp = this.state.grid.worldToGrid(u.x, u.z); const t = this.state.grid.get(gp.x, gp.y); v.visible = !this.fog || !this.fog.enabled || !t || t.visible; }   // прячем врага в тумане
+    }
+    // интерполяция дичи (бродит/убегает) + прячем в тумане
+    for (const a of this.state.animals) {
+      const v = a.view;
+      const ix = a.px + (a.x - a.px) * alpha, iz = a.pz + (a.z - a.pz) * alpha;
+      const moving = Math.hypot(a.x - a.px, a.z - a.pz) > 0.0015;
+      const bob = moving ? Math.abs(Math.sin(now * 0.02 + a.id * 1.3)) * 0.04 : 0;
+      v.position.set(ix, this.state.grid.heightAt(ix, iz) + bob, iz);
+      v.rotation.y = a.dir || 0;
+      const gp = this.state.grid.worldToGrid(a.x, a.z); const t = this.state.grid.get(gp.x, gp.y);
+      v.visible = !this.fog || !this.fog.enabled || !t || t.visible;
     }
     // эффекты смерти (падение+уменьшение)
     for (let i = this.state.fx.length - 1; i >= 0; i--) {

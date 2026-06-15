@@ -1,11 +1,11 @@
 // ===== Единый источник правды: ресурсы, сущности, ранги, сейв =====
 import * as THREE from 'three';
-import { GRID_N, STORAGE_KEY } from '../data/config.js?v=16';
-import { Grid } from '../world/Grid.js?v=16';
-import { NodeField } from '../world/NodeField.js?v=16';
-import { BUILDINGS } from '../data/buildings.js?v=16';
-import { UNITS } from '../data/units.js?v=16';
-import { RANKS } from '../data/ranks.js?v=16';
+import { GRID_N, STORAGE_KEY } from '../data/config.js?v=17';
+import { Grid } from '../world/Grid.js?v=17';
+import { NodeField } from '../world/NodeField.js?v=17';
+import { BUILDINGS } from '../data/buildings.js?v=17';
+import { UNITS } from '../data/units.js?v=17';
+import { RANKS } from '../data/ranks.js?v=17';
 
 export class GameState {
   constructor(scene, assets) {
@@ -34,6 +34,7 @@ export class GameState {
     this.units = [];
     this.nodes = [];
     this.camps = [];              // вражьи станы (спавнят набеги, можно сносить)
+    this.animals = [];            // дичь (бродят по карте, на них охотятся)
     this.fx = [];                 // визуальные эффекты (смерть/пуф) — анимируются в render
     this._byId = new Map();
     this._id = 1;
@@ -116,6 +117,29 @@ export class GameState {
     if (this.selected === camp) this.selected = null;
   }
   campById(id) { return this.camps.find(c => c.id === id); }
+
+  // ---- дичь ----
+  addAnimal(kind, def, wx, wz) {
+    const view = this.assets.get(def.model);
+    const y = this.grid.heightAt ? this.grid.heightAt(wx, wz) : 0;
+    view.position.set(wx, y, wz);
+    this.scene.add(view);
+    const a = {
+      id: this._id++, type: 'animal', kind, def, view,
+      x: wx, z: wz, px: wx, pz: wz, dir: 0,
+      hp: def.hp, maxHp: def.hp, wanderT: 0, tx: wx, tz: wz, hunterId: null, fleeing: false,
+    };
+    view.userData.entity = a;
+    this.animals.push(a); this._byId.set(a.id, a);
+    return a;
+  }
+  removeAnimal(a, fx) {
+    this._byId.delete(a.id);
+    this.animals = this.animals.filter(x => x !== a);
+    if (this.selected === a) this.selected = null;
+    if (fx && a.view) { a.view.userData.entity = null; this.fx.push({ view: a.view, kind: 'death', life: 0.5, max: 0.5, y0: a.view.position.y }); }
+    else if (a.view) this.scene.remove(a.view);
+  }
 
   // ---- здания ----
   addBuilding(kind, gx, gy, opts = {}) {

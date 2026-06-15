@@ -1,7 +1,7 @@
 // ===== Панель выбранной сущности: HP, тренировка, инфо =====
-import { UNITS } from '../data/units.js?v=16';
-import { RES_LABEL } from '../data/config.js?v=16';
-import { costStr } from './BuildMenu.js?v=16';
+import { UNITS } from '../data/units.js?v=17';
+import { RES_LABEL } from '../data/config.js?v=17';
+import { costStr } from './BuildMenu.js?v=17';
 
 function hpBar(hp, max) {
   const p = Math.max(0, Math.min(1, hp / max));
@@ -58,6 +58,11 @@ export class Selection {
       html += hpBar(sel.hp, sel.maxHp);
       html += `<div class="sel-sub" id="sel-sub"></div>`;
       html += `<div class="sel-tag">ПКМ воином по стану — снести. Спавнит набеги!</div>`;
+    } else if (sel.type === 'animal') {
+      html += `<div class="sel-h">${sel.def.icon} ${sel.def.name}</div>`;
+      html += hpBar(sel.hp, sel.maxHp);
+      html += `<div class="sel-sub" id="sel-sub"></div>`;
+      html += `<div class="sel-tag">ПКМ своим юнитом — охота 🏹 (+ЕДА и шкуры)</div>`;
     }
     this.el.innerHTML = html;
     this.el.querySelectorAll('.ubtn').forEach(btn => { btn.onclick = () => this.game.train(sel, btn.dataset.u); });
