@@ -1,10 +1,10 @@
 // ===== Постройка, стройка-прогресс и тренировка юнитов =====
-import { BUILDINGS } from '../data/buildings.js?v=28';
-import { UNITS } from '../data/units.js?v=28';
-import { RANKS } from '../data/ranks.js?v=28';
-import { nearestAdj } from '../world/Pathfinding.js?v=28';
-import { bark } from '../data/barks.js?v=28';
-import { edictMods } from './Edicts.js?v=28';
+import { BUILDINGS } from '../data/buildings.js?v=29';
+import { UNITS } from '../data/units.js?v=29';
+import { RANKS } from '../data/ranks.js?v=29';
+import { nearestAdj } from '../world/Pathfinding.js?v=29';
+import { bark } from '../data/barks.js?v=29';
+import { edictMods } from './Edicts.js?v=29';
 
 function trainTime(state, kind) {
   const base = UNITS[kind].trainTime;
@@ -52,7 +52,7 @@ export function placeBuilding(state, kind, gx, gy, ctx) {
   if ((def.rank || 0) > state.rankIndex) return { ok: false, reason: 'нужен ранг ' + RANKS[def.rank].name };
   if (def.requiresTech && !(state.research && state.research.done[def.requiresTech])) return { ok: false, reason: 'изучите технологию (через обсерваторию)' };
   if (def.unique && state.buildings.some(b => b.kind === kind)) return { ok: false, reason: 'уже построено' };
-  if (!state.grid.canPlace(gx, gy, def.w, def.h)) return { ok: false, reason: 'место занято' };
+  if (!state.grid.canPlace(gx, gy, def.w, def.h, !!def.onWater)) return { ok: false, reason: 'место занято' };
   if (!state.canAfford(def.cost)) return { ok: false, reason: 'мало ресурсов' };
   state.spend(def.cost);
   const b = state.addBuilding(kind, gx, gy, { built: (def.build || 0) <= 0 });

@@ -2,7 +2,7 @@
 // Стиль повторяет идол-слой «Гойды»: flatShading, гекс-формы, эмиссивные руны.
 // Origin КАЖДОЙ модели — в центре основания (низ на y=0), модель растёт вверх.
 import * as THREE from 'three';
-import { PAL } from '../data/config.js?v=28';
+import { PAL } from '../data/config.js?v=29';
 
 const _mats = {};
 function mat(color, o = {}) {
@@ -362,11 +362,32 @@ function tower() {
   return g;
 }
 
+// ---- дорога (1×1, мощёная плита) ----
+function road() {
+  const g = new THREE.Group();
+  const d1 = mat(0x6a5a42, { rough: 1 }), d2 = mat(0x7c6c52, { rough: 1 });
+  g.add(box(0.96, 0.06, 0.96, d1, 0, 0.03, 0));
+  for (const [x, z] of [[-0.26, -0.2], [0.22, 0.26], [0.3, -0.3], [-0.2, 0.3]]) g.add(box(0.16, 0.04, 0.16, d2, x, 0.06, z));
+  return g;
+}
+
+// ---- мост (1×1, настил с перилами и сваями; садится на уровень воды) ----
+function bridge() {
+  const g = new THREE.Group();
+  const wd = mat(PAL.wood), dk = mat(PAL.woodDk);
+  g.add(box(0.96, 0.1, 0.96, wd, 0, 0.18, 0));
+  for (let i = 0; i < 4; i++) g.add(box(0.9, 0.04, 0.06, dk, 0, 0.24, -0.36 + i * 0.24));
+  g.add(box(0.06, 0.18, 0.96, dk, -0.45, 0.3, 0)); g.add(box(0.06, 0.18, 0.96, dk, 0.45, 0.3, 0));
+  for (const x of [-0.4, 0.4]) for (const z of [-0.4, 0.4]) g.add(cyl(0.05, 0.05, 0.55, 5, dk, x, -0.12, z));
+  return g;
+}
+
 const BUILDERS = {
   idol_dron: idol, bld_townhall: townhall, bld_izba: izba, bld_ambar: ambar, bld_roshcha: roshcha,
   enemy_camp: enemyCamp,
   bld_kuznica: kuznica, bld_kazarma: kazarma, bld_church: church, bld_market: market,
   bld_ferma: ferma, bld_rudnik: rudnik, bld_zhila: zhila, bld_observatory: observatory, bld_tower: tower,
+  bld_road: road, bld_bridge: bridge,
   bld_chastokol: chastokol, bld_chastokol_gate: chastokolGate,
   res_tree: tree, res_stone: stoneNode, res_ore: oreNode,
   unit_kholop: kholop, unit_ratnik: ratnik, unit_oprichnik: oprichnik, unit_bogatyr: bogatyr,

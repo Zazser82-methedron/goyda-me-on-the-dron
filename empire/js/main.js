@@ -1,41 +1,41 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=28';
-import { RTSCamera } from './engine/RTSCamera.js?v=28';
-import { Picker } from './engine/Picker.js?v=28';
-import { Loop } from './engine/Loop.js?v=28';
-import { AssetManager } from './engine/AssetManager.js?v=28';
-import { TerrainMesh } from './world/TerrainMesh.js?v=28';
-import { WorldBase } from './world/WorldBase.js?v=28';
-import { Sky } from './world/Sky.js?v=28';
+import { Renderer } from './engine/Renderer.js?v=29';
+import { RTSCamera } from './engine/RTSCamera.js?v=29';
+import { Picker } from './engine/Picker.js?v=29';
+import { Loop } from './engine/Loop.js?v=29';
+import { AssetManager } from './engine/AssetManager.js?v=29';
+import { TerrainMesh } from './world/TerrainMesh.js?v=29';
+import { WorldBase } from './world/WorldBase.js?v=29';
+import { Sky } from './world/Sky.js?v=29';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=28';
-import { GameState } from './sim/GameState.js?v=28';
-import * as Economy from './sim/Economy.js?v=28';
-import * as BuildSys from './sim/Buildings.js?v=28';
-import * as Waves from './sim/Waves.js?v=28';
-import * as Tech from './sim/Tech.js?v=28';
-import * as Nature from './sim/Nature.js?v=28';
-import * as Relics from './sim/Relics.js?v=28';
-import * as Camps from './sim/Camps.js?v=28';
-import * as Wildlife from './sim/Wildlife.js?v=28';
-import * as Research from './sim/Research.js?v=28';
-import { updateUnits, damage } from './sim/Units.js?v=28';
-import { toggleEdict } from './sim/Edicts.js?v=28';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=28';
-import { HUD } from './ui/HUD.js?v=28';
-import { BuildMenu } from './ui/BuildMenu.js?v=28';
-import { Selection } from './ui/Selection.js?v=28';
-import { Minimap } from './ui/Minimap.js?v=28';
-import { ResearchPanel } from './ui/Research.js?v=28';
-import { Toasts } from './ui/Toasts.js?v=28';
-import { BUILDINGS } from './data/buildings.js?v=28';
-import { RANKS } from './data/ranks.js?v=28';
-import { bark } from './data/barks.js?v=28';
-import { STORAGE_KEY } from './data/config.js?v=28';
-import { getFaction } from './data/factions.js?v=28';
-import { getMap } from './data/maps.js?v=28';
-import { StartScreen } from './ui/StartScreen.js?v=28';
+import { nearestAdj } from './world/Pathfinding.js?v=29';
+import { GameState } from './sim/GameState.js?v=29';
+import * as Economy from './sim/Economy.js?v=29';
+import * as BuildSys from './sim/Buildings.js?v=29';
+import * as Waves from './sim/Waves.js?v=29';
+import * as Tech from './sim/Tech.js?v=29';
+import * as Nature from './sim/Nature.js?v=29';
+import * as Relics from './sim/Relics.js?v=29';
+import * as Camps from './sim/Camps.js?v=29';
+import * as Wildlife from './sim/Wildlife.js?v=29';
+import * as Research from './sim/Research.js?v=29';
+import { updateUnits, damage } from './sim/Units.js?v=29';
+import { toggleEdict } from './sim/Edicts.js?v=29';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=29';
+import { HUD } from './ui/HUD.js?v=29';
+import { BuildMenu } from './ui/BuildMenu.js?v=29';
+import { Selection } from './ui/Selection.js?v=29';
+import { Minimap } from './ui/Minimap.js?v=29';
+import { ResearchPanel } from './ui/Research.js?v=29';
+import { Toasts } from './ui/Toasts.js?v=29';
+import { BUILDINGS } from './data/buildings.js?v=29';
+import { RANKS } from './data/ranks.js?v=29';
+import { bark } from './data/barks.js?v=29';
+import { STORAGE_KEY } from './data/config.js?v=29';
+import { getFaction } from './data/factions.js?v=29';
+import { getMap } from './data/maps.js?v=29';
+import { StartScreen } from './ui/StartScreen.js?v=29';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -527,7 +527,7 @@ class Game {
     if (this.buildKind) {
       const d = BUILDINGS[this.buildKind];
       if (tile) {
-        const ok = this.state.grid.canPlace(tile.x, tile.y, d.w, d.h) && this.state.canAfford(d.cost) && (d.rank || 0) <= this.state.rankIndex;
+        const ok = this.state.grid.canPlace(tile.x, tile.y, d.w, d.h, !!d.onWater) && this.state.canAfford(d.cost) && (d.rank || 0) <= this.state.rankIndex && (!d.requiresTech || (this.state.research && this.state.research.done[d.requiresTech]));
         if (!this._ghostModels[this.buildKind]) {
           const m = this.assets.get(d.model);
           m.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = 0.5; } });

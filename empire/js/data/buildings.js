@@ -53,6 +53,18 @@ export const BUILDINGS = {
     cost: { wood: 10 }, build: 1,
     desc: 'Проходимый участок стены для своих.',
   },
+  road: {
+    kind: 'road', name: 'ДОРОГА', icon: '🛣️', model: 'bld_road',
+    w: 1, h: 1, hp: 50, cat: 'econ', rank: 0, wall: true, walkable: true, road: true,
+    cost: { stone: 3 }, build: 0,
+    desc: 'Мощёная дорога — юниты идут по ней быстрее. Тяни линией (ПКМ-таскать).',
+  },
+  bridge: {
+    kind: 'bridge', name: 'МОСТ', icon: '🌉', model: 'bld_bridge',
+    w: 1, h: 1, hp: 140, cat: 'econ', rank: 0, wall: true, walkable: true, bridge: true, onWater: true, road: true,
+    cost: { wood: 8 }, build: 0,
+    desc: 'Мост через воду — по нему можно ходить и возить. Тяни линией через реку.',
+  },
   church: {
     kind: 'church', name: 'КУМИРНЯ ДРОНА', icon: '☩', model: 'bld_church',
     w: 2, h: 2, hp: 200, cat: 'faith', rank: 2,
@@ -162,7 +174,7 @@ export const BUILDINGS = {
 };
 
 // порядок в меню постройки
-export const BUILD_ORDER = ['izba', 'ambar', 'ferma', 'roshcha', 'rudnik', 'zhila', 'kuznica', 'kazarma', 'chastokol', 'gate', 'tower', 'church', 'observatory', 'market',
+export const BUILD_ORDER = ['izba', 'ambar', 'ferma', 'roshcha', 'rudnik', 'zhila', 'kuznica', 'kazarma', 'chastokol', 'gate', 'road', 'bridge', 'tower', 'church', 'observatory', 'market',
   'rel_shipo', 'rel_krio', 'rel_obereg', 'rel_giper', 'rel_goydushka', 'rel_zlato', 'rel_fonk', 'rel_vera', 'rel_samotsvet', 'idol'];
 
 export const CATS = {

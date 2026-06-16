@@ -1,8 +1,8 @@
 // ===== Движение, бой и ИИ юнитов (свои воины + враги). Воркеры — в Jobs.js =====
-import { TILE } from '../data/config.js?v=28';
-import { findPath, nearestAdj } from '../world/Pathfinding.js?v=28';
-import { updateWorker } from './Jobs.js?v=28';
-import { bark } from '../data/barks.js?v=28';
+import { TILE } from '../data/config.js?v=29';
+import { findPath, nearestAdj } from '../world/Pathfinding.js?v=29';
+import { updateWorker } from './Jobs.js?v=29';
+import { bark } from '../data/barks.js?v=29';
 
 export function tileCenter(state, tx, ty) { const w = state.grid.gridToWorld(tx, ty); return { x: w.wx, z: w.wz }; }
 function dist2(ax, az, bx, bz) { return (ax - bx) ** 2 + (az - bz) ** 2; }
@@ -36,7 +36,9 @@ export function moveStep(state, u, dt) {
   const c = tileCenter(state, node.x, node.y);
   const dx = c.x - u.x, dz = c.z - u.z;
   const d = Math.hypot(dx, dz);
-  const step = u.speed * dt * (state.krioTimer > 0 && u.faction === 'ours' ? 0.6 : 1) * (state.superTimer > 0 && u.faction === 'ours' ? 1.4 : 1) * (u.slowT > 0 ? 0.5 : 1);
+  const cur = state.grid.get(u.gx ?? node.x, u.gy ?? node.y);   // текущий тайл
+  const roadMul = (cur && cur.road) ? 1.4 : 1;                  // дорога/мост — быстрее
+  const step = u.speed * dt * roadMul * (state.krioTimer > 0 && u.faction === 'ours' ? 0.6 : 1) * (state.superTimer > 0 && u.faction === 'ours' ? 1.4 : 1) * (u.slowT > 0 ? 0.5 : 1);
   if (d <= step) {
     u.x = c.x; u.z = c.z; u.pi++;
   } else {

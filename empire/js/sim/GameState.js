@@ -1,11 +1,11 @@
 // ===== Единый источник правды: ресурсы, сущности, ранги, сейв =====
 import * as THREE from 'three';
-import { GRID_N, STORAGE_KEY } from '../data/config.js?v=28';
-import { Grid } from '../world/Grid.js?v=28';
-import { NodeField } from '../world/NodeField.js?v=28';
-import { BUILDINGS } from '../data/buildings.js?v=28';
-import { UNITS } from '../data/units.js?v=28';
-import { RANKS } from '../data/ranks.js?v=28';
+import { GRID_N, STORAGE_KEY } from '../data/config.js?v=29';
+import { Grid } from '../world/Grid.js?v=29';
+import { NodeField } from '../world/NodeField.js?v=29';
+import { BUILDINGS } from '../data/buildings.js?v=29';
+import { UNITS } from '../data/units.js?v=29';
+import { RANKS } from '../data/ranks.js?v=29';
 
 export class GameState {
   constructor(scene, assets) {
@@ -151,7 +151,8 @@ export class GameState {
     // персональные материалы на каждое здание (иначе общий кэш сделает прозрачными все)
     view.traverse(o => { if (o.isMesh) o.material = o.material.clone(); });
     const c = this.grid.footprintCenter(gx, gy, def.w, def.h);
-    const cy = this.grid.heightAt ? this.grid.heightAt(c.wx, c.wz) : 0;
+    // мост садится на уровень воды, остальное — на рельеф
+    const cy = def.bridge ? (this.grid.water ?? -0.5) : (this.grid.heightAt ? this.grid.heightAt(c.wx, c.wz) : 0);
     view.position.set(c.wx, cy, c.wz);
     this.scene.add(view);
     const b = {
@@ -162,7 +163,7 @@ export class GameState {
       cx: c.wx, cz: c.wz, cy,
     };
     view.userData.entity = b;
-    this.grid.occupy(gx, gy, def.w, def.h, b.id, { walkable: !!def.walkable });
+    this.grid.occupy(gx, gy, def.w, def.h, b.id, { walkable: !!def.walkable, road: !!def.road });
     this.buildings.push(b); this._byId.set(b.id, b);
     if (def.unique && kind === 'townhall') this.townhall = b;
     if (def.wonder) this.idol = b;

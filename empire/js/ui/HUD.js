@@ -1,6 +1,6 @@
 // ===== Верхняя панель: ресурсы, ранг, Базометр-ВЕРА, население, счастье, день =====
-import { RES, RES_LABEL } from '../data/config.js?v=28';
-import { RANKS } from '../data/ranks.js?v=28';
+import { RES, RES_LABEL } from '../data/config.js?v=29';
+import { RANKS } from '../data/ranks.js?v=29';
 
 export class HUD {
   constructor(game) {

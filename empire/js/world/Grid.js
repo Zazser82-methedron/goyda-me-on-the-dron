@@ -1,6 +1,6 @@
 // ===== Сетка мира: тайлы, координаты, занятость, рельеф =====
-import { TILE, GRID_N } from '../data/config.js?v=28';
-import { makeNoise, fbm, hashSeed } from './Noise.js?v=28';
+import { TILE, GRID_N } from '../data/config.js?v=29';
+import { makeNoise, fbm, hashSeed } from './Noise.js?v=29';
 
 export class Grid {
   constructor(n = GRID_N) {
@@ -16,6 +16,7 @@ export class Grid {
           occupiedBy: null,
           walkable: true, buildable: true,
           baseWalkable: true, baseBuildable: true,   // природная проходимость (вода/обрыв = false)
+          road: false,                                // дорога/мост (ускоряет юнитов)
           explored: false, visible: false,           // туман войны
         });
       }
@@ -43,11 +44,14 @@ export class Grid {
   }
 
   // Можно ли поставить footprint w×h с левым-верхним углом (gx,gy)?
-  canPlace(gx, gy, w, h) {
+  // allowWater=true — для мостов (ставятся на воду).
+  canPlace(gx, gy, w, h, allowWater = false) {
     for (let dy = 0; dy < h; dy++) {
       for (let dx = 0; dx < w; dx++) {
         const t = this.get(gx + dx, gy + dy);
-        if (!t || !t.buildable || t.occupiedBy !== null || t.type === 'water') return false;
+        if (!t || t.occupiedBy !== null) return false;
+        if (allowWater) continue;                                  // мост — вода разрешена
+        if (!t.buildable || t.type === 'water') return false;
       }
     }
     return true;
@@ -60,8 +64,8 @@ export class Grid {
         const t = this.get(gx + dx, gy + dy);
         if (!t) continue;
         t.occupiedBy = id;
-        if (id === null) { t.walkable = t.baseWalkable !== false; t.buildable = t.baseBuildable !== false; }
-        else { t.walkable = !!opts.walkable; t.buildable = false; }
+        if (id === null) { t.walkable = t.baseWalkable !== false; t.buildable = t.baseBuildable !== false; t.road = false; }
+        else { t.walkable = !!opts.walkable; t.buildable = false; t.road = !!opts.road; }
       }
     }
   }
