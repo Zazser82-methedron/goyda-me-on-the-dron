@@ -2,7 +2,7 @@
 // Стиль повторяет идол-слой «Гойды»: flatShading, гекс-формы, эмиссивные руны.
 // Origin КАЖДОЙ модели — в центре основания (низ на y=0), модель растёт вверх.
 import * as THREE from 'three';
-import { PAL } from '../data/config.js?v=30';
+import { PAL } from '../data/config.js?v=31';
 
 const _mats = {};
 function mat(color, o = {}) {
@@ -162,7 +162,12 @@ function chastokolGate() {
   // убрать средние посты — «ворота»
   g.children = g.children.filter((c, i) => i < 2 || i > 5);
   const m = mat(PAL.crimson);
-  g.add(box(0.5, 0.7, 0.06, m, 0, 0.45, 0));
+  // створка на петле: панель смещена в группе → ось вращения у левого края (анимация открытия в render)
+  const door = new THREE.Group();
+  door.add(box(0.5, 0.7, 0.06, m, 0.25, 0.45, 0));
+  door.position.set(-0.25, 0, 0);
+  door.name = 'gate_door';
+  g.add(door);
   return g;
 }
 

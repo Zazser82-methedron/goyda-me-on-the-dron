@@ -1,45 +1,45 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=30';
-import { RTSCamera } from './engine/RTSCamera.js?v=30';
-import { Picker } from './engine/Picker.js?v=30';
-import { Loop } from './engine/Loop.js?v=30';
-import { AssetManager } from './engine/AssetManager.js?v=30';
-import { TerrainMesh } from './world/TerrainMesh.js?v=30';
-import { WorldBase } from './world/WorldBase.js?v=30';
-import { Sky } from './world/Sky.js?v=30';
+import { Renderer } from './engine/Renderer.js?v=31';
+import { RTSCamera } from './engine/RTSCamera.js?v=31';
+import { Picker } from './engine/Picker.js?v=31';
+import { Loop } from './engine/Loop.js?v=31';
+import { AssetManager } from './engine/AssetManager.js?v=31';
+import { TerrainMesh } from './world/TerrainMesh.js?v=31';
+import { WorldBase } from './world/WorldBase.js?v=31';
+import { Sky } from './world/Sky.js?v=31';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=30';
-import { GameState } from './sim/GameState.js?v=30';
-import * as Economy from './sim/Economy.js?v=30';
-import * as BuildSys from './sim/Buildings.js?v=30';
-import * as Waves from './sim/Waves.js?v=30';
-import * as Tech from './sim/Tech.js?v=30';
-import * as Nature from './sim/Nature.js?v=30';
-import * as Relics from './sim/Relics.js?v=30';
-import * as Camps from './sim/Camps.js?v=30';
-import * as Wildlife from './sim/Wildlife.js?v=30';
-import * as Research from './sim/Research.js?v=30';
-import { updateUnits, damage } from './sim/Units.js?v=30';
-import { toggleEdict } from './sim/Edicts.js?v=30';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=30';
-import { HUD } from './ui/HUD.js?v=30';
-import { BuildMenu } from './ui/BuildMenu.js?v=30';
-import { Selection } from './ui/Selection.js?v=30';
-import { Minimap } from './ui/Minimap.js?v=30';
-import { ResearchPanel } from './ui/Research.js?v=30';
-import { Toasts } from './ui/Toasts.js?v=30';
-import { BUILDINGS } from './data/buildings.js?v=30';
-import { RANKS } from './data/ranks.js?v=30';
-import { bark } from './data/barks.js?v=30';
-import { STORAGE_KEY } from './data/config.js?v=30';
-import { getFaction } from './data/factions.js?v=30';
-import { getMap } from './data/maps.js?v=30';
-import { StartScreen } from './ui/StartScreen.js?v=30';
+import { nearestAdj } from './world/Pathfinding.js?v=31';
+import { GameState } from './sim/GameState.js?v=31';
+import * as Economy from './sim/Economy.js?v=31';
+import * as BuildSys from './sim/Buildings.js?v=31';
+import * as Waves from './sim/Waves.js?v=31';
+import * as Tech from './sim/Tech.js?v=31';
+import * as Nature from './sim/Nature.js?v=31';
+import * as Relics from './sim/Relics.js?v=31';
+import * as Camps from './sim/Camps.js?v=31';
+import * as Wildlife from './sim/Wildlife.js?v=31';
+import * as Research from './sim/Research.js?v=31';
+import { updateUnits, damage } from './sim/Units.js?v=31';
+import { toggleEdict } from './sim/Edicts.js?v=31';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=31';
+import { HUD } from './ui/HUD.js?v=31';
+import { BuildMenu } from './ui/BuildMenu.js?v=31';
+import { Selection } from './ui/Selection.js?v=31';
+import { Minimap } from './ui/Minimap.js?v=31';
+import { ResearchPanel } from './ui/Research.js?v=31';
+import { Toasts } from './ui/Toasts.js?v=31';
+import { BUILDINGS } from './data/buildings.js?v=31';
+import { RANKS } from './data/ranks.js?v=31';
+import { bark } from './data/barks.js?v=31';
+import { STORAGE_KEY } from './data/config.js?v=31';
+import { getFaction } from './data/factions.js?v=31';
+import { getMap } from './data/maps.js?v=31';
+import { StartScreen } from './ui/StartScreen.js?v=31';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
-  'bld_chastokol', 'bld_chastokol_gate', 'bld_church', 'bld_market',
+  'bld_chastokol', 'bld_church', 'bld_market',   // ВОРОТА — процедурный плейсхолдер (со створкой-анимацией)
   'res_tree', 'res_stone', 'res_ore', 'unit_kholop', 'unit_ratnik', 'unit_oprichnik',
   'enemy_raider', 'enemy_boss', 'enemy_camp',
   // детальные идолы-реликвии (каждый со своим силуэтом, Blender GLB)
@@ -80,6 +80,7 @@ class Game {
     this.startScreen = new StartScreen(this);
 
     this.buildKind = null;
+    this._buildRot = 0;            // поворот призрака/постройки (0..3 = 0/90/180/270°)
     this.placing = false;
     this._keepBuild = false;
     this._ghostModels = {};
@@ -252,7 +253,7 @@ class Game {
     this.state.edicts = {};
     for (const n of (s.nodes || [])) this.state.addNode(n.kind, n.gx, n.gy, n.amount);
     for (const b of (s.buildings || [])) {
-      const bb = this.state.addBuilding(b.kind, b.gx, b.gy, { built: b.built !== false });
+      const bb = this.state.addBuilding(b.kind, b.gx, b.gy, { built: b.built !== false, rotation: b.rot || 0 });
       if (b.hp) bb.hp = b.hp;
     }
     for (const u of (s.units || [])) { const uu = this.state.addUnit(u.kind, u.x, u.z, {}); if (u.hp) uu.hp = u.hp; }
@@ -284,6 +285,7 @@ class Game {
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Escape') { this.buildKind = null; this.terrain.hideGhost(); this.state.selected = null; }
       else if (e.code === 'Space') { e.preventDefault(); this.activateSuper(); }
+      else if (e.code === 'KeyR' && this.buildKind) { this._buildRot = ((this._buildRot || 0) + 1) % 4; sfx('click'); }   // R — повернуть постройку
     });
     document.getElementById('superBtn').onclick = () => this.activateSuper();
     const mb = document.getElementById('muteBtn');
@@ -308,7 +310,7 @@ class Game {
   _placeAt(silent) {
     const tile = this.picker.tileUnder(this.camera, this.state.grid);
     if (!tile) return;
-    const r = BuildSys.placeBuilding(this.state, this.buildKind, tile.x, tile.y, this.ctx);
+    const r = BuildSys.placeBuilding(this.state, this.buildKind, tile.x, tile.y, this.ctx, { rotation: this._buildRot || 0 });
     if (r.ok) {
       if (!BUILDINGS[this.buildKind].wall && !this._keepBuild) { this.buildKind = null; this.terrain.hideGhost(); }
     } else if (!silent && r.reason) {
@@ -504,6 +506,15 @@ class Game {
     for (const b of this.state.buildings) {
       if (b._hit > 0) { b._hit -= fdt; const j = b._hit > 0 ? (Math.random() - 0.5) * 0.06 : 0; b.view.position.set(b.cx + j, b.cy || 0, b.cz + j); }
     }
+    // анимация калитки: открывается, когда рядом свой юнит, иначе плавно закрывается
+    for (const b of this.state.buildings) {
+      if (b.kind !== 'gate' || !b.built) continue;
+      let near = false;
+      for (const u of this.state.units) { if (u.faction === 'ours' && Math.abs(u.x - b.cx) < 2 && Math.abs(u.z - b.cz) < 2) { near = true; break; } }
+      b._gateOpen = Math.max(0, Math.min(1, (b._gateOpen || 0) + (near ? 1 : -1) * fdt * 3));
+      const door = b.view.getObjectByName('gate_door');
+      if (door) door.rotation.y = b._gateOpen * Math.PI * 0.62;
+    }
     for (const cp of this.state.camps) { const t = this.state.grid.get(cp.gx, cp.gy); cp.view.visible = !this.fog || !this.fog.enabled || !t || t.explored; }   // станы видны только разведанными
     // «сердце» базы — свет
     const s = this.state;
@@ -534,6 +545,7 @@ class Game {
           this._ghostModels[this.buildKind] = m;
         }
         this.terrain.setGhost(tile.x, tile.y, d.w, d.h, ok, this._ghostModels[this.buildKind]);
+        const gm = this._ghostModels[this.buildKind]; if (gm) gm.rotation.y = (this._buildRot || 0) * Math.PI / 2;   // показываем поворот
       } else this.terrain.hideGhost();
       this.terrain.setHover(null);
     } else {

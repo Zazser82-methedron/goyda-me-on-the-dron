@@ -1,10 +1,10 @@
 // ===== Постройка, стройка-прогресс и тренировка юнитов =====
-import { BUILDINGS } from '../data/buildings.js?v=30';
-import { UNITS } from '../data/units.js?v=30';
-import { RANKS } from '../data/ranks.js?v=30';
-import { nearestAdj } from '../world/Pathfinding.js?v=30';
-import { bark } from '../data/barks.js?v=30';
-import { edictMods } from './Edicts.js?v=30';
+import { BUILDINGS } from '../data/buildings.js?v=31';
+import { UNITS } from '../data/units.js?v=31';
+import { RANKS } from '../data/ranks.js?v=31';
+import { nearestAdj } from '../world/Pathfinding.js?v=31';
+import { bark } from '../data/barks.js?v=31';
+import { edictMods } from './Edicts.js?v=31';
 
 function trainTime(state, kind) {
   const base = UNITS[kind].trainTime;
@@ -46,7 +46,7 @@ export function update(state, dt, ctx) {
   }
 }
 
-export function placeBuilding(state, kind, gx, gy, ctx) {
+export function placeBuilding(state, kind, gx, gy, ctx, opts = {}) {
   const def = BUILDINGS[kind];
   if (!def) return { ok: false, reason: 'нет такого здания' };
   if ((def.rank || 0) > state.rankIndex) return { ok: false, reason: 'нужен ранг ' + RANKS[def.rank].name };
@@ -55,7 +55,7 @@ export function placeBuilding(state, kind, gx, gy, ctx) {
   if (!state.grid.canPlace(gx, gy, def.w, def.h, !!def.onWater)) return { ok: false, reason: 'место занято' };
   if (!state.canAfford(def.cost)) return { ok: false, reason: 'мало ресурсов' };
   state.spend(def.cost);
-  const b = state.addBuilding(kind, gx, gy, { built: (def.build || 0) <= 0 });
+  const b = state.addBuilding(kind, gx, gy, { built: (def.build || 0) <= 0, rotation: opts.rotation || 0 });
   if (b.built) state.recomputePop();
   ctx.sfx && ctx.sfx('place');
   if (def.wonder) {

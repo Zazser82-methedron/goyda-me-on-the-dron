@@ -1,11 +1,11 @@
 // ===== Единый источник правды: ресурсы, сущности, ранги, сейв =====
 import * as THREE from 'three';
-import { GRID_N, STORAGE_KEY } from '../data/config.js?v=30';
-import { Grid } from '../world/Grid.js?v=30';
-import { NodeField } from '../world/NodeField.js?v=30';
-import { BUILDINGS } from '../data/buildings.js?v=30';
-import { UNITS } from '../data/units.js?v=30';
-import { RANKS } from '../data/ranks.js?v=30';
+import { GRID_N, STORAGE_KEY } from '../data/config.js?v=31';
+import { Grid } from '../world/Grid.js?v=31';
+import { NodeField } from '../world/NodeField.js?v=31';
+import { BUILDINGS } from '../data/buildings.js?v=31';
+import { UNITS } from '../data/units.js?v=31';
+import { RANKS } from '../data/ranks.js?v=31';
 
 export class GameState {
   constructor(scene, assets) {
@@ -154,10 +154,12 @@ export class GameState {
     // мост садится на уровень воды, остальное — на рельеф
     const cy = def.bridge ? (this.grid.water ?? -0.5) : (this.grid.heightAt ? this.grid.heightAt(c.wx, c.wz) : 0);
     view.position.set(c.wx, cy, c.wz);
+    const rot = opts.rotation || 0;
+    view.rotation.y = rot * Math.PI / 2;          // поворот постройки (R при размещении)
     this.scene.add(view);
     const b = {
       id: this._id++, type: 'building', kind, def, gx, gy, w: def.w, h: def.h,
-      hp: def.hp, maxHp: def.hp, view,
+      hp: def.hp, maxHp: def.hp, view, rot,
       built: opts.built ?? false, buildLeft: opts.built ? 0 : (def.build || 0),
       trainQueue: [], trainLeft: 0,
       cx: c.wx, cz: c.wz, cy,
@@ -294,7 +296,7 @@ export class GameState {
     return {
       v: 2, res: this.resources, happiness: this.happiness, rankIndex: this.rankIndex, day: this.day,
       faction: this.faction ? this.faction.key : 'goyda', mapKey: this.mapKey || 'les',
-      buildings: this.buildings.map(b => ({ kind: b.kind, gx: b.gx, gy: b.gy, built: b.built, hp: b.hp })),
+      buildings: this.buildings.map(b => ({ kind: b.kind, gx: b.gx, gy: b.gy, built: b.built, hp: b.hp, rot: b.rot || 0 })),
       nodes: this.nodes.map(n => ({ kind: n.kind, gx: n.gx, gy: n.gy, amount: n.amount })),
       units: this.units.filter(u => u.faction === 'ours').map(u => ({ kind: u.kind, x: u.x, z: u.z, hp: u.hp })),
     };

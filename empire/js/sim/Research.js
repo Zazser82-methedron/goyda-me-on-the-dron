@@ -1,6 +1,6 @@
 // ===== Исследования: покупка технологий, накопление эффектов в state.research =====
-import { TECHS } from '../data/tech.js?v=30';
-import { BUILDINGS } from '../data/buildings.js?v=30';
+import { TECHS } from '../data/tech.js?v=31';
+import { BUILDINGS } from '../data/buildings.js?v=31';
 
 export function init() {
   return { done: {}, gatherMul: 1, dmgMul: 1, hpMul: 1, spdMul: 1, popBonus: 0, foodDay: 0, goldDay: 0, faithDay: 0 };
