@@ -1,6 +1,6 @@
 // ===== Земля: единый меш-рельеф (1 draw call) + вода + декор + ховер/призрак =====
 import * as THREE from 'three';
-import { TILE, PAL } from '../data/config.js?v=33';
+import { TILE, PAL } from '../data/config.js?v=34';
 
 export class TerrainMesh {
   constructor(scene, grid, pal) {
@@ -13,6 +13,8 @@ export class TerrainMesh {
     // ---- меш рельефа из углов-высот ----
     const verts = new Float32Array((n + 1) * (n + 1) * 3);
     const cols = new Float32Array((n + 1) * (n + 1) * 3);
+    const uvs = new Float32Array((n + 1) * (n + 1) * 2);
+    const UVK = 0.25;   // мирово-тайловые UV: одна «плитка» детал-текстуры на ~4 тайла
     const col = new THREE.Color();
     let vi = 0;
     for (let cy = 0; cy <= n; cy++) {
@@ -22,6 +24,7 @@ export class TerrainMesh {
         verts[vi * 3] = wx; verts[vi * 3 + 1] = h; verts[vi * 3 + 2] = wz;
         this._cornerColor(col, h, T);
         cols[vi * 3] = col.r; cols[vi * 3 + 1] = col.g; cols[vi * 3 + 2] = col.b;
+        uvs[vi * 2] = cx * UVK; uvs[vi * 2 + 1] = cy * UVK;
         vi++;
       }
     }
@@ -37,10 +40,13 @@ export class TerrainMesh {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(verts, 3));
     geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+    geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
     geo.setIndex(new THREE.BufferAttribute(idx, 1));
-    geo.computeVertexNormals();
+    geo.computeVertexNormals();   // гладкие нормали — чтобы нормал-мапа ловила свет (Тропико-стиль)
+    // PBR-земля: процедурные тайловые detail/normal/roughness карты (без внешних ассетов) поверх биом-цвета.
     // envMapIntensity низкий — IBL не должен пересвечивать светлые биомы (песок/снег выгорали)
-    const mat = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.99, metalness: 0, envMapIntensity: 0.3 });
+    const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.96, metalness: 0, envMapIntensity: 0.3 });
+    this._pbrGround(mat);
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.receiveShadow = true; this.mesh.castShadow = false;
     scene.add(this.mesh);
@@ -76,6 +82,61 @@ export class TerrainMesh {
     );
     this.ghostPlane.rotation.x = -Math.PI / 2;
     this.ghost.add(this.ghostPlane);
+  }
+
+  // ---- процедурная PBR-земля: тайловые detail(albedo)/normal/roughness без внешних текстур ----
+  _pbrGround(mat) {
+    const S = 256;
+    // тайловая value-noise: решётка периода P оборачивается по краю канваса → бесшовно
+    const lattice = (P) => { const a = new Float32Array(P * P); for (let i = 0; i < a.length; i++) a[i] = Math.random(); return a; };
+    const smooth = (t) => t * t * (3 - 2 * t);
+    const sample = (lat, P, u, v) => {
+      const fx = u * P, fy = v * P;
+      const x0 = Math.floor(fx), y0 = Math.floor(fy);
+      const tx = smooth(fx - x0), ty = smooth(fy - y0);
+      const at = (x, y) => lat[((y % P) + P) % P * P + ((x % P) + P) % P];
+      const a = at(x0, y0), b = at(x0 + 1, y0), c = at(x0, y0 + 1), d = at(x0 + 1, y0 + 1);
+      return (a * (1 - tx) + b * tx) * (1 - ty) + (c * (1 - tx) + d * tx) * ty;
+    };
+    // высотное поле fbm (3 октавы, каждая периодична → бесшовно)
+    const octs = [{ P: 8, w: 0.55 }, { P: 16, w: 0.3 }, { P: 48, w: 0.15 }].map(o => ({ ...o, lat: lattice(o.P) }));
+    const H = new Float32Array(S * S);
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+      let h = 0; const u = x / S, v = y / S;
+      for (const o of octs) h += sample(o.lat, o.P, u, v) * o.w;
+      H[y * S + x] = h;   // ~0..1
+    }
+    const mk = () => { const c = document.createElement('canvas'); c.width = c.height = S; return c; };
+    const wrap = (t) => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; t.needsUpdate = true; return t; };
+
+    // detail/albedo: серый ≈1.0, лёгкая зернистость множит биом-цвет (0.84..1.12)
+    const ac = mk(), actx = ac.getContext('2d'), aimg = actx.createImageData(S, S);
+    // roughness: чуть выше во впадинах
+    const rc = mk(), rctx = rc.getContext('2d'), rimg = rctx.createImageData(S, S);
+    // normal: из градиента высот
+    const nc = mk(), nctx = nc.getContext('2d'), nimg = nctx.createImageData(S, S);
+    const STR = 2.2;   // сила рельефа нормал-мапы
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+      const i = y * S + x, p = i * 4;
+      const g = 0.84 + H[i] * 0.28;
+      const av = Math.max(0, Math.min(255, g * 255));
+      aimg.data[p] = aimg.data[p + 1] = aimg.data[p + 2] = av; aimg.data[p + 3] = 255;
+      const rv = Math.max(0, Math.min(255, (0.9 - H[i] * 0.18) * 255));
+      rimg.data[p] = rimg.data[p + 1] = rimg.data[p + 2] = rv; rimg.data[p + 3] = 255;
+      const hl = H[y * S + ((x - 1 + S) % S)], hr = H[y * S + ((x + 1) % S)];
+      const hu = H[((y - 1 + S) % S) * S + x], hd = H[((y + 1) % S) * S + x];
+      let nx = -(hr - hl) * STR, ny = -(hd - hu) * STR, nz = 1;
+      const inv = 1 / Math.hypot(nx, ny, nz); nx *= inv; ny *= inv; nz *= inv;
+      nimg.data[p] = (nx * 0.5 + 0.5) * 255; nimg.data[p + 1] = (ny * 0.5 + 0.5) * 255; nimg.data[p + 2] = (nz * 0.5 + 0.5) * 255; nimg.data[p + 3] = 255;
+    }
+    actx.putImageData(aimg, 0, 0); rctx.putImageData(rimg, 0, 0); nctx.putImageData(nimg, 0, 0);
+
+    const aTex = wrap(new THREE.CanvasTexture(ac)); aTex.colorSpace = THREE.SRGBColorSpace;
+    mat.map = aTex;
+    mat.roughnessMap = wrap(new THREE.CanvasTexture(rc));
+    mat.normalMap = wrap(new THREE.CanvasTexture(nc));
+    mat.normalScale = new THREE.Vector2(0.55, 0.55);   // умеренно — первый проход, легко докрутить
+    mat.needsUpdate = true;
   }
 
   _cornerColor(out, h, T) {
