@@ -1,41 +1,41 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=32';
-import { RTSCamera } from './engine/RTSCamera.js?v=32';
-import { Picker } from './engine/Picker.js?v=32';
-import { Loop } from './engine/Loop.js?v=32';
-import { AssetManager } from './engine/AssetManager.js?v=32';
-import { TerrainMesh } from './world/TerrainMesh.js?v=32';
-import { WorldBase } from './world/WorldBase.js?v=32';
-import { Sky } from './world/Sky.js?v=32';
+import { Renderer } from './engine/Renderer.js?v=33';
+import { RTSCamera } from './engine/RTSCamera.js?v=33';
+import { Picker } from './engine/Picker.js?v=33';
+import { Loop } from './engine/Loop.js?v=33';
+import { AssetManager } from './engine/AssetManager.js?v=33';
+import { TerrainMesh } from './world/TerrainMesh.js?v=33';
+import { WorldBase } from './world/WorldBase.js?v=33';
+import { Sky } from './world/Sky.js?v=33';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=32';
-import { GameState } from './sim/GameState.js?v=32';
-import * as Economy from './sim/Economy.js?v=32';
-import * as BuildSys from './sim/Buildings.js?v=32';
-import * as Waves from './sim/Waves.js?v=32';
-import * as Tech from './sim/Tech.js?v=32';
-import * as Nature from './sim/Nature.js?v=32';
-import * as Relics from './sim/Relics.js?v=32';
-import * as Camps from './sim/Camps.js?v=32';
-import * as Wildlife from './sim/Wildlife.js?v=32';
-import * as Research from './sim/Research.js?v=32';
-import { updateUnits, damage } from './sim/Units.js?v=32';
-import { toggleEdict } from './sim/Edicts.js?v=32';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=32';
-import { HUD } from './ui/HUD.js?v=32';
-import { BuildMenu } from './ui/BuildMenu.js?v=32';
-import { Selection } from './ui/Selection.js?v=32';
-import { Minimap } from './ui/Minimap.js?v=32';
-import { ResearchPanel } from './ui/Research.js?v=32';
-import { Toasts } from './ui/Toasts.js?v=32';
-import { BUILDINGS } from './data/buildings.js?v=32';
-import { RANKS } from './data/ranks.js?v=32';
-import { bark } from './data/barks.js?v=32';
-import { STORAGE_KEY } from './data/config.js?v=32';
-import { getFaction } from './data/factions.js?v=32';
-import { getMap } from './data/maps.js?v=32';
-import { StartScreen } from './ui/StartScreen.js?v=32';
+import { nearestAdj } from './world/Pathfinding.js?v=33';
+import { GameState } from './sim/GameState.js?v=33';
+import * as Economy from './sim/Economy.js?v=33';
+import * as BuildSys from './sim/Buildings.js?v=33';
+import * as Waves from './sim/Waves.js?v=33';
+import * as Tech from './sim/Tech.js?v=33';
+import * as Nature from './sim/Nature.js?v=33';
+import * as Relics from './sim/Relics.js?v=33';
+import * as Camps from './sim/Camps.js?v=33';
+import * as Wildlife from './sim/Wildlife.js?v=33';
+import * as Research from './sim/Research.js?v=33';
+import { updateUnits, damage } from './sim/Units.js?v=33';
+import { toggleEdict } from './sim/Edicts.js?v=33';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=33';
+import { HUD } from './ui/HUD.js?v=33';
+import { BuildMenu } from './ui/BuildMenu.js?v=33';
+import { Selection } from './ui/Selection.js?v=33';
+import { Minimap } from './ui/Minimap.js?v=33';
+import { ResearchPanel } from './ui/Research.js?v=33';
+import { Toasts } from './ui/Toasts.js?v=33';
+import { BUILDINGS } from './data/buildings.js?v=33';
+import { RANKS } from './data/ranks.js?v=33';
+import { bark } from './data/barks.js?v=33';
+import { STORAGE_KEY } from './data/config.js?v=33';
+import { getFaction } from './data/factions.js?v=33';
+import { getMap } from './data/maps.js?v=33';
+import { StartScreen } from './ui/StartScreen.js?v=33';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -157,7 +157,12 @@ class Game {
     this.terrain = new TerrainMesh(this.scene, this.state.grid, map.pal);
     this.worldBase = new WorldBase(this.scene, this.state.grid);   // плита на слонах+черепахе
     if (map.key === 'neon') this._addNeonSun();
-    else this.sky = new Sky(this.scene, this.rdr);                 // суточный цикл + погода (кроме неона)
+    else {
+      this.sky = new Sky(this.scene, this.rdr);                    // суточный цикл + погода (кроме неона)
+      const WMSG = { rain: '🌧️ Зарядил дождь', snow: '🌨️ Повалил снег', fog: '🌫️ Пал туман', storm: '⛈️ Надвигается ГРОЗА', clear: '☀️ Распогодилось' };
+      let _first = true;                                            // не тостим стартовую «ясно»
+      this.sky.onWeather = (w) => { if (_first) { _first = false; return; } if (WMSG[w]) this.toasts.show(WMSG[w]); };
+    }
     Wildlife.spawn(this.state);   // дичь бродит по карте (охота)
   }
 
