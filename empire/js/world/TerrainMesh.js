@@ -1,6 +1,7 @@
 // ===== Земля: единый меш-рельеф (1 draw call) + вода + декор + ховер/призрак =====
 import * as THREE from 'three';
-import { TILE, PAL } from '../data/config.js?v=38';
+import { TILE, PAL } from '../data/config.js?v=39';
+import { makeRippleNormal } from './WaterFx.js?v=39';
 
 export class TerrainMesh {
   constructor(scene, grid, pal) {
@@ -60,6 +61,10 @@ export class TerrainMesh {
     );
     this.water.rotation.x = -Math.PI / 2;
     this.water.position.y = (grid.water ?? -0.5) - 0.02;
+    // рябь: тайловая normal-мапа, скроллится в update → блики дробятся, вода «живая»
+    const wn = makeRippleNormal(128); wn.repeat.set(8, 8);
+    this.water.material.normalMap = wn; this.water.material.normalScale = new THREE.Vector2(0.35, 0.35); this.water.material.needsUpdate = true;
+    this._waterN = wn;
     scene.add(this.water);
 
     // ---- декор (кусты + валуны) по высоте ----
@@ -137,6 +142,11 @@ export class TerrainMesh {
     mat.normalMap = wrap(new THREE.CanvasTexture(nc));
     mat.normalScale = new THREE.Vector2(0.55, 0.55);   // умеренно — первый проход, легко докрутить
     mat.needsUpdate = true;
+  }
+
+  // анимация ряби воды (зовётся из render-loop)
+  update(fdt) {
+    if (this._waterN) { this._waterN.offset.x += fdt * 0.015; this._waterN.offset.y += fdt * 0.02; }
   }
 
   _cornerColor(out, h, T) {

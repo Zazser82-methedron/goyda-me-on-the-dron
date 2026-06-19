@@ -1,6 +1,7 @@
 // ===== Мир-плита на слонах и черепахе в океане (лор «плоской земли») =====
 import * as THREE from 'three';
-import { TILE } from '../data/config.js?v=38';
+import { TILE } from '../data/config.js?v=39';
+import { makeRippleNormal } from './WaterFx.js?v=39';
 
 const _m = {};
 function matStd(c, o = {}) { const k = c + '|' + (o.r ?? 1); if (!_m[k]) _m[k] = new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: o.r ?? 1, metalness: o.m ?? 0 }); return _m[k]; }
@@ -77,6 +78,9 @@ export class WorldBase {
     );
     ocean.rotation.x = -Math.PI / 2;
     ocean.position.y = turTop - tS - ww * 0.12;
+    const on = makeRippleNormal(128); on.repeat.set(24, 24);   // рябь океана
+    ocean.material.normalMap = on; ocean.material.normalScale = new THREE.Vector2(0.28, 0.28); ocean.material.needsUpdate = true;
+    this._oceanN = on;
     this.ocean = ocean;
     this.group.add(ocean);
 
@@ -115,16 +119,34 @@ export class WorldBase {
       { x: half, z: 0, ry: Math.PI / 2 },
       { x: -half, z: 0, ry: -Math.PI / 2 },
     ];
+    // дымка-брызги у подножия каскада
+    const mistCv = document.createElement('canvas'); mistCv.width = mistCv.height = 32;
+    const mx = mistCv.getContext('2d');
+    const mg = mx.createRadialGradient(16, 18, 1, 16, 18, 16); mg.addColorStop(0, 'rgba(255,255,255,0.75)'); mg.addColorStop(1, 'rgba(255,255,255,0)');
+    mx.fillStyle = mg; mx.fillRect(0, 0, 32, 32);
+    const mistTex = new THREE.CanvasTexture(mistCv);
+    this._mist = []; this._t = 0;
     for (const e of edges) {
       const m = new THREE.Mesh(new THREE.PlaneGeometry(ww, H), mat);
       m.position.set(e.x, yC, e.z); m.rotation.y = e.ry; m.renderOrder = 8; this.group.add(m);
       // пенный гребень по кромке
       const foam = new THREE.Mesh(new THREE.BoxGeometry(ww, 0.22, 0.45), foamMat);
       foam.position.set(e.x, yTop, e.z); foam.rotation.y = e.ry; this.group.add(foam);
+      // ряд мягких клубов брызг у основания
+      const along = Math.abs(e.ry) > 1.0;   // ±PI/2 → кромка вдоль оси Z
+      for (let k = 0; k < 7; k++) {
+        const f = (k / 6 - 0.5) * ww * 0.86;
+        const mm = new THREE.SpriteMaterial({ map: mistTex, transparent: true, depthWrite: false, opacity: 0.25, fog: false });
+        const sp = new THREE.Sprite(mm); sp.scale.set(ww * 0.11, H * 0.55, 1);
+        sp.position.set(along ? e.x : f, yC - H * 0.42, along ? f : e.z); sp.renderOrder = 9;
+        this.group.add(sp); this._mist.push({ sp, ph: Math.random() * 6.28 });
+      }
     }
   }
 
   update(dt) {
     if (this._fallTex) { this._fallTex.offset.y -= dt * 0.7; if (this._fallTex.offset.y < -10) this._fallTex.offset.y += 10; }
+    if (this._oceanN) { this._oceanN.offset.x += dt * 0.01; this._oceanN.offset.y += dt * 0.014; }
+    if (this._mist) { this._t += dt; for (const m of this._mist) m.sp.material.opacity = 0.14 + Math.abs(Math.sin(this._t * 0.8 + m.ph)) * 0.22; }
   }
 }
