@@ -1,5 +1,5 @@
 // ===== Игровой цикл: фиксированный шаг симуляции + рендер с интерполяцией =====
-import { SIM_DT } from '../data/config.js?v=34';
+import { SIM_DT } from '../data/config.js?v=35';
 
 export class Loop {
   constructor(update, render, simDt = SIM_DT) {
