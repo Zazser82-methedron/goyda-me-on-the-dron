@@ -1,42 +1,42 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=39';
-import { RTSCamera } from './engine/RTSCamera.js?v=39';
-import { Picker } from './engine/Picker.js?v=39';
-import { Loop } from './engine/Loop.js?v=39';
-import { AssetManager } from './engine/AssetManager.js?v=39';
-import { TerrainMesh } from './world/TerrainMesh.js?v=39';
-import { WorldBase } from './world/WorldBase.js?v=39';
-import { Sky } from './world/Sky.js?v=39';
-import { Atmosphere } from './world/Atmosphere.js?v=39';
+import { Renderer } from './engine/Renderer.js?v=40';
+import { RTSCamera } from './engine/RTSCamera.js?v=40';
+import { Picker } from './engine/Picker.js?v=40';
+import { Loop } from './engine/Loop.js?v=40';
+import { AssetManager } from './engine/AssetManager.js?v=40';
+import { TerrainMesh } from './world/TerrainMesh.js?v=40';
+import { WorldBase } from './world/WorldBase.js?v=40';
+import { Sky } from './world/Sky.js?v=40';
+import { Atmosphere } from './world/Atmosphere.js?v=40';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=39';
-import { GameState } from './sim/GameState.js?v=39';
-import * as Economy from './sim/Economy.js?v=39';
-import * as BuildSys from './sim/Buildings.js?v=39';
-import * as Waves from './sim/Waves.js?v=39';
-import * as Tech from './sim/Tech.js?v=39';
-import * as Nature from './sim/Nature.js?v=39';
-import * as Relics from './sim/Relics.js?v=39';
-import * as Camps from './sim/Camps.js?v=39';
-import * as Wildlife from './sim/Wildlife.js?v=39';
-import * as Research from './sim/Research.js?v=39';
-import { updateUnits, damage } from './sim/Units.js?v=39';
-import { toggleEdict } from './sim/Edicts.js?v=39';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=39';
-import { HUD } from './ui/HUD.js?v=39';
-import { BuildMenu } from './ui/BuildMenu.js?v=39';
-import { Selection } from './ui/Selection.js?v=39';
-import { Minimap } from './ui/Minimap.js?v=39';
-import { ResearchPanel } from './ui/Research.js?v=39';
-import { Toasts } from './ui/Toasts.js?v=39';
-import { BUILDINGS } from './data/buildings.js?v=39';
-import { RANKS } from './data/ranks.js?v=39';
-import { bark } from './data/barks.js?v=39';
-import { STORAGE_KEY } from './data/config.js?v=39';
-import { getFaction } from './data/factions.js?v=39';
-import { getMap } from './data/maps.js?v=39';
-import { StartScreen } from './ui/StartScreen.js?v=39';
+import { nearestAdj } from './world/Pathfinding.js?v=40';
+import { GameState } from './sim/GameState.js?v=40';
+import * as Economy from './sim/Economy.js?v=40';
+import * as BuildSys from './sim/Buildings.js?v=40';
+import * as Waves from './sim/Waves.js?v=40';
+import * as Tech from './sim/Tech.js?v=40';
+import * as Nature from './sim/Nature.js?v=40';
+import * as Relics from './sim/Relics.js?v=40';
+import * as Camps from './sim/Camps.js?v=40';
+import * as Wildlife from './sim/Wildlife.js?v=40';
+import * as Research from './sim/Research.js?v=40';
+import { updateUnits, damage } from './sim/Units.js?v=40';
+import { toggleEdict } from './sim/Edicts.js?v=40';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=40';
+import { HUD } from './ui/HUD.js?v=40';
+import { BuildMenu } from './ui/BuildMenu.js?v=40';
+import { Selection } from './ui/Selection.js?v=40';
+import { Minimap } from './ui/Minimap.js?v=40';
+import { ResearchPanel } from './ui/Research.js?v=40';
+import { Toasts } from './ui/Toasts.js?v=40';
+import { BUILDINGS } from './data/buildings.js?v=40';
+import { RANKS } from './data/ranks.js?v=40';
+import { bark } from './data/barks.js?v=40';
+import { STORAGE_KEY } from './data/config.js?v=40';
+import { getFaction } from './data/factions.js?v=40';
+import { getMap } from './data/maps.js?v=40';
+import { StartScreen } from './ui/StartScreen.js?v=40';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -106,6 +106,7 @@ class Game {
       bark: (u, text) => this.float(u.x, u.z, text, '#ffe8b5', 1.4),
       float: (x, z, t, c) => this.float(x, z, t, c, 0.6),
       flash: (b) => { b._hit = 0.18; },
+      burst: (x, y, z, col, n) => { this.atmo && this.atmo.burst(x, y, z, col, n); },
       tracer: (u, t) => this.spawnTracer(u, t),
       onLose: () => this.end('lose'),
       onWin: () => this.end('win'),
@@ -524,16 +525,26 @@ class Game {
     for (let i = this.state.fx.length - 1; i >= 0; i--) {
       const f = this.state.fx[i]; f.life -= fdt;
       const t = 1 - Math.max(0, f.life) / f.max;
-      if (f.kind === 'death') { f.view.rotation.z = t * 1.5; f.view.position.y = (f.y0 || 0) - t * 0.35; f.view.scale.multiplyScalar(0.965); }
+      if (f.kind === 'death') {
+        if (!f._burst && this.atmo) { f._burst = true; this.atmo.burst(f.view.position.x, (f.y0 || 0) + 0.4, f.view.position.z, 0xff7744, 9); }
+        f.view.rotation.z = t * 1.5; f.view.position.y = (f.y0 || 0) - t * 0.35; f.view.scale.multiplyScalar(0.965);
+      }
       if (f.life <= 0) { this.scene.remove(f.view); this.state.fx.splice(i, 1); }
     }
     // пульс эмиссии идола
     if (this.state.idol) { const p = 1.4 + Math.sin(now * 0.005) * 0.9; this.state.idol.view.traverse(o => { if (o.isMesh && o.material && o.material.emissiveIntensity > 0) o.material.emissiveIntensity = p; }); }
-    // живые идолы-реликвии: медленно вращаются + парят
+    // живые идолы-реликвии: медленно вращаются + парят; кольцо ауры дышит и крутится
     for (const b of this.state.buildings) {
-      if (!b.built || !b.def || b.def.cat !== 'relic') continue;
-      b.view.rotation.y += fdt * 0.5;
-      if (!(b._hit > 0)) b.view.position.y = (b.cy || 0) + Math.sin(now * 0.002 + b.cx) * 0.06;
+      if (!b.built || !b.def) continue;
+      if (b.def.cat === 'relic') {
+        b.view.rotation.y += fdt * 0.5;
+        if (!(b._hit > 0)) b.view.position.y = (b.cy || 0) + Math.sin(now * 0.002 + b.cx) * 0.06;
+      }
+      if (b._ring) {
+        b._ring.rotation.z += fdt * 0.35;
+        b._ring.material.opacity = 0.14 + Math.abs(Math.sin(now * 0.003 + b.cx)) * 0.16;
+        const sc = 1 + Math.sin(now * 0.004 + b.cz) * 0.02; b._ring.scale.set(sc, sc, 1);
+      }
     }
     // ретровейв-солнце смотрит на камеру + лёгкий пульс
     if (this._neon) {

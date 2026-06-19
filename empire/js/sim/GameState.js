@@ -1,11 +1,11 @@
 // ===== Единый источник правды: ресурсы, сущности, ранги, сейв =====
 import * as THREE from 'three';
-import { GRID_N, STORAGE_KEY } from '../data/config.js?v=39';
-import { Grid } from '../world/Grid.js?v=39';
-import { NodeField } from '../world/NodeField.js?v=39';
-import { BUILDINGS } from '../data/buildings.js?v=39';
-import { UNITS } from '../data/units.js?v=39';
-import { RANKS } from '../data/ranks.js?v=39';
+import { GRID_N, STORAGE_KEY } from '../data/config.js?v=40';
+import { Grid } from '../world/Grid.js?v=40';
+import { NodeField } from '../world/NodeField.js?v=40';
+import { BUILDINGS } from '../data/buildings.js?v=40';
+import { UNITS } from '../data/units.js?v=40';
+import { RANKS } from '../data/ranks.js?v=40';
 
 export class GameState {
   constructor(scene, assets) {
@@ -170,10 +170,12 @@ export class GameState {
     if (def.unique && kind === 'townhall') this.townhall = b;
     if (def.wonder) this.idol = b;
     this._applyBuildVisual(b);
-    if (def.aura) {   // кольцо радиуса ауры реликвии
+    if (def.aura) {   // кольцо радиуса ауры реликвии — цвет по типу эффекта
+      const AC = { slow: 0x66ddff, heal: 0x66ff88, aoe: 0xff6633 };
+      const rc = AC[def.aura.effect] || 0xcc66ff;
       const rg = new THREE.Mesh(
-        new THREE.RingGeometry(def.aura.radius - 0.25, def.aura.radius, 40),
-        new THREE.MeshBasicMaterial({ color: 0xcc66ff, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false })
+        new THREE.RingGeometry(def.aura.radius - 0.28, def.aura.radius, 48),
+        new THREE.MeshBasicMaterial({ color: rc, transparent: true, opacity: 0.18, side: THREE.DoubleSide, depthWrite: false })
       );
       rg.rotation.x = -Math.PI / 2; rg.position.set(c.wx, cy + 0.08, c.wz);
       this.scene.add(rg); b._ring = rg;

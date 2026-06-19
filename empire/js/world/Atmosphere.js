@@ -23,7 +23,7 @@ export class Atmosphere {
     this._sparkTex = radialTex('rgba(255,228,150,1)', 'rgba(255,120,20,0)');
     this._cloudTex = radialTex('rgba(255,255,255,0.92)', 'rgba(255,255,255,0)');
     this._dustTex = radialTex('rgba(170,150,116,0.7)', 'rgba(170,150,116,0)');
-    this._buildSmoke(); this._buildSparks(); this._buildDust(); this._buildBirds(); this._buildClouds(); this._buildFireflies();
+    this._buildSmoke(); this._buildSparks(); this._buildDust(); this._buildBurst(); this._buildBirds(); this._buildClouds(); this._buildFireflies();
   }
 
   _pool(tex, n, blend) {
@@ -38,6 +38,16 @@ export class Atmosphere {
   _buildSmoke() { this.smoke = this._pool(this._smokeTex, 38); }
   _buildSparks() { this.sparks = this._pool(this._sparkTex, 20, THREE.AdditiveBlending); }
   _buildDust() { this.dust = this._pool(this._dustTex, 26); }
+  _buildBurst() { this.burstPool = this._pool(this._sparkTex, 46, THREE.AdditiveBlending); }
+
+  // вспышка-фонтан частиц (стройка готова / гибель врага / сбор ресурса). Зовётся через ctx.burst.
+  burst(x, y, z, color = 0xffd060, count = 12) {
+    for (let i = 0; i < count; i++) {
+      const a = Math.random() * 6.28, sp = 1 + Math.random() * 2.6;
+      this._emit(this.burstPool, x, y, z,
+        { life: 0.45 + Math.random() * 0.4, vx: Math.cos(a) * sp, vy: 1.2 + Math.random() * 1.9, vz: Math.sin(a) * sp, op: 1, sc: 0.17, sc1: 0.03, col: color });
+    }
+  }
 
   // пыль из-под ног идущих юнитов (зовётся из main render-loop, троттлинг там же)
   spawnDust(x, y, z) {
@@ -139,6 +149,7 @@ export class Atmosphere {
         { life: 0.5 + Math.random() * 0.4, vx: (Math.random() - 0.5) * 1.6, vy: 1.4 + Math.random() * 1.2, vz: (Math.random() - 0.5) * 1.6, op: 1, sc: 0.13, sc1: 0.04, col: 0xffd060 });
     }
     this._decay(this.sparks, fdt, 4.5);   // гравитация
+    this._decay(this.burstPool, fdt, 4.0);
 
     // птицы — кружат над зоной камеры, машут крыльями
     for (const b of this.birds) {

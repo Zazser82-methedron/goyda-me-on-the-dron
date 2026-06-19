@@ -1,10 +1,10 @@
 // ===== Постройка, стройка-прогресс и тренировка юнитов =====
-import { BUILDINGS } from '../data/buildings.js?v=39';
-import { UNITS } from '../data/units.js?v=39';
-import { RANKS } from '../data/ranks.js?v=39';
-import { nearestAdj } from '../world/Pathfinding.js?v=39';
-import { bark } from '../data/barks.js?v=39';
-import { edictMods } from './Edicts.js?v=39';
+import { BUILDINGS } from '../data/buildings.js?v=40';
+import { UNITS } from '../data/units.js?v=40';
+import { RANKS } from '../data/ranks.js?v=40';
+import { nearestAdj } from '../world/Pathfinding.js?v=40';
+import { bark } from '../data/barks.js?v=40';
+import { edictMods } from './Edicts.js?v=40';
 
 function trainTime(state, kind) {
   const base = UNITS[kind].trainTime;
@@ -30,6 +30,7 @@ export function update(state, dt, ctx) {
       if (b.buildLeft <= 0) {
         state.finishBuild(b);
         ctx.sfx && ctx.sfx('build');
+        ctx.burst && ctx.burst(b.cx, (b.cy || 0) + 0.6, b.cz, 0xffcc44, 16);   // салют завершения стройки
         ctx.toast && ctx.toast(b.def.icon + ' ' + b.def.name + ' готов!');
         if (b.def.wonder && ctx.onWin) ctx.onWin();
       }
