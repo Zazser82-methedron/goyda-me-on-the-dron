@@ -1,6 +1,6 @@
 // ===== Three.js рендерер, сцена, свет, туман — настроение идол-слоя «Гойды» =====
 import * as THREE from 'three';
-import { PAL } from '../data/config.js?v=40';
+import { PAL } from '../data/config.js?v=41';
 
 export class Renderer {
   constructor(canvas) {

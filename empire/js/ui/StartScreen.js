@@ -1,6 +1,6 @@
 // ===== Стартовый экран: выбор фракции и земли =====
-import { FACTIONS } from '../data/factions.js?v=40';
-import { MAPS } from '../data/maps.js?v=40';
+import { FACTIONS } from '../data/factions.js?v=41';
+import { MAPS } from '../data/maps.js?v=41';
 
 export class StartScreen {
   constructor(game) { this.game = game; this.el = document.getElementById('start'); this.fk = 'goyda'; this.mk = 'les'; }
