@@ -1,42 +1,42 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=37';
-import { RTSCamera } from './engine/RTSCamera.js?v=37';
-import { Picker } from './engine/Picker.js?v=37';
-import { Loop } from './engine/Loop.js?v=37';
-import { AssetManager } from './engine/AssetManager.js?v=37';
-import { TerrainMesh } from './world/TerrainMesh.js?v=37';
-import { WorldBase } from './world/WorldBase.js?v=37';
-import { Sky } from './world/Sky.js?v=37';
-import { Atmosphere } from './world/Atmosphere.js?v=37';
+import { Renderer } from './engine/Renderer.js?v=38';
+import { RTSCamera } from './engine/RTSCamera.js?v=38';
+import { Picker } from './engine/Picker.js?v=38';
+import { Loop } from './engine/Loop.js?v=38';
+import { AssetManager } from './engine/AssetManager.js?v=38';
+import { TerrainMesh } from './world/TerrainMesh.js?v=38';
+import { WorldBase } from './world/WorldBase.js?v=38';
+import { Sky } from './world/Sky.js?v=38';
+import { Atmosphere } from './world/Atmosphere.js?v=38';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=37';
-import { GameState } from './sim/GameState.js?v=37';
-import * as Economy from './sim/Economy.js?v=37';
-import * as BuildSys from './sim/Buildings.js?v=37';
-import * as Waves from './sim/Waves.js?v=37';
-import * as Tech from './sim/Tech.js?v=37';
-import * as Nature from './sim/Nature.js?v=37';
-import * as Relics from './sim/Relics.js?v=37';
-import * as Camps from './sim/Camps.js?v=37';
-import * as Wildlife from './sim/Wildlife.js?v=37';
-import * as Research from './sim/Research.js?v=37';
-import { updateUnits, damage } from './sim/Units.js?v=37';
-import { toggleEdict } from './sim/Edicts.js?v=37';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=37';
-import { HUD } from './ui/HUD.js?v=37';
-import { BuildMenu } from './ui/BuildMenu.js?v=37';
-import { Selection } from './ui/Selection.js?v=37';
-import { Minimap } from './ui/Minimap.js?v=37';
-import { ResearchPanel } from './ui/Research.js?v=37';
-import { Toasts } from './ui/Toasts.js?v=37';
-import { BUILDINGS } from './data/buildings.js?v=37';
-import { RANKS } from './data/ranks.js?v=37';
-import { bark } from './data/barks.js?v=37';
-import { STORAGE_KEY } from './data/config.js?v=37';
-import { getFaction } from './data/factions.js?v=37';
-import { getMap } from './data/maps.js?v=37';
-import { StartScreen } from './ui/StartScreen.js?v=37';
+import { nearestAdj } from './world/Pathfinding.js?v=38';
+import { GameState } from './sim/GameState.js?v=38';
+import * as Economy from './sim/Economy.js?v=38';
+import * as BuildSys from './sim/Buildings.js?v=38';
+import * as Waves from './sim/Waves.js?v=38';
+import * as Tech from './sim/Tech.js?v=38';
+import * as Nature from './sim/Nature.js?v=38';
+import * as Relics from './sim/Relics.js?v=38';
+import * as Camps from './sim/Camps.js?v=38';
+import * as Wildlife from './sim/Wildlife.js?v=38';
+import * as Research from './sim/Research.js?v=38';
+import { updateUnits, damage } from './sim/Units.js?v=38';
+import { toggleEdict } from './sim/Edicts.js?v=38';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=38';
+import { HUD } from './ui/HUD.js?v=38';
+import { BuildMenu } from './ui/BuildMenu.js?v=38';
+import { Selection } from './ui/Selection.js?v=38';
+import { Minimap } from './ui/Minimap.js?v=38';
+import { ResearchPanel } from './ui/Research.js?v=38';
+import { Toasts } from './ui/Toasts.js?v=38';
+import { BUILDINGS } from './data/buildings.js?v=38';
+import { RANKS } from './data/ranks.js?v=38';
+import { bark } from './data/barks.js?v=38';
+import { STORAGE_KEY } from './data/config.js?v=38';
+import { getFaction } from './data/factions.js?v=38';
+import { getMap } from './data/maps.js?v=38';
+import { StartScreen } from './ui/StartScreen.js?v=38';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -88,6 +88,7 @@ class Game {
     this.lastRender = performance.now();
     this._uiT = 0;
     this.tracers = [];
+    this._uShadows = []; this._aShadows = [];   // пулы мягких теней-пятен под юнитами/дичью
     this.floaters = document.getElementById('floaters');
 
     this.ctx = this._makeCtx();
@@ -458,6 +459,21 @@ class Game {
     Wildlife.update(this.state, dt, this.ctx);
   }
 
+  // мягкая тень-пятно под объектом (пул, ленивое создание ресурсов)
+  _blobShadow(i, pool) {
+    if (!this._blobGeo) {
+      const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+      const cx = cv.getContext('2d'); const g = cx.createRadialGradient(32, 32, 0, 32, 32, 32);
+      g.addColorStop(0, 'rgba(0,0,0,0.5)'); g.addColorStop(0.65, 'rgba(0,0,0,0.26)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      cx.fillStyle = g; cx.fillRect(0, 0, 64, 64);
+      this._blobTex = new THREE.CanvasTexture(cv);
+      this._blobGeo = new THREE.PlaneGeometry(1, 1);
+      this._blobMat = new THREE.MeshBasicMaterial({ map: this._blobTex, transparent: true, depthWrite: false, opacity: 0.55, fog: true });
+    }
+    if (!pool[i]) { const m = new THREE.Mesh(this._blobGeo, this._blobMat); m.rotation.x = -Math.PI / 2; m.renderOrder = 2; this.scene.add(m); pool[i] = m; }
+    return pool[i];
+  }
+
   // ---------- рендер ----------
   render(alpha) {
     if (!this._rendered) { this._rendered = true; window.__gboot && window.__gboot('RENDERING ✓'); }
@@ -467,30 +483,43 @@ class Game {
     this.rdr.updateShadow(this.cameraRig.target.x, this.cameraRig.target.z);
     if (this.fog) this.fog.update(this.state, fdt);
 
-    // интерполяция + анимация юнитов (рост/ходьба/выпад)
-    for (const u of this.state.units) {
-      const v = u.view;
+    // интерполяция + анимация юнитов (рост/ходьба/выпад) + тень-пятно + пыль
+    const units = this.state.units;
+    for (let ui = 0; ui < units.length; ui++) {
+      const u = units[ui], v = u.view;
       if (u.grow < 1) { u.grow = Math.min(1, u.grow + fdt * 3.5); v.scale.setScalar(u.growMax * (0.25 + 0.75 * u.grow)); }
+      if (!u._noCast) { v.traverse(o => { if (o.isMesh) o.castShadow = false; }); u._noCast = true; }   // тень даёт пятно, не shadow-map
       const ix = u.px + (u.x - u.px) * alpha, iz = u.pz + (u.z - u.pz) * alpha;
+      const gy = this.state.grid.heightAt(ix, iz);
       const moving = Math.hypot(u.x - u.px, u.z - u.pz) > 0.0025;
       let bob = 0, fwd = 0;
       if (moving) bob = Math.abs(Math.sin(now * 0.016 + u.id * 1.7)) * 0.045;
       if (u.atkAnim > 0) { u.atkAnim -= fdt; fwd = Math.sin((1 - Math.max(0, u.atkAnim) / 0.2) * Math.PI) * 0.16; }
-      v.position.set(ix + Math.sin(u.dir) * fwd, this.state.grid.heightAt(ix, iz) + bob, iz + Math.cos(u.dir) * fwd);
+      v.position.set(ix + Math.sin(u.dir) * fwd, gy + bob, iz + Math.cos(u.dir) * fwd);
       v.rotation.y = u.dir || 0;
-      if (u.faction === 'enemy') { const gp = this.state.grid.worldToGrid(u.x, u.z); const t = this.state.grid.get(gp.x, gp.y); v.visible = !this.fog || !this.fog.enabled || !t || t.visible; }   // прячем врага в тумане
+      let vis = true;
+      if (u.faction === 'enemy') { const gp = this.state.grid.worldToGrid(u.x, u.z); const t = this.state.grid.get(gp.x, gp.y); vis = !this.fog || !this.fog.enabled || !t || t.visible; v.visible = vis; }
+      const sh = this._blobShadow(ui, this._uShadows);
+      sh.visible = vis; sh.position.set(ix, gy + 0.04, iz); const ss = (u.growMax || 1) * 0.78; sh.scale.set(ss, ss, ss);
+      if (moving && vis) { u._dustT = (u._dustT || 0) - fdt; if (u._dustT <= 0) { this.atmo && this.atmo.spawnDust(ix, gy, iz); u._dustT = 0.26; } }
     }
-    // интерполяция дичи (бродит/убегает) + прячем в тумане
-    for (const a of this.state.animals) {
-      const v = a.view;
+    for (let i = units.length; i < this._uShadows.length; i++) this._uShadows[i].visible = false;
+    // интерполяция дичи (бродит/убегает) + тень-пятно + прячем в тумане
+    const animals = this.state.animals;
+    for (let ai = 0; ai < animals.length; ai++) {
+      const a = animals[ai], v = a.view;
       const ix = a.px + (a.x - a.px) * alpha, iz = a.pz + (a.z - a.pz) * alpha;
+      const gy = this.state.grid.heightAt(ix, iz);
       const moving = Math.hypot(a.x - a.px, a.z - a.pz) > 0.0015;
       const bob = moving ? Math.abs(Math.sin(now * 0.02 + a.id * 1.3)) * 0.04 : 0;
-      v.position.set(ix, this.state.grid.heightAt(ix, iz) + bob, iz);
+      v.position.set(ix, gy + bob, iz);
       v.rotation.y = a.dir || 0;
       const gp = this.state.grid.worldToGrid(a.x, a.z); const t = this.state.grid.get(gp.x, gp.y);
-      v.visible = !this.fog || !this.fog.enabled || !t || t.visible;
+      const vis = !this.fog || !this.fog.enabled || !t || t.visible; v.visible = vis;
+      const sh = this._blobShadow(ai, this._aShadows);
+      sh.visible = vis; sh.position.set(ix, gy + 0.04, iz); sh.scale.set(0.7, 0.7, 0.7);
     }
+    for (let i = animals.length; i < this._aShadows.length; i++) this._aShadows[i].visible = false;
     // эффекты смерти (падение+уменьшение)
     for (let i = this.state.fx.length - 1; i >= 0; i--) {
       const f = this.state.fx[i]; f.life -= fdt;
@@ -500,6 +529,12 @@ class Game {
     }
     // пульс эмиссии идола
     if (this.state.idol) { const p = 1.4 + Math.sin(now * 0.005) * 0.9; this.state.idol.view.traverse(o => { if (o.isMesh && o.material && o.material.emissiveIntensity > 0) o.material.emissiveIntensity = p; }); }
+    // живые идолы-реликвии: медленно вращаются + парят
+    for (const b of this.state.buildings) {
+      if (!b.built || !b.def || b.def.cat !== 'relic') continue;
+      b.view.rotation.y += fdt * 0.5;
+      if (!(b._hit > 0)) b.view.position.y = (b.cy || 0) + Math.sin(now * 0.002 + b.cx) * 0.06;
+    }
     // ретровейв-солнце смотрит на камеру + лёгкий пульс
     if (this._neon) {
       this._neon.sun.quaternion.copy(this.camera.quaternion);

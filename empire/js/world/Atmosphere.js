@@ -22,7 +22,8 @@ export class Atmosphere {
     this._smokeTex = radialTex('rgba(196,196,202,0.85)', 'rgba(196,196,202,0)');
     this._sparkTex = radialTex('rgba(255,228,150,1)', 'rgba(255,120,20,0)');
     this._cloudTex = radialTex('rgba(255,255,255,0.92)', 'rgba(255,255,255,0)');
-    this._buildSmoke(); this._buildSparks(); this._buildBirds(); this._buildClouds(); this._buildFireflies();
+    this._dustTex = radialTex('rgba(170,150,116,0.7)', 'rgba(170,150,116,0)');
+    this._buildSmoke(); this._buildSparks(); this._buildDust(); this._buildBirds(); this._buildClouds(); this._buildFireflies();
   }
 
   _pool(tex, n, blend) {
@@ -36,6 +37,26 @@ export class Atmosphere {
   }
   _buildSmoke() { this.smoke = this._pool(this._smokeTex, 38); }
   _buildSparks() { this.sparks = this._pool(this._sparkTex, 20, THREE.AdditiveBlending); }
+  _buildDust() { this.dust = this._pool(this._dustTex, 26); }
+
+  // пыль из-под ног идущих юнитов (зовётся из main render-loop, троттлинг там же)
+  spawnDust(x, y, z) {
+    this._emit(this.dust, x, y + 0.05, z,
+      { life: 0.6 + Math.random() * 0.3, vx: (Math.random() - 0.5) * 0.3, vy: 0.25 + Math.random() * 0.2, vz: (Math.random() - 0.5) * 0.3, op: 0.4, sc: 0.18, sc1: 0.52, col: 0xb09668 });
+  }
+
+  // общий спад частицы-спрайта (gravity>0 — падающие искры; иначе мягкое затухание)
+  _decay(pool, fdt, gravity) {
+    for (const p of pool) {
+      if (p.life <= 0) continue;
+      p.life -= fdt; const t = 1 - p.life / p.max;
+      if (gravity) p.vy -= gravity * fdt;
+      p.sp.position.x += p.vx * fdt; p.sp.position.y += p.vy * fdt; p.sp.position.z += p.vz * fdt;
+      p.sp.scale.setScalar(p._sc0 + (p._sc1 - p._sc0) * t);
+      p.sp.material.opacity = p._op * (gravity ? (1 - t) : (1 - t) * (1 - t));
+      if (p.life <= 0) { p.sp.visible = false; p.sp.material.opacity = 0; }
+    }
+  }
 
   _buildClouds() {
     this.clouds = [];
@@ -106,14 +127,8 @@ export class Atmosphere {
       this._emit(this.smoke, s.x + (Math.random() - 0.5) * 0.12, s.y, s.z + (Math.random() - 0.5) * 0.12,
         { life: 2.6 + Math.random() * 1.4, vx: (Math.random() - 0.5) * 0.2 + 0.12, vy: 0.55 + Math.random() * 0.25, vz: (Math.random() - 0.5) * 0.2, op: 0.5, sc: 0.28, sc1: 1.1, col: 0xc4c4ca });
     }
-    for (const p of this.smoke) {
-      if (p.life <= 0) continue;
-      p.life -= fdt; const t = 1 - p.life / p.max;
-      p.sp.position.x += p.vx * fdt; p.sp.position.y += p.vy * fdt; p.sp.position.z += p.vz * fdt;
-      p.sp.scale.setScalar(p._sc0 + (p._sc1 - p._sc0) * t);
-      p.sp.material.opacity = p._op * (1 - t) * (1 - t);
-      if (p.life <= 0) { p.sp.visible = false; p.sp.material.opacity = 0; }
-    }
+    this._decay(this.smoke, fdt, 0);
+    this._decay(this.dust, fdt, 0);
 
     // искры кузницы
     this._sparkT -= fdt;
@@ -123,15 +138,7 @@ export class Atmosphere {
       for (let k = 0; k < 2; k++) this._emit(this.sparks, f.x, f.y, f.z,
         { life: 0.5 + Math.random() * 0.4, vx: (Math.random() - 0.5) * 1.6, vy: 1.4 + Math.random() * 1.2, vz: (Math.random() - 0.5) * 1.6, op: 1, sc: 0.13, sc1: 0.04, col: 0xffd060 });
     }
-    for (const p of this.sparks) {
-      if (p.life <= 0) continue;
-      p.life -= fdt; const t = 1 - p.life / p.max;
-      p.vy -= 4.5 * fdt;   // гравитация
-      p.sp.position.x += p.vx * fdt; p.sp.position.y += p.vy * fdt; p.sp.position.z += p.vz * fdt;
-      p.sp.scale.setScalar(p._sc0 + (p._sc1 - p._sc0) * t);
-      p.sp.material.opacity = p._op * (1 - t);
-      if (p.life <= 0) { p.sp.visible = false; p.sp.material.opacity = 0; }
-    }
+    this._decay(this.sparks, fdt, 4.5);   // гравитация
 
     // птицы — кружат над зоной камеры, машут крыльями
     for (const b of this.birds) {
