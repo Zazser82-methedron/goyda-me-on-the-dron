@@ -65,6 +65,7 @@ export class Sky {
     this.t += dt / CYCLE; if (this.t >= 1) this.t -= 1;
     const elev = Math.sin(this.t * Math.PI * 2 - Math.PI / 2);   // -1 ночь .. +1 полдень
     const day = Math.max(0, elev);
+    this.day = day;                                              // наружу — для атмосферы (светлячки/птицы)
     const horizon = Math.max(0, 1 - Math.abs(elev) * 1.5);        // рассвет/закат у горизонта
 
     // ---- выбор/переход погоды (плавно тянем параметры к целевым) ----
