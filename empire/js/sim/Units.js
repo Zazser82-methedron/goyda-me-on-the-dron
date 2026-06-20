@@ -1,8 +1,8 @@
 // ===== Движение, бой и ИИ юнитов (свои воины + враги). Воркеры — в Jobs.js =====
-import { TILE } from '../data/config.js?v=47';
-import { findPath, nearestAdj } from '../world/Pathfinding.js?v=47';
-import { updateWorker } from './Jobs.js?v=47';
-import { bark } from '../data/barks.js?v=47';
+import { TILE } from '../data/config.js?v=48';
+import { findPath, nearestAdj } from '../world/Pathfinding.js?v=48';
+import { updateWorker } from './Jobs.js?v=48';
+import { bark } from '../data/barks.js?v=48';
 
 export function tileCenter(state, tx, ty) { const w = state.grid.gridToWorld(tx, ty); return { x: w.wx, z: w.wz }; }
 function dist2(ax, az, bx, bz) { return (ax - bx) ** 2 + (az - bz) ** 2; }
@@ -52,12 +52,17 @@ export function moveStep(state, u, dt) {
 export function damage(state, target, amt, ctx) {
   if (!target || target.hp <= 0) return true;
   target.hp -= amt;
+  if (ctx.dmgNum) ctx.dmgNum(target, amt);                       // всплывающее число урона
   if (target.type === 'building' && ctx.flash) ctx.flash(target);
   if (target.hp <= 0) {
     if (target.type === 'unit') {
+      if (ctx.shake) ctx.shake(target.bossKey ? 0.7 : 0.26);     // тряска на гибели (босс — сильнее)
+      if (target.bossKey && ctx.hitStop) ctx.hitStop(0.08);      // hit-pause на смерти босса
       if (target.bossKey && ctx.onBossDown) ctx.onBossDown(target);
       state.killUnit(target);
     } else {
+      if (ctx.shake) ctx.shake(0.5);                             // снос здания — заметная тряска
+      if (ctx.hitStop) ctx.hitStop(0.05);
       const wasTown = target === state.townhall;
       state.removeBuilding(target);
       if (ctx.toast) ctx.toast('💥 ' + target.def.name + ' разрушен', { bad: true });

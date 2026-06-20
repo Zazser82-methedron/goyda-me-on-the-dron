@@ -1,6 +1,6 @@
 // ===== RTS-камера: пан по XZ, орбита (ПКМ/Q-E), зум колесом, сглаживание =====
 import * as THREE from 'three';
-import { GRID_N, TILE } from '../data/config.js?v=47';
+import { GRID_N, TILE } from '../data/config.js?v=48';
 
 export class RTSCamera {
   constructor(dom) {
@@ -18,6 +18,9 @@ export class RTSCamera {
     this._radius = this.radius;
     this._azimuth = this.azimuth;
     this._polar = this.polar;
+
+    this.trauma = 0;                       // тряска камеры: 0..1, плавно спадает (удары/взрывы/босс)
+    this._lookTmp = new THREE.Vector3();
 
     this.minRadius = 8; this.maxRadius = 200;
     this.minPolar = 0.12; this.maxPolar = 1.42;   // ниже наклон — видно край мира и слонов
@@ -112,8 +115,21 @@ export class RTSCamera {
       this._target.y + rad * Math.cos(ph),
       this._target.z + rad * sinp * Math.cos(th),
     );
-    this.camera.lookAt(this._target);
+    // тряска камеры (trauma² — резкий пик, мягкий спад); масштаб ~ зум, чтобы не укачивало вблизи
+    if (this.trauma > 0) {
+      const s = this.trauma * this.trauma, tt = performance.now() * 0.001, amp = 0.5 + rad * 0.012;
+      const ox = Math.sin(tt * 47) * s * amp, oy = Math.sin(tt * 59 + 1.7) * s * amp * 0.8;
+      this.camera.position.x += ox; this.camera.position.y += oy;
+      this._lookTmp.set(this._target.x + ox * 0.4, this._target.y, this._target.z + oy * 0.4);
+      this.camera.lookAt(this._lookTmp);
+      this.trauma = Math.max(0, this.trauma - dt * 1.8);
+    } else {
+      this.camera.lookAt(this._target);
+    }
   }
+
+  // добавить тряску (накапливается, кап 1) — зовётся из ctx.shake
+  addShake(a) { this.trauma = Math.min(1, this.trauma + a); }
 
   resize(w, h) {
     this.camera.aspect = w / h;

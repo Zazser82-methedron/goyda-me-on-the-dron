@@ -1,43 +1,43 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=47';
-import { RTSCamera } from './engine/RTSCamera.js?v=47';
-import { Picker } from './engine/Picker.js?v=47';
-import { Loop } from './engine/Loop.js?v=47';
-import { AssetManager } from './engine/AssetManager.js?v=47';
-import { TerrainMesh } from './world/TerrainMesh.js?v=47';
-import { WorldBase } from './world/WorldBase.js?v=47';
-import { Sky } from './world/Sky.js?v=47';
-import { Atmosphere } from './world/Atmosphere.js?v=47';
+import { Renderer } from './engine/Renderer.js?v=48';
+import { RTSCamera } from './engine/RTSCamera.js?v=48';
+import { Picker } from './engine/Picker.js?v=48';
+import { Loop } from './engine/Loop.js?v=48';
+import { AssetManager } from './engine/AssetManager.js?v=48';
+import { TerrainMesh } from './world/TerrainMesh.js?v=48';
+import { WorldBase } from './world/WorldBase.js?v=48';
+import { Sky } from './world/Sky.js?v=48';
+import { Atmosphere } from './world/Atmosphere.js?v=48';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=47';
-import { GameState } from './sim/GameState.js?v=47';
-import * as Economy from './sim/Economy.js?v=47';
-import * as BuildSys from './sim/Buildings.js?v=47';
-import * as Waves from './sim/Waves.js?v=47';
-import * as Tech from './sim/Tech.js?v=47';
-import * as Nature from './sim/Nature.js?v=47';
-import * as Relics from './sim/Relics.js?v=47';
-import * as Camps from './sim/Camps.js?v=47';
-import * as Wildlife from './sim/Wildlife.js?v=47';
-import * as Research from './sim/Research.js?v=47';
-import { updateUnits, damage } from './sim/Units.js?v=47';
-import { toggleEdict } from './sim/Edicts.js?v=47';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=47';
-import { HUD } from './ui/HUD.js?v=47';
-import { BuildMenu } from './ui/BuildMenu.js?v=47';
-import { Selection } from './ui/Selection.js?v=47';
-import { Minimap } from './ui/Minimap.js?v=47';
-import { ResearchPanel } from './ui/Research.js?v=47';
-import { Toasts } from './ui/Toasts.js?v=47';
-import { Leaderboard } from './ui/Leaderboard.js?v=47';
-import { BUILDINGS } from './data/buildings.js?v=47';
-import { RANKS } from './data/ranks.js?v=47';
-import { bark } from './data/barks.js?v=47';
-import { STORAGE_KEY } from './data/config.js?v=47';
-import { getFaction } from './data/factions.js?v=47';
-import { getMap } from './data/maps.js?v=47';
-import { StartScreen } from './ui/StartScreen.js?v=47';
+import { nearestAdj } from './world/Pathfinding.js?v=48';
+import { GameState } from './sim/GameState.js?v=48';
+import * as Economy from './sim/Economy.js?v=48';
+import * as BuildSys from './sim/Buildings.js?v=48';
+import * as Waves from './sim/Waves.js?v=48';
+import * as Tech from './sim/Tech.js?v=48';
+import * as Nature from './sim/Nature.js?v=48';
+import * as Relics from './sim/Relics.js?v=48';
+import * as Camps from './sim/Camps.js?v=48';
+import * as Wildlife from './sim/Wildlife.js?v=48';
+import * as Research from './sim/Research.js?v=48';
+import { updateUnits, damage } from './sim/Units.js?v=48';
+import { toggleEdict } from './sim/Edicts.js?v=48';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=48';
+import { HUD } from './ui/HUD.js?v=48';
+import { BuildMenu } from './ui/BuildMenu.js?v=48';
+import { Selection } from './ui/Selection.js?v=48';
+import { Minimap } from './ui/Minimap.js?v=48';
+import { ResearchPanel } from './ui/Research.js?v=48';
+import { Toasts } from './ui/Toasts.js?v=48';
+import { Leaderboard } from './ui/Leaderboard.js?v=48';
+import { BUILDINGS } from './data/buildings.js?v=48';
+import { RANKS } from './data/ranks.js?v=48';
+import { bark } from './data/barks.js?v=48';
+import { STORAGE_KEY } from './data/config.js?v=48';
+import { getFaction } from './data/factions.js?v=48';
+import { getMap } from './data/maps.js?v=48';
+import { StartScreen } from './ui/StartScreen.js?v=48';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -92,6 +92,9 @@ class Game {
     this.tracers = [];
     this._uShadows = []; this._aShadows = [];   // пулы мягких теней-пятен под юнитами/дичью
     this.floaters = document.getElementById('floaters');
+    this._hitStop = 0;          // таймер hit-pause (сек реального времени)
+    this._ripples = [];         // кольца-подтверждения команд
+    this._fltCount = 0;         // бюджет всплывающих чисел за кадр (анти-спам DOM)
 
     this.ctx = this._makeCtx();
     this.rdr.onResize = (w, h) => this.cameraRig.resize(w, h);
@@ -108,8 +111,11 @@ class Game {
       bark: (u, text) => this.float(u.x, u.z, text, '#ffe8b5', 1.4),
       float: (x, z, t, c) => this.float(x, z, t, c, 0.6),
       flash: (b) => { b._hit = 0.18; },
-      burst: (x, y, z, col, n) => { this.atmo && this.atmo.burst(x, y, z, col, n); },
+      burst: (x, y, z, col, n) => { this.atmo && this.atmo.burst(x, y, z, col, n); this.cameraRig.addShake(Math.min(0.4, (n || 8) * 0.012)); },
       tracer: (u, t) => this.spawnTracer(u, t),
+      shake: (a) => this.cameraRig.addShake(a),                       // тряска камеры (game-feel)
+      dmgNum: (target, amt, kind) => this.dmgNumber(target, amt, kind),  // всплывающее число урона/лечения
+      hitStop: (t) => { this._hitStop = Math.max(this._hitStop, t); },   // короткая пауза симуляции на сильных ударах
       onLose: () => this.end('lose'),
       onWin: () => this.end('win'),
       onRankUp: () => {},
@@ -117,7 +123,7 @@ class Game {
       onBossDown: (boss) => {
         this.state.gain({ gold: 60, faith: 25 });
         this.toasts.show('☠️ ' + (boss.bossName || 'Босс') + ' повержен! +60🪙 +25☩', { gold: true, big: true });
-        sfx('win');
+        sfx('win'); this.cameraRig.addShake(0.85); this._hitStop = Math.max(this._hitStop, 0.07);
       },
     };
   }
@@ -364,24 +370,28 @@ class Game {
     // рубить ресурс (для добытчика)
     if (ent && ent.type === 'node' && sel.def.worker) {
       sel.huntId = null; sel.job = ent.id; sel.jobType = ent.resType; sel.manualIdle = false; sel.moveOrder = null; sel.path = null; sel.state = 'toNode';
-      sfx('click'); this.float(sel.x, sel.z, 'Иду рубить!', '#9effd0', 1.4); return;
+      sfx('click'); this.float(sel.x, sel.z, 'Иду рубить!', '#9effd0', 1.4);
+      { const w = this.state.grid.gridToWorld(ent.gx, ent.gy); this.orderRipple(w.wx, w.wz, 0x9effd0); } return;
     }
     // охота на зверя (любой свой юнит)
     if (ent && ent.type === 'animal') {
       sel.huntId = ent.id; sel.moveOrder = null; sel.path = null; sel._huntTx = null;
       if (sel.def.worker) { sel.job = null; sel.manualIdle = true; }
-      sfx('click'); this.float(sel.x, sel.z, 'На охоту! ' + ent.def.icon, '#ffe08a', 1.4); return;
+      sfx('click'); this.float(sel.x, sel.z, 'На охоту! ' + ent.def.icon, '#ffe08a', 1.4);
+      this.orderRipple(ent.x, ent.z, 0xffe08a); return;
     }
     // в атаку на врага (для воина)
     if (ent && ent.type === 'unit' && ent.faction === 'enemy' && !sel.def.worker) {
       const g = this.state.grid.worldToGrid(ent.x, ent.z);
       sel.huntId = null; sel.moveOrder = { x: g.x, y: g.y }; sel.path = null;
-      sfx('click'); this.float(sel.x, sel.z, 'В атаку!', '#ff8a8a', 1.4); return;
+      sfx('click'); this.float(sel.x, sel.z, 'В атаку!', '#ff8a8a', 1.4);
+      this.orderRipple(ent.x, ent.z, 0xff6a6a); return;
     }
     // снести вражий стан (для воина)
     if (ent && ent.type === 'camp' && !sel.def.worker) {
       sel.huntId = null; sel.targetCampId = ent.id; sel.moveOrder = null; sel.path = null;
-      sfx('click'); this.float(sel.x, sel.z, 'Снести стан!', '#ff8a8a', 1.4); return;
+      sfx('click'); this.float(sel.x, sel.z, 'Снести стан!', '#ff8a8a', 1.4);
+      this.orderRipple(ent.cx, ent.cz, 0xff6a6a); return;
     }
     // идти на указанную точку (любой свой юнит — куда скажешь)
     const t = this.picker.tileUnder(this.camera, this.state.grid);
@@ -389,6 +399,7 @@ class Game {
       sel.huntId = null; sel.moveOrder = { x: t.x, y: t.y }; sel.path = null;
       if (sel.def.worker) { sel.job = null; sel.manualIdle = true; }
       sfx('click'); this.float(sel.x, sel.z, 'Идём!', '#9effd0', 1.4);
+      { const w = this.state.grid.gridToWorld(t.x, t.y); this.orderRipple(w.wx, w.wz, 0x9effd0); }
     }
   }
 
@@ -415,6 +426,68 @@ class Game {
     d.style.top = (-v.y * 0.5 + 0.5) * window.innerHeight + 'px';
     this.floaters.appendChild(d);
     setTimeout(() => d.remove(), 1150);
+  }
+
+  // всплывающее число урона/лечения над целью (бюджет за кадр против DOM-спама)
+  dmgNumber(target, amt, kind) {
+    if (this._fltCount > 8) return;
+    const x = target.x ?? target.cx, z = target.z ?? target.cz;
+    if (x === undefined) return;
+    const n = Math.max(1, Math.round(amt));
+    const col = kind === 'heal' ? '#7dffa0'
+      : (target.faction === 'ours' || target.type === 'building') ? '#ff7a6b' : '#ffe24a';
+    const gy = (this.state.grid.heightAt ? this.state.grid.heightAt(x, z) : 0) + 1.25;
+    this._fltCount++;
+    this.float(x + (Math.random() - 0.5) * 0.5, z + (Math.random() - 0.5) * 0.5, (kind === 'heal' ? '+' : '−') + n, col, gy);
+  }
+
+  // анимированное кольцо под выбранной сущностью (пульс + вращение, цвет по типу)
+  _updateSelRing(alpha, now) {
+    const sel = this.state.selected;
+    if (!sel || sel.hp === 0) { if (this._selRing) this._selRing.visible = false; return; }
+    if (!this._selRing) {
+      const geo = new THREE.RingGeometry(0.5, 0.62, 40);
+      const mat = new THREE.MeshBasicMaterial({ color: 0xffd24a, transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
+      this._selRing = new THREE.Mesh(geo, mat);
+      this._selRing.rotation.x = -Math.PI / 2; this._selRing.renderOrder = 5;
+      this.scene.add(this._selRing);
+    }
+    const r = this._selRing;
+    let x, z, rad = 0.8, col = 0xffd24a;
+    if (sel.type === 'unit' || sel.type === 'animal') {
+      x = sel.px + (sel.x - sel.px) * alpha; z = sel.pz + (sel.z - sel.pz) * alpha;
+      rad = sel.type === 'animal' ? 1.0 : 0.85;
+      col = sel.faction === 'enemy' ? 0xff5050 : (sel.type === 'animal' ? 0xffe08a : 0xffd24a);
+    } else if (sel.type === 'building' || sel.type === 'camp') {
+      x = sel.cx; z = sel.cz; rad = Math.max(sel.w || 2, sel.h || 2) * 0.78;
+      col = sel.type === 'camp' ? 0xff5050 : 0xffd24a;
+    } else if (sel.type === 'node') {
+      const w = this.state.grid.gridToWorld(sel.gx, sel.gy); x = w.wx; z = w.wz; rad = 0.7; col = 0x66e0ff;
+    } else { r.visible = false; return; }
+    const gy = this.state.grid.heightAt(x, z);
+    r.position.set(x, gy + 0.07, z);
+    r.scale.setScalar(rad * (1 + Math.sin(now * 0.006) * 0.07));
+    r.rotation.z = now * 0.0011;
+    r.material.color.setHex(col);
+    r.visible = true;
+  }
+
+  // расходящееся кольцо-подтверждение команды (на земле под точкой приказа)
+  orderRipple(wx, wz, color = 0x9effd0) {
+    if (!this._ripGeo) this._ripGeo = new THREE.RingGeometry(0.16, 0.3, 28);
+    const m = new THREE.Mesh(this._ripGeo, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+    m.rotation.x = -Math.PI / 2;
+    const gy = this.state.grid.heightAt(wx, wz);
+    m.position.set(wx, gy + 0.09, wz); m.renderOrder = 6;
+    this.scene.add(m); this._ripples.push({ m, t: 0 });
+  }
+  updateRipples(fdt) {
+    for (let i = this._ripples.length - 1; i >= 0; i--) {
+      const r = this._ripples[i]; r.t += fdt; const k = r.t / 0.55;
+      if (k >= 1) { this.scene.remove(r.m); r.m.material.dispose(); this._ripples.splice(i, 1); continue; }
+      r.m.scale.setScalar(0.5 + k * 3.6);
+      r.m.material.opacity = 0.9 * (1 - k);
+    }
   }
 
   // снаряд шамана: летит к цели, наносит урон по прилёту
@@ -457,6 +530,7 @@ class Game {
   // ---------- симуляция ----------
   tick(dt) {
     if (this.state.gameOver) return;
+    if (this._hitStop > 0) return;          // hit-pause: рендер живёт (тряска), сим заморожен
     Economy.update(this.state, dt, this.ctx);
     BuildSys.update(this.state, dt, this.ctx);
     updateUnits(this.state, dt, this.ctx);
@@ -488,6 +562,8 @@ class Game {
     if (!this._rendered) { this._rendered = true; window.__gboot && window.__gboot('RENDERING ✓'); }
     const now = performance.now();
     let fdt = (now - this.lastRender) / 1000; if (fdt > 0.1) fdt = 0.1; this.lastRender = now;
+    if (this._hitStop > 0) this._hitStop = Math.max(0, this._hitStop - fdt);   // hit-pause тает в реальном времени
+    this._fltCount = 0;                                                        // сброс бюджета чисел урона за кадр
     this.cameraRig.update(fdt);
     this.rdr.updateShadow(this.cameraRig.target.x, this.cameraRig.target.z);
     if (this.fog) this.fog.update(this.state, fdt);
@@ -589,6 +665,8 @@ class Game {
 
     // ховер/призрак
     this._updateHover();
+    this._updateSelRing(alpha, now);   // анимированное кольцо под выбранным
+    this.updateRipples(fdt);           // кольца-подтверждения команд
     this.rdr.render(this.camera);
 
     this._uiT += fdt;
