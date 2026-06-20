@@ -1,7 +1,7 @@
 // ===== Процедурная фоновая музыка + звук окружения (WebAudio) =====
 // Генеративный эмбиент: бас + пэд-аккорды + редкая мелодия (минорная пентатоника «Гойды»),
 // ветер (шум через лоупасс), птицы днём, дождь/гром по погоде. Делит AudioContext со Sfx, уважает mute.
-import { audioCtx, isMuted } from './Sfx.js?v=55';
+import { audioCtx, isMuted } from './Sfx.js?v=56';
 
 const SCALE = [220.00, 261.63, 293.66, 329.63, 392.00];   // ля-минор пентатоника: A C D E G
 const ROOTS = [110.00, 130.81, 146.83, 164.81];           // смены аккорда (бас): A C D E
@@ -79,6 +79,19 @@ export class AmbientAudio {
     const og = a.createGain();
     og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(0.35, t + 0.05); og.gain.exponentialRampToValueAtTime(0.0001, t + 1.3);
     o.connect(og); og.connect(this.master); o.start(t); o.stop(t + 1.35);
+  }
+
+  victory() {   // триумфальный восходящий мотив + аккорд
+    if (!this.started || isMuted()) return;
+    const t = this.actx.currentTime;
+    [261.63, 329.63, 392.00, 523.25, 659.25].forEach((f, i) => this._note(f, t + i * 0.17, 0.9, 'triangle', 0.16));
+    [392.00, 523.25, 659.25, 783.99].forEach(f => this._note(f, t + 0.85, 2.6, 'triangle', 0.07));
+  }
+  defeat() {   // нисходящий минорный мотив
+    if (!this.started || isMuted()) return;
+    const t = this.actx.currentTime;
+    [329.63, 277.18, 220.00, 164.81].forEach((f, i) => this._note(f, t + i * 0.32, 1.2, 'sine', 0.16));
+    this._note(110, t, 3.0, 'sine', 0.1);
   }
 
   _sched() {

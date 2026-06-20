@@ -1,6 +1,6 @@
 // ===== Экономика: производство/расход в день, счастье, ВЕРА, таймеры =====
-import { SIM_DT, DAY_TICKS } from '../data/config.js?v=55';
-import { edictMods } from './Edicts.js?v=55';
+import { SIM_DT, DAY_TICKS } from '../data/config.js?v=56';
+import { edictMods } from './Edicts.js?v=56';
 
 const DAY_SECONDS = DAY_TICKS * SIM_DT;   // 8 сек
 const FOOD_PER_POP = 1;
@@ -35,6 +35,7 @@ function onDay(state, ctx) {
   if (fm) { prod.faith *= fm.faithMul || 1; happyMod += fm.happy || 0; }
 
   const food = prod.food;   // для баланса счастья/голода ниже
+  if (prod.gold) prod.gold *= 0.78 + state.happiness / 100 * 0.44;   // довольный народ платит больше податей (0.78..1.22)
   state.gain(prod);
 
   // расход еды
