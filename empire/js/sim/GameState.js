@@ -1,11 +1,11 @@
 // ===== Единый источник правды: ресурсы, сущности, ранги, сейв =====
 import * as THREE from 'three';
-import { GRID_N, STORAGE_KEY } from '../data/config.js?v=44';
-import { Grid } from '../world/Grid.js?v=44';
-import { NodeField } from '../world/NodeField.js?v=44';
-import { BUILDINGS } from '../data/buildings.js?v=44';
-import { UNITS } from '../data/units.js?v=44';
-import { RANKS } from '../data/ranks.js?v=44';
+import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=45';
+import { Grid } from '../world/Grid.js?v=45';
+import { NodeField } from '../world/NodeField.js?v=45';
+import { BUILDINGS } from '../data/buildings.js?v=45';
+import { UNITS } from '../data/units.js?v=45';
+import { RANKS } from '../data/ranks.js?v=45';
 
 export class GameState {
   constructor(scene, assets) {
@@ -144,6 +144,40 @@ export class GameState {
     else if (a.view) this.scene.remove(a.view);
   }
 
+  // ---- общий «земляной патч» под здания (ленивая инициализация, 1 текстура/материал/геометрия на все) ----
+  _dirtTex() {
+    if (this._dTex) return this._dTex;
+    const S = 128, c = document.createElement('canvas'); c.width = c.height = S;
+    const x = c.getContext('2d');
+    const g = x.createRadialGradient(S / 2, S / 2, S * 0.1, S / 2, S / 2, S * 0.5);
+    g.addColorStop(0, 'rgba(74,54,32,0.95)');
+    g.addColorStop(0.6, 'rgba(86,64,38,0.72)');
+    g.addColorStop(1, 'rgba(86,64,38,0)');
+    x.fillStyle = g; x.fillRect(0, 0, S, S);
+    // рваные края — выгрызаем кляксы по периметру
+    x.globalCompositeOperation = 'destination-out';
+    for (let i = 0; i < 64; i++) {
+      const a = Math.random() * 6.283, r = S * (0.33 + Math.random() * 0.2);
+      x.beginPath(); x.arc(S / 2 + Math.cos(a) * r, S / 2 + Math.sin(a) * r, 2 + Math.random() * 7, 0, 6.283);
+      x.fillStyle = 'rgba(0,0,0,' + (0.3 + Math.random() * 0.5) + ')'; x.fill();
+    }
+    x.globalCompositeOperation = 'source-over';
+    // тёмные комья земли
+    for (let i = 0; i < 44; i++) {
+      const px = Math.random() * S, py = Math.random() * S, d = Math.hypot(px - S / 2, py - S / 2) / (S / 2);
+      if (d > 0.82) continue;
+      x.fillStyle = 'rgba(48,34,20,' + (0.12 + Math.random() * 0.26) * (1 - d) + ')';
+      x.beginPath(); x.arc(px, py, 1 + Math.random() * 2.5, 0, 6.283); x.fill();
+    }
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.needsUpdate = true;
+    this._dTex = t; return t;
+  }
+  _dirtMat() {
+    if (!this._dMat) this._dMat = new THREE.MeshStandardMaterial({ map: this._dirtTex(), transparent: true, roughness: 1, metalness: 0, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+    return this._dMat;
+  }
+  _dirtGeo() { if (!this._dGeo) this._dGeo = new THREE.PlaneGeometry(1, 1); return this._dGeo; }
+
   // ---- здания ----
   addBuilding(kind, gx, gy, opts = {}) {
     const def = BUILDINGS[kind];
@@ -165,6 +199,16 @@ export class GameState {
       cx: c.wx, cz: c.wz, cy,
     };
     view.userData.entity = b;
+    // «затоптанный» земляной патч под зданием — мягко вписывает постройку в траву (нет жёсткого стыка)
+    if (!def.bridge && !def.onWater && !def.road) {
+      const dp = new THREE.Mesh(this._dirtGeo(), this._dirtMat());
+      dp.rotation.x = -Math.PI / 2;
+      const sz = (Math.max(def.w, def.h) + 1.1) * TILE;
+      dp.scale.set(sz, sz, 1);
+      dp.position.set(c.wx, cy + 0.03, c.wz);
+      dp.renderOrder = 1; dp.receiveShadow = false;
+      this.scene.add(dp); b._dirt = dp;
+    }
     this.grid.occupy(gx, gy, def.w, def.h, b.id, { walkable: !!def.walkable, road: !!def.road });
     this.buildings.push(b); this._byId.set(b.id, b);
     if (def.unique && kind === 'townhall') this.townhall = b;
@@ -204,6 +248,7 @@ export class GameState {
   removeBuilding(b) {
     this.scene.remove(b.view);
     if (b._ring) this.scene.remove(b._ring);
+    if (b._dirt) this.scene.remove(b._dirt);
     this.grid.occupy(b.gx, b.gy, b.w, b.h, null);
     this.buildings = this.buildings.filter(x => x !== b);
     this._byId.delete(b.id);

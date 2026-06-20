@@ -1,7 +1,7 @@
 // ===== Земля: единый меш-рельеф (1 draw call) + вода + декор + ховер/призрак =====
 import * as THREE from 'three';
-import { TILE, PAL } from '../data/config.js?v=44';
-import { makeRippleNormal } from './WaterFx.js?v=44';
+import { TILE, PAL } from '../data/config.js?v=45';
+import { makeRippleNormal } from './WaterFx.js?v=45';
 
 export class TerrainMesh {
   constructor(scene, grid, pal) {
@@ -10,6 +10,21 @@ export class TerrainMesh {
     this.pal = pal || { a: PAL.grass1, b: PAL.grass2, c: PAL.grass3, dirt: PAL.dirt };
     const n = grid.n;
     const T = grid.terr || { water: -0.5, sand: -0.15, rock: 1.7, snow: 2.7 };
+
+    // ---- низкочастотное поле-шум для богатого грунта (крупные пятна сухой/сочной травы, землистые проплешины,
+    //      пятнистый камень). Детерминируется один раз при постройке. ----
+    const NP = 16, nlat = new Float32Array(NP * NP);
+    for (let i = 0; i < nlat.length; i++) nlat[i] = Math.random();
+    const _sm = t => t * t * (3 - 2 * t);
+    this._gnoise = (cx, cy, sc, ox, oy) => {
+      const u = cx * sc + ox, v = cy * sc + oy;
+      const x0 = Math.floor(u), y0 = Math.floor(v);
+      const tx = _sm(u - x0), ty = _sm(v - y0);
+      const at = (x, y) => nlat[(((y % NP) + NP) % NP) * NP + (((x % NP) + NP) % NP)];
+      const a = at(x0, y0), b = at(x0 + 1, y0), c = at(x0, y0 + 1), d = at(x0 + 1, y0 + 1);
+      return (a * (1 - tx) + b * tx) * (1 - ty) + (c * (1 - tx) + d * tx) * ty;
+    };
+    this._tc = new THREE.Color();   // переиспользуемый temp для блендов цвета
 
     // ---- меш рельефа из углов-высот ----
     const verts = new Float32Array((n + 1) * (n + 1) * 3);
@@ -23,7 +38,7 @@ export class TerrainMesh {
         const wx = (cx - n / 2) * TILE, wz = (cy - n / 2) * TILE;
         const h = grid.heights ? grid.heights[cy * (n + 1) + cx] : 0;
         verts[vi * 3] = wx; verts[vi * 3 + 1] = h; verts[vi * 3 + 2] = wz;
-        this._cornerColor(col, h, T);
+        this._cornerColor(col, h, T, cx, cy);
         cols[vi * 3] = col.r; cols[vi * 3 + 1] = col.g; cols[vi * 3 + 2] = col.b;
         uvs[vi * 2] = cx * UVK; uvs[vi * 2 + 1] = cy * UVK;
         vi++;
@@ -140,7 +155,7 @@ export class TerrainMesh {
     mat.map = aTex;
     mat.roughnessMap = wrap(new THREE.CanvasTexture(rc));
     mat.normalMap = wrap(new THREE.CanvasTexture(nc));
-    mat.normalScale = new THREE.Vector2(0.55, 0.55);   // умеренно — первый проход, легко докрутить
+    mat.normalScale = new THREE.Vector2(0.72, 0.72);   // сильнее рельеф земли — детали читаются ближним зумом
     mat.needsUpdate = true;
   }
 
@@ -149,14 +164,37 @@ export class TerrainMesh {
     if (this._waterN) { this._waterN.offset.x += fdt * 0.015; this._waterN.offset.y += fdt * 0.02; }
   }
 
-  _cornerColor(out, h, T) {
-    const p = this.pal;
-    if (h < T.water) out.setHex(0x4a4030);                       // подводный грунт
-    else if (h > (T.snow ?? 2.7)) out.setHex(0xd2d9e4);          // снег (притушен, не выгорает)
-    else if (h > (T.rock ?? 1.7)) out.setHex(PAL.rock);          // камень
-    else if (h < (T.sand ?? -0.15)) out.setHex(0xb49a62);        // песок (темнее — не светится)
-    else out.setHex(Math.random() < 0.5 ? p.b : p.c);           // трава/лес
-    out.multiplyScalar(0.9 + Math.random() * 0.2);
+  _cornerColor(out, h, T, cx = 0, cy = 0) {
+    const p = this.pal, tc = this._tc;
+    if (h < T.water) {                                           // подводный грунт
+      out.setHex(0x4a4030).multiplyScalar(0.86 + Math.random() * 0.18);
+      return out;
+    }
+    if (h > (T.snow ?? 2.7)) {                                   // снег (притушен, не выгорает)
+      out.setHex(0xd2d9e4).multiplyScalar(0.93 + Math.random() * 0.12);
+      return out;
+    }
+    if (h > (T.rock ?? 1.7)) {                                   // камень — пятнистый, тёмные/светлые жилы
+      const rk = this._gnoise(cx, cy, 0.4, 11, 7);
+      out.setHex(PAL.rock).lerp(tc.setHex(PAL.rockDk || 0x55524c), rk * 0.55);
+      out.multiplyScalar(0.85 + Math.random() * 0.22);
+      return out;
+    }
+    if (h < (T.sand ?? -0.15)) {                                 // песок/берег — влажные тёмные пятна у воды
+      const wet = this._gnoise(cx, cy, 0.3, 3, 9);
+      out.setHex(0xb49a62).multiplyScalar(0.82 + wet * 0.32);
+      return out;
+    }
+    // ---- ТРАВА: крупные пятна сочной/сухой/землистой травы вместо равномерного зелёного ----
+    const patch = this._gnoise(cx, cy, 0.16, 0, 0);             // 0..1 — крупные пятна оттенка
+    const dry = this._gnoise(cx, cy, 0.26, 21, 13);             // 0..1 — сухость/проплешины земли
+    out.setHex(p.b).lerp(tc.setHex(p.c), patch);               // блендим тёмно↔светло-зелёный
+    if (dry > 0.6) {                                            // сухие/землистые проплешины
+      out.lerp(tc.setHex(p.dirt || 0x8a6a3a), Math.min(1, (dry - 0.6) / 0.32) * 0.7);
+    } else if (patch > 0.8) {                                   // редкие очень сочные луга (тёплый зелёный)
+      out.lerp(tc.setHex(0x9bbf3a), (patch - 0.8) / 0.2 * 0.38);
+    }
+    out.multiplyScalar(0.93 + Math.random() * 0.12);           // мелкая зернистость
     return out;
   }
 
