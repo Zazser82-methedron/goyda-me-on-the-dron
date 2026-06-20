@@ -1,7 +1,7 @@
 // ===== Земля: единый меш-рельеф (1 draw call) + вода + декор + ховер/призрак =====
 import * as THREE from 'three';
-import { TILE, PAL } from '../data/config.js?v=45';
-import { makeRippleNormal } from './WaterFx.js?v=45';
+import { TILE, PAL } from '../data/config.js?v=46';
+import { makeRippleNormal } from './WaterFx.js?v=46';
 
 export class TerrainMesh {
   constructor(scene, grid, pal) {
@@ -249,6 +249,22 @@ export class TerrainMesh {
     flowers.castShadow = flowers.receiveShadow = false; flowers.frustumCulled = false;
     fill(flowers, fln, 0xff6ec7, 0xffe24a, 0.1, 0.6, 1.2);
     scene.add(flowers);
+
+    // ---- сухие/мёртвые деревья (силуэт-разнообразие; декор, не рубятся) ----
+    const deadGeo = new THREE.ConeGeometry(0.11, 0.95, 5);
+    const dn = Math.floor(n * n * 0.006);
+    const dead = new THREE.InstancedMesh(deadGeo, dmat(), dn);
+    dead.castShadow = dead.receiveShadow = false; dead.frustumCulled = false;
+    fill(dead, dn, 0x6b5538, 0x564327, 0.47, 0.7, 1.5);
+    scene.add(dead);
+
+    // ---- пни (намёк на вырубку — отличаются от ёлок) ----
+    const stumpGeo = new THREE.CylinderGeometry(0.15, 0.19, 0.22, 7);
+    const sn = Math.floor(n * n * 0.004);
+    const stumps = new THREE.InstancedMesh(stumpGeo, dmat(), sn);
+    stumps.castShadow = stumps.receiveShadow = false; stumps.frustumCulled = false;
+    fill(stumps, sn, 0x6b5740, 0x55462f, 0.11, 0.7, 1.3);
+    scene.add(stumps);
   }
 
   setHover(tile, color) {

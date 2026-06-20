@@ -1,11 +1,11 @@
 // ===== Единый источник правды: ресурсы, сущности, ранги, сейв =====
 import * as THREE from 'three';
-import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=45';
-import { Grid } from '../world/Grid.js?v=45';
-import { NodeField } from '../world/NodeField.js?v=45';
-import { BUILDINGS } from '../data/buildings.js?v=45';
-import { UNITS } from '../data/units.js?v=45';
-import { RANKS } from '../data/ranks.js?v=45';
+import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=46';
+import { Grid } from '../world/Grid.js?v=46';
+import { NodeField } from '../world/NodeField.js?v=46';
+import { BUILDINGS } from '../data/buildings.js?v=46';
+import { UNITS } from '../data/units.js?v=46';
+import { RANKS } from '../data/ranks.js?v=46';
 
 export class GameState {
   constructor(scene, assets) {
@@ -56,6 +56,7 @@ export class GameState {
 
     this.onToast = () => {};      // (text, opts) — назначает main
     this.onRankUp = () => {};
+    this._tmpCol = new THREE.Color();   // переиспользуемый для вычисления оттенков нод
   }
 
   // ---- ресурсы ----
@@ -86,7 +87,18 @@ export class GameState {
     const y = this.grid.heightAt ? this.grid.heightAt(wx, wz) : 0;
     const ry = (gx * 1.7 + gy * 0.9) % (Math.PI * 2);
     const n = { id: this._id++, type: 'node', kind, resType, gx, gy, amount, maxAmount: amount, depleted: false, field, instIndex: -1 };
-    field.add(n, wx, y, wz, ry, 1);
+    // детерминированная вариативность вида (размер/высота/оттенок) — стабильна между ребилдами/сейвом
+    const hh = (((gx * 73856093) ^ (gy * 19349663)) >>> 0);
+    const r1 = (hh & 255) / 255, r2 = ((hh >> 8) & 255) / 255, r3 = ((hh >> 16) & 255) / 255;
+    let opt;
+    if (kind === 'res_tree') {
+      // оттенок хвои: от тёмно- до светло/желтовато-зелёного (умножается на запечённый цвет; ствол ~коричневый остаётся)
+      const tint = this._tmpCol.setHSL(0.22 + r3 * 0.12, 0.28 + r2 * 0.38, 0.6 + r1 * 0.3).getHex();
+      opt = { baseSc: 0.8 + r1 * 0.6, aspect: 0.82 + r2 * 0.5, tint };       // размер 0.8..1.4, высота 0.82..1.32
+    } else {
+      opt = { baseSc: 0.82 + r1 * 0.42, aspect: 0.85 + r2 * 0.4, tint: this._tmpCol.setHSL(0, 0, 0.78 + r2 * 0.22).getHex() };
+    }
+    field.add(n, wx, y, wz, ry, 1, opt);
     this.grid.occupy(gx, gy, 1, 1, n.id, { walkable: false });
     this.nodes.push(n); this._byId.set(n.id, n);
     return n;

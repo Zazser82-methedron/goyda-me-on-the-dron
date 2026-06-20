@@ -2,7 +2,7 @@
 // Вместо ~800 отдельных Object3D — по одному InstancedMesh на тип (1 draw call).
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { buildPlaceholder } from '../engine/Placeholders.js?v=45';
+import { buildPlaceholder } from '../engine/Placeholders.js?v=46';
 
 // Слить меши плейсхолдера в одну геометрию с запечёнными vertex-color (1 материал).
 function bakedGeometry(modelName) {
@@ -35,29 +35,35 @@ export class NodeField {
     this.inst.receiveShadow = false;
     this.inst.count = 0;
     this.inst.frustumCulled = false;          // одна большая «куча», не отсекаем
+    // per-instance цвет (тонировка-вариативность); белый = без изменений
+    this.inst.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(maxCount * 3).fill(1), 3);
     scene.add(this.inst);
     this.slots = [];                          // index -> node
-    this.pr = [];                             // index -> {x,y,z,ry,sc}
+    this.pr = [];                             // index -> {x,y,z,ry,sc,baseSc,aspect}
     this._m = new THREE.Matrix4(); this._q = new THREE.Quaternion();
     this._p = new THREE.Vector3(); this._s = new THREE.Vector3(); this._up = new THREE.Vector3(0, 1, 0);
+    this._c = new THREE.Color();
   }
 
   _write(i) {
     const pr = this.pr[i];
     this._p.set(pr.x, pr.y, pr.z);
     this._q.setFromAxisAngle(this._up, pr.ry);
-    this._s.setScalar(pr.sc);
+    const b = pr.baseSc * pr.sc;             // baseSc = индивидуальный размер, sc = доля роста (рубка/отрастание)
+    this._s.set(b, b * pr.aspect, b);        // aspect — высота: узкие/раскидистые экземпляры
     this._m.compose(this._p, this._q, this._s);
     this.inst.setMatrixAt(i, this._m);
   }
 
-  add(node, x, y, z, ry, sc) {
+  add(node, x, y, z, ry, sc, opt = {}) {
     const i = this.inst.count;
     if (i >= this.inst.instanceMatrix.count) return -1;   // переполнение — игнор
     this.inst.count = i + 1;
-    this.slots[i] = node; this.pr[i] = { x, y, z, ry, sc };
+    this.slots[i] = node;
+    this.pr[i] = { x, y, z, ry, sc, baseSc: opt.baseSc ?? 1, aspect: opt.aspect ?? 1 };
     node.field = this; node.instIndex = i;
     this._write(i);
+    if (opt.tint != null) { this._c.set(opt.tint); this.inst.setColorAt(i, this._c); this.inst.instanceColor.needsUpdate = true; }
     this.inst.instanceMatrix.needsUpdate = true;
     return i;
   }
@@ -84,6 +90,9 @@ export class NodeField {
       if (moved) moved.instIndex = i;
       this.inst.getMatrixAt(last, this._m);
       this.inst.setMatrixAt(i, this._m);
+      this.inst.getColorAt(last, this._c);   // перенести и тон вместе с матрицей
+      this.inst.setColorAt(i, this._c);
+      this.inst.instanceColor.needsUpdate = true;
     }
     this.inst.count = last;
     this.slots[last] = null;

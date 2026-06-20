@@ -2,7 +2,7 @@
 // Стиль повторяет идол-слой «Гойды»: flatShading, гекс-формы, эмиссивные руны.
 // Origin КАЖДОЙ модели — в центре основания (низ на y=0), модель растёт вверх.
 import * as THREE from 'three';
-import { PAL } from '../data/config.js?v=45';
+import { PAL } from '../data/config.js?v=46';
 
 const _mats = {};
 function mat(color, o = {}) {
@@ -173,11 +173,13 @@ function chastokolGate() {
 
 // ---- ресурсные ноды ----
 function tree() {
+  // 3-ярусная ель с конусным стволом и градиентом хвои (база для инстанс-вариаций цвета/размера)
   const g = new THREE.Group();
-  const tr = mat(PAL.woodDk), f1 = mat(PAL.grass3), f2 = mat(PAL.grass2);
-  g.add(cyl(0.07, 0.1, 0.55, 5, tr, 0, 0.27, 0));
-  g.add(cone(0.4, 0.7, 6, f2, 0, 0.7, 0));
-  g.add(cone(0.3, 0.55, 6, f1, 0, 1.05, 0));
+  const tr = mat(PAL.woodDk), f0 = mat(PAL.grass2), f1 = mat(PAL.grass3), f2 = mat(0x82b052);
+  g.add(cyl(0.07, 0.12, 0.5, 5, tr, 0, 0.25, 0));
+  g.add(cone(0.46, 0.62, 7, f0, 0, 0.62, 0));
+  g.add(cone(0.36, 0.55, 7, f1, 0, 0.96, 0));
+  g.add(cone(0.24, 0.46, 6, f2, 0, 1.3, 0));
   return g;
 }
 function stoneNode() {
