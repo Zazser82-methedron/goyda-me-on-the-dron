@@ -44,3 +44,4 @@ export function sfx(name) { if (muted) return; const p = PRESETS[name]; if (p) t
 export function isMuted() { return muted; }
 export function toggleMute() { muted = !muted; try { localStorage.setItem('GOYDA_EMPIRE_MUTE', muted ? '1' : '0'); } catch (e) {} return muted; }
 export function resumeAudio() { ac(); }
+export function audioCtx() { return ac(); }   // общий AudioContext для фоновой музыки/окружения (Music.js)
