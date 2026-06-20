@@ -24,6 +24,14 @@ const EVENTS = [
     { lbl: 'Нанять (−50 🪙 → ратник)', msg: 'В строю новый ратник!', f: s => { if ((s.resources.gold || 0) >= 50) { s.resources.gold -= 50; if (s.townhall) { const w = s.grid.gridToWorld(s.townhall.gx, s.townhall.gy); s.addUnit('ratnik', w.wx, w.wz, {}); } } } },
     { lbl: 'Отказать', msg: 'Наёмник ушёл к соседям', f: () => {} },
   ] },
+  { w: 2, choice: true, t: '🔥 Пожар в избах', m: 'Огонь перекинулся на дворы!', choices: [
+    { lbl: 'Тушить миром (−40 🌲)', msg: 'Отстояли дворы!', f: s => { s.resources.wood = Math.max(0, s.resources.wood - 40); } },
+    { lbl: 'Само потухнет (−счастье)', msg: 'Сгорело несколько изб', f: s => { s.happiness = Math.max(0, s.happiness - 12); } },
+  ] },
+  { w: 1, choice: true, t: '🔮 Волхв-предсказатель', m: 'Погадает на судьбу за веру.', choices: [
+    { lbl: 'Заплатить (−20 ☩)', msg: 'Доброе знамение! +30 🪙 +4 💎', f: s => { if ((s.resources.faith || 0) >= 20) { s.resources.faith -= 20; s.gain({ gold: 30, gems: 4 }); } } },
+    { lbl: 'Прогнать', msg: 'Волхв ушёл в лес', f: () => {} },
+  ] },
 ];
 
 function pick() {

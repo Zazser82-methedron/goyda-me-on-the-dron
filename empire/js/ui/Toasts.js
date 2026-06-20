@@ -1,7 +1,10 @@
 // ===== Всплывающие сообщения (ранг-ап / набег / указ / барки) =====
+import { sfx } from '../audio/Sfx.js?v=53';
+
 export class Toasts {
   constructor(el) { this.el = el; }
   show(text, opts = {}) {
+    if (opts.bad) sfx('deny');   // звук отказа/тревоги на «плохих» тостах
     const d = document.createElement('div');
     d.className = 'toast' + (opts.bad ? ' bad' : '') + (opts.gold ? ' gold' : '') + (opts.big ? ' big' : '');
     d.textContent = text;
