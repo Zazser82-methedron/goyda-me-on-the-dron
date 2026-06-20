@@ -151,7 +151,7 @@ export class Sky {
     // ---- дистанционный туман (FogExp2.density) + цвет ----
     // днём даль уходит в светло-голубую дымку (сливается с атмосферным небом), на закате — тёплую
     this.scene.fog.density = this.base.fogD * this._fogMul;
-    const dayFog = new THREE.Color(0xaecbe2).lerp(new THREE.Color(0xe8c39a), horizon * 0.7);
+    const dayFog = new THREE.Color(0x9cbcd8).lerp(new THREE.Color(0xd8b488), horizon * 0.6);
     const fc = new THREE.Color(0x0e1220).lerp(dayFog, Math.max(day, horizon * 0.6));
     if (this.weather === 'rain' || this.weather === 'storm') fc.lerp(new THREE.Color(0x59636f), 0.4);
     if (this.weather === 'fog') fc.lerp(new THREE.Color(0xb9bcc6), 0.5);     // молочная дымка

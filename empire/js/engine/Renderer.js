@@ -1,6 +1,26 @@
 // ===== Three.js рендерер, сцена, свет, туман — настроение идол-слоя «Гойды» =====
 import * as THREE from 'three';
-import { PAL } from '../data/config.js?v=43';
+import { PAL } from '../data/config.js?v=44';
+
+// Цветокоррекция (пост): контраст вокруг 0.5, насыщенность, лёгкий тёплый тон, мягкая виньетка.
+const GRADE_SHADER = {
+  uniforms: {
+    tDiffuse: { value: null },
+    contrast: { value: 1.1 }, saturation: { value: 1.14 }, warmth: { value: 0.012 }, vignette: { value: 0.32 },
+  },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+  fragmentShader:
+    'uniform sampler2D tDiffuse; uniform float contrast, saturation, warmth, vignette; varying vec2 vUv;' +
+    'void main(){' +
+    '  vec4 t = texture2D(tDiffuse, vUv); vec3 c = t.rgb;' +
+    '  c = (c - 0.5) * contrast + 0.5;' +                                  // контраст
+    '  float l = dot(c, vec3(0.299, 0.587, 0.114)); c = mix(vec3(l), c, saturation);' + // насыщенность
+    '  c += vec3(warmth, warmth * 0.25, -warmth);' +                       // тёплый тон
+    '  vec2 d = vUv - 0.5; float v = smoothstep(0.9, 0.32, length(d));' +
+    '  c *= mix(1.0, v, vignette);' +                                      // виньетка
+    '  gl_FragColor = vec4(clamp(c, 0.0, 1.0), t.a);' +
+    '}',
+};
 
 export class Renderer {
   constructor(canvas) {
@@ -11,14 +31,16 @@ export class Renderer {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.25;        // фильмовый тон + место под bloom
+    this.renderer.toneMappingExposure = 1.02;        // было 1.25 — сцена пересвечивалась/«белила»
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this._shadowSize = 2048;                          // чётче тени (было 1024)
 
     this.scene = new THREE.Scene();
     // непрозрачный градиент-небо в сцене (нужно для пост-обработки) — заменяет CSS-фон
     this.scene.background = this._skyBg(PAL.sky, PAL.skyLow);
-    this.scene.fog = new THREE.FogExp2(PAL.fog, 0.0045);  // даль уходит в светлый сумрак
+    // дистанционный туман тоньше (0.0045 → 0.0026) — даль больше не тонет в белой дымке при отдалении
+    this.scene.fog = new THREE.FogExp2(PAL.fog, 0.0026);
     this.fxEnabled = false; this.composer = null;
 
     // Полусферический свет неба/земли — ровная читаемая засветка всей сцены
@@ -33,7 +55,7 @@ export class Renderer {
     this.key = new THREE.DirectionalLight(0xfff2dc, 2.3);
     this.key.position.set(40, 64, 28);
     this.key.castShadow = true;
-    this.key.shadow.mapSize.set(1024, 1024);
+    this.key.shadow.mapSize.set(this._shadowSize, this._shadowSize);
     const d = 36;
     const cam = this.key.shadow.camera;
     cam.left = -d; cam.right = d; cam.top = d; cam.bottom = -d;
@@ -72,12 +94,13 @@ export class Renderer {
   // если аддоны не подгрузятся, игра рендерится обычным путём (без чёрного экрана).
   async setupComposer(camera) {
     try {
-      const [{ EffectComposer }, { RenderPass }, { UnrealBloomPass }, { OutputPass }, { SMAAPass }] = await Promise.all([
+      const [{ EffectComposer }, { RenderPass }, { UnrealBloomPass }, { OutputPass }, { SMAAPass }, { ShaderPass }] = await Promise.all([
         import('three/addons/postprocessing/EffectComposer.js'),
         import('three/addons/postprocessing/RenderPass.js'),
         import('three/addons/postprocessing/UnrealBloomPass.js'),
         import('three/addons/postprocessing/OutputPass.js'),
         import('three/addons/postprocessing/SMAAPass.js'),
+        import('three/addons/postprocessing/ShaderPass.js'),
       ]);
       const w = window.innerWidth, h = window.innerHeight;
       const composer = new EffectComposer(this.renderer);
@@ -85,9 +108,12 @@ export class Renderer {
       composer.setSize(w, h);
       composer.addPass(new RenderPass(this.scene, camera));
       // порог высокий → светятся только эмиссивные (идолы/огни/солнце), а НЕ яркий песок/снег
-      this.bloom = new UnrealBloomPass(new THREE.Vector2(w, h), 0.5, 0.4, 1.25);   // сила/радиус/порог
+      this.bloom = new UnrealBloomPass(new THREE.Vector2(w, h), 0.45, 0.4, 1.35);   // сила/радиус/порог (порог↑ — меньше «белит»)
       composer.addPass(this.bloom);
-      composer.addPass(new OutputPass());
+      composer.addPass(new OutputPass());   // тонмаппинг+sRGB → дальше грейд работает по финальной картинке
+      // цветокоррекция: контраст + насыщенность + тёплый тон + виньетка — «дорогая» подача, убирает вымытость
+      this.grade = new ShaderPass(GRADE_SHADER);
+      composer.addPass(this.grade);
       composer.addPass(new SMAAPass(w, h));
       this.composer = composer; this._camera = camera; this.fxEnabled = true;
       window.__gboot && window.__gboot('postfx ✓');
