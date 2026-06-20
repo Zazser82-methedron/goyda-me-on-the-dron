@@ -1,12 +1,12 @@
 // ===== Three.js рендерер, сцена, свет, туман — настроение идол-слоя «Гойды» =====
 import * as THREE from 'three';
-import { PAL } from '../data/config.js?v=49';
+import { PAL } from '../data/config.js?v=50';
 
 // Цветокоррекция (пост): контраст вокруг 0.5, насыщенность, лёгкий тёплый тон, мягкая виньетка.
 const GRADE_SHADER = {
   uniforms: {
     tDiffuse: { value: null },
-    contrast: { value: 1.1 }, saturation: { value: 1.14 }, warmth: { value: 0.012 }, vignette: { value: 0.32 },
+    contrast: { value: 1.12 }, saturation: { value: 1.18 }, warmth: { value: 0.016 }, vignette: { value: 0.36 },
   },
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
   fragmentShader:
@@ -19,6 +19,35 @@ const GRADE_SHADER = {
     '  vec2 d = vUv - 0.5; float v = smoothstep(0.9, 0.32, length(d));' +
     '  c *= mix(1.0, v, vignette);' +                                      // виньетка
     '  gl_FragColor = vec4(clamp(c, 0.0, 1.0), t.a);' +
+    '}',
+};
+
+// Tilt-shift / псевдо-DoF: резкая горизонтальная полоса, размытие к верху/низу → эффект «миниатюры/диорамы».
+const TILTSHIFT_SHADER = {
+  uniforms: {
+    tDiffuse: { value: null },
+    resolution: { value: new THREE.Vector2(1, 1) },
+    focus: { value: 0.58 },     // центр резкости по вертикали (0 верх .. 1 низ)
+    band: { value: 0.16 },      // полуширина резкой полосы
+    strength: { value: 7.0 },   // макс. радиус размытия по краям (пиксели)
+  },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+  fragmentShader:
+    'uniform sampler2D tDiffuse; uniform vec2 resolution; uniform float focus, band, strength; varying vec2 vUv;' +
+    'void main(){' +
+    '  float dy = abs(vUv.y - focus);' +
+    '  float b = clamp((dy - band) * 2.4, 0.0, 1.0); b *= b;' +            // 0 в полосе → 1 к краям (мягкий старт)
+    '  vec2 px = (b * strength) / resolution;' +
+    '  vec4 s = texture2D(tDiffuse, vUv) * 0.227;' +                       // 9 отсчётов, гаусс-подобные веса
+    '  s += texture2D(tDiffuse, vUv + vec2(px.x, 0.0)) * 0.123;' +
+    '  s += texture2D(tDiffuse, vUv - vec2(px.x, 0.0)) * 0.123;' +
+    '  s += texture2D(tDiffuse, vUv + vec2(0.0, px.y)) * 0.123;' +
+    '  s += texture2D(tDiffuse, vUv - vec2(0.0, px.y)) * 0.123;' +
+    '  s += texture2D(tDiffuse, vUv + px * 1.5) * 0.07;' +
+    '  s += texture2D(tDiffuse, vUv - px * 1.5) * 0.07;' +
+    '  s += texture2D(tDiffuse, vUv + vec2(px.x, -px.y) * 1.5) * 0.07;' +
+    '  s += texture2D(tDiffuse, vUv + vec2(-px.x, px.y) * 1.5) * 0.07;' +
+    '  gl_FragColor = s;' +
     '}',
 };
 
@@ -114,6 +143,10 @@ export class Renderer {
       // цветокоррекция: контраст + насыщенность + тёплый тон + виньетка — «дорогая» подача, убирает вымытость
       this.grade = new ShaderPass(GRADE_SHADER);
       composer.addPass(this.grade);
+      // tilt-shift диорама: резкая полоса в центре, мягкое размытие к краям («миниатюра»)
+      this.tilt = new ShaderPass(TILTSHIFT_SHADER);
+      this.tilt.uniforms.resolution.value.set(w, h);
+      composer.addPass(this.tilt);
       composer.addPass(new SMAAPass(w, h));
       this.composer = composer; this._camera = camera; this.fxEnabled = true;
       window.__gboot && window.__gboot('postfx ✓');
@@ -136,6 +169,7 @@ export class Renderer {
   resize() {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     if (this.composer) this.composer.setSize(window.innerWidth, window.innerHeight);
+    if (this.tilt) this.tilt.uniforms.resolution.value.set(window.innerWidth, window.innerHeight);
     if (this.onResize) this.onResize(window.innerWidth, window.innerHeight);
   }
 
