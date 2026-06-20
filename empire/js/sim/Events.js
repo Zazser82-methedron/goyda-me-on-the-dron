@@ -32,6 +32,22 @@ const EVENTS = [
     { lbl: 'Заплатить (−20 ☩)', msg: 'Доброе знамение! +30 🪙 +4 💎', f: s => { if ((s.resources.faith || 0) >= 20) { s.resources.faith -= 20; s.gain({ gold: 30, gems: 4 }); } } },
     { lbl: 'Прогнать', msg: 'Волхв ушёл в лес', f: () => {} },
   ] },
+  { w: 2, choice: true, t: '🤝 Посол соседей', m: 'Предлагает союз и дары.', choices: [
+    { lbl: 'Заключить союз (+вера, +счастье)', msg: 'Союз скреплён!', f: s => { s.gain({ faith: 20 }); s.happiness = Math.min(100, s.happiness + 8); } },
+    { lbl: 'Прогнать посла (−вера)', msg: 'Соседи оскорблены', f: s => { s.resources.faith = Math.max(0, s.resources.faith - 8); } },
+  ] },
+  { w: 2, choice: true, t: '🛡️ Странствующий богатырь', m: 'Силач продаст службу за самоцветы.', choices: [
+    { lbl: 'Нанять (−6 💎 → опричник)', msg: 'Богатырь встал под стяг!', f: s => { if ((s.resources.gems || 0) >= 6) { s.resources.gems -= 6; if (s.townhall) { const w = s.grid.gridToWorld(s.townhall.gx, s.townhall.gy); s.addUnit('oprichnik', w.wx, w.wz, {}); } } } },
+    { lbl: 'Отказать', msg: 'Богатырь побрёл дальше', f: () => {} },
+  ] },
+  { w: 1, choice: true, t: '⚓ Корабли у берега', m: 'Чужой флот требует дань.', choices: [
+    { lbl: 'Откупиться (−80 🪙)', msg: 'Флот ушёл с миром', f: s => { s.resources.gold = Math.max(0, s.resources.gold - 80); } },
+    { lbl: 'К оружию! (тревога)', msg: 'Готовь оборону — будет набег!', f: s => { s.threatTimer = Math.max(s.threatTimer || 0, 14); } },
+  ] },
+  { w: 1, choice: true, t: '⛪ Благословение волхвов', m: 'Жертва духам ради народного духа.', choices: [
+    { lbl: 'Пожертвовать (−25 🪙 → +счастье)', msg: 'Народ воспрял духом!', f: s => { s.resources.gold = Math.max(0, s.resources.gold - 25); s.happiness = Math.min(100, s.happiness + 14); } },
+    { lbl: 'Сберечь казну', msg: 'Волхвы разочарованы', f: () => {} },
+  ] },
 ];
 
 function pick() {
