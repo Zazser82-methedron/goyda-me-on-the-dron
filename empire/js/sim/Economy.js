@@ -1,6 +1,6 @@
 // ===== Экономика: производство/расход в день, счастье, ВЕРА, таймеры =====
-import { SIM_DT, DAY_TICKS } from '../data/config.js?v=53';
-import { edictMods } from './Edicts.js?v=53';
+import { SIM_DT, DAY_TICKS } from '../data/config.js?v=54';
+import { edictMods } from './Edicts.js?v=54';
 
 const DAY_SECONDS = DAY_TICKS * SIM_DT;   // 8 сек
 const FOOD_PER_POP = 1;
@@ -49,12 +49,25 @@ function onDay(state, ctx) {
   target += clamp(foodBal * 3, -20, 20);
   target += Math.min(18, state.resources.faith * 0.08);
   target += Math.min(14, (state.popCap - state.population) * 2);
+  // удобства: церковь/рынок радуют народ (Тропико-слой нужд)
+  const amen = state.buildings.reduce((n, b) => n + (b.built && (b.kind === 'church' || b.kind === 'market') ? 1 : 0), 0);
+  target += Math.min(12, amen * 3);
   target += happyMod;
   if (state.threatTimer > 0) target -= 10;
   if (starve) target -= 28;
   target = clamp(target, 0, 100);
   state.happiness += (target - state.happiness) * 0.34;
   state.happiness = clamp(state.happiness, 0, 100);
+
+  // последствия счастья: ропот / бегство недовольных / приток веры при высоком духе
+  if (state.happiness < 30) {
+    if (!state._unrest) { state._unrest = true; ctx.toast && ctx.toast('😠 Народ ропщет! Дайте еды, стройте церковь/рынок', { bad: true, big: true }); }
+  } else if (state.happiness > 45) state._unrest = false;
+  if (state.happiness < 22 && state.workers().length > 1 && Math.random() < 0.15) {
+    state.removeUnit(state.workers()[0]);
+    ctx.toast && ctx.toast('🚪 Недовольный холоп сбежал из державы', { bad: true });
+  }
+  if (state.happiness > 82) state.gain({ faith: 1 });
 
   // голод: иногда уходит работник
   if (starve && state.workers().length > 0 && Math.random() < 0.5) {
