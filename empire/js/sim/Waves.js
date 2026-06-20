@@ -1,11 +1,19 @@
 // ===== Набеги (Fortnite-слой): волны врагов + именованные боссы =====
-import { UNITS } from '../data/units.js?v=63';
-import { BOSSES } from '../data/bosses.js?v=63';
-import { bark } from '../data/barks.js?v=63';
-import { hostileFor } from '../data/factions.js?v=63';
-import { floodReachable } from '../world/Pathfinding.js?v=63';
+import { UNITS } from '../data/units.js?v=64';
+import { BOSSES } from '../data/bosses.js?v=64';
+import { bark } from '../data/barks.js?v=64';
+import { hostileFor } from '../data/factions.js?v=64';
+import { floodReachable } from '../world/Pathfinding.js?v=64';
 
 const MAX_ENEMIES = 56;   // мягкий потолок: меньше тормозов в лейте, угроза сохраняется
+
+// уровни сложности набегов (выбор игрока, сохраняется) — масштаб числа/HP врагов и частоты волн
+export const DIFF = {
+  easy: { count: 0.7, hp: 0.8, interval: 1.4, emoji: '😌', name: 'Легко' },
+  normal: { count: 1, hp: 1, interval: 1, emoji: '⚔️', name: 'Норма' },
+  hard: { count: 1.4, hp: 1.3, interval: 0.7, emoji: '💀', name: 'Тяжело' },
+};
+function diff(state) { return DIFF[state.difficulty] || DIFF.normal; }
 
 // связная с базой суша (кэш) — спавним только там, откуда реально можно дойти до ратуши
 export function reachSet(state) {
@@ -38,7 +46,7 @@ export function update(state, dt, ctx) {
     state.waveNum = (state.waveNum || 0) + 1;
     state._warned = false;
     // волны реже и плавнее — игра дольше и спокойнее
-    state.nextWaveIn = Math.max(38, 85 - state.rankIndex * 3 - state.waveNum * 0.3);
+    state.nextWaveIn = Math.max(38, 85 - state.rankIndex * 3 - state.waveNum * 0.3) * diff(state).interval;
   }
 }
 
@@ -85,12 +93,12 @@ function pickRaider(rank) {
 
 function spawnWave(state, ctx) {
   if (state.enemies().length > MAX_ENEMIES) { state.nextWaveIn = 12; return; }
-  const count = 2 + state.rankIndex + Math.floor((state.waveNum || 0) / 2);
+  const count = Math.max(1, Math.round((2 + state.rankIndex + Math.floor((state.waveNum || 0) / 2)) * diff(state).count));
   const hf = hostileFor(state);
   for (const p of edgePoints(state, count)) {
     const kind = pickRaider(state.rankIndex);
     const def = UNITS[kind];
-    const hp = Math.round(def.hp * hf.raid.hpMul);
+    const hp = Math.round(def.hp * hf.raid.hpMul * diff(state).hp);
     const u = state.addUnit(kind, p.x, p.z, { tint: def.tint || hf.raid.tint, hp, maxHp: hp, scale: def.scale || 1 });
     u.speed = def.speed * hf.raid.speedMul;
   }
