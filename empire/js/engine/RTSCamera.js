@@ -1,6 +1,6 @@
 // ===== RTS-камера: пан по XZ, орбита (ПКМ/Q-E), зум колесом, сглаживание =====
 import * as THREE from 'three';
-import { GRID_N, TILE } from '../data/config.js?v=59';
+import { GRID_N, TILE } from '../data/config.js?v=60';
 
 export class RTSCamera {
   constructor(dom) {
@@ -130,6 +130,14 @@ export class RTSCamera {
 
   // добавить тряску (накапливается, кап 1) — зовётся из ctx.shake
   addShake(a) { this.trauma = Math.min(1, this.trauma + a); }
+
+  // тач: drag-пан «схватить карту» (dx,dy в пикселях, с учётом азимута) и pinch-зум
+  panDrag(dx, dy) {
+    const f = this.radius / 480, cos = Math.cos(this.azimuth), sin = Math.sin(this.azimuth);
+    this.target.x -= (dx * cos - dy * sin) * f;
+    this.target.z -= (dx * sin + dy * cos) * f;
+  }
+  zoomBy(f) { this.radius = THREE.MathUtils.clamp(this.radius * f, this.minRadius, this.maxRadius); }
 
   resize(w, h) {
     this.camera.aspect = w / h;

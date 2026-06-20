@@ -1,45 +1,45 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=59';
-import { RTSCamera } from './engine/RTSCamera.js?v=59';
-import { Picker } from './engine/Picker.js?v=59';
-import { Loop } from './engine/Loop.js?v=59';
-import { AssetManager } from './engine/AssetManager.js?v=59';
-import { TerrainMesh } from './world/TerrainMesh.js?v=59';
-import { WorldBase } from './world/WorldBase.js?v=59';
-import { Sky } from './world/Sky.js?v=59';
-import { Atmosphere } from './world/Atmosphere.js?v=59';
+import { Renderer } from './engine/Renderer.js?v=60';
+import { RTSCamera } from './engine/RTSCamera.js?v=60';
+import { Picker } from './engine/Picker.js?v=60';
+import { Loop } from './engine/Loop.js?v=60';
+import { AssetManager } from './engine/AssetManager.js?v=60';
+import { TerrainMesh } from './world/TerrainMesh.js?v=60';
+import { WorldBase } from './world/WorldBase.js?v=60';
+import { Sky } from './world/Sky.js?v=60';
+import { Atmosphere } from './world/Atmosphere.js?v=60';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=59';
-import { GameState } from './sim/GameState.js?v=59';
-import * as Economy from './sim/Economy.js?v=59';
-import * as BuildSys from './sim/Buildings.js?v=59';
-import * as Waves from './sim/Waves.js?v=59';
-import * as Tech from './sim/Tech.js?v=59';
-import * as Nature from './sim/Nature.js?v=59';
-import * as Relics from './sim/Relics.js?v=59';
-import * as Camps from './sim/Camps.js?v=59';
-import * as Wildlife from './sim/Wildlife.js?v=59';
-import * as Events from './sim/Events.js?v=59';
-import * as Research from './sim/Research.js?v=59';
-import { updateUnits, damage } from './sim/Units.js?v=59';
-import { toggleEdict } from './sim/Edicts.js?v=59';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=59';
-import { AmbientAudio } from './audio/Music.js?v=59';
-import { HUD } from './ui/HUD.js?v=59';
-import { BuildMenu } from './ui/BuildMenu.js?v=59';
-import { Selection } from './ui/Selection.js?v=59';
-import { Minimap } from './ui/Minimap.js?v=59';
-import { ResearchPanel } from './ui/Research.js?v=59';
-import { Toasts } from './ui/Toasts.js?v=59';
-import { Leaderboard } from './ui/Leaderboard.js?v=59';
-import { BUILDINGS } from './data/buildings.js?v=59';
-import { RANKS } from './data/ranks.js?v=59';
-import { bark } from './data/barks.js?v=59';
-import { STORAGE_KEY } from './data/config.js?v=59';
-import { getFaction } from './data/factions.js?v=59';
-import { getMap } from './data/maps.js?v=59';
-import { StartScreen } from './ui/StartScreen.js?v=59';
+import { nearestAdj } from './world/Pathfinding.js?v=60';
+import { GameState } from './sim/GameState.js?v=60';
+import * as Economy from './sim/Economy.js?v=60';
+import * as BuildSys from './sim/Buildings.js?v=60';
+import * as Waves from './sim/Waves.js?v=60';
+import * as Tech from './sim/Tech.js?v=60';
+import * as Nature from './sim/Nature.js?v=60';
+import * as Relics from './sim/Relics.js?v=60';
+import * as Camps from './sim/Camps.js?v=60';
+import * as Wildlife from './sim/Wildlife.js?v=60';
+import * as Events from './sim/Events.js?v=60';
+import * as Research from './sim/Research.js?v=60';
+import { updateUnits, damage } from './sim/Units.js?v=60';
+import { toggleEdict } from './sim/Edicts.js?v=60';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=60';
+import { AmbientAudio } from './audio/Music.js?v=60';
+import { HUD } from './ui/HUD.js?v=60';
+import { BuildMenu } from './ui/BuildMenu.js?v=60';
+import { Selection } from './ui/Selection.js?v=60';
+import { Minimap } from './ui/Minimap.js?v=60';
+import { ResearchPanel } from './ui/Research.js?v=60';
+import { Toasts } from './ui/Toasts.js?v=60';
+import { Leaderboard } from './ui/Leaderboard.js?v=60';
+import { BUILDINGS } from './data/buildings.js?v=60';
+import { RANKS } from './data/ranks.js?v=60';
+import { bark } from './data/barks.js?v=60';
+import { STORAGE_KEY } from './data/config.js?v=60';
+import { getFaction } from './data/factions.js?v=60';
+import { getMap } from './data/maps.js?v=60';
+import { StartScreen } from './ui/StartScreen.js?v=60';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -294,6 +294,7 @@ class Game {
   _input() {
     const cv = this.canvas;
     cv.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'touch') return;   // тач обрабатывается отдельно (_touchInput)
       resumeAudio();
       this.picker.setFromEvent(e);
       if (e.button === 0) {            // ЛКМ — выбор / постройка
@@ -307,11 +308,13 @@ class Game {
       }
     });
     cv.addEventListener('pointermove', (e) => {
+      if (e.pointerType === 'touch') return;
       this.picker.setFromEvent(e);
       this._pointerMoved = true;
       if (this.placing && this.buildKind && BUILDINGS[this.buildKind].wall) this._placeAt(true);
     });
     window.addEventListener('pointerup', () => { this.placing = false; });
+    this._touchInput();
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Escape') { this.buildKind = null; this.terrain.hideGhost(); this.state.selected = null; }
       else if (e.code === 'Space') { e.preventDefault(); this.activateSuper(); }
@@ -363,6 +366,39 @@ class Game {
   }
 
   _entUnder() { return this.picker.entityUnder(this.camera, this._pickables(), Object.values(this.state.fields)); }
+
+  // ТАЧ-управление: тап = выбор/постройка, долгий тап = команда (ПКМ), 1 палец drag = пан, щипок = зум
+  _touchInput() {
+    const cv = this.canvas, R = this.cameraRig;
+    let sx = 0, sy = 0, lx = 0, ly = 0, t0 = 0, moved = false, pinch = false, pinchD = 0, lp = null;
+    const dist = (ts) => Math.hypot(ts[0].clientX - ts[1].clientX, ts[0].clientY - ts[1].clientY);
+    cv.addEventListener('touchstart', (e) => {
+      resumeAudio();
+      if (e.touches.length === 1) {
+        const t = e.touches[0]; sx = lx = t.clientX; sy = ly = t.clientY; t0 = performance.now(); moved = false; pinch = false;
+        lp = setTimeout(() => { if (!moved && !pinch) { this.picker.setFromEvent({ clientX: sx, clientY: sy }); this._command(); moved = true; } }, 430);   // долгий тап → команда
+      } else if (e.touches.length >= 2) { pinch = true; clearTimeout(lp); pinchD = dist(e.touches); }
+    }, { passive: false });
+    cv.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (pinch && e.touches.length >= 2) { const d = dist(e.touches); if (pinchD > 0 && d > 0) R.zoomBy(pinchD / d); pinchD = d; return; }
+      if (e.touches.length === 1) {
+        const t = e.touches[0], dx = t.clientX - lx, dy = t.clientY - ly; lx = t.clientX; ly = t.clientY;
+        if (!moved && (Math.abs(t.clientX - sx) > 9 || Math.abs(t.clientY - sy) > 9)) { moved = true; clearTimeout(lp); }
+        if (moved) R.panDrag(dx, dy);
+      }
+    }, { passive: false });
+    cv.addEventListener('touchend', (e) => {
+      clearTimeout(lp);
+      if (!moved && !pinch && (performance.now() - t0) < 420) {   // короткий тап → выбор/постройка
+        this.picker.setFromEvent({ clientX: sx, clientY: sy });
+        if (this.buildKind) { this.placing = true; this._placeAt(); this.placing = false; }
+        else this._select();
+      }
+      if (e.touches.length === 0) { pinch = false; moved = false; }
+    }, { passive: false });
+    cv.addEventListener('touchcancel', () => { clearTimeout(lp); pinch = false; moved = false; });
+  }
 
   // ЛКМ — только выбор
   _select() {
