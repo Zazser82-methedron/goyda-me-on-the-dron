@@ -1,8 +1,8 @@
 // ===== Движение, бой и ИИ юнитов (свои воины + враги). Воркеры — в Jobs.js =====
-import { TILE } from '../data/config.js?v=66';
-import { findPath, nearestAdj } from '../world/Pathfinding.js?v=66';
-import { updateWorker } from './Jobs.js?v=66';
-import { bark } from '../data/barks.js?v=66';
+import { TILE } from '../data/config.js?v=67';
+import { findPath, nearestAdj } from '../world/Pathfinding.js?v=67';
+import { updateWorker } from './Jobs.js?v=67';
+import { bark } from '../data/barks.js?v=67';
 
 export function tileCenter(state, tx, ty) { const w = state.grid.gridToWorld(tx, ty); return { x: w.wx, z: w.wz }; }
 function dist2(ax, az, bx, bz) { return (ax - bx) ** 2 + (az - bz) ** 2; }

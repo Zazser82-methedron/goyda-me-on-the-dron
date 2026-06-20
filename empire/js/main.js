@@ -1,46 +1,46 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=66';
-import { RTSCamera } from './engine/RTSCamera.js?v=66';
-import { Picker } from './engine/Picker.js?v=66';
-import { Loop } from './engine/Loop.js?v=66';
-import { AssetManager } from './engine/AssetManager.js?v=66';
-import { TerrainMesh } from './world/TerrainMesh.js?v=66';
-import { WorldBase } from './world/WorldBase.js?v=66';
-import { Sky } from './world/Sky.js?v=66';
-import { Atmosphere } from './world/Atmosphere.js?v=66';
+import { Renderer } from './engine/Renderer.js?v=67';
+import { RTSCamera } from './engine/RTSCamera.js?v=67';
+import { Picker } from './engine/Picker.js?v=67';
+import { Loop } from './engine/Loop.js?v=67';
+import { AssetManager } from './engine/AssetManager.js?v=67';
+import { TerrainMesh } from './world/TerrainMesh.js?v=67';
+import { WorldBase } from './world/WorldBase.js?v=67';
+import { Sky } from './world/Sky.js?v=67';
+import { Atmosphere } from './world/Atmosphere.js?v=67';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=66';
-import { GameState } from './sim/GameState.js?v=66';
-import * as Economy from './sim/Economy.js?v=66';
-import * as BuildSys from './sim/Buildings.js?v=66';
-import * as Waves from './sim/Waves.js?v=66';
-import * as Tech from './sim/Tech.js?v=66';
-import * as Nature from './sim/Nature.js?v=66';
-import * as Relics from './sim/Relics.js?v=66';
-import * as Camps from './sim/Camps.js?v=66';
-import * as Wildlife from './sim/Wildlife.js?v=66';
-import * as Events from './sim/Events.js?v=66';
-import * as Achievements from './sim/Achievements.js?v=66';
-import * as Research from './sim/Research.js?v=66';
-import { updateUnits, damage } from './sim/Units.js?v=66';
-import { toggleEdict } from './sim/Edicts.js?v=66';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=66';
-import { AmbientAudio } from './audio/Music.js?v=66';
-import { HUD } from './ui/HUD.js?v=66';
-import { BuildMenu } from './ui/BuildMenu.js?v=66';
-import { Selection } from './ui/Selection.js?v=66';
-import { Minimap } from './ui/Minimap.js?v=66';
-import { ResearchPanel } from './ui/Research.js?v=66';
-import { Toasts } from './ui/Toasts.js?v=66';
-import { Leaderboard } from './ui/Leaderboard.js?v=66';
-import { BUILDINGS } from './data/buildings.js?v=66';
-import { RANKS } from './data/ranks.js?v=66';
-import { bark } from './data/barks.js?v=66';
-import { STORAGE_KEY } from './data/config.js?v=66';
-import { getFaction } from './data/factions.js?v=66';
-import { getMap } from './data/maps.js?v=66';
-import { StartScreen } from './ui/StartScreen.js?v=66';
+import { nearestAdj } from './world/Pathfinding.js?v=67';
+import { GameState } from './sim/GameState.js?v=67';
+import * as Economy from './sim/Economy.js?v=67';
+import * as BuildSys from './sim/Buildings.js?v=67';
+import * as Waves from './sim/Waves.js?v=67';
+import * as Tech from './sim/Tech.js?v=67';
+import * as Nature from './sim/Nature.js?v=67';
+import * as Relics from './sim/Relics.js?v=67';
+import * as Camps from './sim/Camps.js?v=67';
+import * as Wildlife from './sim/Wildlife.js?v=67';
+import * as Events from './sim/Events.js?v=67';
+import * as Achievements from './sim/Achievements.js?v=67';
+import * as Research from './sim/Research.js?v=67';
+import { updateUnits, damage } from './sim/Units.js?v=67';
+import { toggleEdict } from './sim/Edicts.js?v=67';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=67';
+import { AmbientAudio } from './audio/Music.js?v=67';
+import { HUD } from './ui/HUD.js?v=67';
+import { BuildMenu } from './ui/BuildMenu.js?v=67';
+import { Selection } from './ui/Selection.js?v=67';
+import { Minimap } from './ui/Minimap.js?v=67';
+import { ResearchPanel } from './ui/Research.js?v=67';
+import { Toasts } from './ui/Toasts.js?v=67';
+import { Leaderboard } from './ui/Leaderboard.js?v=67';
+import { BUILDINGS } from './data/buildings.js?v=67';
+import { RANKS } from './data/ranks.js?v=67';
+import { bark } from './data/barks.js?v=67';
+import { STORAGE_KEY } from './data/config.js?v=67';
+import { getFaction } from './data/factions.js?v=67';
+import { getMap } from './data/maps.js?v=67';
+import { StartScreen } from './ui/StartScreen.js?v=67';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -623,6 +623,34 @@ class Game {
     sfx('click');
   }
 
+  // трекер целей: текущая задача игрока (ведёт новичка, показывает прогресс)
+  _currentObjective() {
+    const s = this.state;
+    const has = k => s.buildings.some(b => b.kind === k);
+    const workers = s.units.filter(u => u.faction === 'ours' && u.def.worker).length;
+    const soldiers = s.units.filter(u => u.faction === 'ours' && !u.def.worker).length;
+    if (!has('izba')) return '🏠 Построй ИЗБУ — жильё для народа';
+    if (!has('ambar') && !has('ferma')) return '🌾 Построй АМБАР или ФЕРМУ — еда';
+    if (workers < 3) return '🧑‍🌾 Натренируй ХОЛОПов: ' + workers + '/3';
+    if (!has('kazarma')) return '⚔️ Построй КАЗАРМУ — куй дружину';
+    if (soldiers < 5) return '🛡️ Собери дружину: ' + soldiers + '/5';
+    if (s.rankIndex < 2) return '📈 Дорасти до ранга ' + ((RANKS[2] && RANKS[2].name) || '2');
+    if (s._hadCamps && s.camps.length > 0) return '🏴 Снеси вражьи станы — осталось ' + s.camps.length;
+    if (!s.idol) return '🗿 Заложи ЧУДО (идол ДРОН) или снеси все станы — ПОБЕДА';
+    return '🗿 Дострой ЧУДО — пробуди ДРОНА!';
+  }
+  _updateObjective() {
+    if (!this._objEl) {
+      const e = document.createElement('div'); e.id = 'objective';
+      e.style.cssText = 'position:fixed;left:10px;top:54px;z-index:40;background:rgba(20,14,8,.82);border:1px solid #c8922e;border-left:3px solid #ffcc44;border-radius:7px;padding:5px 10px;color:#f0e3c8;font-size:12px;max-width:46vw;pointer-events:none;box-shadow:0 3px 12px rgba(0,0,0,.4)';
+      document.getElementById('hud').appendChild(e); this._objEl = e;
+    }
+    if (this.state.gameOver) { this._objEl.style.display = 'none'; return; }
+    this._objEl.style.display = 'block';
+    const t = '🎯 ' + this._currentObjective();
+    if (this._objEl.textContent !== t) this._objEl.textContent = t;
+  }
+
   // сезон партии — мягкий сдвиг цветокоррекции (тепло/насыщенность) + тост; вариативность между играми
   _applySeason() {
     const S = {
@@ -869,7 +897,7 @@ class Game {
     this.rdr.render(this.camera);
 
     this._uiT += fdt;
-    if (this._uiT > 0.1) { this.hud.update(); this.menu.update(); this.selUI.update(); this._uiT = 0; }
+    if (this._uiT > 0.1) { this.hud.update(); this.menu.update(); this.selUI.update(); this._updateObjective(); this._uiT = 0; }
     this.minimap.update(fdt);
     this.updateTracers(fdt);
   }
