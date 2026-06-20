@@ -1,6 +1,6 @@
 // ===== Эпохи/ранги: авто-возвышение по населению и ВЕРЕ, набег-босс на рубеже =====
-import { RANKS } from '../data/ranks.js?v=65';
-import { bark } from '../data/barks.js?v=65';
+import { RANKS } from '../data/ranks.js?v=66';
+import { bark } from '../data/barks.js?v=66';
 
 export function update(state, dt, ctx) {
   if (state.gameOver) return;

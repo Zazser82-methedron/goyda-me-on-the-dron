@@ -38,7 +38,7 @@ export const BUILDINGS = {
   kazarma: {
     kind: 'kazarma', name: 'КАЗАРМА', icon: '⚔️', model: 'bld_kazarma',
     w: 2, h: 2, hp: 260, cat: 'mil', rank: 1,
-    cost: { wood: 40, stone: 30 }, build: 7, trains: ['ratnik', 'oprichnik', 'bogatyr'],
+    cost: { wood: 40, stone: 30 }, build: 7, trains: ['ratnik', 'luchnik', 'oprichnik', 'bogatyr', 'voevoda'],
     desc: 'Куёт воинов: РАТНИКИ, ОПРИЧНИКИ (с кузницей) и БОГАТЫРИ (на железе).',
   },
   chastokol: {

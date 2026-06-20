@@ -25,6 +25,18 @@ export const UNITS = {
     trainAt: 'kazarma', trainTime: 12, cost: { food: 20, iron: 12 }, needs: 'rudnik', rank: 2,
     desc: 'Тяжёлый витязь на ЖЕЛЕЗЕ ⛓️. Стена дружины — много HP и урона.',
   },
+  luchnik: {
+    kind: 'luchnik', name: 'ЛУЧНИК', icon: '🏹', model: 'unit_ratnik', faction: 'ours',
+    hp: 55, speed: 2.2, dmg: 12, range: 5.5, atkCd: 1.3, ranged: true,
+    trainAt: 'kazarma', trainTime: 7, cost: { food: 12, wood: 10, gold: 10 }, rank: 1,
+    desc: 'Бьёт издали. Стеклянная пушка — держи за спинами копейщиков.',
+  },
+  voevoda: {
+    kind: 'voevoda', name: 'ВОЕВОДА', icon: '🐻', model: 'unit_oprichnik', faction: 'ours',
+    hp: 320, speed: 1.9, dmg: 30, range: 1.5, atkCd: 1.1,
+    trainAt: 'kazarma', trainTime: 14, cost: { food: 25, gold: 50, iron: 8 }, needs: 'kuznica', rank: 3,
+    desc: 'Богатырский воевода — таран дружины: гора HP и урона.',
+  },
   raider: {
     kind: 'raider', name: 'НАБЕЖЧИК', icon: '👹', model: 'enemy_raider', faction: 'enemy',
     hp: 55, speed: 2.0, dmg: 7, range: 1.2, atkCd: 1.1,
