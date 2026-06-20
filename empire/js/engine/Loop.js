@@ -1,5 +1,5 @@
 // ===== Игровой цикл: фиксированный шаг симуляции + рендер с интерполяцией =====
-import { SIM_DT } from '../data/config.js?v=58';
+import { SIM_DT } from '../data/config.js?v=59';
 
 export class Loop {
   constructor(update, render, simDt = SIM_DT) {
@@ -8,6 +8,7 @@ export class Loop {
     this.simDt = simDt;
     this.acc = 0;
     this.last = 0;
+    this.speed = 1;            // множитель скорости симуляции (0 = пауза, 1/2/3); рендер не масштабируется
     this.running = false;
     this.tickCount = 0;
     this._frame = this._frame.bind(this);
@@ -27,9 +28,9 @@ export class Loop {
     let dt = (now - this.last) / 1000;
     this.last = now;
     if (dt > 0.25) dt = 0.25;          // защита от spiral-of-death (вкладка ушла в фон)
-    this.acc += dt;
+    this.acc += dt * this.speed;       // пауза/ускорение симуляции (рендер по-прежнему каждый кадр)
     let guard = 0;
-    while (this.acc >= this.simDt && guard < 8) {
+    while (this.acc >= this.simDt && guard < 12) {
       this.update(this.simDt);
       this.acc -= this.simDt;
       this.tickCount++;
