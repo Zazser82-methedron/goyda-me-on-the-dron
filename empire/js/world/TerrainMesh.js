@@ -1,7 +1,7 @@
 // ===== Земля: единый меш-рельеф (1 draw call) + вода + декор + ховер/призрак =====
 import * as THREE from 'three';
-import { TILE, PAL } from '../data/config.js?v=42';
-import { makeRippleNormal } from './WaterFx.js?v=42';
+import { TILE, PAL } from '../data/config.js?v=43';
+import { makeRippleNormal } from './WaterFx.js?v=43';
 
 export class TerrainMesh {
   constructor(scene, grid, pal) {

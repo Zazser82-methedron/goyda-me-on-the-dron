@@ -36,19 +36,43 @@ export class Sky {
     };
     this._buildPrecip();
     this._sunVec = new THREE.Vector3();
+    // палитра неба (предсоздана — не аллоцируем цвета в кадре)
+    this._cTopDay = new THREE.Color(0x2f6fc0);   // зенит днём
+    this._cHorDay = new THREE.Color(0xd2e4f2);   // горизонт днём
+    this._cHorSet = new THREE.Color(0xf2b070);   // горизонт на закате
+    this._cSunSet = new THREE.Color(0xff8838);   // солнце на закате
     this._buildDome();
   }
 
-  // Атмосферное небо (рассеяние + реальное солнце) — three/addons/objects/Sky.js, ленивая загрузка.
-  // Купол радиусом ~600 следует за камерой (камера far=700) → горизонт всегда вдали. Фолбэк — градиент-фон Renderer.
-  async _buildDome() {
-    try {
-      const { Sky } = await import('three/addons/objects/Sky.js');
-      const dome = new Sky(); dome.scale.setScalar(600); dome.frustumCulled = false;
-      const u = dome.material.uniforms;
-      u.turbidity.value = 8; u.rayleigh.value = 1.8; u.mieCoefficient.value = 0.006; u.mieDirectionalG.value = 0.86;
-      this.scene.add(dome); this.dome = dome;
-    } catch (e) { /* остаётся CSS/градиент-фон из Renderer */ }
+  // Кастомный купол-небо: вертикальный градиент (горизонт→зенит) + солнечный диск/гало.
+  // Свой шейдер (а не Preetham-аддон) — предсказуемо рендерится везде, не «молочно-белый», легко тюнится.
+  // Купол R=500 следует за камерой; depthTest off + renderOrder -1000 → фон, поверх рисуется всё остальное.
+  _buildDome() {
+    const geo = new THREE.SphereGeometry(500, 24, 16);
+    const mat = new THREE.ShaderMaterial({
+      side: THREE.BackSide, depthWrite: false, depthTest: false, fog: false,
+      uniforms: {
+        topC: { value: new THREE.Color(0x2f6fc0) },
+        horC: { value: new THREE.Color(0xcfe2f0) },
+        sunDir: { value: new THREE.Vector3(0.5, 0.6, 0.4) },
+        sunC: { value: new THREE.Color(0xfff0d0) },
+      },
+      vertexShader: 'varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+      fragmentShader:
+        'uniform vec3 topC, horC, sunDir, sunC; varying vec3 vDir;' +
+        'void main(){' +
+        '  vec3 dir = normalize(vDir);' +
+        '  float h = clamp(dir.y*0.5+0.5, 0.0, 1.0);' +
+        '  vec3 sky = mix(horC, topC, pow(h, 0.5));' +
+        '  float d = max(dot(dir, normalize(sunDir)), 0.0);' +
+        '  float disk = smoothstep(0.9986, 0.9995, d);' +
+        '  float halo = pow(d, 90.0)*0.6 + pow(d, 6.0)*0.12;' +
+        '  gl_FragColor = vec4(sky + sunC*(disk*1.6 + halo), 1.0);' +
+        '}',
+    });
+    this.dome = new THREE.Mesh(geo, mat);
+    this.dome.renderOrder = -1000; this.dome.frustumCulled = false;
+    this.scene.add(this.dome);
   }
 
   _buildPrecip() {
@@ -82,15 +106,18 @@ export class Sky {
     this.day = day;                                              // наружу — для атмосферы (светлячки/птицы)
     const horizon = Math.max(0, 1 - Math.abs(elev) * 1.5);        // рассвет/закат у горизонта
 
-    // ---- атмосферный купол: солнце по сутками (азимут как у key-света), купол едет за камерой ----
+    // ---- купол-небо: цвета по времени суток + солнце по азимуту key-света, купол едет за камерой ----
     if (this.dome) {
       if (camera) this.dome.position.copy(camera.position);
       const u = this.dome.material.uniforms;
-      this._sunVec.set(36, elev * 90 + 4, 26).normalize();      // высота солнца = ход суток; ночь → под горизонтом → темно
-      u.sunPosition.value.copy(this._sunVec);
-      u.rayleigh.value = 1.4 + horizon * 2.2;                    // закат/рассвет — насыщеннее рассеяние
-      u.turbidity.value = 6 + horizon * 7;
-      u.mieCoefficient.value = 0.005 + horizon * 0.02;           // больше гало у солнца на закате
+      this._sunVec.set(36, elev * 90 + 6, 26).normalize();      // высота солнца = ход суток
+      u.sunDir.value.copy(this._sunVec);
+      // зенит: ночь тёмно-синий → день голубой
+      u.topC.value.setHex(0x0a1530).lerp(this._cTopDay, day);
+      // горизонт: ночь тёмный → день светлый → на закате тёплый
+      u.horC.value.setHex(0x10182e).lerp(this._cHorDay, day).lerp(this._cHorSet, horizon * 0.75);
+      // солнце: днём тёпло-белое → на закате оранжевое
+      u.sunC.value.setHex(0xfff0d0).lerp(this._cSunSet, horizon * 0.6);
     }
 
     // ---- выбор/переход погоды (плавно тянем параметры к целевым) ----
