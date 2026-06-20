@@ -1,45 +1,45 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=57';
-import { RTSCamera } from './engine/RTSCamera.js?v=57';
-import { Picker } from './engine/Picker.js?v=57';
-import { Loop } from './engine/Loop.js?v=57';
-import { AssetManager } from './engine/AssetManager.js?v=57';
-import { TerrainMesh } from './world/TerrainMesh.js?v=57';
-import { WorldBase } from './world/WorldBase.js?v=57';
-import { Sky } from './world/Sky.js?v=57';
-import { Atmosphere } from './world/Atmosphere.js?v=57';
+import { Renderer } from './engine/Renderer.js?v=58';
+import { RTSCamera } from './engine/RTSCamera.js?v=58';
+import { Picker } from './engine/Picker.js?v=58';
+import { Loop } from './engine/Loop.js?v=58';
+import { AssetManager } from './engine/AssetManager.js?v=58';
+import { TerrainMesh } from './world/TerrainMesh.js?v=58';
+import { WorldBase } from './world/WorldBase.js?v=58';
+import { Sky } from './world/Sky.js?v=58';
+import { Atmosphere } from './world/Atmosphere.js?v=58';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=57';
-import { GameState } from './sim/GameState.js?v=57';
-import * as Economy from './sim/Economy.js?v=57';
-import * as BuildSys from './sim/Buildings.js?v=57';
-import * as Waves from './sim/Waves.js?v=57';
-import * as Tech from './sim/Tech.js?v=57';
-import * as Nature from './sim/Nature.js?v=57';
-import * as Relics from './sim/Relics.js?v=57';
-import * as Camps from './sim/Camps.js?v=57';
-import * as Wildlife from './sim/Wildlife.js?v=57';
-import * as Events from './sim/Events.js?v=57';
-import * as Research from './sim/Research.js?v=57';
-import { updateUnits, damage } from './sim/Units.js?v=57';
-import { toggleEdict } from './sim/Edicts.js?v=57';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=57';
-import { AmbientAudio } from './audio/Music.js?v=57';
-import { HUD } from './ui/HUD.js?v=57';
-import { BuildMenu } from './ui/BuildMenu.js?v=57';
-import { Selection } from './ui/Selection.js?v=57';
-import { Minimap } from './ui/Minimap.js?v=57';
-import { ResearchPanel } from './ui/Research.js?v=57';
-import { Toasts } from './ui/Toasts.js?v=57';
-import { Leaderboard } from './ui/Leaderboard.js?v=57';
-import { BUILDINGS } from './data/buildings.js?v=57';
-import { RANKS } from './data/ranks.js?v=57';
-import { bark } from './data/barks.js?v=57';
-import { STORAGE_KEY } from './data/config.js?v=57';
-import { getFaction } from './data/factions.js?v=57';
-import { getMap } from './data/maps.js?v=57';
-import { StartScreen } from './ui/StartScreen.js?v=57';
+import { nearestAdj } from './world/Pathfinding.js?v=58';
+import { GameState } from './sim/GameState.js?v=58';
+import * as Economy from './sim/Economy.js?v=58';
+import * as BuildSys from './sim/Buildings.js?v=58';
+import * as Waves from './sim/Waves.js?v=58';
+import * as Tech from './sim/Tech.js?v=58';
+import * as Nature from './sim/Nature.js?v=58';
+import * as Relics from './sim/Relics.js?v=58';
+import * as Camps from './sim/Camps.js?v=58';
+import * as Wildlife from './sim/Wildlife.js?v=58';
+import * as Events from './sim/Events.js?v=58';
+import * as Research from './sim/Research.js?v=58';
+import { updateUnits, damage } from './sim/Units.js?v=58';
+import { toggleEdict } from './sim/Edicts.js?v=58';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=58';
+import { AmbientAudio } from './audio/Music.js?v=58';
+import { HUD } from './ui/HUD.js?v=58';
+import { BuildMenu } from './ui/BuildMenu.js?v=58';
+import { Selection } from './ui/Selection.js?v=58';
+import { Minimap } from './ui/Minimap.js?v=58';
+import { ResearchPanel } from './ui/Research.js?v=58';
+import { Toasts } from './ui/Toasts.js?v=58';
+import { Leaderboard } from './ui/Leaderboard.js?v=58';
+import { BUILDINGS } from './data/buildings.js?v=58';
+import { RANKS } from './data/ranks.js?v=58';
+import { bark } from './data/barks.js?v=58';
+import { STORAGE_KEY } from './data/config.js?v=58';
+import { getFaction } from './data/factions.js?v=58';
+import { getMap } from './data/maps.js?v=58';
+import { StartScreen } from './ui/StartScreen.js?v=58';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -237,6 +237,8 @@ class Game {
     window.__gboot && window.__gboot('loop ' + (restored ? 'restore' : 'new'));
     this.music.start();   // фоновая музыка (стартует на пользовательском жесте — старт-экран)
     if (!restored) this._maybeTutorial();   // подсказки новичку (только первый раз)
+    this._season = ['summer', 'autumn', 'winter', 'spring'][Math.floor(Math.random() * 4)];   // сезон партии (тон грейда)
+    this._seasonApplied = false;
     this.loop.start();
   }
 
@@ -557,6 +559,20 @@ class Game {
     for (const [t, d] of tips) setTimeout(() => { if (!this.state.gameOver) this.toasts.show(t, { big: true, gold: true }); }, d * 1000);
   }
 
+  // сезон партии — мягкий сдвиг цветокоррекции (тепло/насыщенность) + тост; вариативность между играми
+  _applySeason() {
+    const S = {
+      summer: { w: 0.005, s: 0.06, name: '☀️ Лето' },
+      autumn: { w: 0.014, s: 0.0, name: '🍂 Осень' },
+      winter: { w: -0.012, s: -0.13, name: '❄️ Зима' },
+      spring: { w: 0.002, s: 0.05, name: '🌸 Весна' },
+    }[this._season] || { w: 0, s: 0, name: '' };
+    const g = this.rdr.grade.uniforms;
+    g.warmth.value = 0.016 + S.w;
+    g.saturation.value = 1.18 + S.s;
+    if (S.name) this.toasts.show(S.name + ' в державе', { gold: true });
+  }
+
   // событие-выбор: модалка с вариантами + таймер авто-решения (по истечении — последний/отказ)
   choiceEvent(ev) {
     if (this._evtEl) { this._evtEl.remove(); this._evtEl = null; cancelAnimationFrame(this._evtRaf); }
@@ -664,6 +680,7 @@ class Game {
     let fdt = (now - this.lastRender) / 1000; if (fdt > 0.1) fdt = 0.1; this.lastRender = now;
     if (this._hitStop > 0) this._hitStop = Math.max(0, this._hitStop - fdt);   // hit-pause тает в реальном времени
     this._fltCount = 0;                                                        // сброс бюджета чисел урона за кадр
+    if (this.rdr.grade && !this._seasonApplied) { this._applySeason(); this._seasonApplied = true; }   // тон сезона (когда composer готов)
     this.cameraRig.update(fdt);
     this.rdr.updateShadow(this.cameraRig.target.x, this.cameraRig.target.z);
     if (this.fog) this.fog.update(this.state, fdt);
