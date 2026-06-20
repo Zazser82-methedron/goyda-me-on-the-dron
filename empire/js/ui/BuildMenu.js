@@ -1,9 +1,9 @@
 // ===== Нижняя панель: вкладки-категории построек + модальная сетка карточек + указы =====
-import { BUILDINGS, BUILD_ORDER, CATS } from '../data/buildings.js?v=69';
-import { RANKS } from '../data/ranks.js?v=69';
-import { RES_LABEL } from '../data/config.js?v=69';
-import { EDICTS } from '../sim/Edicts.js?v=69';
-import { TECHS } from '../data/tech.js?v=69';
+import { BUILDINGS, BUILD_ORDER, CATS } from '../data/buildings.js?v=70';
+import { RANKS } from '../data/ranks.js?v=70';
+import { RES_LABEL } from '../data/config.js?v=70';
+import { EDICTS } from '../sim/Edicts.js?v=70';
+import { TECHS } from '../data/tech.js?v=70';
 
 export function costStr(cost) {
   const keys = Object.keys(cost || {});

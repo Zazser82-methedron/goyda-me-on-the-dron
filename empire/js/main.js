@@ -1,46 +1,46 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=69';
-import { RTSCamera } from './engine/RTSCamera.js?v=69';
-import { Picker } from './engine/Picker.js?v=69';
-import { Loop } from './engine/Loop.js?v=69';
-import { AssetManager } from './engine/AssetManager.js?v=69';
-import { TerrainMesh } from './world/TerrainMesh.js?v=69';
-import { WorldBase } from './world/WorldBase.js?v=69';
-import { Sky } from './world/Sky.js?v=69';
-import { Atmosphere } from './world/Atmosphere.js?v=69';
+import { Renderer } from './engine/Renderer.js?v=70';
+import { RTSCamera } from './engine/RTSCamera.js?v=70';
+import { Picker } from './engine/Picker.js?v=70';
+import { Loop } from './engine/Loop.js?v=70';
+import { AssetManager } from './engine/AssetManager.js?v=70';
+import { TerrainMesh } from './world/TerrainMesh.js?v=70';
+import { WorldBase } from './world/WorldBase.js?v=70';
+import { Sky } from './world/Sky.js?v=70';
+import { Atmosphere } from './world/Atmosphere.js?v=70';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=69';
-import { GameState } from './sim/GameState.js?v=69';
-import * as Economy from './sim/Economy.js?v=69';
-import * as BuildSys from './sim/Buildings.js?v=69';
-import * as Waves from './sim/Waves.js?v=69';
-import * as Tech from './sim/Tech.js?v=69';
-import * as Nature from './sim/Nature.js?v=69';
-import * as Relics from './sim/Relics.js?v=69';
-import * as Camps from './sim/Camps.js?v=69';
-import * as Wildlife from './sim/Wildlife.js?v=69';
-import * as Events from './sim/Events.js?v=69';
-import * as Achievements from './sim/Achievements.js?v=69';
-import * as Research from './sim/Research.js?v=69';
-import { updateUnits, damage } from './sim/Units.js?v=69';
-import { toggleEdict } from './sim/Edicts.js?v=69';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=69';
-import { AmbientAudio } from './audio/Music.js?v=69';
-import { HUD } from './ui/HUD.js?v=69';
-import { BuildMenu } from './ui/BuildMenu.js?v=69';
-import { Selection } from './ui/Selection.js?v=69';
-import { Minimap } from './ui/Minimap.js?v=69';
-import { ResearchPanel } from './ui/Research.js?v=69';
-import { Toasts } from './ui/Toasts.js?v=69';
-import { Leaderboard } from './ui/Leaderboard.js?v=69';
-import { BUILDINGS } from './data/buildings.js?v=69';
-import { RANKS } from './data/ranks.js?v=69';
-import { bark } from './data/barks.js?v=69';
-import { STORAGE_KEY } from './data/config.js?v=69';
-import { getFaction } from './data/factions.js?v=69';
-import { getMap } from './data/maps.js?v=69';
-import { StartScreen } from './ui/StartScreen.js?v=69';
+import { nearestAdj } from './world/Pathfinding.js?v=70';
+import { GameState } from './sim/GameState.js?v=70';
+import * as Economy from './sim/Economy.js?v=70';
+import * as BuildSys from './sim/Buildings.js?v=70';
+import * as Waves from './sim/Waves.js?v=70';
+import * as Tech from './sim/Tech.js?v=70';
+import * as Nature from './sim/Nature.js?v=70';
+import * as Relics from './sim/Relics.js?v=70';
+import * as Camps from './sim/Camps.js?v=70';
+import * as Wildlife from './sim/Wildlife.js?v=70';
+import * as Events from './sim/Events.js?v=70';
+import * as Achievements from './sim/Achievements.js?v=70';
+import * as Research from './sim/Research.js?v=70';
+import { updateUnits, damage } from './sim/Units.js?v=70';
+import { toggleEdict } from './sim/Edicts.js?v=70';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=70';
+import { AmbientAudio } from './audio/Music.js?v=70';
+import { HUD } from './ui/HUD.js?v=70';
+import { BuildMenu } from './ui/BuildMenu.js?v=70';
+import { Selection } from './ui/Selection.js?v=70';
+import { Minimap } from './ui/Minimap.js?v=70';
+import { ResearchPanel } from './ui/Research.js?v=70';
+import { Toasts } from './ui/Toasts.js?v=70';
+import { Leaderboard } from './ui/Leaderboard.js?v=70';
+import { BUILDINGS } from './data/buildings.js?v=70';
+import { RANKS } from './data/ranks.js?v=70';
+import { bark } from './data/barks.js?v=70';
+import { STORAGE_KEY } from './data/config.js?v=70';
+import { getFaction } from './data/factions.js?v=70';
+import { getMap, MAPS } from './data/maps.js?v=70';
+import { StartScreen } from './ui/StartScreen.js?v=70';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -138,6 +138,37 @@ class Game {
     try {
       // модели грузятся в фоне — не блокируют запуск (есть плейсхолдеры)
       this.assets.preload(MODELS).then(c => { this._glb = c; G('models ' + c); }).catch(() => {});
+      // ПОРТАЛ ДРОНА: прибытие на новую Землю (перенос ресурсов+ранга+дружины) — до обычного сейва
+      const portal = (() => { try { return JSON.parse(localStorage.getItem('GOYDA_EMPIRE_PORTAL')); } catch (e) { return null; } })();
+      if (portal && portal.mapKey) {
+        try { localStorage.removeItem('GOYDA_EMPIRE_PORTAL'); } catch (_) {}
+        try {
+          this._portalArrivalFx();                      // оверлей-воронка сразу — маскирует reload, пока строится мир
+          this.state.faction = getFaction(portal.faction);
+          this.state.mapKey = portal.mapKey;
+          const map = getMap(portal.mapKey);
+          this.buildWorld(map);
+          this.initMap(map);                            // свежая ратуша + стартовые холопы + ресурсы
+          Object.assign(this.state.resources, portal.res || {});   // перенесённые ресурсы поверх стартовых
+          this.state.rankIndex = portal.rankIndex || 0;
+          this.state.day = portal.day || 0;
+          this.state.happiness = portal.happiness ?? 60;
+          this.state.portalDepth = portal.depth || 2;
+          const g = this.state.grid, c = Math.floor(g.n / 2);   // высадка дружины кольцом у ратуши
+          for (const a of (portal.army || [])) {
+            const adj = nearestAdj(g, c - 1, c - 1, 3, 3, c + ri(-3, 3), c + ri(2, 5)) || { x: c, y: c + 3 };
+            const w = g.gridToWorld(adj.x, adj.y);
+            const uu = this.state.addUnit(a.kind, w.wx, w.wz, {});
+            if (a.maxHp) uu.maxHp = a.maxHp;
+            if (a.hp) uu.hp = a.hp;
+            if (a.vet) uu.vet = a.vet;
+            if (a.kills) uu.kills = a.kills;
+          }
+          this.state.recomputePop();
+          this._portalArrival = true;                   // тост прибытия в _begin
+          G('portal depth ' + this.state.portalDepth); this._begin(false); return;
+        } catch (e) { console.warn('portal failed', e); try { localStorage.removeItem(STORAGE_KEY); } catch (_) {} }
+      }
       const save = GameState.load();
       G('save=' + (save && save.buildings ? save.buildings.length : 'none'));
       if (save && save.v === 2 && save.buildings && save.buildings.length) {   // старые сейвы (до рельефа) — старт заново
@@ -233,7 +264,10 @@ class Game {
     cam.radius = 26; cam.polar = 1.04; cam.azimuth = Math.PI * 0.22;
     cam._radius = 40; cam._polar = 0.92; cam._azimuth = cam.azimuth;
     const f = this.state.faction;
-    this.toasts.show(restored ? '⚔️ Поход продолжается…' : ('🗿 ' + (f ? f.emoji + ' ' + f.name : 'ГОЙДА') + ' · ' + this.map.name + '. ГОЙДА!'), { big: true, gold: true });
+    if (this._portalArrival) {
+      this.toasts.show('🌀 Портал Дрона: высадка на ' + this.map.emoji + ' ' + this.map.name + ' · Земля №' + (this.state.portalDepth || 2) + '! ' + bark('win'), { big: true, gold: true });
+      this._portalArrival = false;
+    } else this.toasts.show(restored ? '⚔️ Поход продолжается…' : ('🗿 ' + (f ? f.emoji + ' ' + f.name : 'ГОЙДА') + ' · ' + this.map.name + '. ГОЙДА!'), { big: true, gold: true });
     if (this._glb > 0) this.toasts.show('Blender-моделей: ' + this._glb);
     window.__gboot && window.__gboot('loop ' + (restored ? 'restore' : 'new'));
     this.music.start();   // фоновая музыка (стартует на пользовательском жесте — старт-экран)
@@ -350,6 +384,8 @@ class Game {
     if (xb) xb.onclick = () => { this.rdr.fxEnabled = !this.rdr.fxEnabled && !!this.rdr.composer; xb.classList.toggle('on', this.rdr.fxEnabled); sfx('click'); };
     const rb = document.getElementById('restartBtn');
     if (rb) rb.onclick = () => this.restart();
+    const pb = document.getElementById('portalBtn');
+    if (pb) pb.onclick = () => this._portalMenu();
     const lb = document.getElementById('lobbyBtn');
     if (lb) lb.onclick = () => { if (confirm('Выйти в меню ГОЙДЫ? Поход сохранится.')) location.href = '../'; };
   }
@@ -697,6 +733,78 @@ class Game {
   }
 
   // снаряд: летит к цели, наносит урон по прилёту. opt.arrow=стрела (ориентируется по полёту), иначе шар-сгусток
+  // ---------- ПОРТАЛ ДРОНА: прыжок на новую Землю (перенос ресурсов+ранга+дружины) ----------
+  _portalMenu() {
+    if (this.state.gameOver || this._portalEl) return;
+    sfx('edict');
+    const wasSpeed = this.loop.speed; this._setSpeed(0);                 // пауза на время выбора
+    const cur = this.state.mapKey;
+    const dests = MAPS.filter(m => m.key !== cur);
+    const army = this.state.units.filter(u => u.faction === 'ours').length;
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:120;background:linear-gradient(180deg,#1b1430,#0e0820);border:2px solid #9a5cff;border-radius:14px;padding:16px 18px;max-width:440px;width:88%;box-shadow:0 14px 50px rgba(60,10,140,.6);color:#ece0ff;text-align:center;font-size:14px';
+    const rows = dests.map(m => `<button data-k="${m.key}" style="display:block;width:100%;margin:5px 0;padding:9px 12px;border-radius:9px;border:1px solid #7a4ad0;background:#241840;color:#f0e6ff;cursor:pointer;font:inherit;text-align:left">${m.emoji} <b>${m.name}</b> <span style="opacity:.7">— ${m.desc}</span></button>`).join('');
+    el.innerHTML = '<div style="font-size:19px;font-weight:800;margin-bottom:4px">🌀 Портал Дрона</div>'
+      + '<div style="opacity:.85;margin-bottom:10px">Прыжок на новую Землю. Переносишь <b>ресурсы, ранг и дружину</b> (' + army + ' ед., ветеранство сохранится). Постройки остаются здесь — базу ставишь заново.</div>'
+      + rows
+      + '<button data-k="__rand" style="display:block;width:100%;margin:5px 0;padding:9px 12px;border-radius:9px;border:1px solid #c8922e;background:#2c2113;color:#ffe6a8;cursor:pointer;font:inherit">🎲 Случайная Земля</button>'
+      + '<button data-k="__cancel" style="margin-top:8px;padding:7px 16px;border-radius:8px;border:1px solid #555;background:#1a1626;color:#cbb8e8;cursor:pointer;font:inherit">Отмена</button>';
+    document.getElementById('app').appendChild(el);
+    this._portalEl = el;
+    const close = () => { if (this._portalEl) { this._portalEl.remove(); this._portalEl = null; } this._setSpeed(wasSpeed || 1); };
+    el.querySelectorAll('button').forEach(b => b.onclick = () => {
+      const k = b.dataset.k;
+      if (k === '__cancel') { sfx('click'); close(); return; }
+      let dest = k;
+      if (k === '__rand') dest = dests[Math.floor(Math.random() * dests.length)].key;
+      this._portalEl.remove(); this._portalEl = null;
+      this._doPortal(dest);
+    });
+  }
+
+  _doPortal(destKey) {
+    const s = this.state;
+    const army = s.units.filter(u => u.faction === 'ours').map(u => ({ kind: u.kind, hp: Math.round(u.hp), maxHp: u.maxHp, vet: u.vet || 0, kills: u.kills || 0 }));
+    const payload = {
+      faction: s.faction ? s.faction.key : 'goyda', mapKey: destKey,
+      res: s.resources, rankIndex: s.rankIndex, day: s.day, happiness: s.happiness,
+      army, depth: (s.portalDepth || 1) + 1,
+    };
+    try { localStorage.setItem('GOYDA_EMPIRE_PORTAL', JSON.stringify(payload)); } catch (e) {}
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}          // обычный сейв не должен перехватить boot
+    this._portalSwirl(() => location.reload());
+  }
+
+  // воронка раскрывается на весь экран → reload (новый мир грузится под прикрытием)
+  _portalSwirl(done) {
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:9998;pointer-events:none;overflow:hidden;background:rgba(10,2,24,0);transition:background .5s';
+    const core = document.createElement('div');
+    core.style.cssText = 'position:absolute;left:50%;top:50%;width:14px;height:14px;border-radius:50%;transform:translate(-50%,-50%);background:conic-gradient(from 0deg,#ff5cf0,#7a30ff,#28d0ff,#9cff5c,#ff5cf0);box-shadow:0 0 80px 30px #7a30ff';
+    ov.appendChild(core); document.body.appendChild(ov);
+    sfx('super');
+    requestAnimationFrame(() => { ov.style.background = 'rgba(10,2,24,.45)'; });
+    const t0 = performance.now(), dur = 1150;
+    const tick = () => {
+      const k = Math.min(1, (performance.now() - t0) / dur);
+      const sc = 1 + k * k * 240;
+      core.style.transform = 'translate(-50%,-50%) scale(' + sc + ') rotate(' + (k * 1000) + 'deg)';
+      core.style.filter = 'blur(' + (1 + k * 5) + 'px) hue-rotate(' + (k * 360) + 'deg)';
+      if (k >= 1) { done && done(); return; }
+      requestAnimationFrame(tick);
+    };
+    tick();
+  }
+
+  // прибытие: непрозрачный портальный оверлей гаснет, открывая новый мир
+  _portalArrivalFx() {
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:9998;pointer-events:none;background:radial-gradient(circle at 50% 50%,#9a5cff 0%,#3a1080 42%,#0e0820 100%);opacity:1;transition:opacity 1s ease-out';
+    document.body.appendChild(ov);
+    requestAnimationFrame(() => requestAnimationFrame(() => { ov.style.opacity = '0'; }));
+    setTimeout(() => ov.remove(), 1200);
+  }
+
   spawnTracer(u, t, opt = {}) {
     let m;
     if (opt.arrow) {
