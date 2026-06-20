@@ -1,45 +1,45 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=54';
-import { RTSCamera } from './engine/RTSCamera.js?v=54';
-import { Picker } from './engine/Picker.js?v=54';
-import { Loop } from './engine/Loop.js?v=54';
-import { AssetManager } from './engine/AssetManager.js?v=54';
-import { TerrainMesh } from './world/TerrainMesh.js?v=54';
-import { WorldBase } from './world/WorldBase.js?v=54';
-import { Sky } from './world/Sky.js?v=54';
-import { Atmosphere } from './world/Atmosphere.js?v=54';
+import { Renderer } from './engine/Renderer.js?v=55';
+import { RTSCamera } from './engine/RTSCamera.js?v=55';
+import { Picker } from './engine/Picker.js?v=55';
+import { Loop } from './engine/Loop.js?v=55';
+import { AssetManager } from './engine/AssetManager.js?v=55';
+import { TerrainMesh } from './world/TerrainMesh.js?v=55';
+import { WorldBase } from './world/WorldBase.js?v=55';
+import { Sky } from './world/Sky.js?v=55';
+import { Atmosphere } from './world/Atmosphere.js?v=55';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=54';
-import { GameState } from './sim/GameState.js?v=54';
-import * as Economy from './sim/Economy.js?v=54';
-import * as BuildSys from './sim/Buildings.js?v=54';
-import * as Waves from './sim/Waves.js?v=54';
-import * as Tech from './sim/Tech.js?v=54';
-import * as Nature from './sim/Nature.js?v=54';
-import * as Relics from './sim/Relics.js?v=54';
-import * as Camps from './sim/Camps.js?v=54';
-import * as Wildlife from './sim/Wildlife.js?v=54';
-import * as Events from './sim/Events.js?v=54';
-import * as Research from './sim/Research.js?v=54';
-import { updateUnits, damage } from './sim/Units.js?v=54';
-import { toggleEdict } from './sim/Edicts.js?v=54';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=54';
-import { AmbientAudio } from './audio/Music.js?v=54';
-import { HUD } from './ui/HUD.js?v=54';
-import { BuildMenu } from './ui/BuildMenu.js?v=54';
-import { Selection } from './ui/Selection.js?v=54';
-import { Minimap } from './ui/Minimap.js?v=54';
-import { ResearchPanel } from './ui/Research.js?v=54';
-import { Toasts } from './ui/Toasts.js?v=54';
-import { Leaderboard } from './ui/Leaderboard.js?v=54';
-import { BUILDINGS } from './data/buildings.js?v=54';
-import { RANKS } from './data/ranks.js?v=54';
-import { bark } from './data/barks.js?v=54';
-import { STORAGE_KEY } from './data/config.js?v=54';
-import { getFaction } from './data/factions.js?v=54';
-import { getMap } from './data/maps.js?v=54';
-import { StartScreen } from './ui/StartScreen.js?v=54';
+import { nearestAdj } from './world/Pathfinding.js?v=55';
+import { GameState } from './sim/GameState.js?v=55';
+import * as Economy from './sim/Economy.js?v=55';
+import * as BuildSys from './sim/Buildings.js?v=55';
+import * as Waves from './sim/Waves.js?v=55';
+import * as Tech from './sim/Tech.js?v=55';
+import * as Nature from './sim/Nature.js?v=55';
+import * as Relics from './sim/Relics.js?v=55';
+import * as Camps from './sim/Camps.js?v=55';
+import * as Wildlife from './sim/Wildlife.js?v=55';
+import * as Events from './sim/Events.js?v=55';
+import * as Research from './sim/Research.js?v=55';
+import { updateUnits, damage } from './sim/Units.js?v=55';
+import { toggleEdict } from './sim/Edicts.js?v=55';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=55';
+import { AmbientAudio } from './audio/Music.js?v=55';
+import { HUD } from './ui/HUD.js?v=55';
+import { BuildMenu } from './ui/BuildMenu.js?v=55';
+import { Selection } from './ui/Selection.js?v=55';
+import { Minimap } from './ui/Minimap.js?v=55';
+import { ResearchPanel } from './ui/Research.js?v=55';
+import { Toasts } from './ui/Toasts.js?v=55';
+import { Leaderboard } from './ui/Leaderboard.js?v=55';
+import { BUILDINGS } from './data/buildings.js?v=55';
+import { RANKS } from './data/ranks.js?v=55';
+import { bark } from './data/barks.js?v=55';
+import { STORAGE_KEY } from './data/config.js?v=55';
+import { getFaction } from './data/factions.js?v=55';
+import { getMap } from './data/maps.js?v=55';
+import { StartScreen } from './ui/StartScreen.js?v=55';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -496,6 +496,51 @@ class Game {
     }
   }
 
+  // низкополигональный караван (верблюд + повозка) — оживляет мир, периодически пересекает карту
+  _caravanMesh() {
+    const g = new THREE.Group();
+    const M = (c) => new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: 1 });
+    const brown = M(0x9a7850), dk = M(0x5a4630), cloth = M(0xb83c3c);
+    const box = (w, h, d, m, x, y, z) => { const e = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); e.position.set(x, y, z); return e; };
+    const sph = (r, m, x, y, z) => { const e = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 0), m); e.position.set(x, y, z); return e; };
+    const cyl = (r, h, m, x, y, z) => { const e = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 6), m); e.position.set(x, y, z); return e; };
+    g.add(box(0.45, 0.4, 1.0, brown, 0, 0.7, 0));                                            // тело верблюда
+    g.add(sph(0.17, brown, 0, 0.95, -0.18)); g.add(sph(0.17, brown, 0, 0.95, 0.18));         // горбы
+    g.add(box(0.16, 0.5, 0.16, brown, 0, 0.9, 0.58)); g.add(sph(0.13, brown, 0, 1.15, 0.66)); // шея+голова
+    for (const [x, z] of [[-0.16, -0.32], [0.16, -0.32], [-0.16, 0.32], [0.16, 0.32]]) g.add(cyl(0.05, 0.5, dk, x, 0.28, z));
+    g.add(box(0.7, 0.4, 0.7, dk, 0, 0.45, -1.1)); g.add(box(0.76, 0.34, 0.76, cloth, 0, 0.78, -1.1)); // повозка + тюк
+    for (const x of [-0.38, 0.38]) { const w = cyl(0.18, 0.08, dk, x, 0.2, -1.1); w.rotation.z = Math.PI / 2; g.add(w); }   // колёса
+    g.scale.setScalar(0.95);
+    return g;
+  }
+  _updateCaravan(fdt) {
+    const c = this._caravan;
+    if (!c) {
+      this._caravanT = (this._caravanT == null ? 45 : this._caravanT) - fdt;
+      if (this._caravanT > 0) return;
+      this._caravanT = 75 + Math.random() * 70;
+      if (!this._caravanObj) this._caravanObj = this._caravanMesh();
+      const half = this.state.grid.n / 2 - 2, horiz = Math.random() < 0.5, off = () => (Math.random() - 0.5) * half * 1.3;
+      const a = horiz ? { x: -half, z: off() } : { x: off(), z: -half };
+      const b = horiz ? { x: half, z: off() } : { x: off(), z: half };
+      this._caravan = { m: this._caravanObj, a, b, t: 0, dur: 30 + Math.random() * 12 };
+      this.scene.add(this._caravanObj);
+      return;
+    }
+    c.t += fdt;
+    const k = c.t / c.dur;
+    if (k >= 1) {
+      this.scene.remove(c.m); this._caravan = null;
+      const reward = 25 + Math.floor(Math.random() * 20);
+      this.state.gain({ gold: reward });
+      this.toasts.show('🐫 Караван прошёл державу — торговля +' + reward + ' 🪙', { gold: true });
+      return;
+    }
+    const x = c.a.x + (c.b.x - c.a.x) * k, z = c.a.z + (c.b.z - c.a.z) * k;
+    c.m.position.set(x, this.state.grid.heightAt(x, z), z);
+    c.m.rotation.y = Math.atan2(c.b.x - c.a.x, c.b.z - c.a.z);
+  }
+
   // подсказки новичку — серия тостов на первой партии (гейт по localStorage, один раз)
   _maybeTutorial() {
     let done = false;
@@ -704,6 +749,7 @@ class Game {
     }
     // атмосфера: дым/искры/птицы/облака/светлячки (ночь = 1-день; неон без цикла → лёгкие сумерки)
     if (this.atmo) this.atmo.update(fdt, now, this.state.buildings, this.cameraRig.target, this.sky ? 1 - (this.sky.day || 0) : 0.45);
+    this._updateCaravan(fdt);   // торговый караван пересекает карту (жизнь + бонус золота)
     // дрожание зданий под уроном
     for (const b of this.state.buildings) {
       if (b._hit > 0) { b._hit -= fdt; const j = b._hit > 0 ? (Math.random() - 0.5) * 0.06 : 0; b.view.position.set(b.cx + j, b.cy || 0, b.cz + j); }
