@@ -1,45 +1,45 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=51';
-import { RTSCamera } from './engine/RTSCamera.js?v=51';
-import { Picker } from './engine/Picker.js?v=51';
-import { Loop } from './engine/Loop.js?v=51';
-import { AssetManager } from './engine/AssetManager.js?v=51';
-import { TerrainMesh } from './world/TerrainMesh.js?v=51';
-import { WorldBase } from './world/WorldBase.js?v=51';
-import { Sky } from './world/Sky.js?v=51';
-import { Atmosphere } from './world/Atmosphere.js?v=51';
+import { Renderer } from './engine/Renderer.js?v=52';
+import { RTSCamera } from './engine/RTSCamera.js?v=52';
+import { Picker } from './engine/Picker.js?v=52';
+import { Loop } from './engine/Loop.js?v=52';
+import { AssetManager } from './engine/AssetManager.js?v=52';
+import { TerrainMesh } from './world/TerrainMesh.js?v=52';
+import { WorldBase } from './world/WorldBase.js?v=52';
+import { Sky } from './world/Sky.js?v=52';
+import { Atmosphere } from './world/Atmosphere.js?v=52';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=51';
-import { GameState } from './sim/GameState.js?v=51';
-import * as Economy from './sim/Economy.js?v=51';
-import * as BuildSys from './sim/Buildings.js?v=51';
-import * as Waves from './sim/Waves.js?v=51';
-import * as Tech from './sim/Tech.js?v=51';
-import * as Nature from './sim/Nature.js?v=51';
-import * as Relics from './sim/Relics.js?v=51';
-import * as Camps from './sim/Camps.js?v=51';
-import * as Wildlife from './sim/Wildlife.js?v=51';
-import * as Events from './sim/Events.js?v=51';
-import * as Research from './sim/Research.js?v=51';
-import { updateUnits, damage } from './sim/Units.js?v=51';
-import { toggleEdict } from './sim/Edicts.js?v=51';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=51';
-import { AmbientAudio } from './audio/Music.js?v=51';
-import { HUD } from './ui/HUD.js?v=51';
-import { BuildMenu } from './ui/BuildMenu.js?v=51';
-import { Selection } from './ui/Selection.js?v=51';
-import { Minimap } from './ui/Minimap.js?v=51';
-import { ResearchPanel } from './ui/Research.js?v=51';
-import { Toasts } from './ui/Toasts.js?v=51';
-import { Leaderboard } from './ui/Leaderboard.js?v=51';
-import { BUILDINGS } from './data/buildings.js?v=51';
-import { RANKS } from './data/ranks.js?v=51';
-import { bark } from './data/barks.js?v=51';
-import { STORAGE_KEY } from './data/config.js?v=51';
-import { getFaction } from './data/factions.js?v=51';
-import { getMap } from './data/maps.js?v=51';
-import { StartScreen } from './ui/StartScreen.js?v=51';
+import { nearestAdj } from './world/Pathfinding.js?v=52';
+import { GameState } from './sim/GameState.js?v=52';
+import * as Economy from './sim/Economy.js?v=52';
+import * as BuildSys from './sim/Buildings.js?v=52';
+import * as Waves from './sim/Waves.js?v=52';
+import * as Tech from './sim/Tech.js?v=52';
+import * as Nature from './sim/Nature.js?v=52';
+import * as Relics from './sim/Relics.js?v=52';
+import * as Camps from './sim/Camps.js?v=52';
+import * as Wildlife from './sim/Wildlife.js?v=52';
+import * as Events from './sim/Events.js?v=52';
+import * as Research from './sim/Research.js?v=52';
+import { updateUnits, damage } from './sim/Units.js?v=52';
+import { toggleEdict } from './sim/Edicts.js?v=52';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=52';
+import { AmbientAudio } from './audio/Music.js?v=52';
+import { HUD } from './ui/HUD.js?v=52';
+import { BuildMenu } from './ui/BuildMenu.js?v=52';
+import { Selection } from './ui/Selection.js?v=52';
+import { Minimap } from './ui/Minimap.js?v=52';
+import { ResearchPanel } from './ui/Research.js?v=52';
+import { Toasts } from './ui/Toasts.js?v=52';
+import { Leaderboard } from './ui/Leaderboard.js?v=52';
+import { BUILDINGS } from './data/buildings.js?v=52';
+import { RANKS } from './data/ranks.js?v=52';
+import { bark } from './data/barks.js?v=52';
+import { STORAGE_KEY } from './data/config.js?v=52';
+import { getFaction } from './data/factions.js?v=52';
+import { getMap } from './data/maps.js?v=52';
+import { StartScreen } from './ui/StartScreen.js?v=52';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -119,6 +119,7 @@ class Game {
       shake: (a) => this.cameraRig.addShake(a),                       // тряска камеры (game-feel)
       dmgNum: (target, amt, kind) => this.dmgNumber(target, amt, kind),  // всплывающее число урона/лечения
       hitStop: (t) => { this._hitStop = Math.max(this._hitStop, t); },   // короткая пауза симуляции на сильных ударах
+      choiceEvent: (ev) => this.choiceEvent(ev),                          // событие-выбор (модалка)
       onLose: () => this.end('lose'),
       onWin: () => this.end('win'),
       onRankUp: () => {},
@@ -492,6 +493,37 @@ class Game {
       r.m.scale.setScalar(0.5 + k * 3.6);
       r.m.material.opacity = 0.9 * (1 - k);
     }
+  }
+
+  // событие-выбор: модалка с вариантами + таймер авто-решения (по истечении — последний/отказ)
+  choiceEvent(ev) {
+    if (this._evtEl) { this._evtEl.remove(); this._evtEl = null; cancelAnimationFrame(this._evtRaf); }
+    sfx('rankup');
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;left:50%;top:74px;transform:translateX(-50%);z-index:60;background:linear-gradient(180deg,#231a12,#150e07);border:2px solid #c8922e;border-radius:12px;padding:12px 16px;max-width:460px;box-shadow:0 10px 34px rgba(0,0,0,.6);color:#f0e3c8;text-align:center;font-size:14px';
+    const btns = ev.choices.map((c, i) => `<button data-i="${i}" style="margin:4px;padding:8px 13px;border-radius:8px;border:1px solid #c8922e;background:#2c2113;color:#ffe6a8;cursor:pointer;font:inherit">${c.lbl}</button>`).join('');
+    el.innerHTML = `<div style="font-size:17px;font-weight:700;margin-bottom:3px">${ev.t}</div><div style="opacity:.85;margin-bottom:9px">${ev.m}</div><div>${btns}</div><div class="evt-bar" style="height:3px;background:#c8922e;margin-top:9px;border-radius:2px;width:100%"></div>`;
+    document.getElementById('app').appendChild(el);
+    this._evtEl = el;
+    const resolve = (i) => {
+      if (!this._evtEl) return;
+      cancelAnimationFrame(this._evtRaf);
+      const c = ev.choices[i] || ev.choices[ev.choices.length - 1];
+      try { c.f(this.state); } catch (e) {}
+      this.toasts.show(ev.t + ' — ' + (c.msg || c.lbl), { gold: true });
+      sfx('click');
+      el.remove(); this._evtEl = null;
+    };
+    el.querySelectorAll('button').forEach(b => b.onclick = () => resolve(+b.dataset.i));
+    const dur = 16000, t0 = performance.now(), bar = el.querySelector('.evt-bar');
+    const tick = () => {
+      if (!this._evtEl) return;
+      const k = Math.min(1, (performance.now() - t0) / dur);
+      bar.style.width = (100 - k * 100) + '%';
+      if (k >= 1) { resolve(ev.choices.length - 1); return; }   // авто-решение = отказ
+      this._evtRaf = requestAnimationFrame(tick);
+    };
+    tick();
   }
 
   // снаряд шамана: летит к цели, наносит урон по прилёту

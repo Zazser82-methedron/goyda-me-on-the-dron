@@ -1,6 +1,6 @@
 // ===== RTS-камера: пан по XZ, орбита (ПКМ/Q-E), зум колесом, сглаживание =====
 import * as THREE from 'three';
-import { GRID_N, TILE } from '../data/config.js?v=51';
+import { GRID_N, TILE } from '../data/config.js?v=52';
 
 export class RTSCamera {
   constructor(dom) {
