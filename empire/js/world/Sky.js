@@ -35,6 +35,20 @@ export class Sky {
       fogC: scene.fog.color.clone(), fogD: scene.fog.density,
     };
     this._buildPrecip();
+    this._sunVec = new THREE.Vector3();
+    this._buildDome();
+  }
+
+  // Атмосферное небо (рассеяние + реальное солнце) — three/addons/objects/Sky.js, ленивая загрузка.
+  // Купол радиусом ~600 следует за камерой (камера far=700) → горизонт всегда вдали. Фолбэк — градиент-фон Renderer.
+  async _buildDome() {
+    try {
+      const { Sky } = await import('three/addons/objects/Sky.js');
+      const dome = new Sky(); dome.scale.setScalar(600); dome.frustumCulled = false;
+      const u = dome.material.uniforms;
+      u.turbidity.value = 8; u.rayleigh.value = 1.8; u.mieCoefficient.value = 0.006; u.mieDirectionalG.value = 0.86;
+      this.scene.add(dome); this.dome = dome;
+    } catch (e) { /* остаётся CSS/градиент-фон из Renderer */ }
   }
 
   _buildPrecip() {
@@ -60,13 +74,24 @@ export class Sky {
     if (this.onWeather) this.onWeather(pick);   // опц. колбэк для тоста/звука
   }
 
-  update(dt, target, mapKey, now) {
+  update(dt, target, mapKey, now, camera) {
     // ---- сутки ----
     this.t += dt / CYCLE; if (this.t >= 1) this.t -= 1;
     const elev = Math.sin(this.t * Math.PI * 2 - Math.PI / 2);   // -1 ночь .. +1 полдень
     const day = Math.max(0, elev);
     this.day = day;                                              // наружу — для атмосферы (светлячки/птицы)
     const horizon = Math.max(0, 1 - Math.abs(elev) * 1.5);        // рассвет/закат у горизонта
+
+    // ---- атмосферный купол: солнце по сутками (азимут как у key-света), купол едет за камерой ----
+    if (this.dome) {
+      if (camera) this.dome.position.copy(camera.position);
+      const u = this.dome.material.uniforms;
+      this._sunVec.set(36, elev * 90 + 4, 26).normalize();      // высота солнца = ход суток; ночь → под горизонтом → темно
+      u.sunPosition.value.copy(this._sunVec);
+      u.rayleigh.value = 1.4 + horizon * 2.2;                    // закат/рассвет — насыщеннее рассеяние
+      u.turbidity.value = 6 + horizon * 7;
+      u.mieCoefficient.value = 0.005 + horizon * 0.02;           // больше гало у солнца на закате
+    }
 
     // ---- выбор/переход погоды (плавно тянем параметры к целевым) ----
     this.wT -= dt;
@@ -97,8 +122,10 @@ export class Sky {
     r.hemi.color.copy(new THREE.Color(0x1a2238).lerp(this.base.hemiSky, day));
 
     // ---- дистанционный туман (FogExp2.density) + цвет ----
+    // днём даль уходит в светло-голубую дымку (сливается с атмосферным небом), на закате — тёплую
     this.scene.fog.density = this.base.fogD * this._fogMul;
-    const fc = new THREE.Color(0x0e1220).lerp(this.base.fogC, Math.max(day, horizon * 0.6));
+    const dayFog = new THREE.Color(0xaecbe2).lerp(new THREE.Color(0xe8c39a), horizon * 0.7);
+    const fc = new THREE.Color(0x0e1220).lerp(dayFog, Math.max(day, horizon * 0.6));
     if (this.weather === 'rain' || this.weather === 'storm') fc.lerp(new THREE.Color(0x59636f), 0.4);
     if (this.weather === 'fog') fc.lerp(new THREE.Color(0xb9bcc6), 0.5);     // молочная дымка
     if (flash > 0.01) fc.lerp(new THREE.Color(0xc8d0e8), Math.min(0.8, flash));

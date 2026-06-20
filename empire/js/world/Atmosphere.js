@@ -85,12 +85,20 @@ export class Atmosphere {
   _buildBirds() {
     this.birds = [];
     const mat = new THREE.MeshBasicMaterial({ color: this.neon ? 0x301a44 : 0x20242c, fog: true });
-    for (let i = 0; i < 5; i++) {
+    const half = this.grid.n * 0.4;
+    for (let i = 0; i < 7; i++) {
       const g = new THREE.Group();
       const wl = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.04, 0.18), mat);
       const wr = wl.clone(); wl.position.x = -0.26; wr.position.x = 0.26;
       g.add(wl, wr); g.renderOrder = 8; this.scene.add(g);
-      this.birds.push({ g, wl, wr, a: Math.random() * 6.28, r: 8 + i * 2.4, h: 11 + (i % 3) * 2, spd: 0.18 + Math.random() * 0.1, flap: Math.random() * 6.28 });
+      this.birds.push({
+        g, wl, wr,
+        cx: (Math.random() - 0.5) * half, cz: (Math.random() - 0.5) * half,   // МИРОВОЙ центр круга (не камера!)
+        a: Math.random() * 6.28, r: 6 + Math.random() * 10, h: 10 + Math.random() * 7,
+        spd: (0.09 + Math.random() * 0.12) * (Math.random() < 0.5 ? 1 : -1),    // разные направления вращения
+        flap: Math.random() * 6.28, flapSpd: 7 + Math.random() * 4, glide: 0,
+        driftA: Math.random() * 6.28, driftR: 5 + Math.random() * 6,
+      });
     }
   }
 
@@ -151,14 +159,22 @@ export class Atmosphere {
     this._decay(this.sparks, fdt, 4.5);   // гравитация
     this._decay(this.burstPool, fdt, 4.0);
 
-    // птицы — кружат над зоной камеры, машут крыльями
+    // птицы — кочуют по МИРУ (центр круга медленно дрейфует), машут/планируют. НЕ привязаны к камере.
     for (const b of this.birds) {
-      b.a += b.spd * fdt; b.flap += fdt * 9;
-      const cx = target.x, cz = target.z;
-      b.g.position.set(cx + Math.cos(b.a) * b.r, b.h - night * 2, cz + Math.sin(b.a) * b.r);
-      b.g.rotation.y = -b.a;
-      const fl = Math.sin(b.flap) * 0.7;
+      b.a += b.spd * fdt; b.driftA += fdt * 0.04;
+      // иногда сложить крылья и планировать (пауза взмахов) — живее
+      b.glide -= fdt;
+      if (b.glide <= 0 && Math.random() < fdt * 0.15) b.glide = 0.8 + Math.random() * 1.4;
+      if (b.glide <= 0) b.flap += fdt * b.flapSpd;
+      const ox = Math.cos(b.driftA) * b.driftR, oz = Math.sin(b.driftA * 0.8) * b.driftR;
+      const x = b.cx + ox + Math.cos(b.a) * b.r;
+      const z = b.cz + oz + Math.sin(b.a) * b.r;
+      const y = b.h + Math.sin(b.flap * 0.13) * 0.7 - night * 2;
+      b.g.position.set(x, y, z);
+      b.g.rotation.y = -b.a + (b.spd < 0 ? Math.PI : 0);     // нос по ходу
+      const fl = b.glide > 0 ? 0.25 : Math.sin(b.flap) * 0.7; // планирование — крылья почти ровно
       b.wl.rotation.z = fl; b.wr.rotation.z = -fl;
+      b.g.rotation.x = Math.cos(b.a) * 0.14 * (b.spd < 0 ? -1 : 1);   // крен на вираже
       b.g.visible = night < 0.75;   // на ночь прячутся
     }
 

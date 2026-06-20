@@ -1,43 +1,43 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=41';
-import { RTSCamera } from './engine/RTSCamera.js?v=41';
-import { Picker } from './engine/Picker.js?v=41';
-import { Loop } from './engine/Loop.js?v=41';
-import { AssetManager } from './engine/AssetManager.js?v=41';
-import { TerrainMesh } from './world/TerrainMesh.js?v=41';
-import { WorldBase } from './world/WorldBase.js?v=41';
-import { Sky } from './world/Sky.js?v=41';
-import { Atmosphere } from './world/Atmosphere.js?v=41';
+import { Renderer } from './engine/Renderer.js?v=42';
+import { RTSCamera } from './engine/RTSCamera.js?v=42';
+import { Picker } from './engine/Picker.js?v=42';
+import { Loop } from './engine/Loop.js?v=42';
+import { AssetManager } from './engine/AssetManager.js?v=42';
+import { TerrainMesh } from './world/TerrainMesh.js?v=42';
+import { WorldBase } from './world/WorldBase.js?v=42';
+import { Sky } from './world/Sky.js?v=42';
+import { Atmosphere } from './world/Atmosphere.js?v=42';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=41';
-import { GameState } from './sim/GameState.js?v=41';
-import * as Economy from './sim/Economy.js?v=41';
-import * as BuildSys from './sim/Buildings.js?v=41';
-import * as Waves from './sim/Waves.js?v=41';
-import * as Tech from './sim/Tech.js?v=41';
-import * as Nature from './sim/Nature.js?v=41';
-import * as Relics from './sim/Relics.js?v=41';
-import * as Camps from './sim/Camps.js?v=41';
-import * as Wildlife from './sim/Wildlife.js?v=41';
-import * as Research from './sim/Research.js?v=41';
-import { updateUnits, damage } from './sim/Units.js?v=41';
-import { toggleEdict } from './sim/Edicts.js?v=41';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=41';
-import { HUD } from './ui/HUD.js?v=41';
-import { BuildMenu } from './ui/BuildMenu.js?v=41';
-import { Selection } from './ui/Selection.js?v=41';
-import { Minimap } from './ui/Minimap.js?v=41';
-import { ResearchPanel } from './ui/Research.js?v=41';
-import { Toasts } from './ui/Toasts.js?v=41';
-import { Leaderboard } from './ui/Leaderboard.js?v=41';
-import { BUILDINGS } from './data/buildings.js?v=41';
-import { RANKS } from './data/ranks.js?v=41';
-import { bark } from './data/barks.js?v=41';
-import { STORAGE_KEY } from './data/config.js?v=41';
-import { getFaction } from './data/factions.js?v=41';
-import { getMap } from './data/maps.js?v=41';
-import { StartScreen } from './ui/StartScreen.js?v=41';
+import { nearestAdj } from './world/Pathfinding.js?v=42';
+import { GameState } from './sim/GameState.js?v=42';
+import * as Economy from './sim/Economy.js?v=42';
+import * as BuildSys from './sim/Buildings.js?v=42';
+import * as Waves from './sim/Waves.js?v=42';
+import * as Tech from './sim/Tech.js?v=42';
+import * as Nature from './sim/Nature.js?v=42';
+import * as Relics from './sim/Relics.js?v=42';
+import * as Camps from './sim/Camps.js?v=42';
+import * as Wildlife from './sim/Wildlife.js?v=42';
+import * as Research from './sim/Research.js?v=42';
+import { updateUnits, damage } from './sim/Units.js?v=42';
+import { toggleEdict } from './sim/Edicts.js?v=42';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=42';
+import { HUD } from './ui/HUD.js?v=42';
+import { BuildMenu } from './ui/BuildMenu.js?v=42';
+import { Selection } from './ui/Selection.js?v=42';
+import { Minimap } from './ui/Minimap.js?v=42';
+import { ResearchPanel } from './ui/Research.js?v=42';
+import { Toasts } from './ui/Toasts.js?v=42';
+import { Leaderboard } from './ui/Leaderboard.js?v=42';
+import { BUILDINGS } from './data/buildings.js?v=42';
+import { RANKS } from './data/ranks.js?v=42';
+import { bark } from './data/barks.js?v=42';
+import { STORAGE_KEY } from './data/config.js?v=42';
+import { getFaction } from './data/factions.js?v=42';
+import { getMap } from './data/maps.js?v=42';
+import { StartScreen } from './ui/StartScreen.js?v=42';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -558,7 +558,7 @@ class Game {
     if (this.worldBase && this.worldBase.update) this.worldBase.update(fdt);
     if (this.terrain && this.terrain.update) this.terrain.update(fdt);
     // суточный цикл день/ночь + погода (дождь/снег)
-    if (this.sky) this.sky.update(fdt, this.cameraRig.target, this.map.key, now);
+    if (this.sky) this.sky.update(fdt, this.cameraRig.target, this.map.key, now, this.camera);
     // атмосфера: дым/искры/птицы/облака/светлячки (ночь = 1-день; неон без цикла → лёгкие сумерки)
     if (this.atmo) this.atmo.update(fdt, now, this.state.buildings, this.cameraRig.target, this.sky ? 1 - (this.sky.day || 0) : 0.45);
     // дрожание зданий под уроном
