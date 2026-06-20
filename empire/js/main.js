@@ -1,46 +1,46 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=67';
-import { RTSCamera } from './engine/RTSCamera.js?v=67';
-import { Picker } from './engine/Picker.js?v=67';
-import { Loop } from './engine/Loop.js?v=67';
-import { AssetManager } from './engine/AssetManager.js?v=67';
-import { TerrainMesh } from './world/TerrainMesh.js?v=67';
-import { WorldBase } from './world/WorldBase.js?v=67';
-import { Sky } from './world/Sky.js?v=67';
-import { Atmosphere } from './world/Atmosphere.js?v=67';
+import { Renderer } from './engine/Renderer.js?v=68';
+import { RTSCamera } from './engine/RTSCamera.js?v=68';
+import { Picker } from './engine/Picker.js?v=68';
+import { Loop } from './engine/Loop.js?v=68';
+import { AssetManager } from './engine/AssetManager.js?v=68';
+import { TerrainMesh } from './world/TerrainMesh.js?v=68';
+import { WorldBase } from './world/WorldBase.js?v=68';
+import { Sky } from './world/Sky.js?v=68';
+import { Atmosphere } from './world/Atmosphere.js?v=68';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=67';
-import { GameState } from './sim/GameState.js?v=67';
-import * as Economy from './sim/Economy.js?v=67';
-import * as BuildSys from './sim/Buildings.js?v=67';
-import * as Waves from './sim/Waves.js?v=67';
-import * as Tech from './sim/Tech.js?v=67';
-import * as Nature from './sim/Nature.js?v=67';
-import * as Relics from './sim/Relics.js?v=67';
-import * as Camps from './sim/Camps.js?v=67';
-import * as Wildlife from './sim/Wildlife.js?v=67';
-import * as Events from './sim/Events.js?v=67';
-import * as Achievements from './sim/Achievements.js?v=67';
-import * as Research from './sim/Research.js?v=67';
-import { updateUnits, damage } from './sim/Units.js?v=67';
-import { toggleEdict } from './sim/Edicts.js?v=67';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=67';
-import { AmbientAudio } from './audio/Music.js?v=67';
-import { HUD } from './ui/HUD.js?v=67';
-import { BuildMenu } from './ui/BuildMenu.js?v=67';
-import { Selection } from './ui/Selection.js?v=67';
-import { Minimap } from './ui/Minimap.js?v=67';
-import { ResearchPanel } from './ui/Research.js?v=67';
-import { Toasts } from './ui/Toasts.js?v=67';
-import { Leaderboard } from './ui/Leaderboard.js?v=67';
-import { BUILDINGS } from './data/buildings.js?v=67';
-import { RANKS } from './data/ranks.js?v=67';
-import { bark } from './data/barks.js?v=67';
-import { STORAGE_KEY } from './data/config.js?v=67';
-import { getFaction } from './data/factions.js?v=67';
-import { getMap } from './data/maps.js?v=67';
-import { StartScreen } from './ui/StartScreen.js?v=67';
+import { nearestAdj } from './world/Pathfinding.js?v=68';
+import { GameState } from './sim/GameState.js?v=68';
+import * as Economy from './sim/Economy.js?v=68';
+import * as BuildSys from './sim/Buildings.js?v=68';
+import * as Waves from './sim/Waves.js?v=68';
+import * as Tech from './sim/Tech.js?v=68';
+import * as Nature from './sim/Nature.js?v=68';
+import * as Relics from './sim/Relics.js?v=68';
+import * as Camps from './sim/Camps.js?v=68';
+import * as Wildlife from './sim/Wildlife.js?v=68';
+import * as Events from './sim/Events.js?v=68';
+import * as Achievements from './sim/Achievements.js?v=68';
+import * as Research from './sim/Research.js?v=68';
+import { updateUnits, damage } from './sim/Units.js?v=68';
+import { toggleEdict } from './sim/Edicts.js?v=68';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=68';
+import { AmbientAudio } from './audio/Music.js?v=68';
+import { HUD } from './ui/HUD.js?v=68';
+import { BuildMenu } from './ui/BuildMenu.js?v=68';
+import { Selection } from './ui/Selection.js?v=68';
+import { Minimap } from './ui/Minimap.js?v=68';
+import { ResearchPanel } from './ui/Research.js?v=68';
+import { Toasts } from './ui/Toasts.js?v=68';
+import { Leaderboard } from './ui/Leaderboard.js?v=68';
+import { BUILDINGS } from './data/buildings.js?v=68';
+import { RANKS } from './data/ranks.js?v=68';
+import { bark } from './data/barks.js?v=68';
+import { STORAGE_KEY } from './data/config.js?v=68';
+import { getFaction } from './data/factions.js?v=68';
+import { getMap } from './data/maps.js?v=68';
+import { StartScreen } from './ui/StartScreen.js?v=68';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -116,7 +116,7 @@ class Game {
       float: (x, z, t, c) => this.float(x, z, t, c, 0.6),
       flash: (b) => { b._hit = 0.18; },
       burst: (x, y, z, col, n) => { this.atmo && this.atmo.burst(x, y, z, col, n); this.cameraRig.addShake(Math.min(0.4, (n || 8) * 0.012)); },
-      tracer: (u, t) => this.spawnTracer(u, t),
+      tracer: (u, t, opt) => this.spawnTracer(u, t, opt),
       shake: (a) => this.cameraRig.addShake(a),                       // тряска камеры (game-feel)
       dmgNum: (target, amt, kind) => this.dmgNumber(target, amt, kind),  // всплывающее число урона/лечения
       hitStop: (t) => { this._hitStop = Math.max(this._hitStop, t); },   // короткая пауза симуляции на сильных ударах
@@ -696,13 +696,19 @@ class Game {
     tick();
   }
 
-  // снаряд шамана: летит к цели, наносит урон по прилёту
-  spawnTracer(u, t) {
-    if (!this._tracerGeo) this._tracerGeo = new THREE.SphereGeometry(0.14, 6, 5);
-    const m = new THREE.Mesh(this._tracerGeo, new THREE.MeshBasicMaterial({ color: 0xff5cf0 }));
+  // снаряд: летит к цели, наносит урон по прилёту. opt.arrow=стрела (ориентируется по полёту), иначе шар-сгусток
+  spawnTracer(u, t, opt = {}) {
+    let m;
+    if (opt.arrow) {
+      if (!this._arrowGeo) { this._arrowGeo = new THREE.CylinderGeometry(0.04, 0.012, 0.62, 5); this._arrowGeo.rotateX(Math.PI / 2); }   // длинная ось → +Z
+      m = new THREE.Mesh(this._arrowGeo, new THREE.MeshBasicMaterial({ color: opt.color || 0xffe08a }));
+    } else {
+      if (!this._tracerGeo) this._tracerGeo = new THREE.SphereGeometry(0.14, 6, 5);
+      m = new THREE.Mesh(this._tracerGeo, new THREE.MeshBasicMaterial({ color: opt.color || 0xff5cf0 }));
+    }
     m.position.set(u.x, this.state.grid.heightAt(u.x, u.z) + 0.6, u.z);
     this.scene.add(m);
-    this.tracers.push({ m, target: t, dmg: u.dmg, speed: 16 });
+    this.tracers.push({ m, target: t, dmg: opt.dmg ?? u.dmg, speed: opt.speed || 16, arrow: !!opt.arrow });
   }
   updateTracers(fdt) {
     for (let i = this.tracers.length - 1; i >= 0; i--) {
@@ -713,7 +719,7 @@ class Game {
       const dx = tx - tr.m.position.x, dy = ty - tr.m.position.y, dz = tz - tr.m.position.z;
       const d = Math.hypot(dx, dy, dz), step = tr.speed * fdt;
       if (d <= step + 0.4) { damage(this.state, t, tr.dmg, this.ctx); this.scene.remove(tr.m); this.tracers.splice(i, 1); }
-      else tr.m.position.set(tr.m.position.x + dx / d * step, tr.m.position.y + dy / d * step, tr.m.position.z + dz / d * step);
+      else { tr.m.position.set(tr.m.position.x + dx / d * step, tr.m.position.y + dy / d * step, tr.m.position.z + dz / d * step); if (tr.arrow) tr.m.lookAt(tx, ty, tz); }
     }
   }
 

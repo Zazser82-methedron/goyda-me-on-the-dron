@@ -39,6 +39,7 @@ const PRESETS = {
   lose: () => { [330, 277, 220, 165].forEach((f, i) => tone(f, 0.4, { type: 'sine', vol: 0.18, when: i * 0.18 })); },
   edict: () => { tone(392, 0.12, { type: 'square', vol: 0.12 }); tone(523, 0.14, { type: 'square', vol: 0.1, when: 0.08 }); },
   deny: () => { tone(200, 0.09, { type: 'square', vol: 0.09, slide: -70 }); tone(150, 0.11, { type: 'square', vol: 0.07, when: 0.06, slide: -40 }); },   // отказ/ошибка
+  bow: () => { tone(880, 0.07, { type: 'sawtooth', vol: 0.06, slide: -480 }); tone(1500, 0.04, { type: 'sine', vol: 0.04, when: 0.01, slide: -700 }); },   // тетива/свист стрелы
 };
 
 export function sfx(name) { if (muted) return; const p = PRESETS[name]; if (p) try { p(); } catch (e) {} }
