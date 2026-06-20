@@ -1,6 +1,6 @@
 // ===== Сетка мира: тайлы, координаты, занятость, рельеф =====
-import { TILE, GRID_N } from '../data/config.js?v=50';
-import { makeNoise, fbm, hashSeed } from './Noise.js?v=50';
+import { TILE, GRID_N } from '../data/config.js?v=51';
+import { makeNoise, fbm, hashSeed } from './Noise.js?v=51';
 
 export class Grid {
   constructor(n = GRID_N) {
