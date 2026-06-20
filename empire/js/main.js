@@ -1,46 +1,46 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=68';
-import { RTSCamera } from './engine/RTSCamera.js?v=68';
-import { Picker } from './engine/Picker.js?v=68';
-import { Loop } from './engine/Loop.js?v=68';
-import { AssetManager } from './engine/AssetManager.js?v=68';
-import { TerrainMesh } from './world/TerrainMesh.js?v=68';
-import { WorldBase } from './world/WorldBase.js?v=68';
-import { Sky } from './world/Sky.js?v=68';
-import { Atmosphere } from './world/Atmosphere.js?v=68';
+import { Renderer } from './engine/Renderer.js?v=69';
+import { RTSCamera } from './engine/RTSCamera.js?v=69';
+import { Picker } from './engine/Picker.js?v=69';
+import { Loop } from './engine/Loop.js?v=69';
+import { AssetManager } from './engine/AssetManager.js?v=69';
+import { TerrainMesh } from './world/TerrainMesh.js?v=69';
+import { WorldBase } from './world/WorldBase.js?v=69';
+import { Sky } from './world/Sky.js?v=69';
+import { Atmosphere } from './world/Atmosphere.js?v=69';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=68';
-import { GameState } from './sim/GameState.js?v=68';
-import * as Economy from './sim/Economy.js?v=68';
-import * as BuildSys from './sim/Buildings.js?v=68';
-import * as Waves from './sim/Waves.js?v=68';
-import * as Tech from './sim/Tech.js?v=68';
-import * as Nature from './sim/Nature.js?v=68';
-import * as Relics from './sim/Relics.js?v=68';
-import * as Camps from './sim/Camps.js?v=68';
-import * as Wildlife from './sim/Wildlife.js?v=68';
-import * as Events from './sim/Events.js?v=68';
-import * as Achievements from './sim/Achievements.js?v=68';
-import * as Research from './sim/Research.js?v=68';
-import { updateUnits, damage } from './sim/Units.js?v=68';
-import { toggleEdict } from './sim/Edicts.js?v=68';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=68';
-import { AmbientAudio } from './audio/Music.js?v=68';
-import { HUD } from './ui/HUD.js?v=68';
-import { BuildMenu } from './ui/BuildMenu.js?v=68';
-import { Selection } from './ui/Selection.js?v=68';
-import { Minimap } from './ui/Minimap.js?v=68';
-import { ResearchPanel } from './ui/Research.js?v=68';
-import { Toasts } from './ui/Toasts.js?v=68';
-import { Leaderboard } from './ui/Leaderboard.js?v=68';
-import { BUILDINGS } from './data/buildings.js?v=68';
-import { RANKS } from './data/ranks.js?v=68';
-import { bark } from './data/barks.js?v=68';
-import { STORAGE_KEY } from './data/config.js?v=68';
-import { getFaction } from './data/factions.js?v=68';
-import { getMap } from './data/maps.js?v=68';
-import { StartScreen } from './ui/StartScreen.js?v=68';
+import { nearestAdj } from './world/Pathfinding.js?v=69';
+import { GameState } from './sim/GameState.js?v=69';
+import * as Economy from './sim/Economy.js?v=69';
+import * as BuildSys from './sim/Buildings.js?v=69';
+import * as Waves from './sim/Waves.js?v=69';
+import * as Tech from './sim/Tech.js?v=69';
+import * as Nature from './sim/Nature.js?v=69';
+import * as Relics from './sim/Relics.js?v=69';
+import * as Camps from './sim/Camps.js?v=69';
+import * as Wildlife from './sim/Wildlife.js?v=69';
+import * as Events from './sim/Events.js?v=69';
+import * as Achievements from './sim/Achievements.js?v=69';
+import * as Research from './sim/Research.js?v=69';
+import { updateUnits, damage } from './sim/Units.js?v=69';
+import { toggleEdict } from './sim/Edicts.js?v=69';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=69';
+import { AmbientAudio } from './audio/Music.js?v=69';
+import { HUD } from './ui/HUD.js?v=69';
+import { BuildMenu } from './ui/BuildMenu.js?v=69';
+import { Selection } from './ui/Selection.js?v=69';
+import { Minimap } from './ui/Minimap.js?v=69';
+import { ResearchPanel } from './ui/Research.js?v=69';
+import { Toasts } from './ui/Toasts.js?v=69';
+import { Leaderboard } from './ui/Leaderboard.js?v=69';
+import { BUILDINGS } from './data/buildings.js?v=69';
+import { RANKS } from './data/ranks.js?v=69';
+import { bark } from './data/barks.js?v=69';
+import { STORAGE_KEY } from './data/config.js?v=69';
+import { getFaction } from './data/factions.js?v=69';
+import { getMap } from './data/maps.js?v=69';
+import { StartScreen } from './ui/StartScreen.js?v=69';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -708,7 +708,7 @@ class Game {
     }
     m.position.set(u.x, this.state.grid.heightAt(u.x, u.z) + 0.6, u.z);
     this.scene.add(m);
-    this.tracers.push({ m, target: t, dmg: opt.dmg ?? u.dmg, speed: opt.speed || 16, arrow: !!opt.arrow });
+    this.tracers.push({ m, target: t, dmg: opt.dmg ?? u.dmg, speed: opt.speed || 16, arrow: !!opt.arrow, owner: opt.owner });
   }
   updateTracers(fdt) {
     for (let i = this.tracers.length - 1; i >= 0; i--) {
@@ -718,7 +718,7 @@ class Game {
       const ty = this.state.grid.heightAt(tx, tz) + 0.5;
       const dx = tx - tr.m.position.x, dy = ty - tr.m.position.y, dz = tz - tr.m.position.z;
       const d = Math.hypot(dx, dy, dz), step = tr.speed * fdt;
-      if (d <= step + 0.4) { damage(this.state, t, tr.dmg, this.ctx); this.scene.remove(tr.m); this.tracers.splice(i, 1); }
+      if (d <= step + 0.4) { damage(this.state, t, tr.dmg, this.ctx, tr.owner); this.scene.remove(tr.m); this.tracers.splice(i, 1); }
       else { tr.m.position.set(tr.m.position.x + dx / d * step, tr.m.position.y + dy / d * step, tr.m.position.z + dz / d * step); if (tr.arrow) tr.m.lookAt(tx, ty, tz); }
     }
   }
@@ -796,7 +796,8 @@ class Game {
     const units = this.state.units;
     for (let ui = 0; ui < units.length; ui++) {
       const u = units[ui], v = u.view;
-      if (u.grow < 1) { u.grow = Math.min(1, u.grow + fdt * 3.5); v.scale.setScalar(u.growMax * (0.25 + 0.75 * u.grow)); }
+      if (u.grow < 1) { u.grow = Math.min(1, u.grow + fdt * 3.5); v.scale.setScalar(u.growMax * (0.25 + 0.75 * u.grow)); u._vetApplied = false; }
+      else if (!u._vetApplied) { v.scale.setScalar(u.growMax * (1 + 0.07 * (u.vet || 0))); u._vetApplied = true; }   // ветеран заметно крупнее
       if (!u._noCast) { v.traverse(o => { if (o.isMesh) o.castShadow = false; }); u._noCast = true; }   // тень даёт пятно, не shadow-map
       const ix = u.px + (u.x - u.px) * alpha, iz = u.pz + (u.z - u.pz) * alpha;
       const gy = this.state.grid.heightAt(ix, iz);

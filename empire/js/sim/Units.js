@@ -1,8 +1,8 @@
 // ===== Движение, бой и ИИ юнитов (свои воины + враги). Воркеры — в Jobs.js =====
-import { TILE } from '../data/config.js?v=68';
-import { findPath, nearestAdj } from '../world/Pathfinding.js?v=68';
-import { updateWorker } from './Jobs.js?v=68';
-import { bark } from '../data/barks.js?v=68';
+import { TILE } from '../data/config.js?v=69';
+import { findPath, nearestAdj } from '../world/Pathfinding.js?v=69';
+import { updateWorker } from './Jobs.js?v=69';
+import { bark } from '../data/barks.js?v=69';
 
 export function tileCenter(state, tx, ty) { const w = state.grid.gridToWorld(tx, ty); return { x: w.wx, z: w.wz }; }
 function dist2(ax, az, bx, bz) { return (ax - bx) ** 2 + (az - bz) ** 2; }
@@ -48,14 +48,30 @@ export function moveStep(state, u, dt) {
   return u.pi >= u.path.length ? 'arrived' : 'moving';
 }
 
-// урон сущности (юнит/здание). true если уничтожена.
-export function damage(state, target, amt, ctx) {
+// ветеранство своих воинов: за убийства растёт ранг (★) — +урон/+HP/подлечка, видимо крупнее
+const VET_KILLS = [3, 8, 16];                                    // пороги до ранга 1/2/3
+function promoteVeteran(u, ctx) {
+  u.kills = (u.kills || 0) + 1;
+  const lvl = u.vet || 0;
+  if (lvl < 3 && u.kills >= VET_KILLS[lvl]) {
+    u.vet = lvl + 1;
+    u.maxHp = Math.round((u.maxHp || u.def.hp || u.hp) * 1.12);  // +12% макс HP за ранг
+    u.hp = Math.min(u.maxHp, u.hp + u.maxHp * 0.35);             // подлечить наградой
+    u._vetApplied = false;                                       // render обновит масштаб-маркер
+    if (ctx.float) ctx.float(u.x, u.z, '⭐ ВЕТЕРАН ' + '★'.repeat(u.vet), '#ffe08a');
+    if (ctx.sfx) ctx.sfx('rankup');
+  }
+}
+
+// урон сущности (юнит/здание). true если уничтожена. attacker — кто бьёт (для ветеранства).
+export function damage(state, target, amt, ctx, attacker) {
   if (!target || target.hp <= 0) return true;
   target.hp -= amt;
   if (ctx.dmgNum) ctx.dmgNum(target, amt);                       // всплывающее число урона
   if (target.type === 'building' && ctx.flash) ctx.flash(target);
   if (target.hp <= 0) {
     if (target.type === 'unit') {
+      if (attacker && attacker.faction === 'ours' && target.faction === 'enemy') promoteVeteran(attacker, ctx);
       if (ctx.shake) ctx.shake(target.bossKey ? 0.7 : 0.26);     // тряска на гибели (босс — сильнее)
       if (target.bossKey && ctx.hitStop) ctx.hitStop(0.08);      // hit-pause на смерти босса
       if (target.bossKey && ctx.onBossDown) ctx.onBossDown(target);
@@ -79,14 +95,15 @@ function tryAttack(state, u, target, ctx) {
   u.atkAnim = 0.2;                 // выпад-анимация (render)
   let bonus = (state.superTimer > 0 && u.faction === 'ours') ? 1.5 : 1;
   if (u.faction === 'ours' && state.research) bonus *= state.research.dmgMul;   // исследование «СЕЧА»
+  if (u.vet) bonus *= 1 + 0.13 * u.vet;                                         // бонус ветерана (+13%/ранг)
   const dmg = u.dmg * bonus;
   if (u.def.ranged && ctx.tracer) {              // дальний бой: летит стрела, урон по прилёту
-    ctx.tracer(u, target, { dmg, arrow: true, speed: 24, color: u.faction === 'ours' ? 0xffe08a : 0xff5cf0 });
+    ctx.tracer(u, target, { dmg, arrow: true, speed: 24, owner: u, color: u.faction === 'ours' ? 0xffe08a : 0xff5cf0 });
     if (ctx.sfx) ctx.sfx(u.faction === 'ours' ? 'bow' : 'hitEnemy');
     if (u.barkT <= 0 && Math.random() < 0.25) { ctx.bark && ctx.bark(u, bark('attack')); u.barkT = 3; }
     return;
   }
-  damage(state, target, dmg, ctx);
+  damage(state, target, dmg, ctx, u);
   if (ctx.sfx) ctx.sfx(u.faction === 'ours' ? 'hit' : 'hitEnemy');
   if (u.barkT <= 0 && Math.random() < 0.25) { ctx.bark && ctx.bark(u, bark('attack')); u.barkT = 3; }
 }
