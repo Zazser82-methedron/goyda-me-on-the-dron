@@ -227,3 +227,18 @@
   #selection{ bottom:108px; width:180px; }
   #hint{ display:none; }
 }
+
+/* телефон: крупные тап-цели, прокручиваемый топбар, панели по ширине экрана */
+@media (max-width:560px){
+  #topbar{ font-size:11px; gap:5px; height:42px; overflow-x:auto; flex-wrap:nowrap; justify-content:flex-start; padding:0 6px; }
+  .chip{ font-size:12px; } .chip b{ font-size:13px; }
+  .topbtn{ padding:8px 9px; font-size:11px; } .topbtn.icon{ padding:8px; font-size:16px; min-width:40px; }
+  #mini-wrap{ width:104px; } #minimap{ width:104px; height:104px; }
+  #bottombar{ gap:6px; padding:6px; }
+  .catbtn{ min-width:60px; min-height:46px; padding:6px 6px 5px; }
+  .catbtn .cb-ic{ font-size:22px; }
+  #buildpanel{ left:4px; right:4px; bottom:80px; max-height:56vh; overflow-y:auto; }
+  .bp-grid{ grid-template-columns:repeat(auto-fill,minmax(116px,1fr)); }
+  #selection{ bottom:96px; width:46vw; max-width:220px; }
+  #lboard, #research{ width:96vw; max-height:74vh; overflow-y:auto; }
+}
