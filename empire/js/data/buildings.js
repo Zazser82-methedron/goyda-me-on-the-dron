@@ -77,6 +77,24 @@ export const BUILDINGS = {
     cost: { wood: 40, stone: 20, gold: 10 }, build: 6, produce: { gold: 5, happy: 1 },
     desc: 'Торговые ряды. +5 золота в день и точка сдачи.',
   },
+  traktir: {
+    kind: 'traktir', name: 'ТРАКТИР', icon: '🍺', model: 'bld_market',
+    w: 2, h: 2, hp: 170, cat: 'econ', rank: 1,
+    cost: { wood: 35, gold: 15 }, build: 5, produce: { happy: 5 },
+    desc: 'Хмель, пляски, байки — народ гуляет. +5 счастья в день.',
+  },
+  banya: {
+    kind: 'banya', name: 'БАНЯ', icon: '🛁', model: 'bld_izba',
+    w: 1, h: 1, hp: 100, cat: 'econ', rank: 0,
+    cost: { wood: 25, stone: 10 }, build: 3, produce: { happy: 3 },
+    desc: 'Пар да веник — здоровье и довольство. +3 счастья в день.',
+  },
+  veche: {
+    kind: 'veche', name: 'ВЕЧЕ', icon: '🏛️', model: 'bld_observatory',
+    w: 2, h: 2, hp: 230, cat: 'faith', rank: 2,
+    cost: { wood: 40, stone: 35, gold: 20 }, build: 6, produce: { happy: 3, faith: 4 },
+    desc: 'Народное собрание: голос державы. +счастье и +4 ВЕРЫ в день.',
+  },
   observatory: {
     kind: 'observatory', name: 'ОБСЕРВАТОРИЯ', icon: '🔭', model: 'bld_observatory',
     w: 2, h: 2, hp: 240, cat: 'faith', rank: 2,
@@ -174,7 +192,7 @@ export const BUILDINGS = {
 };
 
 // порядок в меню постройки
-export const BUILD_ORDER = ['izba', 'ambar', 'ferma', 'roshcha', 'rudnik', 'zhila', 'kuznica', 'kazarma', 'chastokol', 'gate', 'road', 'bridge', 'tower', 'church', 'observatory', 'market',
+export const BUILD_ORDER = ['izba', 'banya', 'ambar', 'ferma', 'roshcha', 'rudnik', 'zhila', 'kuznica', 'kazarma', 'chastokol', 'gate', 'road', 'bridge', 'tower', 'church', 'observatory', 'veche', 'market', 'traktir',
   'rel_shipo', 'rel_krio', 'rel_obereg', 'rel_giper', 'rel_goydushka', 'rel_zlato', 'rel_fonk', 'rel_vera', 'rel_samotsvet', 'idol'];
 
 export const CATS = {
