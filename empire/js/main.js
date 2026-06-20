@@ -1,46 +1,46 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=62';
-import { RTSCamera } from './engine/RTSCamera.js?v=62';
-import { Picker } from './engine/Picker.js?v=62';
-import { Loop } from './engine/Loop.js?v=62';
-import { AssetManager } from './engine/AssetManager.js?v=62';
-import { TerrainMesh } from './world/TerrainMesh.js?v=62';
-import { WorldBase } from './world/WorldBase.js?v=62';
-import { Sky } from './world/Sky.js?v=62';
-import { Atmosphere } from './world/Atmosphere.js?v=62';
+import { Renderer } from './engine/Renderer.js?v=63';
+import { RTSCamera } from './engine/RTSCamera.js?v=63';
+import { Picker } from './engine/Picker.js?v=63';
+import { Loop } from './engine/Loop.js?v=63';
+import { AssetManager } from './engine/AssetManager.js?v=63';
+import { TerrainMesh } from './world/TerrainMesh.js?v=63';
+import { WorldBase } from './world/WorldBase.js?v=63';
+import { Sky } from './world/Sky.js?v=63';
+import { Atmosphere } from './world/Atmosphere.js?v=63';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=62';
-import { GameState } from './sim/GameState.js?v=62';
-import * as Economy from './sim/Economy.js?v=62';
-import * as BuildSys from './sim/Buildings.js?v=62';
-import * as Waves from './sim/Waves.js?v=62';
-import * as Tech from './sim/Tech.js?v=62';
-import * as Nature from './sim/Nature.js?v=62';
-import * as Relics from './sim/Relics.js?v=62';
-import * as Camps from './sim/Camps.js?v=62';
-import * as Wildlife from './sim/Wildlife.js?v=62';
-import * as Events from './sim/Events.js?v=62';
-import * as Achievements from './sim/Achievements.js?v=62';
-import * as Research from './sim/Research.js?v=62';
-import { updateUnits, damage } from './sim/Units.js?v=62';
-import { toggleEdict } from './sim/Edicts.js?v=62';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=62';
-import { AmbientAudio } from './audio/Music.js?v=62';
-import { HUD } from './ui/HUD.js?v=62';
-import { BuildMenu } from './ui/BuildMenu.js?v=62';
-import { Selection } from './ui/Selection.js?v=62';
-import { Minimap } from './ui/Minimap.js?v=62';
-import { ResearchPanel } from './ui/Research.js?v=62';
-import { Toasts } from './ui/Toasts.js?v=62';
-import { Leaderboard } from './ui/Leaderboard.js?v=62';
-import { BUILDINGS } from './data/buildings.js?v=62';
-import { RANKS } from './data/ranks.js?v=62';
-import { bark } from './data/barks.js?v=62';
-import { STORAGE_KEY } from './data/config.js?v=62';
-import { getFaction } from './data/factions.js?v=62';
-import { getMap } from './data/maps.js?v=62';
-import { StartScreen } from './ui/StartScreen.js?v=62';
+import { nearestAdj } from './world/Pathfinding.js?v=63';
+import { GameState } from './sim/GameState.js?v=63';
+import * as Economy from './sim/Economy.js?v=63';
+import * as BuildSys from './sim/Buildings.js?v=63';
+import * as Waves from './sim/Waves.js?v=63';
+import * as Tech from './sim/Tech.js?v=63';
+import * as Nature from './sim/Nature.js?v=63';
+import * as Relics from './sim/Relics.js?v=63';
+import * as Camps from './sim/Camps.js?v=63';
+import * as Wildlife from './sim/Wildlife.js?v=63';
+import * as Events from './sim/Events.js?v=63';
+import * as Achievements from './sim/Achievements.js?v=63';
+import * as Research from './sim/Research.js?v=63';
+import { updateUnits, damage } from './sim/Units.js?v=63';
+import { toggleEdict } from './sim/Edicts.js?v=63';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=63';
+import { AmbientAudio } from './audio/Music.js?v=63';
+import { HUD } from './ui/HUD.js?v=63';
+import { BuildMenu } from './ui/BuildMenu.js?v=63';
+import { Selection } from './ui/Selection.js?v=63';
+import { Minimap } from './ui/Minimap.js?v=63';
+import { ResearchPanel } from './ui/Research.js?v=63';
+import { Toasts } from './ui/Toasts.js?v=63';
+import { Leaderboard } from './ui/Leaderboard.js?v=63';
+import { BUILDINGS } from './data/buildings.js?v=63';
+import { RANKS } from './data/ranks.js?v=63';
+import { bark } from './data/barks.js?v=63';
+import { STORAGE_KEY } from './data/config.js?v=63';
+import { getFaction } from './data/factions.js?v=63';
+import { getMap } from './data/maps.js?v=63';
+import { StartScreen } from './ui/StartScreen.js?v=63';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -706,6 +706,14 @@ class Game {
     Wildlife.update(this.state, dt, this.ctx);
     Events.update(this.state, dt, this.ctx);   // случайные события мира
     Achievements.update(this.state, dt, this.ctx);   // вехи-достижения
+    // 2-е условие победы: КОНКВЕСТ — снести ВСЕ вражьи станы (альтернатива чуду-идолу)
+    if (!this.state.gameOver) {
+      if (this.state.camps.length) this.state._hadCamps = true;
+      else if (this.state._hadCamps && Math.floor(this.state.day) >= 8) {
+        this.toasts.show('🏴 Все вражьи станы снесены — ПОБЕДА ЗАВОЕВАНИЕМ!', { gold: true, big: true });
+        this.end('win');
+      }
+    }
   }
 
   // мягкая тень-пятно под объектом (пул, ленивое создание ресурсов)
