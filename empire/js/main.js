@@ -1,47 +1,47 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=76';
-import { RTSCamera } from './engine/RTSCamera.js?v=76';
-import { Picker } from './engine/Picker.js?v=76';
-import { Loop } from './engine/Loop.js?v=76';
-import { AssetManager } from './engine/AssetManager.js?v=76';
-import { TerrainMesh } from './world/TerrainMesh.js?v=76';
-import { WorldBase } from './world/WorldBase.js?v=76';
-import { Sky } from './world/Sky.js?v=76';
-import { Atmosphere } from './world/Atmosphere.js?v=76';
+import { Renderer } from './engine/Renderer.js?v=77';
+import { RTSCamera } from './engine/RTSCamera.js?v=77';
+import { Picker } from './engine/Picker.js?v=77';
+import { Loop } from './engine/Loop.js?v=77';
+import { AssetManager } from './engine/AssetManager.js?v=77';
+import { TerrainMesh } from './world/TerrainMesh.js?v=77';
+import { WorldBase } from './world/WorldBase.js?v=77';
+import { Sky } from './world/Sky.js?v=77';
+import { Atmosphere } from './world/Atmosphere.js?v=77';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=76';
-import { GameState } from './sim/GameState.js?v=76';
-import * as Economy from './sim/Economy.js?v=76';
-import * as BuildSys from './sim/Buildings.js?v=76';
-import * as Waves from './sim/Waves.js?v=76';
-import * as Tech from './sim/Tech.js?v=76';
-import * as Nature from './sim/Nature.js?v=76';
-import * as Relics from './sim/Relics.js?v=76';
-import * as Camps from './sim/Camps.js?v=76';
-import * as Wildlife from './sim/Wildlife.js?v=76';
-import * as Events from './sim/Events.js?v=76';
-import * as Achievements from './sim/Achievements.js?v=76';
-import * as Meta from './sim/Meta.js?v=76';
-import * as Research from './sim/Research.js?v=76';
-import { updateUnits, damage } from './sim/Units.js?v=76';
-import { toggleEdict } from './sim/Edicts.js?v=76';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=76';
-import { AmbientAudio } from './audio/Music.js?v=76';
-import { HUD } from './ui/HUD.js?v=76';
-import { BuildMenu } from './ui/BuildMenu.js?v=76';
-import { Selection } from './ui/Selection.js?v=76';
-import { Minimap } from './ui/Minimap.js?v=76';
-import { ResearchPanel } from './ui/Research.js?v=76';
-import { Toasts } from './ui/Toasts.js?v=76';
-import { Leaderboard } from './ui/Leaderboard.js?v=76';
-import { BUILDINGS } from './data/buildings.js?v=76';
-import { RANKS } from './data/ranks.js?v=76';
-import { bark } from './data/barks.js?v=76';
-import { STORAGE_KEY } from './data/config.js?v=76';
-import { getFaction } from './data/factions.js?v=76';
-import { getMap, MAPS } from './data/maps.js?v=76';
-import { StartScreen } from './ui/StartScreen.js?v=76';
+import { nearestAdj } from './world/Pathfinding.js?v=77';
+import { GameState } from './sim/GameState.js?v=77';
+import * as Economy from './sim/Economy.js?v=77';
+import * as BuildSys from './sim/Buildings.js?v=77';
+import * as Waves from './sim/Waves.js?v=77';
+import * as Tech from './sim/Tech.js?v=77';
+import * as Nature from './sim/Nature.js?v=77';
+import * as Relics from './sim/Relics.js?v=77';
+import * as Camps from './sim/Camps.js?v=77';
+import * as Wildlife from './sim/Wildlife.js?v=77';
+import * as Events from './sim/Events.js?v=77';
+import * as Achievements from './sim/Achievements.js?v=77';
+import * as Meta from './sim/Meta.js?v=77';
+import * as Research from './sim/Research.js?v=77';
+import { updateUnits, damage } from './sim/Units.js?v=77';
+import { toggleEdict } from './sim/Edicts.js?v=77';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=77';
+import { AmbientAudio } from './audio/Music.js?v=77';
+import { HUD } from './ui/HUD.js?v=77';
+import { BuildMenu } from './ui/BuildMenu.js?v=77';
+import { Selection } from './ui/Selection.js?v=77';
+import { Minimap } from './ui/Minimap.js?v=77';
+import { ResearchPanel } from './ui/Research.js?v=77';
+import { Toasts } from './ui/Toasts.js?v=77';
+import { Leaderboard } from './ui/Leaderboard.js?v=77';
+import { BUILDINGS } from './data/buildings.js?v=77';
+import { RANKS } from './data/ranks.js?v=77';
+import { bark } from './data/barks.js?v=77';
+import { STORAGE_KEY } from './data/config.js?v=77';
+import { getFaction } from './data/factions.js?v=77';
+import { getMap, MAPS } from './data/maps.js?v=77';
+import { StartScreen } from './ui/StartScreen.js?v=77';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -209,17 +209,52 @@ class Game {
   // мета-прогрессия: бонусы старта по накопленной Доблести (ресурсы + вольные воины)
   _applyMetaPerks() {
     const p = Meta.startPerks();
-    if (!p.tier) return;
-    this.state.gain({ gold: p.gold, food: p.food });
+    if (!p.any) return;
+    if (p.gold || p.food) this.state.gain({ gold: p.gold, food: p.food });
     const g = this.state.grid, c = Math.floor(g.n / 2);
     const spawnNear = (kind) => {
       const adj = nearestAdj(g, c - 1, c - 1, 3, 3, c + ri(-3, 3), c + ri(2, 5)) || { x: c, y: c + 3 };
       const w = g.gridToWorld(adj.x, adj.y); this.state.addUnit(kind, w.wx, w.wz, {});
     };
+    for (let i = 0; i < (p.holops || 0); i++) spawnNear('kholop');
     if (p.freeRatnik) spawnNear('ratnik');
     if (p.freeOprichnik) spawnNear('oprichnik');
     this.state.recomputePop();
     this._metaPerks = p;             // тост в _begin
+  }
+
+  // Палата Доблести: тратим накопленную Доблесть на постоянные разблокировки
+  _metaShop() {
+    if (this._shopEl) return;
+    sfx('edict');
+    const render = () => {
+      const m = Meta.load();
+      const rows = Meta.SHOP.map(s => {
+        const has = m.unlocks.includes(s.id);
+        const afford = m.valor >= s.cost;
+        const bg = has ? '#1e3a1e' : afford ? '#241840' : '#2a1620';
+        const border = has ? '#5cc85c' : afford ? '#9a5cff' : '#7a4a4a';
+        const label = has ? '✓ Открыто' : afford ? 'Купить · ' + s.cost + '⭐' : 'Нужно ' + s.cost + '⭐';
+        const dim = has || !afford;
+        return '<button data-buy="' + s.id + '" ' + (dim ? 'disabled' : '') + ' style="display:block;width:100%;margin:5px 0;padding:9px 12px;border-radius:9px;border:1px solid ' + border + ';background:' + bg + ';color:#f0e6ff;cursor:' + (dim ? 'default' : 'pointer') + ';font:inherit;text-align:left;opacity:' + (dim ? '0.75' : '1') + '">'
+          + s.ic + ' <b>' + s.name + '</b> <span style="opacity:.7">— ' + s.desc + '</span><div style="font-size:12px;margin-top:3px;color:#cbb8e8">' + label + '</div></button>';
+      }).join('');
+      this._shopEl.innerHTML = '<div style="font-size:19px;font-weight:800;margin-bottom:2px">⭐ Палата Доблести</div>'
+        + '<div style="opacity:.85;margin-bottom:10px">Доблесть: <b>' + m.valor + '</b> · побед ' + m.wins + ' · лучшая Земля №' + m.bestDepth + '. Разблокировки постоянны и действуют с новой кампании.</div>'
+        + rows
+        + '<button data-buy="__close" style="margin-top:8px;padding:7px 16px;border-radius:8px;border:1px solid #555;background:#1a1626;color:#cbb8e8;cursor:pointer;font:inherit">Закрыть</button>';
+      this._shopEl.querySelectorAll('button').forEach(b => b.onclick = () => {
+        const id = b.dataset.buy;
+        if (id === '__close') { this._shopEl.remove(); this._shopEl = null; sfx('click'); return; }
+        const r = Meta.buy(id);
+        if (r.ok) { sfx('rankup'); this.toasts.show('⭐ Открыто: ' + (Meta.SHOP.find(s => s.id === id) || {}).name + '. Действует с новой кампании.', { gold: true }); render(); }
+        else { sfx('deny'); }
+      });
+    };
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:120;background:linear-gradient(180deg,#1b1430,#0e0820);border:2px solid #9a5cff;border-radius:14px;padding:16px 18px;max-width:440px;width:88%;box-shadow:0 14px 50px rgba(60,10,140,.6);color:#ece0ff;text-align:center;font-size:14px;max-height:80vh;overflow:auto';
+    document.getElementById('app').appendChild(el);
+    this._shopEl = el; render();
   }
 
   buildWorld(map) {
@@ -298,7 +333,13 @@ class Game {
     } else this.toasts.show(restored ? '⚔️ Поход продолжается…' : ('🗿 ' + (f ? f.emoji + ' ' + f.name : 'ГОЙДА') + ' · ' + this.map.name + '. ГОЙДА!'), { big: true, gold: true });
     if (this._metaPerks) {
       const p = this._metaPerks; this._metaPerks = null;
-      this.toasts.show('⭐ Доблесть ' + p.valor + ' · бонус старта: +' + p.gold + '🪙 +' + p.food + '🍖' + (p.freeRatnik ? ' +ратник' : '') + (p.freeOprichnik ? ' +опричник' : ''), { gold: true });
+      const bits = [];
+      if (p.gold) bits.push('+' + p.gold + '🪙');
+      if (p.food) bits.push('+' + p.food + '🍖');
+      if (p.holops) bits.push('+' + p.holops + '🧑‍🌾');
+      if (p.freeRatnik) bits.push('+ратник');
+      if (p.freeOprichnik) bits.push('+опричник');
+      this.toasts.show('⭐ Палата Доблести · бонус старта: ' + bits.join(' '), { gold: true });
     }
     if (this._glb > 0) this.toasts.show('Blender-моделей: ' + this._glb);
     window.__gboot && window.__gboot('loop ' + (restored ? 'restore' : 'new'));
@@ -431,6 +472,8 @@ class Game {
     if (rb) rb.onclick = () => this.restart();
     const pb = document.getElementById('portalBtn');
     if (pb) pb.onclick = () => this._portalMenu();
+    const vb = document.getElementById('valorBtn');
+    if (vb) vb.onclick = () => this._metaShop();
     const lb = document.getElementById('lobbyBtn');
     if (lb) lb.onclick = () => { if (confirm('Выйти в меню ГОЙДЫ? Поход сохранится.')) location.href = '../'; };
   }
