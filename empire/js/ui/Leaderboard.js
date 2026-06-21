@@ -1,5 +1,5 @@
 // ===== Онлайн-таблица рекордов (общий jsonblob, без аккаунта) + локальный фолбэк =====
-import { RANKS } from '../data/ranks.js?v=79';
+import { RANKS } from '../data/ranks.js?v=80';
 
 // ЛОКАЛЬНЫЙ режим: BLOB пуст → рекорды хранятся на устройстве (localStorage).
 // Чтобы таблица стала ОБЩЕЙ — впиши сюда REST-URL бэкенда с CORS (Supabase/Firebase)

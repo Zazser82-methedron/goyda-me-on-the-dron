@@ -1,7 +1,7 @@
 // ===== Мир-плита на слонах и черепахе в океане (лор «плоской земли») =====
 import * as THREE from 'three';
-import { TILE } from '../data/config.js?v=79';
-import { makeRippleNormal } from './WaterFx.js?v=79';
+import { TILE } from '../data/config.js?v=80';
+import { makeRippleNormal } from './WaterFx.js?v=80';
 
 const _m = {};
 function matStd(c, o = {}) { const k = c + '|' + (o.r ?? 1); if (!_m[k]) _m[k] = new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: o.r ?? 1, metalness: o.m ?? 0 }); return _m[k]; }

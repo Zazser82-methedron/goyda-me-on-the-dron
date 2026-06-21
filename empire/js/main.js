@@ -1,47 +1,47 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=79';
-import { RTSCamera } from './engine/RTSCamera.js?v=79';
-import { Picker } from './engine/Picker.js?v=79';
-import { Loop } from './engine/Loop.js?v=79';
-import { AssetManager } from './engine/AssetManager.js?v=79';
-import { TerrainMesh } from './world/TerrainMesh.js?v=79';
-import { WorldBase } from './world/WorldBase.js?v=79';
-import { Sky } from './world/Sky.js?v=79';
-import { Atmosphere } from './world/Atmosphere.js?v=79';
+import { Renderer } from './engine/Renderer.js?v=80';
+import { RTSCamera } from './engine/RTSCamera.js?v=80';
+import { Picker } from './engine/Picker.js?v=80';
+import { Loop } from './engine/Loop.js?v=80';
+import { AssetManager } from './engine/AssetManager.js?v=80';
+import { TerrainMesh } from './world/TerrainMesh.js?v=80';
+import { WorldBase } from './world/WorldBase.js?v=80';
+import { Sky } from './world/Sky.js?v=80';
+import { Atmosphere } from './world/Atmosphere.js?v=80';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=79';
-import { GameState } from './sim/GameState.js?v=79';
-import * as Economy from './sim/Economy.js?v=79';
-import * as BuildSys from './sim/Buildings.js?v=79';
-import * as Waves from './sim/Waves.js?v=79';
-import * as Tech from './sim/Tech.js?v=79';
-import * as Nature from './sim/Nature.js?v=79';
-import * as Relics from './sim/Relics.js?v=79';
-import * as Camps from './sim/Camps.js?v=79';
-import * as Wildlife from './sim/Wildlife.js?v=79';
-import * as Events from './sim/Events.js?v=79';
-import * as Achievements from './sim/Achievements.js?v=79';
-import * as Meta from './sim/Meta.js?v=79';
-import * as Research from './sim/Research.js?v=79';
-import { updateUnits, damage } from './sim/Units.js?v=79';
-import { toggleEdict } from './sim/Edicts.js?v=79';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=79';
-import { AmbientAudio } from './audio/Music.js?v=79';
-import { HUD } from './ui/HUD.js?v=79';
-import { BuildMenu } from './ui/BuildMenu.js?v=79';
-import { Selection } from './ui/Selection.js?v=79';
-import { Minimap } from './ui/Minimap.js?v=79';
-import { ResearchPanel } from './ui/Research.js?v=79';
-import { Toasts } from './ui/Toasts.js?v=79';
-import { Leaderboard } from './ui/Leaderboard.js?v=79';
-import { BUILDINGS } from './data/buildings.js?v=79';
-import { RANKS } from './data/ranks.js?v=79';
-import { bark } from './data/barks.js?v=79';
-import { STORAGE_KEY } from './data/config.js?v=79';
-import { getFaction } from './data/factions.js?v=79';
-import { getMap, MAPS } from './data/maps.js?v=79';
-import { StartScreen } from './ui/StartScreen.js?v=79';
+import { nearestAdj } from './world/Pathfinding.js?v=80';
+import { GameState } from './sim/GameState.js?v=80';
+import * as Economy from './sim/Economy.js?v=80';
+import * as BuildSys from './sim/Buildings.js?v=80';
+import * as Waves from './sim/Waves.js?v=80';
+import * as Tech from './sim/Tech.js?v=80';
+import * as Nature from './sim/Nature.js?v=80';
+import * as Relics from './sim/Relics.js?v=80';
+import * as Camps from './sim/Camps.js?v=80';
+import * as Wildlife from './sim/Wildlife.js?v=80';
+import * as Events from './sim/Events.js?v=80';
+import * as Achievements from './sim/Achievements.js?v=80';
+import * as Meta from './sim/Meta.js?v=80';
+import * as Research from './sim/Research.js?v=80';
+import { updateUnits, damage } from './sim/Units.js?v=80';
+import { toggleEdict } from './sim/Edicts.js?v=80';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=80';
+import { AmbientAudio } from './audio/Music.js?v=80';
+import { HUD } from './ui/HUD.js?v=80';
+import { BuildMenu } from './ui/BuildMenu.js?v=80';
+import { Selection } from './ui/Selection.js?v=80';
+import { Minimap } from './ui/Minimap.js?v=80';
+import { ResearchPanel } from './ui/Research.js?v=80';
+import { Toasts } from './ui/Toasts.js?v=80';
+import { Leaderboard } from './ui/Leaderboard.js?v=80';
+import { BUILDINGS } from './data/buildings.js?v=80';
+import { RANKS } from './data/ranks.js?v=80';
+import { bark } from './data/barks.js?v=80';
+import { STORAGE_KEY } from './data/config.js?v=80';
+import { getFaction } from './data/factions.js?v=80';
+import { getMap, MAPS } from './data/maps.js?v=80';
+import { StartScreen } from './ui/StartScreen.js?v=80';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -125,7 +125,7 @@ class Game {
       choiceEvent: (ev) => this.choiceEvent(ev),                          // событие-выбор (модалка)
       onLose: () => this.end('lose'),
       onWin: () => this.end('win'),
-      onRankUp: () => {},
+      onRankUp: (ri) => this._boonDraft(ri),
       spawnBoss: (key) => Waves.spawnBoss(this.state, key, this.ctx),
       onBossDown: (boss) => {
         this.state.gain({ gold: 60, faith: 25 });
@@ -324,6 +324,36 @@ class Game {
     el.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:120;background:linear-gradient(180deg,#1b1430,#0e0820);border:2px solid #c8922e;border-radius:14px;padding:16px 18px;max-width:420px;width:88%;box-shadow:0 14px 50px rgba(60,10,140,.6);color:#ece0ff;text-align:center;font-size:14px;max-height:80vh;overflow:auto';
     document.getElementById('app').appendChild(el);
     this._tradeEl = el; render();
+  }
+
+  // Дары Гойды: на возвышении эпохи — выбор 1 из 3 баффов (рогалик-слой; эффекты через живые множители research)
+  _boonDraft(rankIndex) {
+    if (this._boonEl) return;   // редкий случай двойного возвышения — пропускаем
+    const BOONS = [
+      { id: 'gather', ic: '⛏️', name: 'Тороватые руки', desc: '+25% добычи', f: (s) => { s.research.gatherMul *= 1.25; } },
+      { id: 'might', ic: '⚔️', name: 'Сеча', desc: '+20% урона дружины', f: (s) => { s.research.dmgMul *= 1.2; } },
+      { id: 'tithe', ic: '🪙', name: 'Подати', desc: '+5 золота в день', f: (s) => { s.research.goldDay += 5; } },
+      { id: 'harvest', ic: '🌾', name: 'Урожай', desc: '+4 еды в день', f: (s) => { s.research.foodDay += 4; } },
+      { id: 'grace', ic: '☩', name: 'Благодать', desc: '+3 веры в день', f: (s) => { s.research.faithDay += 3; } },
+      { id: 'bounty', ic: '🎁', name: 'Щедрый дар', desc: '+120🪙 +80🍖 сразу', f: (s) => { s.gain({ gold: 120, food: 80 }); } },
+    ];
+    const pool = BOONS.slice(); const pick = [];
+    while (pick.length < 3 && pool.length) pick.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+    sfx('rankup');
+    const wasSpeed = this.loop.speed; this._setSpeed(0);   // пауза на выбор дара
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:130;background:linear-gradient(180deg,#241840,#0e0820);border:2px solid #ffd84a;border-radius:14px;padding:16px 18px;max-width:440px;width:90%;box-shadow:0 14px 50px rgba(140,100,10,.5);color:#ece0ff;text-align:center;font-size:14px';
+    el.innerHTML = '<div style="font-size:19px;font-weight:800;margin-bottom:2px">🎁 ДАР ГОЙДЫ за возвышение</div>'
+      + '<div style="opacity:.85;margin-bottom:10px">Выбери благословение державе:</div>'
+      + pick.map(b => '<button data-boon="' + b.id + '" style="display:block;width:100%;margin:5px 0;padding:11px 12px;border-radius:9px;border:1px solid #ffd84a;background:#2c2113;color:#ffe6a8;cursor:pointer;font:inherit;text-align:left">'
+        + b.ic + ' <b>' + b.name + '</b> <span style="opacity:.8">— ' + b.desc + '</span></button>').join('');
+    document.getElementById('app').appendChild(el);
+    this._boonEl = el;
+    el.querySelectorAll('button').forEach(btn => btn.onclick = () => {
+      const boon = pick.find(b => b.id === btn.dataset.boon);
+      if (boon) { try { boon.f(this.state); } catch (e) {} this.toasts.show('🎁 Дар принят: ' + boon.name + ' — ' + boon.desc, { gold: true, big: true }); sfx('super'); }
+      el.remove(); this._boonEl = null; this._setSpeed(wasSpeed || 1);
+    });
   }
 
   buildWorld(map) {
