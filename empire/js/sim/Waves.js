@@ -1,9 +1,9 @@
 // ===== Набеги (Fortnite-слой): волны врагов + именованные боссы =====
-import { UNITS } from '../data/units.js?v=70';
-import { BOSSES } from '../data/bosses.js?v=70';
-import { bark } from '../data/barks.js?v=70';
-import { hostileFor } from '../data/factions.js?v=70';
-import { floodReachable } from '../world/Pathfinding.js?v=70';
+import { UNITS } from '../data/units.js?v=71';
+import { BOSSES } from '../data/bosses.js?v=71';
+import { bark } from '../data/barks.js?v=71';
+import { hostileFor } from '../data/factions.js?v=71';
+import { floodReachable } from '../world/Pathfinding.js?v=71';
 
 const MAX_ENEMIES = 56;   // мягкий потолок: меньше тормозов в лейте, угроза сохраняется
 
@@ -14,6 +14,8 @@ export const DIFF = {
   hard: { count: 1.4, hp: 1.3, interval: 0.7, emoji: '💀', name: 'Тяжело' },
 };
 function diff(state) { return DIFF[state.difficulty] || DIFF.normal; }
+// глубина портала: каждая новая Земля чуть сложнее (число/HP врагов растут)
+function depthMul(state) { const d = (state.portalDepth || 1) - 1; return { count: 1 + d * 0.18, hp: 1 + d * 0.12 }; }
 
 // связная с базой суша (кэш) — спавним только там, откуда реально можно дойти до ратуши
 export function reachSet(state) {
@@ -93,12 +95,12 @@ function pickRaider(rank) {
 
 function spawnWave(state, ctx) {
   if (state.enemies().length > MAX_ENEMIES) { state.nextWaveIn = 12; return; }
-  const count = Math.max(1, Math.round((2 + state.rankIndex + Math.floor((state.waveNum || 0) / 2)) * diff(state).count));
+  const count = Math.max(1, Math.round((2 + state.rankIndex + Math.floor((state.waveNum || 0) / 2)) * diff(state).count * depthMul(state).count));
   const hf = hostileFor(state);
   for (const p of edgePoints(state, count)) {
     const kind = pickRaider(state.rankIndex);
     const def = UNITS[kind];
-    const hp = Math.round(def.hp * hf.raid.hpMul * diff(state).hp);
+    const hp = Math.round(def.hp * hf.raid.hpMul * diff(state).hp * depthMul(state).hp);
     const u = state.addUnit(kind, p.x, p.z, { tint: def.tint || hf.raid.tint, hp, maxHp: hp, scale: def.scale || 1 });
     u.speed = def.speed * hf.raid.speedMul;
   }

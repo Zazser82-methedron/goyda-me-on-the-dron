@@ -1,46 +1,46 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=70';
-import { RTSCamera } from './engine/RTSCamera.js?v=70';
-import { Picker } from './engine/Picker.js?v=70';
-import { Loop } from './engine/Loop.js?v=70';
-import { AssetManager } from './engine/AssetManager.js?v=70';
-import { TerrainMesh } from './world/TerrainMesh.js?v=70';
-import { WorldBase } from './world/WorldBase.js?v=70';
-import { Sky } from './world/Sky.js?v=70';
-import { Atmosphere } from './world/Atmosphere.js?v=70';
+import { Renderer } from './engine/Renderer.js?v=71';
+import { RTSCamera } from './engine/RTSCamera.js?v=71';
+import { Picker } from './engine/Picker.js?v=71';
+import { Loop } from './engine/Loop.js?v=71';
+import { AssetManager } from './engine/AssetManager.js?v=71';
+import { TerrainMesh } from './world/TerrainMesh.js?v=71';
+import { WorldBase } from './world/WorldBase.js?v=71';
+import { Sky } from './world/Sky.js?v=71';
+import { Atmosphere } from './world/Atmosphere.js?v=71';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=70';
-import { GameState } from './sim/GameState.js?v=70';
-import * as Economy from './sim/Economy.js?v=70';
-import * as BuildSys from './sim/Buildings.js?v=70';
-import * as Waves from './sim/Waves.js?v=70';
-import * as Tech from './sim/Tech.js?v=70';
-import * as Nature from './sim/Nature.js?v=70';
-import * as Relics from './sim/Relics.js?v=70';
-import * as Camps from './sim/Camps.js?v=70';
-import * as Wildlife from './sim/Wildlife.js?v=70';
-import * as Events from './sim/Events.js?v=70';
-import * as Achievements from './sim/Achievements.js?v=70';
-import * as Research from './sim/Research.js?v=70';
-import { updateUnits, damage } from './sim/Units.js?v=70';
-import { toggleEdict } from './sim/Edicts.js?v=70';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=70';
-import { AmbientAudio } from './audio/Music.js?v=70';
-import { HUD } from './ui/HUD.js?v=70';
-import { BuildMenu } from './ui/BuildMenu.js?v=70';
-import { Selection } from './ui/Selection.js?v=70';
-import { Minimap } from './ui/Minimap.js?v=70';
-import { ResearchPanel } from './ui/Research.js?v=70';
-import { Toasts } from './ui/Toasts.js?v=70';
-import { Leaderboard } from './ui/Leaderboard.js?v=70';
-import { BUILDINGS } from './data/buildings.js?v=70';
-import { RANKS } from './data/ranks.js?v=70';
-import { bark } from './data/barks.js?v=70';
-import { STORAGE_KEY } from './data/config.js?v=70';
-import { getFaction } from './data/factions.js?v=70';
-import { getMap, MAPS } from './data/maps.js?v=70';
-import { StartScreen } from './ui/StartScreen.js?v=70';
+import { nearestAdj } from './world/Pathfinding.js?v=71';
+import { GameState } from './sim/GameState.js?v=71';
+import * as Economy from './sim/Economy.js?v=71';
+import * as BuildSys from './sim/Buildings.js?v=71';
+import * as Waves from './sim/Waves.js?v=71';
+import * as Tech from './sim/Tech.js?v=71';
+import * as Nature from './sim/Nature.js?v=71';
+import * as Relics from './sim/Relics.js?v=71';
+import * as Camps from './sim/Camps.js?v=71';
+import * as Wildlife from './sim/Wildlife.js?v=71';
+import * as Events from './sim/Events.js?v=71';
+import * as Achievements from './sim/Achievements.js?v=71';
+import * as Research from './sim/Research.js?v=71';
+import { updateUnits, damage } from './sim/Units.js?v=71';
+import { toggleEdict } from './sim/Edicts.js?v=71';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=71';
+import { AmbientAudio } from './audio/Music.js?v=71';
+import { HUD } from './ui/HUD.js?v=71';
+import { BuildMenu } from './ui/BuildMenu.js?v=71';
+import { Selection } from './ui/Selection.js?v=71';
+import { Minimap } from './ui/Minimap.js?v=71';
+import { ResearchPanel } from './ui/Research.js?v=71';
+import { Toasts } from './ui/Toasts.js?v=71';
+import { Leaderboard } from './ui/Leaderboard.js?v=71';
+import { BUILDINGS } from './data/buildings.js?v=71';
+import { RANKS } from './data/ranks.js?v=71';
+import { bark } from './data/barks.js?v=71';
+import { STORAGE_KEY } from './data/config.js?v=71';
+import { getFaction } from './data/factions.js?v=71';
+import { getMap, MAPS } from './data/maps.js?v=71';
+import { StartScreen } from './ui/StartScreen.js?v=71';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -146,14 +146,16 @@ class Game {
           this._portalArrivalFx();                      // оверлей-воронка сразу — маскирует reload, пока строится мир
           this.state.faction = getFaction(portal.faction);
           this.state.mapKey = portal.mapKey;
+          this.state.portalDepth = portal.depth || 2;   // до initMap: глубокие Земли богаче залежами
           const map = getMap(portal.mapKey);
           this.buildWorld(map);
-          this.initMap(map);                            // свежая ратуша + стартовые холопы + ресурсы
-          Object.assign(this.state.resources, portal.res || {});   // перенесённые ресурсы поверх стартовых
+          this.initMap(map);                            // свежая ратуша + стартовые холопы + ресурсы (щедрее по глубине)
+          for (const k in (portal.res || {})) {         // перенос ресурсов, но не выше складских лимитов (cap)
+            if (this.state.resources[k] !== undefined) this.state.resources[k] = Math.min(this.state.cap[k] ?? 9999, portal.res[k]);
+          }
           this.state.rankIndex = portal.rankIndex || 0;
           this.state.day = portal.day || 0;
           this.state.happiness = portal.happiness ?? 60;
-          this.state.portalDepth = portal.depth || 2;
           const g = this.state.grid, c = Math.floor(g.n / 2);   // высадка дружины кольцом у ратуши
           for (const a of (portal.army || [])) {
             const adj = nearestAdj(g, c - 1, c - 1, 3, 3, c + ri(-3, 3), c + ri(2, 5)) || { x: c, y: c + 3 };
@@ -165,6 +167,8 @@ class Game {
             if (a.kills) uu.kills = a.kills;
           }
           this.state.recomputePop();
+          const dBonus = (this.state.portalDepth || 1) - 1;   // награда за глубину — в ВЕРУ (cap 999, не упрётся в склад)
+          if (dBonus > 0) this.state.gain({ faith: dBonus * 18 });
           this._portalArrival = true;                   // тост прибытия в _begin
           G('portal depth ' + this.state.portalDepth); this._begin(false); return;
         } catch (e) { console.warn('portal failed', e); try { localStorage.removeItem(STORAGE_KEY); } catch (_) {} }
@@ -274,7 +278,19 @@ class Game {
     if (!restored) this._maybeTutorial();   // подсказки новичку (только первый раз)
     this._season = ['summer', 'autumn', 'winter', 'spring'][Math.floor(Math.random() * 4)];   // сезон партии (тон грейда)
     this._seasonApplied = false;
+    if ((this.state.portalDepth || 1) > 1) this._showLandBadge();   // индикатор глубины портала
     this.loop.start();
+  }
+
+  // постоянный бейдж глубины портала (Земля №N) — только на прыжках через портал
+  _showLandBadge() {
+    let el = document.getElementById('landBadge');
+    if (!el) {
+      el = document.createElement('div'); el.id = 'landBadge';
+      el.style.cssText = 'position:fixed;left:8px;top:74px;z-index:40;background:linear-gradient(180deg,#241840,#160e2a);border:1px solid #9a5cff;border-radius:8px;padding:4px 9px;color:#e6d8ff;font:700 12px/1.3 inherit;box-shadow:0 4px 14px rgba(60,10,140,.5);pointer-events:none';
+      document.getElementById('app').appendChild(el);
+    }
+    el.textContent = '🌀 Земля №' + (this.state.portalDepth || 1) + ' · набеги жёстче, но земля щедрей';
   }
 
   initMap(map) {
@@ -287,13 +303,14 @@ class Game {
     this.state.recomputePop();
     // ресурсы вокруг (подальше от центра)
     const far = (x, y, r) => Math.max(Math.abs(x - c), Math.abs(y - c)) > r;
+    const rich = 1 + ((this.state.portalDepth || 1) - 1) * 0.2;   // глубокие Земли: залежи щедрее (амуниция награды портала)
     const scatter = (kind, count, amount, minR, biomes) => {
       let n = 0, t = 0;
       while (n < count && t < count * 50) {
         t++; const x = ri(2, g.n - 3), y = ri(2, g.n - 3);
         if (!far(x, y, minR) || !g.canPlace(x, y, 1, 1)) continue;
         if (biomes && !biomes.includes(g.get(x, y).biome)) continue;
-        this.state.addNode(kind, x, y, amount + ri(-10, 10)); n++;
+        this.state.addNode(kind, x, y, Math.round((amount + ri(-10, 10)) * rich)); n++;
       }
     };
     // ресурсы по биомам: деревья в зелени, камень/золото в скалах
