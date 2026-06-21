@@ -1,46 +1,46 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=73';
-import { RTSCamera } from './engine/RTSCamera.js?v=73';
-import { Picker } from './engine/Picker.js?v=73';
-import { Loop } from './engine/Loop.js?v=73';
-import { AssetManager } from './engine/AssetManager.js?v=73';
-import { TerrainMesh } from './world/TerrainMesh.js?v=73';
-import { WorldBase } from './world/WorldBase.js?v=73';
-import { Sky } from './world/Sky.js?v=73';
-import { Atmosphere } from './world/Atmosphere.js?v=73';
+import { Renderer } from './engine/Renderer.js?v=74';
+import { RTSCamera } from './engine/RTSCamera.js?v=74';
+import { Picker } from './engine/Picker.js?v=74';
+import { Loop } from './engine/Loop.js?v=74';
+import { AssetManager } from './engine/AssetManager.js?v=74';
+import { TerrainMesh } from './world/TerrainMesh.js?v=74';
+import { WorldBase } from './world/WorldBase.js?v=74';
+import { Sky } from './world/Sky.js?v=74';
+import { Atmosphere } from './world/Atmosphere.js?v=74';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=73';
-import { GameState } from './sim/GameState.js?v=73';
-import * as Economy from './sim/Economy.js?v=73';
-import * as BuildSys from './sim/Buildings.js?v=73';
-import * as Waves from './sim/Waves.js?v=73';
-import * as Tech from './sim/Tech.js?v=73';
-import * as Nature from './sim/Nature.js?v=73';
-import * as Relics from './sim/Relics.js?v=73';
-import * as Camps from './sim/Camps.js?v=73';
-import * as Wildlife from './sim/Wildlife.js?v=73';
-import * as Events from './sim/Events.js?v=73';
-import * as Achievements from './sim/Achievements.js?v=73';
-import * as Research from './sim/Research.js?v=73';
-import { updateUnits, damage } from './sim/Units.js?v=73';
-import { toggleEdict } from './sim/Edicts.js?v=73';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=73';
-import { AmbientAudio } from './audio/Music.js?v=73';
-import { HUD } from './ui/HUD.js?v=73';
-import { BuildMenu } from './ui/BuildMenu.js?v=73';
-import { Selection } from './ui/Selection.js?v=73';
-import { Minimap } from './ui/Minimap.js?v=73';
-import { ResearchPanel } from './ui/Research.js?v=73';
-import { Toasts } from './ui/Toasts.js?v=73';
-import { Leaderboard } from './ui/Leaderboard.js?v=73';
-import { BUILDINGS } from './data/buildings.js?v=73';
-import { RANKS } from './data/ranks.js?v=73';
-import { bark } from './data/barks.js?v=73';
-import { STORAGE_KEY } from './data/config.js?v=73';
-import { getFaction } from './data/factions.js?v=73';
-import { getMap, MAPS } from './data/maps.js?v=73';
-import { StartScreen } from './ui/StartScreen.js?v=73';
+import { nearestAdj } from './world/Pathfinding.js?v=74';
+import { GameState } from './sim/GameState.js?v=74';
+import * as Economy from './sim/Economy.js?v=74';
+import * as BuildSys from './sim/Buildings.js?v=74';
+import * as Waves from './sim/Waves.js?v=74';
+import * as Tech from './sim/Tech.js?v=74';
+import * as Nature from './sim/Nature.js?v=74';
+import * as Relics from './sim/Relics.js?v=74';
+import * as Camps from './sim/Camps.js?v=74';
+import * as Wildlife from './sim/Wildlife.js?v=74';
+import * as Events from './sim/Events.js?v=74';
+import * as Achievements from './sim/Achievements.js?v=74';
+import * as Research from './sim/Research.js?v=74';
+import { updateUnits, damage } from './sim/Units.js?v=74';
+import { toggleEdict } from './sim/Edicts.js?v=74';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=74';
+import { AmbientAudio } from './audio/Music.js?v=74';
+import { HUD } from './ui/HUD.js?v=74';
+import { BuildMenu } from './ui/BuildMenu.js?v=74';
+import { Selection } from './ui/Selection.js?v=74';
+import { Minimap } from './ui/Minimap.js?v=74';
+import { ResearchPanel } from './ui/Research.js?v=74';
+import { Toasts } from './ui/Toasts.js?v=74';
+import { Leaderboard } from './ui/Leaderboard.js?v=74';
+import { BUILDINGS } from './data/buildings.js?v=74';
+import { RANKS } from './data/ranks.js?v=74';
+import { bark } from './data/barks.js?v=74';
+import { STORAGE_KEY } from './data/config.js?v=74';
+import { getFaction } from './data/factions.js?v=74';
+import { getMap, MAPS } from './data/maps.js?v=74';
+import { StartScreen } from './ui/StartScreen.js?v=74';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -94,6 +94,7 @@ class Game {
     this._uiT = 0;
     this.tracers = [];
     this._uShadows = []; this._aShadows = [];   // пулы мягких теней-пятен под юнитами/дичью
+    this._vetMarkers = [];                       // пул шевронов-звёзд ★ над ветеранами
     this.floaters = document.getElementById('floaters');
     this._hitStop = 0;          // таймер hit-pause (сек реального времени)
     this._ripples = [];         // кольца-подтверждения команд
@@ -937,6 +938,32 @@ class Game {
     return pool[i];
   }
 
+  // шеврон-звёзды ★ над ветераном (billboard-спрайт; уровень = число звёзд)
+  _vetMarker(i, level) {
+    if (!this._vetTex) {
+      this._vetTex = {};
+      for (let lv = 1; lv <= 3; lv++) {
+        const cv = document.createElement('canvas'); cv.width = 40 * lv; cv.height = 44;
+        const cx = cv.getContext('2d');
+        cx.font = 'bold 30px serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+        for (let s = 0; s < lv; s++) {
+          const x = 20 + s * 40;
+          cx.lineWidth = 5; cx.strokeStyle = 'rgba(30,14,0,0.92)'; cx.strokeText('★', x, 24);
+          cx.fillStyle = '#ffd84a'; cx.fillText('★', x, 24);
+        }
+        const tex = new THREE.CanvasTexture(cv); tex.magFilter = THREE.LinearFilter;
+        this._vetTex[lv] = tex;
+      }
+    }
+    if (!this._vetMarkers[i]) {
+      const m = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, depthTest: false, fog: false }));
+      m.renderOrder = 6; this.scene.add(m); this._vetMarkers[i] = m;
+    }
+    const sp = this._vetMarkers[i], lv = Math.min(3, level);
+    if (sp._lv !== lv) { sp.material.map = this._vetTex[lv]; sp.material.needsUpdate = true; sp.scale.set(0.3 * lv, 0.3, 1); sp._lv = lv; }
+    return sp;
+  }
+
   // ---------- рендер ----------
   render(alpha) {
     if (!this._rendered) { this._rendered = true; window.__gboot && window.__gboot('RENDERING ✓'); }
@@ -969,8 +996,13 @@ class Game {
       const sh = this._blobShadow(ui, this._uShadows);
       sh.visible = vis; sh.position.set(ix, gy + 0.04, iz); const ss = (u.growMax || 1) * 0.78; sh.scale.set(ss, ss, ss);
       if (moving && vis) { u._dustT = (u._dustT || 0) - fdt; if (u._dustT <= 0) { this.atmo && this.atmo.spawnDust(ix, gy, iz); u._dustT = 0.26; } }
+      if (u.faction === 'ours' && (u.vet || 0) > 0 && vis) {        // шеврон ветерана над головой
+        const mk = this._vetMarker(ui, u.vet); mk.visible = true;
+        mk.position.set(v.position.x, gy + bob + 1.05 * (u.growMax || 1) + 0.4, v.position.z);
+      } else if (this._vetMarkers[ui]) this._vetMarkers[ui].visible = false;
     }
     for (let i = units.length; i < this._uShadows.length; i++) this._uShadows[i].visible = false;
+    for (let i = units.length; i < this._vetMarkers.length; i++) this._vetMarkers[i].visible = false;
     // интерполяция дичи (бродит/убегает) + тень-пятно + прячем в тумане
     const animals = this.state.animals;
     for (let ai = 0; ai < animals.length; ai++) {

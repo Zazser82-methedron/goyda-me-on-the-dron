@@ -1,6 +1,6 @@
 // ===== Three.js рендерер, сцена, свет, туман — настроение идол-слоя «Гойды» =====
 import * as THREE from 'three';
-import { PAL } from '../data/config.js?v=73';
+import { PAL } from '../data/config.js?v=74';
 
 // Цветокоррекция (пост): контраст вокруг 0.5, насыщенность, лёгкий тёплый тон, мягкая виньетка.
 const GRADE_SHADER = {
