@@ -1,47 +1,47 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=77';
-import { RTSCamera } from './engine/RTSCamera.js?v=77';
-import { Picker } from './engine/Picker.js?v=77';
-import { Loop } from './engine/Loop.js?v=77';
-import { AssetManager } from './engine/AssetManager.js?v=77';
-import { TerrainMesh } from './world/TerrainMesh.js?v=77';
-import { WorldBase } from './world/WorldBase.js?v=77';
-import { Sky } from './world/Sky.js?v=77';
-import { Atmosphere } from './world/Atmosphere.js?v=77';
+import { Renderer } from './engine/Renderer.js?v=78';
+import { RTSCamera } from './engine/RTSCamera.js?v=78';
+import { Picker } from './engine/Picker.js?v=78';
+import { Loop } from './engine/Loop.js?v=78';
+import { AssetManager } from './engine/AssetManager.js?v=78';
+import { TerrainMesh } from './world/TerrainMesh.js?v=78';
+import { WorldBase } from './world/WorldBase.js?v=78';
+import { Sky } from './world/Sky.js?v=78';
+import { Atmosphere } from './world/Atmosphere.js?v=78';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=77';
-import { GameState } from './sim/GameState.js?v=77';
-import * as Economy from './sim/Economy.js?v=77';
-import * as BuildSys from './sim/Buildings.js?v=77';
-import * as Waves from './sim/Waves.js?v=77';
-import * as Tech from './sim/Tech.js?v=77';
-import * as Nature from './sim/Nature.js?v=77';
-import * as Relics from './sim/Relics.js?v=77';
-import * as Camps from './sim/Camps.js?v=77';
-import * as Wildlife from './sim/Wildlife.js?v=77';
-import * as Events from './sim/Events.js?v=77';
-import * as Achievements from './sim/Achievements.js?v=77';
-import * as Meta from './sim/Meta.js?v=77';
-import * as Research from './sim/Research.js?v=77';
-import { updateUnits, damage } from './sim/Units.js?v=77';
-import { toggleEdict } from './sim/Edicts.js?v=77';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=77';
-import { AmbientAudio } from './audio/Music.js?v=77';
-import { HUD } from './ui/HUD.js?v=77';
-import { BuildMenu } from './ui/BuildMenu.js?v=77';
-import { Selection } from './ui/Selection.js?v=77';
-import { Minimap } from './ui/Minimap.js?v=77';
-import { ResearchPanel } from './ui/Research.js?v=77';
-import { Toasts } from './ui/Toasts.js?v=77';
-import { Leaderboard } from './ui/Leaderboard.js?v=77';
-import { BUILDINGS } from './data/buildings.js?v=77';
-import { RANKS } from './data/ranks.js?v=77';
-import { bark } from './data/barks.js?v=77';
-import { STORAGE_KEY } from './data/config.js?v=77';
-import { getFaction } from './data/factions.js?v=77';
-import { getMap, MAPS } from './data/maps.js?v=77';
-import { StartScreen } from './ui/StartScreen.js?v=77';
+import { nearestAdj } from './world/Pathfinding.js?v=78';
+import { GameState } from './sim/GameState.js?v=78';
+import * as Economy from './sim/Economy.js?v=78';
+import * as BuildSys from './sim/Buildings.js?v=78';
+import * as Waves from './sim/Waves.js?v=78';
+import * as Tech from './sim/Tech.js?v=78';
+import * as Nature from './sim/Nature.js?v=78';
+import * as Relics from './sim/Relics.js?v=78';
+import * as Camps from './sim/Camps.js?v=78';
+import * as Wildlife from './sim/Wildlife.js?v=78';
+import * as Events from './sim/Events.js?v=78';
+import * as Achievements from './sim/Achievements.js?v=78';
+import * as Meta from './sim/Meta.js?v=78';
+import * as Research from './sim/Research.js?v=78';
+import { updateUnits, damage } from './sim/Units.js?v=78';
+import { toggleEdict } from './sim/Edicts.js?v=78';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=78';
+import { AmbientAudio } from './audio/Music.js?v=78';
+import { HUD } from './ui/HUD.js?v=78';
+import { BuildMenu } from './ui/BuildMenu.js?v=78';
+import { Selection } from './ui/Selection.js?v=78';
+import { Minimap } from './ui/Minimap.js?v=78';
+import { ResearchPanel } from './ui/Research.js?v=78';
+import { Toasts } from './ui/Toasts.js?v=78';
+import { Leaderboard } from './ui/Leaderboard.js?v=78';
+import { BUILDINGS } from './data/buildings.js?v=78';
+import { RANKS } from './data/ranks.js?v=78';
+import { bark } from './data/barks.js?v=78';
+import { STORAGE_KEY } from './data/config.js?v=78';
+import { getFaction } from './data/factions.js?v=78';
+import { getMap, MAPS } from './data/maps.js?v=78';
+import { StartScreen } from './ui/StartScreen.js?v=78';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -255,6 +255,53 @@ class Game {
     el.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:120;background:linear-gradient(180deg,#1b1430,#0e0820);border:2px solid #9a5cff;border-radius:14px;padding:16px 18px;max-width:440px;width:88%;box-shadow:0 14px 50px rgba(60,10,140,.6);color:#ece0ff;text-align:center;font-size:14px;max-height:80vh;overflow:auto';
     document.getElementById('app').appendChild(el);
     this._shopEl = el; render();
+  }
+
+  // Торг на рынке: продать излишки за золото / докупить нужное (с наценкой-спредом). Нужен построенный рынок.
+  _tradePanel() {
+    if (this._tradeEl) return;
+    const hasMarket = this.state.buildings.some(b => b.built && (b.kind === 'market' || b.kind === 'traktir'));
+    if (!hasMarket) { this.toasts.show('🛒 Нужен РЫНОК для торга', { bad: true }); sfx('deny'); return; }
+    sfx('edict');
+    const TRADE = [
+      { k: 'wood', ic: '🪵', name: 'Лес', sell: 0.3, buy: 0.8 },
+      { k: 'stone', ic: '🪨', name: 'Камень', sell: 0.35, buy: 0.9 },
+      { k: 'iron', ic: '⛓️', name: 'Железо', sell: 0.7, buy: 1.6 },
+      { k: 'gems', ic: '💎', name: 'Самоцветы', sell: 1.5, buy: 3.5 },
+      { k: 'food', ic: '🍖', name: 'Еда', sell: 0.25, buy: 0.7 },
+    ];
+    const CHUNK = 25;
+    const render = () => {
+      const r = this.state.resources, cap = this.state.cap;
+      const rows = TRADE.map(t => {
+        const sg = Math.round(CHUNK * t.sell), bg = Math.round(CHUNK * t.buy);
+        const canSell = (r[t.k] || 0) >= CHUNK, canBuy = r.gold >= bg && (r[t.k] || 0) < (cap[t.k] || 400);
+        return '<div style="display:flex;align-items:center;gap:6px;margin:5px 0">'
+          + '<div style="flex:1;text-align:left">' + t.ic + ' <b>' + t.name + '</b> <span style="opacity:.6">' + Math.floor(r[t.k] || 0) + '</span></div>'
+          + '<button data-sell="' + t.k + '" ' + (canSell ? '' : 'disabled') + ' style="padding:6px 9px;border-radius:7px;border:1px solid #5cc85c;background:' + (canSell ? '#1e3a1e' : '#222') + ';color:#dfffe0;cursor:' + (canSell ? 'pointer' : 'default') + ';font:inherit;opacity:' + (canSell ? '1' : '.5') + '">−' + CHUNK + '→+' + sg + '🪙</button>'
+          + '<button data-buy="' + t.k + '" ' + (canBuy ? '' : 'disabled') + ' style="padding:6px 9px;border-radius:7px;border:1px solid #c8922e;background:' + (canBuy ? '#2c2113' : '#222') + ';color:#ffe6a8;cursor:' + (canBuy ? 'pointer' : 'default') + ';font:inherit;opacity:' + (canBuy ? '1' : '.5') + '">+' + CHUNK + '←−' + bg + '🪙</button>'
+          + '</div>';
+      }).join('');
+      this._tradeEl.innerHTML = '<div style="font-size:19px;font-weight:800;margin-bottom:2px">🛒 Торг на рынке</div>'
+        + '<div style="opacity:.85;margin-bottom:10px">Золото: <b>' + Math.floor(r.gold) + '</b>🪙. Продавай излишки, докупай нужное (с наценкой).</div>'
+        + rows
+        + '<button data-close="1" style="margin-top:8px;padding:7px 16px;border-radius:8px;border:1px solid #555;background:#1a1626;color:#cbb8e8;cursor:pointer;font:inherit">Закрыть</button>';
+      this._tradeEl.querySelectorAll('button').forEach(b => b.onclick = () => {
+        if (b.dataset.close) { this._tradeEl.remove(); this._tradeEl = null; sfx('click'); return; }
+        const r2 = this.state.resources, cap2 = this.state.cap;
+        if (b.dataset.sell) {
+          const t = TRADE.find(x => x.k === b.dataset.sell);
+          if ((r2[t.k] || 0) >= CHUNK) { r2[t.k] -= CHUNK; this.state.gain({ gold: Math.round(CHUNK * t.sell) }); sfx('deposit'); render(); }
+        } else if (b.dataset.buy) {
+          const t = TRADE.find(x => x.k === b.dataset.buy), cost = Math.round(CHUNK * t.buy);
+          if (r2.gold >= cost && (r2[t.k] || 0) < (cap2[t.k] || 400)) { r2.gold -= cost; r2[t.k] = Math.min(cap2[t.k] || 400, (r2[t.k] || 0) + CHUNK); sfx('place'); render(); }
+        }
+      });
+    };
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:120;background:linear-gradient(180deg,#1b1430,#0e0820);border:2px solid #c8922e;border-radius:14px;padding:16px 18px;max-width:420px;width:88%;box-shadow:0 14px 50px rgba(60,10,140,.6);color:#ece0ff;text-align:center;font-size:14px;max-height:80vh;overflow:auto';
+    document.getElementById('app').appendChild(el);
+    this._tradeEl = el; render();
   }
 
   buildWorld(map) {
@@ -474,6 +521,8 @@ class Game {
     if (pb) pb.onclick = () => this._portalMenu();
     const vb = document.getElementById('valorBtn');
     if (vb) vb.onclick = () => this._metaShop();
+    const trb = document.getElementById('tradeBtn');
+    if (trb) trb.onclick = () => this._tradePanel();
     const lb = document.getElementById('lobbyBtn');
     if (lb) lb.onclick = () => { if (confirm('Выйти в меню ГОЙДЫ? Поход сохранится.')) location.href = '../'; };
   }
