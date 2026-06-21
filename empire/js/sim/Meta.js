@@ -33,6 +33,9 @@ export const SHOP = [
 
 export function owned(id) { return load().unlocks.includes(id); }
 
+// прямое начисление Доблести (достижения и пр.)
+export function addValor(n) { const m = load(); m.valor += (n || 0); save(m); return m.valor; }
+
 export function buy(id) {
   const m = load(); const item = SHOP.find(s => s.id === id);
   if (!item) return { ok: false, reason: 'no-item' };
