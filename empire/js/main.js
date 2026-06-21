@@ -1,46 +1,46 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=72';
-import { RTSCamera } from './engine/RTSCamera.js?v=72';
-import { Picker } from './engine/Picker.js?v=72';
-import { Loop } from './engine/Loop.js?v=72';
-import { AssetManager } from './engine/AssetManager.js?v=72';
-import { TerrainMesh } from './world/TerrainMesh.js?v=72';
-import { WorldBase } from './world/WorldBase.js?v=72';
-import { Sky } from './world/Sky.js?v=72';
-import { Atmosphere } from './world/Atmosphere.js?v=72';
+import { Renderer } from './engine/Renderer.js?v=73';
+import { RTSCamera } from './engine/RTSCamera.js?v=73';
+import { Picker } from './engine/Picker.js?v=73';
+import { Loop } from './engine/Loop.js?v=73';
+import { AssetManager } from './engine/AssetManager.js?v=73';
+import { TerrainMesh } from './world/TerrainMesh.js?v=73';
+import { WorldBase } from './world/WorldBase.js?v=73';
+import { Sky } from './world/Sky.js?v=73';
+import { Atmosphere } from './world/Atmosphere.js?v=73';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=72';
-import { GameState } from './sim/GameState.js?v=72';
-import * as Economy from './sim/Economy.js?v=72';
-import * as BuildSys from './sim/Buildings.js?v=72';
-import * as Waves from './sim/Waves.js?v=72';
-import * as Tech from './sim/Tech.js?v=72';
-import * as Nature from './sim/Nature.js?v=72';
-import * as Relics from './sim/Relics.js?v=72';
-import * as Camps from './sim/Camps.js?v=72';
-import * as Wildlife from './sim/Wildlife.js?v=72';
-import * as Events from './sim/Events.js?v=72';
-import * as Achievements from './sim/Achievements.js?v=72';
-import * as Research from './sim/Research.js?v=72';
-import { updateUnits, damage } from './sim/Units.js?v=72';
-import { toggleEdict } from './sim/Edicts.js?v=72';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=72';
-import { AmbientAudio } from './audio/Music.js?v=72';
-import { HUD } from './ui/HUD.js?v=72';
-import { BuildMenu } from './ui/BuildMenu.js?v=72';
-import { Selection } from './ui/Selection.js?v=72';
-import { Minimap } from './ui/Minimap.js?v=72';
-import { ResearchPanel } from './ui/Research.js?v=72';
-import { Toasts } from './ui/Toasts.js?v=72';
-import { Leaderboard } from './ui/Leaderboard.js?v=72';
-import { BUILDINGS } from './data/buildings.js?v=72';
-import { RANKS } from './data/ranks.js?v=72';
-import { bark } from './data/barks.js?v=72';
-import { STORAGE_KEY } from './data/config.js?v=72';
-import { getFaction } from './data/factions.js?v=72';
-import { getMap, MAPS } from './data/maps.js?v=72';
-import { StartScreen } from './ui/StartScreen.js?v=72';
+import { nearestAdj } from './world/Pathfinding.js?v=73';
+import { GameState } from './sim/GameState.js?v=73';
+import * as Economy from './sim/Economy.js?v=73';
+import * as BuildSys from './sim/Buildings.js?v=73';
+import * as Waves from './sim/Waves.js?v=73';
+import * as Tech from './sim/Tech.js?v=73';
+import * as Nature from './sim/Nature.js?v=73';
+import * as Relics from './sim/Relics.js?v=73';
+import * as Camps from './sim/Camps.js?v=73';
+import * as Wildlife from './sim/Wildlife.js?v=73';
+import * as Events from './sim/Events.js?v=73';
+import * as Achievements from './sim/Achievements.js?v=73';
+import * as Research from './sim/Research.js?v=73';
+import { updateUnits, damage } from './sim/Units.js?v=73';
+import { toggleEdict } from './sim/Edicts.js?v=73';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=73';
+import { AmbientAudio } from './audio/Music.js?v=73';
+import { HUD } from './ui/HUD.js?v=73';
+import { BuildMenu } from './ui/BuildMenu.js?v=73';
+import { Selection } from './ui/Selection.js?v=73';
+import { Minimap } from './ui/Minimap.js?v=73';
+import { ResearchPanel } from './ui/Research.js?v=73';
+import { Toasts } from './ui/Toasts.js?v=73';
+import { Leaderboard } from './ui/Leaderboard.js?v=73';
+import { BUILDINGS } from './data/buildings.js?v=73';
+import { RANKS } from './data/ranks.js?v=73';
+import { bark } from './data/barks.js?v=73';
+import { STORAGE_KEY } from './data/config.js?v=73';
+import { getFaction } from './data/factions.js?v=73';
+import { getMap, MAPS } from './data/maps.js?v=73';
+import { StartScreen } from './ui/StartScreen.js?v=73';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -181,6 +181,7 @@ class Game {
           this.state.mapKey = save.mapKey || 'les';
           this.buildWorld(getMap(this.state.mapKey));
           this._restore(save);
+          this._checkArenaReturn();                     // награда за победы в карточной арене, пока был там
           G('restored'); this._begin(true); return;
         } catch (e) {
           console.warn('restore failed', e);
@@ -268,7 +269,11 @@ class Game {
     cam.radius = 26; cam.polar = 1.04; cam.azimuth = Math.PI * 0.22;
     cam._radius = 40; cam._polar = 0.92; cam._azimuth = cam.azimuth;
     const f = this.state.faction;
-    if (this._portalArrival) {
+    if (this._arenaReturn) {
+      const d = this._arenaReturn.delta; this._arenaReturn = null;
+      if (d > 0) this.toasts.show('🏆 Возврат из арены ГОЙДЫ: ' + d + ' побед(ы)! Награда +' + (d * 30) + '🪙 +' + (d * 16) + '☩ +' + (d * 20) + '🍖', { big: true, gold: true });
+      else this.toasts.show('🌀 Возврат из карточной арены. Поход продолжается!', { gold: true });
+    } else if (this._portalArrival) {
       this.toasts.show('🌀 Портал Дрона: высадка на ' + this.map.emoji + ' ' + this.map.name + ' · Земля №' + (this.state.portalDepth || 2) + '! ' + bark('win'), { big: true, gold: true });
       this._portalArrival = false;
     } else this.toasts.show(restored ? '⚔️ Поход продолжается…' : ('🗿 ' + (f ? f.emoji + ' ' + f.name : 'ГОЙДА') + ' · ' + this.map.name + '. ГОЙДА!'), { big: true, gold: true });
@@ -789,7 +794,21 @@ class Game {
     const army = s.units.filter(u => u.faction === 'ours').length;
     const bridge = { from: 'empire', day: Math.floor(s.day || 0), rankIndex: s.rankIndex || 0, depth: s.portalDepth || 1, army, gold: Math.round(s.resources.gold || 0) };
     try { localStorage.setItem('GOYDA_BRIDGE', JSON.stringify(bridge)); } catch (e) {}
+    // метка вылазки: запоминаем победы карточной, чтобы на возврате наградить за прирост (петля награды)
+    let cardWins = 0; try { const st = JSON.parse(localStorage.getItem('goyda_stats_v1')); cardWins = (st && st.wins) || 0; } catch (e) {}
+    try { localStorage.setItem('GOYDA_ARENA_TRIP', JSON.stringify({ cardWins })); } catch (e) {}
     this._portalSwirl(() => { location.href = '../'; });
+  }
+
+  // возврат из карточной арены: награда за прирост побед, пока был там (обе игры делят localStorage)
+  _checkArenaReturn() {
+    let trip = null; try { trip = JSON.parse(localStorage.getItem('GOYDA_ARENA_TRIP')); } catch (e) {}
+    if (!trip) return;
+    try { localStorage.removeItem('GOYDA_ARENA_TRIP'); } catch (e) {}
+    let wins = 0; try { const st = JSON.parse(localStorage.getItem('goyda_stats_v1')); wins = (st && st.wins) || 0; } catch (e) {}
+    const delta = Math.max(0, wins - (trip.cardWins || 0));
+    this._arenaReturn = { delta };
+    if (delta > 0) this.state.gain({ gold: delta * 30, faith: delta * 16, food: delta * 20 });
   }
 
   _doPortal(destKey) {

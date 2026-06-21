@@ -1,6 +1,6 @@
 // ===== Туман войны: видимость вокруг своих + оверлей-меш по рельефу =====
 import * as THREE from 'three';
-import { TILE } from '../data/config.js?v=72';
+import { TILE } from '../data/config.js?v=73';
 
 export class Fog {
   constructor(scene, grid) {
