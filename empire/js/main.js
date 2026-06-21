@@ -1,46 +1,47 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=74';
-import { RTSCamera } from './engine/RTSCamera.js?v=74';
-import { Picker } from './engine/Picker.js?v=74';
-import { Loop } from './engine/Loop.js?v=74';
-import { AssetManager } from './engine/AssetManager.js?v=74';
-import { TerrainMesh } from './world/TerrainMesh.js?v=74';
-import { WorldBase } from './world/WorldBase.js?v=74';
-import { Sky } from './world/Sky.js?v=74';
-import { Atmosphere } from './world/Atmosphere.js?v=74';
+import { Renderer } from './engine/Renderer.js?v=75';
+import { RTSCamera } from './engine/RTSCamera.js?v=75';
+import { Picker } from './engine/Picker.js?v=75';
+import { Loop } from './engine/Loop.js?v=75';
+import { AssetManager } from './engine/AssetManager.js?v=75';
+import { TerrainMesh } from './world/TerrainMesh.js?v=75';
+import { WorldBase } from './world/WorldBase.js?v=75';
+import { Sky } from './world/Sky.js?v=75';
+import { Atmosphere } from './world/Atmosphere.js?v=75';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=74';
-import { GameState } from './sim/GameState.js?v=74';
-import * as Economy from './sim/Economy.js?v=74';
-import * as BuildSys from './sim/Buildings.js?v=74';
-import * as Waves from './sim/Waves.js?v=74';
-import * as Tech from './sim/Tech.js?v=74';
-import * as Nature from './sim/Nature.js?v=74';
-import * as Relics from './sim/Relics.js?v=74';
-import * as Camps from './sim/Camps.js?v=74';
-import * as Wildlife from './sim/Wildlife.js?v=74';
-import * as Events from './sim/Events.js?v=74';
-import * as Achievements from './sim/Achievements.js?v=74';
-import * as Research from './sim/Research.js?v=74';
-import { updateUnits, damage } from './sim/Units.js?v=74';
-import { toggleEdict } from './sim/Edicts.js?v=74';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=74';
-import { AmbientAudio } from './audio/Music.js?v=74';
-import { HUD } from './ui/HUD.js?v=74';
-import { BuildMenu } from './ui/BuildMenu.js?v=74';
-import { Selection } from './ui/Selection.js?v=74';
-import { Minimap } from './ui/Minimap.js?v=74';
-import { ResearchPanel } from './ui/Research.js?v=74';
-import { Toasts } from './ui/Toasts.js?v=74';
-import { Leaderboard } from './ui/Leaderboard.js?v=74';
-import { BUILDINGS } from './data/buildings.js?v=74';
-import { RANKS } from './data/ranks.js?v=74';
-import { bark } from './data/barks.js?v=74';
-import { STORAGE_KEY } from './data/config.js?v=74';
-import { getFaction } from './data/factions.js?v=74';
-import { getMap, MAPS } from './data/maps.js?v=74';
-import { StartScreen } from './ui/StartScreen.js?v=74';
+import { nearestAdj } from './world/Pathfinding.js?v=75';
+import { GameState } from './sim/GameState.js?v=75';
+import * as Economy from './sim/Economy.js?v=75';
+import * as BuildSys from './sim/Buildings.js?v=75';
+import * as Waves from './sim/Waves.js?v=75';
+import * as Tech from './sim/Tech.js?v=75';
+import * as Nature from './sim/Nature.js?v=75';
+import * as Relics from './sim/Relics.js?v=75';
+import * as Camps from './sim/Camps.js?v=75';
+import * as Wildlife from './sim/Wildlife.js?v=75';
+import * as Events from './sim/Events.js?v=75';
+import * as Achievements from './sim/Achievements.js?v=75';
+import * as Meta from './sim/Meta.js?v=75';
+import * as Research from './sim/Research.js?v=75';
+import { updateUnits, damage } from './sim/Units.js?v=75';
+import { toggleEdict } from './sim/Edicts.js?v=75';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=75';
+import { AmbientAudio } from './audio/Music.js?v=75';
+import { HUD } from './ui/HUD.js?v=75';
+import { BuildMenu } from './ui/BuildMenu.js?v=75';
+import { Selection } from './ui/Selection.js?v=75';
+import { Minimap } from './ui/Minimap.js?v=75';
+import { ResearchPanel } from './ui/Research.js?v=75';
+import { Toasts } from './ui/Toasts.js?v=75';
+import { Leaderboard } from './ui/Leaderboard.js?v=75';
+import { BUILDINGS } from './data/buildings.js?v=75';
+import { RANKS } from './data/ranks.js?v=75';
+import { bark } from './data/barks.js?v=75';
+import { STORAGE_KEY } from './data/config.js?v=75';
+import { getFaction } from './data/factions.js?v=75';
+import { getMap, MAPS } from './data/maps.js?v=75';
+import { StartScreen } from './ui/StartScreen.js?v=75';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -201,7 +202,24 @@ class Game {
     const map = getMap(mk);
     this.buildWorld(map);
     this.initMap(map);
+    this._applyMetaPerks();          // бонусы старта за накопленную Доблесть (только свежая кампания)
     this._begin(false);
+  }
+
+  // мета-прогрессия: бонусы старта по накопленной Доблести (ресурсы + вольные воины)
+  _applyMetaPerks() {
+    const p = Meta.startPerks();
+    if (!p.tier) return;
+    this.state.gain({ gold: p.gold, food: p.food });
+    const g = this.state.grid, c = Math.floor(g.n / 2);
+    const spawnNear = (kind) => {
+      const adj = nearestAdj(g, c - 1, c - 1, 3, 3, c + ri(-3, 3), c + ri(2, 5)) || { x: c, y: c + 3 };
+      const w = g.gridToWorld(adj.x, adj.y); this.state.addUnit(kind, w.wx, w.wz, {});
+    };
+    if (p.freeRatnik) spawnNear('ratnik');
+    if (p.freeOprichnik) spawnNear('oprichnik');
+    this.state.recomputePop();
+    this._metaPerks = p;             // тост в _begin
   }
 
   buildWorld(map) {
@@ -278,6 +296,10 @@ class Game {
       this.toasts.show('🌀 Портал Дрона: высадка на ' + this.map.emoji + ' ' + this.map.name + ' · Земля №' + (this.state.portalDepth || 2) + '! ' + bark('win'), { big: true, gold: true });
       this._portalArrival = false;
     } else this.toasts.show(restored ? '⚔️ Поход продолжается…' : ('🗿 ' + (f ? f.emoji + ' ' + f.name : 'ГОЙДА') + ' · ' + this.map.name + '. ГОЙДА!'), { big: true, gold: true });
+    if (this._metaPerks) {
+      const p = this._metaPerks; this._metaPerks = null;
+      this.toasts.show('⭐ Доблесть ' + p.valor + ' · бонус старта: +' + p.gold + '🪙 +' + p.food + '🍖' + (p.freeRatnik ? ' +ратник' : '') + (p.freeOprichnik ? ' +опричник' : ''), { gold: true });
+    }
     if (this._glb > 0) this.toasts.show('Blender-моделей: ' + this._glb);
     window.__gboot && window.__gboot('loop ' + (restored ? 'restore' : 'new'));
     this.music.start();   // фоновая музыка (стартует на пользовательском жесте — старт-экран)
@@ -887,12 +909,14 @@ class Game {
     const ov = document.getElementById('overlay');
     sfx(kind === 'win' ? 'win' : 'lose');
     try { this.music && (kind === 'win' ? this.music.victory() : this.music.defeat()); } catch (e) {}
+    let metaLine = '';
+    try { const r = Meta.award(this.state, kind); metaLine = `<p style="opacity:.85">⭐ +${r.gain} Доблести (всего ${r.valor}) — бонусы следующей кампании</p>`; } catch (e) {}
     if (kind === 'win') {
       this.state.rankIndex = RANKS.length - 1;
       try { localStorage.removeItem('GOYDA_EMPIRE_SAVE_v1'); } catch (e) {}
-      ov.innerHTML = `<div class="end win"><h1>🌟 АБСОЛЮТ ГОЙДЫ 🌟</h1><p>Идол ДРОН пробуждён. ${bark('win')}</p><button onclick="location.reload()">ВНОВЬ ГОЙДАТЬ</button></div>`;
+      ov.innerHTML = `<div class="end win"><h1>🌟 АБСОЛЮТ ГОЙДЫ 🌟</h1><p>Идол ДРОН пробуждён. ${bark('win')}</p>${metaLine}<button onclick="location.reload()">ВНОВЬ ГОЙДАТЬ</button></div>`;
     } else {
-      ov.innerHTML = `<div class="end lose"><h1>💀 ПАЛАТЫ ПАЛИ 💀</h1><p>${bark('lose')} Держава пала на ${this.state.day}-й день.</p><button onclick="(function(){try{localStorage.removeItem('GOYDA_EMPIRE_SAVE_v1')}catch(e){}location.reload()})()">НОВЫЙ ПОХОД</button></div>`;
+      ov.innerHTML = `<div class="end lose"><h1>💀 ПАЛАТЫ ПАЛИ 💀</h1><p>${bark('lose')} Держава пала на ${this.state.day}-й день.</p>${metaLine}<button onclick="(function(){try{localStorage.removeItem('GOYDA_EMPIRE_SAVE_v1')}catch(e){}location.reload()})()">НОВЫЙ ПОХОД</button></div>`;
     }
     ov.style.display = 'flex';
     try { this.leaderboard.onGameEnd(kind); } catch (e) { console.warn('leaderboard', e); }   // итог → онлайн-таблица

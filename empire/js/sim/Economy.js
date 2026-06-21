@@ -1,6 +1,6 @@
 // ===== Экономика: производство/расход в день, счастье, ВЕРА, таймеры =====
-import { SIM_DT, DAY_TICKS } from '../data/config.js?v=74';
-import { edictMods } from './Edicts.js?v=74';
+import { SIM_DT, DAY_TICKS } from '../data/config.js?v=75';
+import { edictMods } from './Edicts.js?v=75';
 
 const DAY_SECONDS = DAY_TICKS * SIM_DT;   // 8 сек
 const FOOD_PER_POP = 1;
