@@ -1,47 +1,47 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=78';
-import { RTSCamera } from './engine/RTSCamera.js?v=78';
-import { Picker } from './engine/Picker.js?v=78';
-import { Loop } from './engine/Loop.js?v=78';
-import { AssetManager } from './engine/AssetManager.js?v=78';
-import { TerrainMesh } from './world/TerrainMesh.js?v=78';
-import { WorldBase } from './world/WorldBase.js?v=78';
-import { Sky } from './world/Sky.js?v=78';
-import { Atmosphere } from './world/Atmosphere.js?v=78';
+import { Renderer } from './engine/Renderer.js?v=79';
+import { RTSCamera } from './engine/RTSCamera.js?v=79';
+import { Picker } from './engine/Picker.js?v=79';
+import { Loop } from './engine/Loop.js?v=79';
+import { AssetManager } from './engine/AssetManager.js?v=79';
+import { TerrainMesh } from './world/TerrainMesh.js?v=79';
+import { WorldBase } from './world/WorldBase.js?v=79';
+import { Sky } from './world/Sky.js?v=79';
+import { Atmosphere } from './world/Atmosphere.js?v=79';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=78';
-import { GameState } from './sim/GameState.js?v=78';
-import * as Economy from './sim/Economy.js?v=78';
-import * as BuildSys from './sim/Buildings.js?v=78';
-import * as Waves from './sim/Waves.js?v=78';
-import * as Tech from './sim/Tech.js?v=78';
-import * as Nature from './sim/Nature.js?v=78';
-import * as Relics from './sim/Relics.js?v=78';
-import * as Camps from './sim/Camps.js?v=78';
-import * as Wildlife from './sim/Wildlife.js?v=78';
-import * as Events from './sim/Events.js?v=78';
-import * as Achievements from './sim/Achievements.js?v=78';
-import * as Meta from './sim/Meta.js?v=78';
-import * as Research from './sim/Research.js?v=78';
-import { updateUnits, damage } from './sim/Units.js?v=78';
-import { toggleEdict } from './sim/Edicts.js?v=78';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=78';
-import { AmbientAudio } from './audio/Music.js?v=78';
-import { HUD } from './ui/HUD.js?v=78';
-import { BuildMenu } from './ui/BuildMenu.js?v=78';
-import { Selection } from './ui/Selection.js?v=78';
-import { Minimap } from './ui/Minimap.js?v=78';
-import { ResearchPanel } from './ui/Research.js?v=78';
-import { Toasts } from './ui/Toasts.js?v=78';
-import { Leaderboard } from './ui/Leaderboard.js?v=78';
-import { BUILDINGS } from './data/buildings.js?v=78';
-import { RANKS } from './data/ranks.js?v=78';
-import { bark } from './data/barks.js?v=78';
-import { STORAGE_KEY } from './data/config.js?v=78';
-import { getFaction } from './data/factions.js?v=78';
-import { getMap, MAPS } from './data/maps.js?v=78';
-import { StartScreen } from './ui/StartScreen.js?v=78';
+import { nearestAdj } from './world/Pathfinding.js?v=79';
+import { GameState } from './sim/GameState.js?v=79';
+import * as Economy from './sim/Economy.js?v=79';
+import * as BuildSys from './sim/Buildings.js?v=79';
+import * as Waves from './sim/Waves.js?v=79';
+import * as Tech from './sim/Tech.js?v=79';
+import * as Nature from './sim/Nature.js?v=79';
+import * as Relics from './sim/Relics.js?v=79';
+import * as Camps from './sim/Camps.js?v=79';
+import * as Wildlife from './sim/Wildlife.js?v=79';
+import * as Events from './sim/Events.js?v=79';
+import * as Achievements from './sim/Achievements.js?v=79';
+import * as Meta from './sim/Meta.js?v=79';
+import * as Research from './sim/Research.js?v=79';
+import { updateUnits, damage } from './sim/Units.js?v=79';
+import { toggleEdict } from './sim/Edicts.js?v=79';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=79';
+import { AmbientAudio } from './audio/Music.js?v=79';
+import { HUD } from './ui/HUD.js?v=79';
+import { BuildMenu } from './ui/BuildMenu.js?v=79';
+import { Selection } from './ui/Selection.js?v=79';
+import { Minimap } from './ui/Minimap.js?v=79';
+import { ResearchPanel } from './ui/Research.js?v=79';
+import { Toasts } from './ui/Toasts.js?v=79';
+import { Leaderboard } from './ui/Leaderboard.js?v=79';
+import { BUILDINGS } from './data/buildings.js?v=79';
+import { RANKS } from './data/ranks.js?v=79';
+import { bark } from './data/barks.js?v=79';
+import { STORAGE_KEY } from './data/config.js?v=79';
+import { getFaction } from './data/factions.js?v=79';
+import { getMap, MAPS } from './data/maps.js?v=79';
+import { StartScreen } from './ui/StartScreen.js?v=79';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -203,7 +203,20 @@ class Game {
     this.buildWorld(map);
     this.initMap(map);
     this._applyMetaPerks();          // бонусы старта за накопленную Доблесть (только свежая кампания)
+    this._applyMutators();           // активные мутаторы-испытания (тяжелее, но Доблести больше)
     this._begin(false);
+  }
+
+  // мутаторы: множители боя + дельты старта + множитель Доблести (только свежая кампания)
+  _applyMutators() {
+    const e = Meta.mutatorEffects();
+    this.state.mutCount = e.count; this.state.mutHp = e.hp; this.state.mutValor = e.valor;
+    if (e.food) this.state.resources.food = Math.max(0, this.state.resources.food + e.food);
+    if (e.wood) this.state.resources.wood = Math.max(0, this.state.resources.wood + e.wood);
+    if (e.active.length) {
+      const ics = e.active.map(id => (Meta.MUTATORS.find(m => m.id === id) || {}).ic || '').join('');
+      this.toasts.show('🎲 Испытания ' + ics + ' активны · Доблесть ×' + e.valor.toFixed(2), { gold: true });
+    }
   }
 
   // мета-прогрессия: бонусы старта по накопленной Доблести (ресурсы + вольные воины)
@@ -239,11 +252,20 @@ class Game {
         return '<button data-buy="' + s.id + '" ' + (dim ? 'disabled' : '') + ' style="display:block;width:100%;margin:5px 0;padding:9px 12px;border-radius:9px;border:1px solid ' + border + ';background:' + bg + ';color:#f0e6ff;cursor:' + (dim ? 'default' : 'pointer') + ';font:inherit;text-align:left;opacity:' + (dim ? '0.75' : '1') + '">'
           + s.ic + ' <b>' + s.name + '</b> <span style="opacity:.7">— ' + s.desc + '</span><div style="font-size:12px;margin-top:3px;color:#cbb8e8">' + label + '</div></button>';
       }).join('');
+      const onMut = Meta.getMutators();
+      const muts = Meta.MUTATORS.map(mt => {
+        const act = onMut.includes(mt.id);
+        return '<button data-mut="' + mt.id + '" style="display:block;width:100%;margin:5px 0;padding:8px 12px;border-radius:9px;border:1px solid ' + (act ? '#ff5cf0' : '#5a4a7a') + ';background:' + (act ? '#3a0e2e' : '#1a1430') + ';color:#f0e6ff;cursor:pointer;font:inherit;text-align:left">'
+          + (act ? '☑ ' : '☐ ') + mt.ic + ' <b>' + mt.name + '</b> <span style="opacity:.7">— ' + mt.desc + '</span> <span style="color:#ffd84a">⭐×' + (mt.valor || 1) + '</span></button>';
+      }).join('');
       this._shopEl.innerHTML = '<div style="font-size:19px;font-weight:800;margin-bottom:2px">⭐ Палата Доблести</div>'
         + '<div style="opacity:.85;margin-bottom:10px">Доблесть: <b>' + m.valor + '</b> · побед ' + m.wins + ' · лучшая Земля №' + m.bestDepth + '. Разблокировки постоянны и действуют с новой кампании.</div>'
         + rows
+        + '<div style="margin:12px 0 2px;font-weight:700">🎲 Испытания (мутаторы)</div><div style="opacity:.7;font-size:12px;margin-bottom:6px">Тяжелее, но Доблести больше. Вступают в силу с новой кампании.</div>'
+        + muts
         + '<button data-buy="__close" style="margin-top:8px;padding:7px 16px;border-radius:8px;border:1px solid #555;background:#1a1626;color:#cbb8e8;cursor:pointer;font:inherit">Закрыть</button>';
       this._shopEl.querySelectorAll('button').forEach(b => b.onclick = () => {
+        if (b.dataset.mut) { Meta.toggleMutator(b.dataset.mut); sfx('click'); render(); return; }
         const id = b.dataset.buy;
         if (id === '__close') { this._shopEl.remove(); this._shopEl = null; sfx('click'); return; }
         const r = Meta.buy(id);

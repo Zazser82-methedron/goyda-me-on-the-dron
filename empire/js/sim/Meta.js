@@ -13,7 +13,7 @@ export function award(state, kind) {
   const m = load();
   const day = Math.floor(state.day || 0);
   const depth = state.portalDepth || 1;
-  const gain = day + depth * 5 + (kind === 'win' ? 60 : 0);
+  const gain = Math.round((day + depth * 5 + (kind === 'win' ? 60 : 0)) * (state.mutValor || 1));   // мутаторы множат награду
   m.valor += gain; m.runs += 1;
   if (kind === 'win') m.wins += 1;
   m.bestDay = Math.max(m.bestDay, day);
@@ -53,4 +53,27 @@ export function startPerks() {
     freeOprichnik: u.includes('freeOprichnik'),
     any: u.length > 0,
   };
+}
+
+// ===== Мутаторы: добровольные испытания — партия тяжелее, но Доблести больше =====
+const MUT_KEY = 'GOYDA_MUTATORS';
+export const MUTATORS = [
+  { id: 'swarm', name: 'Орда', ic: '👹', desc: 'Набеги многочисленнее (×1.5)', count: 1.5, valor: 1.4 },
+  { id: 'titans', name: 'Титаны', ic: '🗿', desc: 'Враги живучее (+35% HP)', hp: 1.35, valor: 1.4 },
+  { id: 'scarcity', name: 'Скудная земля', ic: '🏜️', desc: 'Скудный старт (−40🍖 −50🪵)', food: -40, wood: -50, valor: 1.3 },
+  { id: 'blitz', name: 'Блиц', ic: '⚡', desc: 'Набеги злее (×1.3 число, +20% HP)', count: 1.3, hp: 1.2, valor: 1.6 },
+];
+export function getMutators() { try { const a = JSON.parse(localStorage.getItem(MUT_KEY)); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+export function toggleMutator(id) {
+  let a = getMutators();
+  a = a.includes(id) ? a.filter(x => x !== id) : a.concat(id);
+  try { localStorage.setItem(MUT_KEY, JSON.stringify(a)); } catch (e) {}
+  return a;
+}
+// агрегированные эффекты активных мутаторов (множители боя + дельты старта + множитель Доблести)
+export function mutatorEffects() {
+  const on = getMutators();
+  let count = 1, hp = 1, valor = 1, food = 0, wood = 0;
+  for (const m of MUTATORS) if (on.includes(m.id)) { count *= m.count || 1; hp *= m.hp || 1; valor *= m.valor || 1; food += m.food || 0; wood += m.wood || 0; }
+  return { count, hp, valor, food, wood, active: on };
 }
