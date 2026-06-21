@@ -1,5 +1,5 @@
 // ===== Идолы-реликвии: ауры по радиусу (slow/aoe/heal). Эконом-идолы — через produce. =====
-import { damage } from './Units.js?v=75';
+import { damage } from './Units.js?v=76';
 
 function d2(ax, az, bx, bz) { return (ax - bx) ** 2 + (az - bz) ** 2; }
 

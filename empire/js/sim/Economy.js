@@ -1,6 +1,6 @@
 // ===== Экономика: производство/расход в день, счастье, ВЕРА, таймеры =====
-import { SIM_DT, DAY_TICKS } from '../data/config.js?v=75';
-import { edictMods } from './Edicts.js?v=75';
+import { SIM_DT, DAY_TICKS } from '../data/config.js?v=76';
+import { edictMods } from './Edicts.js?v=76';
 
 const DAY_SECONDS = DAY_TICKS * SIM_DT;   // 8 сек
 const FOOD_PER_POP = 1;
@@ -43,6 +43,21 @@ function onDay(state, ctx) {
   state.resources.food -= cons;
   let starve = false;
   if (state.resources.food < 0) { starve = true; state.resources.food = 0; }
+
+  // РЫНОК: торговля излишками — что копится сверх 85% склада, продаём за золото (экономический смысл рынка)
+  const markets = built.filter(b => b.kind === 'market' || b.kind === 'traktir').length;
+  if (markets > 0) {
+    const rate = { wood: 0.25, stone: 0.3, iron: 0.6, gems: 1.2 };
+    let earned = 0;
+    for (const k in rate) {
+      const overflow = (state.resources[k] || 0) - (state.cap[k] || 400) * 0.85;
+      if (overflow > 0) { const sell = Math.min(overflow, 20 * markets); state.resources[k] -= sell; earned += sell * rate[k]; }
+    }
+    if (earned > 0) {
+      state.gain({ gold: Math.round(earned) });
+      if (earned > 10 && Math.random() < 0.4) ctx.toast && ctx.toast('🛒 Рынок сбыл излишки: +' + Math.round(earned) + '🪙', { gold: true });
+    }
+  }
 
   // целевое счастье
   const foodBal = food - cons;

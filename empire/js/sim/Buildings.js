@@ -1,10 +1,10 @@
 // ===== Постройка, стройка-прогресс и тренировка юнитов =====
-import { BUILDINGS } from '../data/buildings.js?v=75';
-import { UNITS } from '../data/units.js?v=75';
-import { RANKS } from '../data/ranks.js?v=75';
-import { nearestAdj } from '../world/Pathfinding.js?v=75';
-import { bark } from '../data/barks.js?v=75';
-import { edictMods } from './Edicts.js?v=75';
+import { BUILDINGS } from '../data/buildings.js?v=76';
+import { UNITS } from '../data/units.js?v=76';
+import { RANKS } from '../data/ranks.js?v=76';
+import { nearestAdj } from '../world/Pathfinding.js?v=76';
+import { bark } from '../data/barks.js?v=76';
+import { edictMods } from './Edicts.js?v=76';
 
 function trainTime(state, kind) {
   const base = UNITS[kind].trainTime;
