@@ -2295,5 +2295,27 @@ setTimeout(()=>{
   start();
 })();
 </script>
+<script>
+/* Мост из ГОЙДА-ИМПЕРИИ: если пришли порталом — баннер прибытия + кнопка назад. Самодостаточно, не трогает игру. */
+(function () {
+  try {
+    var b = JSON.parse(localStorage.getItem('GOYDA_BRIDGE') || 'null');
+    if (!b || b.from !== 'empire') return;
+    localStorage.removeItem('GOYDA_BRIDGE');
+    var show = function () {
+      var d = document.createElement('div');
+      d.style.cssText = 'position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:99990;background:linear-gradient(180deg,#241840,#160e2a);border:2px solid #9a5cff;border-radius:12px;padding:10px 16px;color:#ece0ff;font:700 14px/1.45 system-ui,sans-serif;box-shadow:0 8px 30px rgba(60,10,140,.6);text-align:center;max-width:92%';
+      d.innerHTML = '🌀 Ты прибыл порталом из <b>ГОЙДА-ИМПЕРИИ</b> · Земля №' + (b.depth || 1) + ', ранг ' + (b.rankIndex || 0) + ', дружина ' + (b.army || 0) + '. Сразись в картах — и возвращайся! '
+        + '<button id="bridgeBack" style="margin-left:8px;padding:5px 12px;border-radius:8px;border:1px solid #c8922e;background:#2c2113;color:#ffe6a8;cursor:pointer;font:inherit">🏰 Назад в Империю</button>'
+        + '<button id="bridgeClose" style="margin-left:6px;padding:5px 10px;border-radius:8px;border:1px solid #555;background:#1a1626;color:#cbb8e8;cursor:pointer;font:inherit">✕</button>';
+      document.body.appendChild(d);
+      var bk = d.querySelector('#bridgeBack'); if (bk) bk.onclick = function () { location.href = 'empire/'; };
+      var cl = d.querySelector('#bridgeClose'); if (cl) cl.onclick = function () { d.remove(); };
+      setTimeout(function () { if (d.parentNode) d.style.transition = 'opacity 1s', d.style.opacity = '0.55'; }, 9000);
+    };
+    if (document.body) show(); else window.addEventListener('DOMContentLoaded', show);
+  } catch (e) {}
+})();
+</script>
 </body>
 </html>

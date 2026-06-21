@@ -1,5 +1,5 @@
 // ===== Всплывающие сообщения (ранг-ап / набег / указ / барки) =====
-import { sfx } from '../audio/Sfx.js?v=71';
+import { sfx } from '../audio/Sfx.js?v=72';
 
 export class Toasts {
   constructor(el) { this.el = el; }
