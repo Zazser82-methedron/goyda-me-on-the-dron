@@ -1,11 +1,11 @@
 // ===== Единый источник правды: ресурсы, сущности, ранги, сейв =====
 import * as THREE from 'three';
-import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=81';
-import { Grid } from '../world/Grid.js?v=81';
-import { NodeField } from '../world/NodeField.js?v=81';
-import { BUILDINGS } from '../data/buildings.js?v=81';
-import { UNITS } from '../data/units.js?v=81';
-import { RANKS } from '../data/ranks.js?v=81';
+import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=82';
+import { Grid } from '../world/Grid.js?v=82';
+import { NodeField } from '../world/NodeField.js?v=82';
+import { BUILDINGS } from '../data/buildings.js?v=82';
+import { UNITS } from '../data/units.js?v=82';
+import { RANKS } from '../data/ranks.js?v=82';
 
 export class GameState {
   constructor(scene, assets) {
@@ -22,6 +22,7 @@ export class GameState {
 
     this.resources = { food: 70, wood: 80, stone: 70, iron: 0, gold: 45, gems: 0, faith: 15 };
     this.cap = { food: 400, wood: 400, stone: 400, iron: 300, gold: 400, gems: 150, faith: 999 };
+    this.stats = { slain: 0, camps: 0, vets: 0 };   // счётчики похода → Сводка в конце
 
     // исследования (древо технологий) — множители/бонусы
     this.research = { done: {}, gatherMul: 1, dmgMul: 1, hpMul: 1, spdMul: 1, popBonus: 0, foodDay: 0, goldDay: 0, faithDay: 0 };

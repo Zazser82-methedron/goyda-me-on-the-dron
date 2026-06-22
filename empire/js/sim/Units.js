@@ -1,8 +1,8 @@
 // ===== Движение, бой и ИИ юнитов (свои воины + враги). Воркеры — в Jobs.js =====
-import { TILE } from '../data/config.js?v=81';
-import { findPath, nearestAdj } from '../world/Pathfinding.js?v=81';
-import { updateWorker } from './Jobs.js?v=81';
-import { bark } from '../data/barks.js?v=81';
+import { TILE } from '../data/config.js?v=82';
+import { findPath, nearestAdj } from '../world/Pathfinding.js?v=82';
+import { updateWorker } from './Jobs.js?v=82';
+import { bark } from '../data/barks.js?v=82';
 
 export function tileCenter(state, tx, ty) { const w = state.grid.gridToWorld(tx, ty); return { x: w.wx, z: w.wz }; }
 function dist2(ax, az, bx, bz) { return (ax - bx) ** 2 + (az - bz) ** 2; }
@@ -50,11 +50,12 @@ export function moveStep(state, u, dt) {
 
 // ветеранство своих воинов: за убийства растёт ранг (★) — +урон/+HP/подлечка, видимо крупнее
 const VET_KILLS = [3, 8, 16];                                    // пороги до ранга 1/2/3
-function promoteVeteran(u, ctx) {
+function promoteVeteran(state, u, ctx) {
   u.kills = (u.kills || 0) + 1;
   const lvl = u.vet || 0;
   if (lvl < 3 && u.kills >= VET_KILLS[lvl]) {
     u.vet = lvl + 1;
+    if (lvl === 0 && state.stats) state.stats.vets++;            // новый ветеран — в сводку
     u.maxHp = Math.round((u.maxHp || u.def.hp || u.hp) * 1.12);  // +12% макс HP за ранг
     u.hp = Math.min(u.maxHp, u.hp + u.maxHp * 0.35);             // подлечить наградой
     u._vetApplied = false;                                       // render обновит масштаб-маркер
@@ -71,7 +72,7 @@ export function damage(state, target, amt, ctx, attacker) {
   if (target.type === 'building' && ctx.flash) ctx.flash(target);
   if (target.hp <= 0) {
     if (target.type === 'unit') {
-      if (attacker && attacker.faction === 'ours' && target.faction === 'enemy') promoteVeteran(attacker, ctx);
+      if (attacker && attacker.faction === 'ours' && target.faction === 'enemy') { promoteVeteran(state, attacker, ctx); if (state.stats) state.stats.slain++; }
       if (ctx.shake) ctx.shake(target.bossKey ? 0.7 : 0.26);     // тряска на гибели (босс — сильнее)
       if (target.bossKey && ctx.hitStop) ctx.hitStop(0.08);      // hit-pause на смерти босса
       if (target.bossKey && ctx.onBossDown) ctx.onBossDown(target);
@@ -148,7 +149,7 @@ function attackCamp(state, u, camp, ctx) {
   u.atkT = u.def.atkCd; u.atkAnim = 0.2;
   camp.hp -= u.dmg * (state.superTimer > 0 ? 1.5 : 1);
   if (ctx.sfx) ctx.sfx('hit');
-  if (camp.hp <= 0) { state.removeCamp(camp); state.gain({ gold: 45, faith: 22 }); ctx.toast && ctx.toast('🏴 Стан снесён! +45🪙 +22☩', { gold: true }); }
+  if (camp.hp <= 0) { state.removeCamp(camp); if (state.stats) state.stats.camps++; state.gain({ gold: 45, faith: 22 }); ctx.toast && ctx.toast('🏴 Стан снесён! +45🪙 +22☩', { gold: true }); }
 }
 
 // ---- свои воины: стойки aggro / defend / hold; сносят станы ----
