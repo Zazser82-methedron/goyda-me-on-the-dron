@@ -1,7 +1,7 @@
 // ===== Панель выбранной сущности: HP, тренировка, инфо =====
-import { UNITS } from '../data/units.js?v=83';
-import { RES_LABEL } from '../data/config.js?v=83';
-import { costStr } from './BuildMenu.js?v=83';
+import { UNITS } from '../data/units.js?v=84';
+import { RES_LABEL } from '../data/config.js?v=84';
+import { costStr } from './BuildMenu.js?v=84';
 
 function hpBar(hp, max) {
   const p = Math.max(0, Math.min(1, hp / max));
@@ -44,9 +44,11 @@ export class Selection {
           <button class="stbtn" data-st="aggro" title="Сами ищут и бьют врага по всей карте">⚔️ Агр</button>
           <button class="stbtn" data-st="defend" title="Бьют врага у базы, иначе держат рубеж">🛡️ Оборона</button>
           <button class="stbtn" data-st="hold" title="Стоят на месте, бьют только в упор">✋ Стоять</button></div>`;
-        html += `<div class="sel-tag">ПКМ — идти куда укажешь / в атаку</div>`;
+        html += `<button class="ord-btn" title="Нажми, потом укажи цель на карте">🎯 ПРИКАЗ</button>`;
+        html += `<div class="sel-tag">ПКМ (или 🎯 ПРИКАЗ) — идти куда укажешь / в атаку</div>`;
       } else if (sel.def.worker) {
-        html += `<div class="sel-tag">ПКМ по ресурсу 🌳🪨🪙 — рубить · ПКМ по земле — идти</div>`;
+        html += `<button class="ord-btn" title="Нажми, потом укажи цель на карте">🎯 ПРИКАЗ</button>`;
+        html += `<div class="sel-tag">ПКМ (или 🎯 ПРИКАЗ) по ресурсу 🌳🪨🪙 — рубить · по земле — идти</div>`;
       }
     } else if (sel.type === 'node') {
       const lbl = RES_LABEL[sel.resType];
@@ -74,6 +76,8 @@ export class Selection {
         this.el.querySelectorAll('.stbtn').forEach(b => b.classList.toggle('on', b.dataset.st === btn.dataset.st));
       };
     });
+    const ord = this.el.querySelector('.ord-btn');
+    if (ord) ord.onclick = () => this.game._armOrder();
   }
 
   _dynamic(sel) {

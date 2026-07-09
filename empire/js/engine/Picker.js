@@ -69,4 +69,20 @@ export class Picker {
     }
     return null;
   }
+
+  // как entityUnder, но с запасом радиуса вокруг (cx,cy) в пикселях — палец толще курсора, точный райкаст часто мажет
+  entityUnderNear(camera, pickables, fields, cx, cy, radiusPx) {
+    const r = this.dom.getBoundingClientRect();
+    const test = (x, y) => {
+      this.ndc.x = ((x - r.left) / r.width) * 2 - 1;
+      this.ndc.y = -((y - r.top) / r.height) * 2 + 1;
+      return this.entityUnder(camera, pickables, fields);
+    };
+    let e = test(cx, cy);
+    if (e || !radiusPx) return e;
+    const k = radiusPx * 0.7071;
+    const offs = [[radiusPx, 0], [-radiusPx, 0], [0, radiusPx], [0, -radiusPx], [k, k], [-k, k], [k, -k], [-k, -k]];
+    for (const [ox, oy] of offs) { e = test(cx + ox, cy + oy); if (e) return e; }
+    return null;
+  }
 }

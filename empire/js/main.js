@@ -1,48 +1,48 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=83';
-import * as Quality from './engine/Quality.js?v=83';
-import { RTSCamera } from './engine/RTSCamera.js?v=83';
-import { Picker } from './engine/Picker.js?v=83';
-import { Loop } from './engine/Loop.js?v=83';
-import { AssetManager } from './engine/AssetManager.js?v=83';
-import { TerrainMesh } from './world/TerrainMesh.js?v=83';
-import { WorldBase } from './world/WorldBase.js?v=83';
-import { Sky } from './world/Sky.js?v=83';
-import { Atmosphere } from './world/Atmosphere.js?v=83';
+import { Renderer } from './engine/Renderer.js?v=84';
+import * as Quality from './engine/Quality.js?v=84';
+import { RTSCamera } from './engine/RTSCamera.js?v=84';
+import { Picker } from './engine/Picker.js?v=84';
+import { Loop } from './engine/Loop.js?v=84';
+import { AssetManager } from './engine/AssetManager.js?v=84';
+import { TerrainMesh } from './world/TerrainMesh.js?v=84';
+import { WorldBase } from './world/WorldBase.js?v=84';
+import { Sky } from './world/Sky.js?v=84';
+import { Atmosphere } from './world/Atmosphere.js?v=84';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=83';
-import { GameState } from './sim/GameState.js?v=83';
-import * as Economy from './sim/Economy.js?v=83';
-import * as BuildSys from './sim/Buildings.js?v=83';
-import * as Waves from './sim/Waves.js?v=83';
-import * as Tech from './sim/Tech.js?v=83';
-import * as Nature from './sim/Nature.js?v=83';
-import * as Relics from './sim/Relics.js?v=83';
-import * as Camps from './sim/Camps.js?v=83';
-import * as Wildlife from './sim/Wildlife.js?v=83';
-import * as Events from './sim/Events.js?v=83';
-import * as Achievements from './sim/Achievements.js?v=83';
-import * as Meta from './sim/Meta.js?v=83';
-import * as Research from './sim/Research.js?v=83';
-import { updateUnits, damage } from './sim/Units.js?v=83';
-import { toggleEdict } from './sim/Edicts.js?v=83';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=83';
-import { AmbientAudio } from './audio/Music.js?v=83';
-import { HUD } from './ui/HUD.js?v=83';
-import { BuildMenu } from './ui/BuildMenu.js?v=83';
-import { Selection } from './ui/Selection.js?v=83';
-import { Minimap } from './ui/Minimap.js?v=83';
-import { ResearchPanel } from './ui/Research.js?v=83';
-import { Toasts } from './ui/Toasts.js?v=83';
-import { Leaderboard } from './ui/Leaderboard.js?v=83';
-import { BUILDINGS } from './data/buildings.js?v=83';
-import { RANKS } from './data/ranks.js?v=83';
-import { bark } from './data/barks.js?v=83';
-import { STORAGE_KEY } from './data/config.js?v=83';
-import { getFaction } from './data/factions.js?v=83';
-import { getMap, MAPS } from './data/maps.js?v=83';
-import { StartScreen } from './ui/StartScreen.js?v=83';
+import { nearestAdj } from './world/Pathfinding.js?v=84';
+import { GameState } from './sim/GameState.js?v=84';
+import * as Economy from './sim/Economy.js?v=84';
+import * as BuildSys from './sim/Buildings.js?v=84';
+import * as Waves from './sim/Waves.js?v=84';
+import * as Tech from './sim/Tech.js?v=84';
+import * as Nature from './sim/Nature.js?v=84';
+import * as Relics from './sim/Relics.js?v=84';
+import * as Camps from './sim/Camps.js?v=84';
+import * as Wildlife from './sim/Wildlife.js?v=84';
+import * as Events from './sim/Events.js?v=84';
+import * as Achievements from './sim/Achievements.js?v=84';
+import * as Meta from './sim/Meta.js?v=84';
+import * as Research from './sim/Research.js?v=84';
+import { updateUnits, damage } from './sim/Units.js?v=84';
+import { toggleEdict } from './sim/Edicts.js?v=84';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=84';
+import { AmbientAudio } from './audio/Music.js?v=84';
+import { HUD } from './ui/HUD.js?v=84';
+import { BuildMenu } from './ui/BuildMenu.js?v=84';
+import { Selection } from './ui/Selection.js?v=84';
+import { Minimap } from './ui/Minimap.js?v=84';
+import { ResearchPanel } from './ui/Research.js?v=84';
+import { Toasts } from './ui/Toasts.js?v=84';
+import { Leaderboard } from './ui/Leaderboard.js?v=84';
+import { BUILDINGS } from './data/buildings.js?v=84';
+import { RANKS } from './data/ranks.js?v=84';
+import { bark } from './data/barks.js?v=84';
+import { STORAGE_KEY } from './data/config.js?v=84';
+import { getFaction } from './data/factions.js?v=84';
+import { getMap, MAPS } from './data/maps.js?v=84';
+import { StartScreen } from './ui/StartScreen.js?v=84';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -91,6 +91,7 @@ class Game {
     this._buildRot = 0;            // поворот призрака/постройки (0..3 = 0/90/180/270°)
     this.placing = false;
     this._keepBuild = false;
+    this._orderPending = false;    // «🎯 ПРИКАЗ» взведён — следующий тап/клик = команда (мобила без ПКМ)
     this._ghostModels = {};
     this.lastRender = performance.now();
     this._uiT = 0;
@@ -520,9 +521,10 @@ class Game {
       if (e.pointerType === 'touch') return;   // тач обрабатывается отдельно (_touchInput)
       resumeAudio();
       this.picker.setFromEvent(e);
-      if (e.button === 0) {            // ЛКМ — выбор / постройка
+      if (e.button === 0) {            // ЛКМ — выбор / постройка / (если взведён 🎯 ПРИКАЗ) — команда
         this._keepBuild = e.shiftKey;
-        if (this.buildKind) { this.placing = true; this._placeAt(); }
+        if (this._orderPending) { this._orderPending = false; this._command(); this._syncOrderBtn(); }
+        else if (this.buildKind) { this.placing = true; this._placeAt(); }
         else this._select();
       } else if (e.button === 2) {     // ПКМ — команда (или отмена стройки)
         e.preventDefault();
@@ -539,7 +541,7 @@ class Game {
     window.addEventListener('pointerup', () => { this.placing = false; });
     this._touchInput();
     window.addEventListener('keydown', (e) => {
-      if (e.code === 'Escape') { this.buildKind = null; this.terrain.hideGhost(); this.state.selected = null; }
+      if (e.code === 'Escape') { this.buildKind = null; this.terrain.hideGhost(); this.state.selected = null; this._orderPending = false; }
       else if (e.code === 'Space') { e.preventDefault(); this.activateSuper(); }
       else if (e.code === 'KeyR' && this.buildKind) { this._buildRot = ((this._buildRot || 0) + 1) % 4; sfx('click'); }   // R — повернуть постройку
       else if (e.code === 'KeyP') { this._setSpeed(this.loop.speed > 0 ? 0 : (this._lastSpeed || 1)); }                  // P — пауза/продолжить
@@ -614,44 +616,72 @@ class Game {
     return a;
   }
 
-  _entUnder() { return this.picker.entityUnder(this.camera, this._pickables(), Object.values(this.state.fields)); }
+  // cx,cy (экранные px) переданы только с тача — тогда, если точный райкаст промазал, пробуем с запасом радиуса
+  // (палец толще курсора мыши; так тап-цели юнитов/ресурсов эффективно крупнее)
+  _entUnder(cx, cy) {
+    const list = this._pickables(), fields = Object.values(this.state.fields);
+    const exact = this.picker.entityUnder(this.camera, list, fields);
+    if (exact || cx === undefined) return exact;
+    return this.picker.entityUnderNear(this.camera, list, fields, cx, cy, 22);
+  }
 
-  // ТАЧ-управление: тап = выбор/постройка, долгий тап = команда (ПКМ), 1 палец drag = пан, щипок = зум
+  // ТАЧ-управление: тап = выбор/постройка; двойной тап (или взведённый 🎯 ПРИКАЗ) = команда;
+  // 1 палец drag = пан; 2 пальца — щипок = зум, твист = поворот камеры
   _touchInput() {
     const cv = this.canvas, R = this.cameraRig;
-    let sx = 0, sy = 0, lx = 0, ly = 0, t0 = 0, moved = false, pinch = false, pinchD = 0, lp = null;
+    let sx = 0, sy = 0, lx = 0, ly = 0, t0 = 0, moved = false, pinch = false, pinchD = 0, pinchA = 0;
+    let lastTap = null;   // { t, x, y } — для двойного тапа
     const dist = (ts) => Math.hypot(ts[0].clientX - ts[1].clientX, ts[0].clientY - ts[1].clientY);
+    const angle = (ts) => Math.atan2(ts[1].clientY - ts[0].clientY, ts[1].clientX - ts[0].clientX);
     cv.addEventListener('touchstart', (e) => {
       resumeAudio();
       if (e.touches.length === 1) {
         const t = e.touches[0]; sx = lx = t.clientX; sy = ly = t.clientY; t0 = performance.now(); moved = false; pinch = false;
-        lp = setTimeout(() => { if (!moved && !pinch) { this.picker.setFromEvent({ clientX: sx, clientY: sy }); this._command(); moved = true; } }, 430);   // долгий тап → команда
-      } else if (e.touches.length >= 2) { pinch = true; clearTimeout(lp); pinchD = dist(e.touches); }
+      } else if (e.touches.length >= 2) { pinch = true; pinchD = dist(e.touches); pinchA = angle(e.touches); }
     }, { passive: false });
     cv.addEventListener('touchmove', (e) => {
       e.preventDefault();
-      if (pinch && e.touches.length >= 2) { const d = dist(e.touches); if (pinchD > 0 && d > 0) R.zoomBy(pinchD / d); pinchD = d; return; }
+      if (pinch && e.touches.length >= 2) {
+        const d = dist(e.touches), a = angle(e.touches);
+        if (pinchD > 0 && d > 0) R.zoomBy(pinchD / d);
+        let da = a - pinchA; if (da > Math.PI) da -= Math.PI * 2; else if (da < -Math.PI) da += Math.PI * 2;
+        R.rotateBy(-da);
+        pinchD = d; pinchA = a;
+        return;
+      }
       if (e.touches.length === 1) {
         const t = e.touches[0], dx = t.clientX - lx, dy = t.clientY - ly; lx = t.clientX; ly = t.clientY;
-        if (!moved && (Math.abs(t.clientX - sx) > 9 || Math.abs(t.clientY - sy) > 9)) { moved = true; clearTimeout(lp); }
+        if (!moved && (Math.abs(t.clientX - sx) > 9 || Math.abs(t.clientY - sy) > 9)) moved = true;
         if (moved) R.panDrag(dx, dy);
       }
     }, { passive: false });
     cv.addEventListener('touchend', (e) => {
-      clearTimeout(lp);
-      if (!moved && !pinch && (performance.now() - t0) < 420) {   // короткий тап → выбор/постройка
+      if (!moved && !pinch && (performance.now() - t0) < 420) {   // короткий тап
         this.picker.setFromEvent({ clientX: sx, clientY: sy });
-        if (this.buildKind) { this.placing = true; this._placeAt(); this.placing = false; }
-        else this._select();
+        const now = performance.now();
+        if (this._orderPending) {                                  // взведён 🎯 ПРИКАЗ → команда сразу
+          this._orderPending = false; this._command(sx, sy); this._syncOrderBtn(); lastTap = null;
+        } else {
+          const dbl = lastTap && (now - lastTap.t < 320) && Math.hypot(sx - lastTap.x, sy - lastTap.y) < 40;
+          if (dbl && lastTap.sel) {   // двойной тап по цели → команда юниту, что был выбран ДО этого тапа
+            this.state.selected = lastTap.sel;   // первый тап пары мог его переселектить/сбросить — вернём
+            this._command(sx, sy); lastTap = null;
+          } else {
+            const selBefore = this.state.selected;
+            if (this.buildKind) { this.placing = true; this._placeAt(); this.placing = false; }
+            else this._select(sx, sy);
+            lastTap = { t: now, x: sx, y: sy, sel: (selBefore && selBefore.type === 'unit' && selBefore.faction === 'ours') ? selBefore : null };
+          }
+        }
       }
       if (e.touches.length === 0) { pinch = false; moved = false; }
     }, { passive: false });
-    cv.addEventListener('touchcancel', () => { clearTimeout(lp); pinch = false; moved = false; });
+    cv.addEventListener('touchcancel', () => { pinch = false; moved = false; });
   }
 
-  // ЛКМ — только выбор
-  _select() {
-    const ent = this._entUnder();
+  // ЛКМ / тап — только выбор
+  _select(cx, cy) {
+    const ent = this._entUnder(cx, cy);
     this.state.selected = ent || null;
     if (ent) {
       sfx('click');
@@ -659,11 +689,11 @@ class Game {
     }
   }
 
-  // ПКМ — команда выбранному своему юниту (двигаться / рубить / в атаку)
-  _command() {
+  // ПКМ / 🎯 ПРИКАЗ / двойной тап — команда выбранному своему юниту (двигаться / рубить / в атаку)
+  _command(cx, cy) {
     const sel = this.state.selected;
     if (!(sel && sel.type === 'unit' && sel.faction === 'ours')) return;
-    const ent = this._entUnder();
+    const ent = this._entUnder(cx, cy);
     // рубить ресурс (для добытчика)
     if (ent && ent.type === 'node' && sel.def.worker) {
       sel.huntId = null; sel.job = ent.id; sel.jobType = ent.resType; sel.manualIdle = false; sel.moveOrder = null; sel.path = null; sel.state = 'toNode';
@@ -700,7 +730,21 @@ class Game {
     }
   }
 
-  enterBuild(kind) { this.buildKind = kind; this.state.selected = null; sfx('click'); }
+  enterBuild(kind) { this.buildKind = kind; this.state.selected = null; this._orderPending = false; sfx('click'); }
+
+  // взвести/снять 🎯 ПРИКАЗ (кнопка в панели выбора) — следующий тап/клик станет командой (замена ПКМ на тач)
+  _armOrder() {
+    const sel = this.state.selected;
+    if (!(sel && sel.type === 'unit' && sel.faction === 'ours')) return;
+    this._orderPending = !this._orderPending;
+    sfx('click');
+    if (this._orderPending) this.toasts.show('🎯 Укажи цель на карте — идти / рубить / охотиться / в атаку', { gold: true });
+    this._syncOrderBtn();
+  }
+  _syncOrderBtn() {
+    const b = this.selUI.el.querySelector('.ord-btn');
+    if (b) b.classList.toggle('armed', !!this._orderPending);
+  }
   train(b, uk) { BuildSys.queueTrain(this.state, b, uk, this.ctx); }
   toggleEdictUI(key) { toggleEdict(this.state, key, this.ctx); }
   setStance(u, st) { u.stance = st; u.path = null; u.moveOrder = null; sfx('click'); }

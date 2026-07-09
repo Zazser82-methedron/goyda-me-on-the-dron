@@ -1,6 +1,6 @@
 // ===== RTS-камера: пан по XZ, орбита (ПКМ/Q-E), зум колесом, сглаживание =====
 import * as THREE from 'three';
-import { GRID_N, TILE } from '../data/config.js?v=83';
+import { GRID_N, TILE } from '../data/config.js?v=84';
 
 export class RTSCamera {
   constructor(dom) {
@@ -138,6 +138,8 @@ export class RTSCamera {
     this.target.z -= (dx * sin + dy * cos) * f;
   }
   zoomBy(f) { this.radius = THREE.MathUtils.clamp(this.radius * f, this.minRadius, this.maxRadius); }
+  // тач: поворот двумя пальцами (твист) — dAngle в радианах
+  rotateBy(dAngle) { this.azimuth += dAngle; }
 
   resize(w, h) {
     this.camera.aspect = w / h;
