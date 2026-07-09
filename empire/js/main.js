@@ -1,48 +1,48 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=86';
-import * as Quality from './engine/Quality.js?v=86';
-import { RTSCamera } from './engine/RTSCamera.js?v=86';
-import { Picker } from './engine/Picker.js?v=86';
-import { Loop } from './engine/Loop.js?v=86';
-import { AssetManager } from './engine/AssetManager.js?v=86';
-import { TerrainMesh } from './world/TerrainMesh.js?v=86';
-import { WorldBase } from './world/WorldBase.js?v=86';
-import { Sky } from './world/Sky.js?v=86';
-import { Atmosphere } from './world/Atmosphere.js?v=86';
+import { Renderer } from './engine/Renderer.js?v=87';
+import * as Quality from './engine/Quality.js?v=87';
+import { RTSCamera } from './engine/RTSCamera.js?v=87';
+import { Picker } from './engine/Picker.js?v=87';
+import { Loop } from './engine/Loop.js?v=87';
+import { AssetManager } from './engine/AssetManager.js?v=87';
+import { TerrainMesh } from './world/TerrainMesh.js?v=87';
+import { WorldBase } from './world/WorldBase.js?v=87';
+import { Sky } from './world/Sky.js?v=87';
+import { Atmosphere } from './world/Atmosphere.js?v=87';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=86';
-import { GameState } from './sim/GameState.js?v=86';
-import * as Economy from './sim/Economy.js?v=86';
-import * as BuildSys from './sim/Buildings.js?v=86';
-import * as Waves from './sim/Waves.js?v=86';
-import * as Tech from './sim/Tech.js?v=86';
-import * as Nature from './sim/Nature.js?v=86';
-import * as Relics from './sim/Relics.js?v=86';
-import * as Camps from './sim/Camps.js?v=86';
-import * as Wildlife from './sim/Wildlife.js?v=86';
-import * as Events from './sim/Events.js?v=86';
-import * as Achievements from './sim/Achievements.js?v=86';
-import * as Meta from './sim/Meta.js?v=86';
-import * as Research from './sim/Research.js?v=86';
-import { updateUnits, damage } from './sim/Units.js?v=86';
-import { toggleEdict } from './sim/Edicts.js?v=86';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=86';
-import { AmbientAudio } from './audio/Music.js?v=86';
-import { HUD } from './ui/HUD.js?v=86';
-import { BuildMenu } from './ui/BuildMenu.js?v=86';
-import { Selection } from './ui/Selection.js?v=86';
-import { Minimap } from './ui/Minimap.js?v=86';
-import { ResearchPanel } from './ui/Research.js?v=86';
-import { Toasts } from './ui/Toasts.js?v=86';
-import { Leaderboard } from './ui/Leaderboard.js?v=86';
-import { BUILDINGS } from './data/buildings.js?v=86';
-import { RANKS } from './data/ranks.js?v=86';
-import { bark } from './data/barks.js?v=86';
-import { STORAGE_KEY } from './data/config.js?v=86';
-import { getFaction } from './data/factions.js?v=86';
-import { getMap, MAPS } from './data/maps.js?v=86';
-import { StartScreen } from './ui/StartScreen.js?v=86';
+import { nearestAdj } from './world/Pathfinding.js?v=87';
+import { GameState } from './sim/GameState.js?v=87';
+import * as Economy from './sim/Economy.js?v=87';
+import * as BuildSys from './sim/Buildings.js?v=87';
+import * as Waves from './sim/Waves.js?v=87';
+import * as Tech from './sim/Tech.js?v=87';
+import * as Nature from './sim/Nature.js?v=87';
+import * as Relics from './sim/Relics.js?v=87';
+import * as Camps from './sim/Camps.js?v=87';
+import * as Wildlife from './sim/Wildlife.js?v=87';
+import * as Events from './sim/Events.js?v=87';
+import * as Achievements from './sim/Achievements.js?v=87';
+import * as Meta from './sim/Meta.js?v=87';
+import * as Research from './sim/Research.js?v=87';
+import { updateUnits, damage } from './sim/Units.js?v=87';
+import { toggleEdict } from './sim/Edicts.js?v=87';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=87';
+import { AmbientAudio } from './audio/Music.js?v=87';
+import { HUD } from './ui/HUD.js?v=87';
+import { BuildMenu } from './ui/BuildMenu.js?v=87';
+import { Selection } from './ui/Selection.js?v=87';
+import { Minimap } from './ui/Minimap.js?v=87';
+import { ResearchPanel } from './ui/Research.js?v=87';
+import { Toasts } from './ui/Toasts.js?v=87';
+import { Leaderboard } from './ui/Leaderboard.js?v=87';
+import { BUILDINGS } from './data/buildings.js?v=87';
+import { RANKS } from './data/ranks.js?v=87';
+import { bark } from './data/barks.js?v=87';
+import { STORAGE_KEY } from './data/config.js?v=87';
+import { getFaction } from './data/factions.js?v=87';
+import { getMap, MAPS } from './data/maps.js?v=87';
+import { StartScreen } from './ui/StartScreen.js?v=87';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -51,6 +51,8 @@ const MODELS = [
   'enemy_raider', 'enemy_boss', 'enemy_camp',
   // детальные идолы-реликвии (каждый со своим силуэтом, Blender GLB)
   'idol_krio', 'idol_giper', 'idol_shipo', 'idol_obereg', 'idol_food', 'idol_gold', 'idol_fonk', 'idol_vera', 'idol_samotsvet',
+  // v87: доделаны в Blender — раньше были только процедурные плейсхолдеры
+  'unit_bogatyr', 'bld_tower', 'bld_ferma', 'bld_rudnik', 'bld_zhila', 'bld_observatory',
 ];
 const ri = (a, b) => Math.floor(a + Math.random() * (b - a + 1));
 

@@ -1,7 +1,7 @@
 // ===== Земля: единый меш-рельеф (1 draw call) + вода + декор + ховер/призрак =====
 import * as THREE from 'three';
-import { TILE, PAL } from '../data/config.js?v=86';
-import { makeRippleNormal } from './WaterFx.js?v=86';
+import { TILE, PAL } from '../data/config.js?v=87';
+import { makeRippleNormal } from './WaterFx.js?v=87';
 
 export class TerrainMesh {
   constructor(scene, grid, pal, tier) {
@@ -166,7 +166,7 @@ export class TerrainMesh {
   // Low-тир этот метод не зовёт вовсе (мобила — без лишней загрузки по сети).
   _loadRealTextures(mat) {
     const loader = new THREE.TextureLoader();
-    const base = './assets/textures/ground/', ver = '?v=86';
+    const base = './assets/textures/ground/', ver = '?v=87';
     const wrap = (t) => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t; };
     loader.load(base + 'ground_diff_1k.jpg' + ver, (t) => { t.colorSpace = THREE.SRGBColorSpace; mat.map = wrap(t); mat.needsUpdate = true; });
     loader.load(base + 'ground_nor_1k.jpg' + ver, (t) => { mat.normalMap = wrap(t); mat.needsUpdate = true; });

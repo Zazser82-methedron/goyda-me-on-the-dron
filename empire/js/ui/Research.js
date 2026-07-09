@@ -1,7 +1,7 @@
 // ===== Панель исследований (древо технологий) =====
-import { TECHS, TECH_ORDER } from '../data/tech.js?v=86';
-import { BUILDINGS } from '../data/buildings.js?v=86';
-import { costStr } from './BuildMenu.js?v=86';
+import { TECHS, TECH_ORDER } from '../data/tech.js?v=87';
+import { BUILDINGS } from '../data/buildings.js?v=87';
+import { costStr } from './BuildMenu.js?v=87';
 
 export class ResearchPanel {
   constructor(game) {
