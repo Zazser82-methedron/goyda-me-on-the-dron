@@ -1,7 +1,7 @@
 // ===== Земля: единый меш-рельеф (1 draw call) + вода + декор + ховер/призрак =====
 import * as THREE from 'three';
-import { TILE, PAL } from '../data/config.js?v=87';
-import { makeRippleNormal } from './WaterFx.js?v=87';
+import { TILE, PAL } from '../data/config.js?v=88';
+import { makeRippleNormal } from './WaterFx.js?v=88';
 
 export class TerrainMesh {
   constructor(scene, grid, pal, tier) {
@@ -166,7 +166,7 @@ export class TerrainMesh {
   // Low-тир этот метод не зовёт вовсе (мобила — без лишней загрузки по сети).
   _loadRealTextures(mat) {
     const loader = new THREE.TextureLoader();
-    const base = './assets/textures/ground/', ver = '?v=87';
+    const base = './assets/textures/ground/', ver = '?v=88';
     const wrap = (t) => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t; };
     loader.load(base + 'ground_diff_1k.jpg' + ver, (t) => { t.colorSpace = THREE.SRGBColorSpace; mat.map = wrap(t); mat.needsUpdate = true; });
     loader.load(base + 'ground_nor_1k.jpg' + ver, (t) => { mat.normalMap = wrap(t); mat.needsUpdate = true; });
@@ -176,6 +176,16 @@ export class TerrainMesh {
   // анимация ряби воды (зовётся из render-loop)
   update(fdt) {
     if (this._waterN) { this._waterN.offset.x += fdt * 0.015; this._waterN.offset.y += fdt * 0.02; }
+  }
+
+  // мокрая земля (0..1, из Sky.wetness): темнее+глаже (мокрый блеск) — дешёво, 2 лерпа на кадр, без новых текстур
+  setWetness(w) {
+    const mat = this.mesh.material;
+    if (this._baseRough === undefined) { this._baseRough = mat.roughness; this._baseEnvI = mat.envMapIntensity; this._baseColor = mat.color.clone(); }
+    if (!this._wetTc) this._wetTc = new THREE.Color(0x8a98a4);
+    mat.roughness = this._baseRough * (1 - 0.55 * w);
+    mat.envMapIntensity = this._baseEnvI * (1 + 1.6 * w);
+    mat.color.copy(this._baseColor).lerp(this._wetTc, w * 0.4);
   }
 
   _cornerColor(out, h, T, cx = 0, cy = 0) {

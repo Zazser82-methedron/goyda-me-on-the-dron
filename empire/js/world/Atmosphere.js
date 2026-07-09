@@ -79,7 +79,16 @@ export class Atmosphere {
       const sc = 10 + Math.random() * 12; sp.scale.set(sc * 1.6, sc, 1);
       sp.position.set((Math.random() - 0.5) * half * 2, 20 + Math.random() * 8, (Math.random() - 0.5) * half * 2);
       sp.renderOrder = 5; this.scene.add(sp);
-      this.clouds.push({ sp, spd: 0.25 + Math.random() * 0.35, half });
+      // тень облака на земле (только High — дорого считать heightAt каждый кадр на слабом железе)
+      let shadow = null;
+      if (!this.low) {
+        const sm = new THREE.SpriteMaterial({ map: this._cloudTex, transparent: true, depthWrite: false, opacity: 0.13 + Math.random() * 0.05, color: 0x000000, blending: THREE.MultiplyBlending, fog: false });
+        shadow = new THREE.Sprite(sm);
+        shadow.scale.set(sc * 2.1, sc * 1.3, 1);
+        shadow.position.set(sp.position.x, 0.12, sp.position.z);
+        shadow.renderOrder = 4; this.scene.add(shadow);
+      }
+      this.clouds.push({ sp, spd: 0.25 + Math.random() * 0.35, half, shadow });
     }
   }
 
@@ -128,8 +137,9 @@ export class Atmosphere {
     p._op = opt.op; p._sc0 = opt.sc; p._sc1 = opt.sc1;
   }
 
-  update(fdt, now, buildings, target, night) {
+  update(fdt, now, buildings, target, night, wind) {
     night = Math.max(0, Math.min(1, night || 0));
+    wind = wind || 0;
     // источники дыма/искр из текущих построек
     const chimneys = [], forges = [];
     for (const b of buildings) {
@@ -179,10 +189,14 @@ export class Atmosphere {
       b.g.visible = night < 0.75;   // на ночь прячутся
     }
 
-    // облака — медленно дрейфуют, заворачиваются
+    // облака — медленно дрейфуют (быстрее при порывах ветра), заворачиваются; тень следует по земле
     for (const c of this.clouds) {
-      c.sp.position.x += c.spd * fdt;
-      if (c.sp.position.x > c.half + 14) c.sp.position.x = -c.half - 14;
+      c.sp.position.x += c.spd * (1 + wind * 1.4) * fdt;
+      if (c.sp.position.x > c.half + 14) { c.sp.position.x = -c.half - 14; if (c.shadow) c.shadow.position.x = c.sp.position.x; }
+      if (c.shadow) {
+        c.shadow.position.x = c.sp.position.x; c.shadow.position.z = c.sp.position.z;
+        c.shadow.position.y = (this.grid.heightAt ? this.grid.heightAt(c.sp.position.x, c.sp.position.z) : 0) + 0.12;
+      }
     }
 
     // светлячки — видны ночью, бродят вокруг камеры

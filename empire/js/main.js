@@ -1,48 +1,48 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=87';
-import * as Quality from './engine/Quality.js?v=87';
-import { RTSCamera } from './engine/RTSCamera.js?v=87';
-import { Picker } from './engine/Picker.js?v=87';
-import { Loop } from './engine/Loop.js?v=87';
-import { AssetManager } from './engine/AssetManager.js?v=87';
-import { TerrainMesh } from './world/TerrainMesh.js?v=87';
-import { WorldBase } from './world/WorldBase.js?v=87';
-import { Sky } from './world/Sky.js?v=87';
-import { Atmosphere } from './world/Atmosphere.js?v=87';
+import { Renderer } from './engine/Renderer.js?v=88';
+import * as Quality from './engine/Quality.js?v=88';
+import { RTSCamera } from './engine/RTSCamera.js?v=88';
+import { Picker } from './engine/Picker.js?v=88';
+import { Loop } from './engine/Loop.js?v=88';
+import { AssetManager } from './engine/AssetManager.js?v=88';
+import { TerrainMesh } from './world/TerrainMesh.js?v=88';
+import { WorldBase } from './world/WorldBase.js?v=88';
+import { Sky } from './world/Sky.js?v=88';
+import { Atmosphere } from './world/Atmosphere.js?v=88';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=87';
-import { GameState } from './sim/GameState.js?v=87';
-import * as Economy from './sim/Economy.js?v=87';
-import * as BuildSys from './sim/Buildings.js?v=87';
-import * as Waves from './sim/Waves.js?v=87';
-import * as Tech from './sim/Tech.js?v=87';
-import * as Nature from './sim/Nature.js?v=87';
-import * as Relics from './sim/Relics.js?v=87';
-import * as Camps from './sim/Camps.js?v=87';
-import * as Wildlife from './sim/Wildlife.js?v=87';
-import * as Events from './sim/Events.js?v=87';
-import * as Achievements from './sim/Achievements.js?v=87';
-import * as Meta from './sim/Meta.js?v=87';
-import * as Research from './sim/Research.js?v=87';
-import { updateUnits, damage } from './sim/Units.js?v=87';
-import { toggleEdict } from './sim/Edicts.js?v=87';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=87';
-import { AmbientAudio } from './audio/Music.js?v=87';
-import { HUD } from './ui/HUD.js?v=87';
-import { BuildMenu } from './ui/BuildMenu.js?v=87';
-import { Selection } from './ui/Selection.js?v=87';
-import { Minimap } from './ui/Minimap.js?v=87';
-import { ResearchPanel } from './ui/Research.js?v=87';
-import { Toasts } from './ui/Toasts.js?v=87';
-import { Leaderboard } from './ui/Leaderboard.js?v=87';
-import { BUILDINGS } from './data/buildings.js?v=87';
-import { RANKS } from './data/ranks.js?v=87';
-import { bark } from './data/barks.js?v=87';
-import { STORAGE_KEY } from './data/config.js?v=87';
-import { getFaction } from './data/factions.js?v=87';
-import { getMap, MAPS } from './data/maps.js?v=87';
-import { StartScreen } from './ui/StartScreen.js?v=87';
+import { nearestAdj } from './world/Pathfinding.js?v=88';
+import { GameState } from './sim/GameState.js?v=88';
+import * as Economy from './sim/Economy.js?v=88';
+import * as BuildSys from './sim/Buildings.js?v=88';
+import * as Waves from './sim/Waves.js?v=88';
+import * as Tech from './sim/Tech.js?v=88';
+import * as Nature from './sim/Nature.js?v=88';
+import * as Relics from './sim/Relics.js?v=88';
+import * as Camps from './sim/Camps.js?v=88';
+import * as Wildlife from './sim/Wildlife.js?v=88';
+import * as Events from './sim/Events.js?v=88';
+import * as Achievements from './sim/Achievements.js?v=88';
+import * as Meta from './sim/Meta.js?v=88';
+import * as Research from './sim/Research.js?v=88';
+import { updateUnits, damage } from './sim/Units.js?v=88';
+import { toggleEdict } from './sim/Edicts.js?v=88';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=88';
+import { AmbientAudio } from './audio/Music.js?v=88';
+import { HUD } from './ui/HUD.js?v=88';
+import { BuildMenu } from './ui/BuildMenu.js?v=88';
+import { Selection } from './ui/Selection.js?v=88';
+import { Minimap } from './ui/Minimap.js?v=88';
+import { ResearchPanel } from './ui/Research.js?v=88';
+import { Toasts } from './ui/Toasts.js?v=88';
+import { Leaderboard } from './ui/Leaderboard.js?v=88';
+import { BUILDINGS } from './data/buildings.js?v=88';
+import { RANKS } from './data/ranks.js?v=88';
+import { bark } from './data/barks.js?v=88';
+import { STORAGE_KEY } from './data/config.js?v=88';
+import { getFaction } from './data/factions.js?v=88';
+import { getMap, MAPS } from './data/maps.js?v=88';
+import { StartScreen } from './ui/StartScreen.js?v=88';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -1281,16 +1281,19 @@ class Game {
     if (this.terrain && this.terrain.update) this.terrain.update(fdt);
     // суточный цикл день/ночь + погода (дождь/снег)
     if (this.sky) this.sky.update(fdt, this.cameraRig.target, this.map.key, now, this.camera);
-    // фоновая музыка/окружение: ночь, тревога (набег), погода; гром на вспышке молнии
+    // мокрая земля в дождь/грозу (темнее+глянцевее, сохнет после) — читает Sky.wetness
+    if (this.terrain && this.terrain.setWetness && this.sky) this.terrain.setWetness(this.sky.wetness);
+    // фоновая музыка/окружение: ночь, тревога (набег), погода; гром запаздывает за вспышкой («далёкая гроза»)
     if (this.music) {
       const night = this.sky ? 1 - (this.sky.day || 0) : 0.4;
       this.music.update(night, this.state.threatTimer > 0 ? 1 : 0, this.sky ? this.sky.weather : 'clear');
       const fl = this.sky ? this.sky._flash : 0;
-      if (fl > 0.6 && (this._lastFlash || 0) <= 0.6) this.music.thunder();
+      if (fl > 0.6 && (this._lastFlash || 0) <= 0.6) this._thunderQueued = 0.15 + Math.random() * 0.9;
       this._lastFlash = fl;
+      if (this._thunderQueued > 0) { this._thunderQueued -= fdt; if (this._thunderQueued <= 0) { this.music.thunder(); this.cameraRig.addShake(0.3); } }
     }
-    // атмосфера: дым/искры/птицы/облака/светлячки (ночь = 1-день; неон без цикла → лёгкие сумерки)
-    if (this.atmo) this.atmo.update(fdt, now, this.state.buildings, this.cameraRig.target, this.sky ? 1 - (this.sky.day || 0) : 0.45);
+    // атмосфера: дым/искры/птицы/облака(+тени)/светлячки (ночь = 1-день; неон без цикла → лёгкие сумерки)
+    if (this.atmo) this.atmo.update(fdt, now, this.state.buildings, this.cameraRig.target, this.sky ? 1 - (this.sky.day || 0) : 0.45, this.sky ? this.sky.windGust : 0);
     this._updateCaravan(fdt);   // торговый караван пересекает карту (жизнь + бонус золота)
     // дрожание зданий под уроном
     for (const b of this.state.buildings) {

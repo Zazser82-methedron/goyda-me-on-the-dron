@@ -28,7 +28,9 @@ export class Sky {
     this.t = 0.30;                 // старт — утро
     this.weather = 'clear';
     this.wT = 26 + Math.random() * 20;
-    this._bright = 1; this._fogMul = 1; this.wind = 0.15; this._flash = 0;
+    this._bright = 1; this._fogMul = 1; this.wind = 0.15; this.windGust = 0.15; this._flash = 0;
+    this._gustPhase = Math.random() * 10;
+    this.wetness = 0;              // 0..1 — мокрая земля (нарастает в дождь/грозу, сохнет после); наружу для TerrainMesh
     this.base = {
       keyI: rdr.key.intensity, hemiI: rdr.hemi.intensity, ambI: rdr.amb.intensity,
       keyC: rdr.key.color.clone(), hemiSky: rdr.hemi.color.clone(),
@@ -75,13 +77,28 @@ export class Sky {
     this.scene.add(this.dome);
   }
 
+  // тонкая вертикальная полоса-«капля» вместо круглой точки — читается как дождь, а не летящие камешки
+  _rainStreakTex() {
+    const s = 32, cv = document.createElement('canvas'); cv.width = cv.height = s;
+    const ctx = cv.getContext('2d');
+    const g = ctx.createLinearGradient(0, 0, 0, s);
+    g.addColorStop(0, 'rgba(200,222,255,0)');
+    g.addColorStop(0.18, 'rgba(200,222,255,0.9)');
+    g.addColorStop(0.82, 'rgba(200,222,255,0.9)');
+    g.addColorStop(1, 'rgba(200,222,255,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(s * 0.4, 0, s * 0.2, s);
+    const t = new THREE.CanvasTexture(cv); t.needsUpdate = true; return t;
+  }
+
   _buildPrecip() {
-    const N = 700; this.N = N;
+    const low = this.rdr.tier === 'low';
+    const N = low ? 280 : 700; this.N = N;   // меньше частиц на мобиле/слабом железе
     const pos = new Float32Array(N * 3);
     for (let i = 0; i < N; i++) { pos[i * 3] = (Math.random() - 0.5) * 72; pos[i * 3 + 1] = Math.random() * 42; pos[i * 3 + 2] = (Math.random() - 0.5) * 72; }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     this.geo = g;
-    this.rainMat = new THREE.PointsMaterial({ color: 0x9fc8ff, size: 0.16, transparent: true, opacity: 0, depthWrite: false, fog: false });
+    this.rainMat = new THREE.PointsMaterial({ map: this._rainStreakTex(), color: 0x9fc8ff, size: 0.7, transparent: true, opacity: 0, depthWrite: false, fog: false });
     this.snowMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.30, transparent: true, opacity: 0, depthWrite: false, fog: false });
     this.precip = new THREE.Points(g, this.rainMat);
     this.precip.frustumCulled = false; this.precip.renderOrder = 15; this.precip.visible = false;
@@ -128,6 +145,15 @@ export class Sky {
     this._fogMul += (W.fogMul - this._fogMul) * Math.min(1, dt * 0.6);
     this.wind += (W.wind - this.wind) * Math.min(1, dt * 0.8);
 
+    // порывы ветра: базовый wind пульсирует (2 наложенных синуса) — не ровный поток, а живые порывы
+    this._gustPhase += dt;
+    const gust = 1 + Math.sin(this._gustPhase * 0.37) * 0.35 + Math.sin(this._gustPhase * 0.91 + 1.7) * 0.15;
+    this.windGust = this.wind * Math.max(0.25, gust);
+
+    // мокрая земля: намокает в дождь/грозу, медленно сохнет после — читает TerrainMesh.setWetness()
+    const wetTarget = (this.weather === 'rain' || this.weather === 'storm') ? 1 : 0;
+    this.wetness += (wetTarget - this.wetness) * Math.min(1, dt * 0.12);
+
     // молния в грозу: редкая яркая вспышка с резким спадом
     if (this.weather === 'storm' && Math.random() < dt * 0.45) this._flash = 1;
     this._flash = Math.max(0, this._flash - dt * 3.2);
@@ -173,7 +199,7 @@ export class Sky {
       this.precip.position.set(target.x, 0, target.z);
       const arr = this.geo.attributes.position.array, snow = precipKind === 'snow';
       const fall = (snow ? 6 : (this.weather === 'storm' ? 42 : 30)) * dt;
-      const drift = (snow ? 0.7 : 2.4) + this.wind * 6;            // ветер сносит струи/хлопья вбок
+      const drift = (snow ? 0.7 : 2.4) + this.windGust * 6;        // порывистый ветер сносит струи/хлопья вбок
       for (let i = 0; i < this.N; i++) {
         const j = i * 3;
         arr[j + 1] -= fall;
