@@ -1,5 +1,5 @@
 // ===== Достижения — вехи прогресса (тост + Доблесть при разблокировке, сохранение между играми) =====
-import * as Meta from './Meta.js?v=84';
+import * as Meta from './Meta.js?v=85';
 
 const ACH = [
   { k: 'settle', i: '🏗️', n: 'Первое поселение', v: 10, c: s => s.buildings.length >= 3 },

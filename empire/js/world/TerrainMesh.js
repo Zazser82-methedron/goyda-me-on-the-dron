@@ -1,13 +1,14 @@
 // ===== Земля: единый меш-рельеф (1 draw call) + вода + декор + ховер/призрак =====
 import * as THREE from 'three';
-import { TILE, PAL } from '../data/config.js?v=84';
-import { makeRippleNormal } from './WaterFx.js?v=84';
+import { TILE, PAL } from '../data/config.js?v=85';
+import { makeRippleNormal } from './WaterFx.js?v=85';
 
 export class TerrainMesh {
-  constructor(scene, grid, pal) {
+  constructor(scene, grid, pal, tier) {
     this.scene = scene;
     this.grid = grid;
     this.pal = pal || { a: PAL.grass1, b: PAL.grass2, c: PAL.grass3, dirt: PAL.dirt };
+    this.tier = tier || 'high';
     const n = grid.n;
     const T = grid.terr || { water: -0.5, sand: -0.15, rock: 1.7, snow: 2.7 };
 
@@ -62,7 +63,8 @@ export class TerrainMesh {
     // PBR-земля: процедурные тайловые detail/normal/roughness карты (без внешних ассетов) поверх биом-цвета.
     // envMapIntensity низкий — IBL не должен пересвечивать светлые биомы (песок/снег выгорали)
     const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.96, metalness: 0, envMapIntensity: 0.3 });
-    this._pbrGround(mat);
+    this._pbrGround(mat);                        // мгновенный процедурный детейл (без сети) — рисуем сразу
+    if (this.tier !== 'low') this._loadRealTextures(mat);   // High: докачиваем фото-PBR (Poly Haven CC0), подменяем когда готово
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.receiveShadow = true; this.mesh.castShadow = false;
     scene.add(this.mesh);
@@ -157,6 +159,18 @@ export class TerrainMesh {
     mat.normalMap = wrap(new THREE.CanvasTexture(nc));
     mat.normalScale = new THREE.Vector2(0.72, 0.72);   // сильнее рельеф земли — детали читаются ближним зумом
     mat.needsUpdate = true;
+  }
+
+  // High-тир: докачать фото-PBR детейл-текстуру земли (Poly Haven CC0, aerial_grass_rock, 1k) поверх
+  // уже нарисованной процедурной — подменяем карты по мере готовности, геометрия/UV/тайлинг не меняются.
+  // Low-тир этот метод не зовёт вовсе (мобила — без лишней загрузки по сети).
+  _loadRealTextures(mat) {
+    const loader = new THREE.TextureLoader();
+    const base = './assets/textures/ground/', ver = '?v=85';
+    const wrap = (t) => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t; };
+    loader.load(base + 'ground_diff_1k.jpg' + ver, (t) => { t.colorSpace = THREE.SRGBColorSpace; mat.map = wrap(t); mat.needsUpdate = true; });
+    loader.load(base + 'ground_nor_1k.jpg' + ver, (t) => { mat.normalMap = wrap(t); mat.needsUpdate = true; });
+    loader.load(base + 'ground_rough_1k.jpg' + ver, (t) => { mat.roughnessMap = wrap(t); mat.needsUpdate = true; });
   }
 
   // анимация ряби воды (зовётся из render-loop)

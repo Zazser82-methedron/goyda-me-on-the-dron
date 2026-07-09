@@ -1,48 +1,48 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=84';
-import * as Quality from './engine/Quality.js?v=84';
-import { RTSCamera } from './engine/RTSCamera.js?v=84';
-import { Picker } from './engine/Picker.js?v=84';
-import { Loop } from './engine/Loop.js?v=84';
-import { AssetManager } from './engine/AssetManager.js?v=84';
-import { TerrainMesh } from './world/TerrainMesh.js?v=84';
-import { WorldBase } from './world/WorldBase.js?v=84';
-import { Sky } from './world/Sky.js?v=84';
-import { Atmosphere } from './world/Atmosphere.js?v=84';
+import { Renderer } from './engine/Renderer.js?v=85';
+import * as Quality from './engine/Quality.js?v=85';
+import { RTSCamera } from './engine/RTSCamera.js?v=85';
+import { Picker } from './engine/Picker.js?v=85';
+import { Loop } from './engine/Loop.js?v=85';
+import { AssetManager } from './engine/AssetManager.js?v=85';
+import { TerrainMesh } from './world/TerrainMesh.js?v=85';
+import { WorldBase } from './world/WorldBase.js?v=85';
+import { Sky } from './world/Sky.js?v=85';
+import { Atmosphere } from './world/Atmosphere.js?v=85';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=84';
-import { GameState } from './sim/GameState.js?v=84';
-import * as Economy from './sim/Economy.js?v=84';
-import * as BuildSys from './sim/Buildings.js?v=84';
-import * as Waves from './sim/Waves.js?v=84';
-import * as Tech from './sim/Tech.js?v=84';
-import * as Nature from './sim/Nature.js?v=84';
-import * as Relics from './sim/Relics.js?v=84';
-import * as Camps from './sim/Camps.js?v=84';
-import * as Wildlife from './sim/Wildlife.js?v=84';
-import * as Events from './sim/Events.js?v=84';
-import * as Achievements from './sim/Achievements.js?v=84';
-import * as Meta from './sim/Meta.js?v=84';
-import * as Research from './sim/Research.js?v=84';
-import { updateUnits, damage } from './sim/Units.js?v=84';
-import { toggleEdict } from './sim/Edicts.js?v=84';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=84';
-import { AmbientAudio } from './audio/Music.js?v=84';
-import { HUD } from './ui/HUD.js?v=84';
-import { BuildMenu } from './ui/BuildMenu.js?v=84';
-import { Selection } from './ui/Selection.js?v=84';
-import { Minimap } from './ui/Minimap.js?v=84';
-import { ResearchPanel } from './ui/Research.js?v=84';
-import { Toasts } from './ui/Toasts.js?v=84';
-import { Leaderboard } from './ui/Leaderboard.js?v=84';
-import { BUILDINGS } from './data/buildings.js?v=84';
-import { RANKS } from './data/ranks.js?v=84';
-import { bark } from './data/barks.js?v=84';
-import { STORAGE_KEY } from './data/config.js?v=84';
-import { getFaction } from './data/factions.js?v=84';
-import { getMap, MAPS } from './data/maps.js?v=84';
-import { StartScreen } from './ui/StartScreen.js?v=84';
+import { nearestAdj } from './world/Pathfinding.js?v=85';
+import { GameState } from './sim/GameState.js?v=85';
+import * as Economy from './sim/Economy.js?v=85';
+import * as BuildSys from './sim/Buildings.js?v=85';
+import * as Waves from './sim/Waves.js?v=85';
+import * as Tech from './sim/Tech.js?v=85';
+import * as Nature from './sim/Nature.js?v=85';
+import * as Relics from './sim/Relics.js?v=85';
+import * as Camps from './sim/Camps.js?v=85';
+import * as Wildlife from './sim/Wildlife.js?v=85';
+import * as Events from './sim/Events.js?v=85';
+import * as Achievements from './sim/Achievements.js?v=85';
+import * as Meta from './sim/Meta.js?v=85';
+import * as Research from './sim/Research.js?v=85';
+import { updateUnits, damage } from './sim/Units.js?v=85';
+import { toggleEdict } from './sim/Edicts.js?v=85';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=85';
+import { AmbientAudio } from './audio/Music.js?v=85';
+import { HUD } from './ui/HUD.js?v=85';
+import { BuildMenu } from './ui/BuildMenu.js?v=85';
+import { Selection } from './ui/Selection.js?v=85';
+import { Minimap } from './ui/Minimap.js?v=85';
+import { ResearchPanel } from './ui/Research.js?v=85';
+import { Toasts } from './ui/Toasts.js?v=85';
+import { Leaderboard } from './ui/Leaderboard.js?v=85';
+import { BUILDINGS } from './data/buildings.js?v=85';
+import { RANKS } from './data/ranks.js?v=85';
+import { bark } from './data/barks.js?v=85';
+import { STORAGE_KEY } from './data/config.js?v=85';
+import { getFaction } from './data/factions.js?v=85';
+import { getMap, MAPS } from './data/maps.js?v=85';
+import { StartScreen } from './ui/StartScreen.js?v=85';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -363,7 +363,7 @@ class Game {
   buildWorld(map) {
     this.map = map;
     this.state.grid.generateTerrain(map.terr, map.key);   // рельеф (высоты/биомы/реки)
-    this.terrain = new TerrainMesh(this.scene, this.state.grid, map.pal);
+    this.terrain = new TerrainMesh(this.scene, this.state.grid, map.pal, this.rdr.tier);
     this.worldBase = new WorldBase(this.scene, this.state.grid);   // плита на слонах+черепахе
     if (map.key === 'neon') this._addNeonSun();
     else {
