@@ -1,6 +1,7 @@
 // ===== Three.js рендерер, сцена, свет, туман — настроение идол-слоя «Гойды» =====
 import * as THREE from 'three';
-import { PAL } from '../data/config.js?v=82';
+import { PAL } from '../data/config.js?v=83';
+import * as Quality from './Quality.js?v=83';
 
 // Цветокоррекция (пост): контраст вокруг 0.5, насыщенность, лёгкий тёплый тон, мягкая виньетка.
 const GRADE_SHADER = {
@@ -55,15 +56,18 @@ export class Renderer {
   constructor(canvas) {
     // alpha:false — канвас НЕПРОЗРАЧНЫЙ (небо рисует scene.background). Прозрачный канвас под
     // пост-обработкой заставлял HUD-панели мерцать при перерисовке поверх канваса.
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this.tier = Quality.getTier();                   // 'low' (мобила/слабое железо) | 'high' (десктоп)
+    const low = this.tier === 'low';
+    // low: без MSAA (композер/SMAA тоже выключены), pixelRatio ≤1.4 (на dpr3-телефоне это в разы меньше пикселей)
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: !low, alpha: false, powerPreference: 'high-performance' });
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1.4 : 2));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.02;        // было 1.25 — сцена пересвечивалась/«белила»
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    this._shadowSize = 2048;                          // чётче тени (было 1024)
+    this.renderer.shadowMap.enabled = !low;          // low: тени-карты ВЫКЛ (у юнитов остаются пятна-тени) — крупный выигрыш на мобиле
+    this.renderer.shadowMap.type = low ? THREE.BasicShadowMap : THREE.PCFSoftShadowMap;
+    this._shadowSize = low ? 1024 : 2048;
 
     this.scene = new THREE.Scene();
     // непрозрачный градиент-небо в сцене (нужно для пост-обработки) — заменяет CSS-фон
@@ -83,7 +87,7 @@ export class Renderer {
     // Яркое тёплое «солнце» с тенями
     this.key = new THREE.DirectionalLight(0xfff2dc, 2.3);
     this.key.position.set(40, 64, 28);
-    this.key.castShadow = true;
+    this.key.castShadow = !low;
     this.key.shadow.mapSize.set(this._shadowSize, this._shadowSize);
     const d = 36;
     const cam = this.key.shadow.camera;

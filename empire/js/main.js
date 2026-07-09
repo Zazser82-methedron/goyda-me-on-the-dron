@@ -1,47 +1,48 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=82';
-import { RTSCamera } from './engine/RTSCamera.js?v=82';
-import { Picker } from './engine/Picker.js?v=82';
-import { Loop } from './engine/Loop.js?v=82';
-import { AssetManager } from './engine/AssetManager.js?v=82';
-import { TerrainMesh } from './world/TerrainMesh.js?v=82';
-import { WorldBase } from './world/WorldBase.js?v=82';
-import { Sky } from './world/Sky.js?v=82';
-import { Atmosphere } from './world/Atmosphere.js?v=82';
+import { Renderer } from './engine/Renderer.js?v=83';
+import * as Quality from './engine/Quality.js?v=83';
+import { RTSCamera } from './engine/RTSCamera.js?v=83';
+import { Picker } from './engine/Picker.js?v=83';
+import { Loop } from './engine/Loop.js?v=83';
+import { AssetManager } from './engine/AssetManager.js?v=83';
+import { TerrainMesh } from './world/TerrainMesh.js?v=83';
+import { WorldBase } from './world/WorldBase.js?v=83';
+import { Sky } from './world/Sky.js?v=83';
+import { Atmosphere } from './world/Atmosphere.js?v=83';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=82';
-import { GameState } from './sim/GameState.js?v=82';
-import * as Economy from './sim/Economy.js?v=82';
-import * as BuildSys from './sim/Buildings.js?v=82';
-import * as Waves from './sim/Waves.js?v=82';
-import * as Tech from './sim/Tech.js?v=82';
-import * as Nature from './sim/Nature.js?v=82';
-import * as Relics from './sim/Relics.js?v=82';
-import * as Camps from './sim/Camps.js?v=82';
-import * as Wildlife from './sim/Wildlife.js?v=82';
-import * as Events from './sim/Events.js?v=82';
-import * as Achievements from './sim/Achievements.js?v=82';
-import * as Meta from './sim/Meta.js?v=82';
-import * as Research from './sim/Research.js?v=82';
-import { updateUnits, damage } from './sim/Units.js?v=82';
-import { toggleEdict } from './sim/Edicts.js?v=82';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=82';
-import { AmbientAudio } from './audio/Music.js?v=82';
-import { HUD } from './ui/HUD.js?v=82';
-import { BuildMenu } from './ui/BuildMenu.js?v=82';
-import { Selection } from './ui/Selection.js?v=82';
-import { Minimap } from './ui/Minimap.js?v=82';
-import { ResearchPanel } from './ui/Research.js?v=82';
-import { Toasts } from './ui/Toasts.js?v=82';
-import { Leaderboard } from './ui/Leaderboard.js?v=82';
-import { BUILDINGS } from './data/buildings.js?v=82';
-import { RANKS } from './data/ranks.js?v=82';
-import { bark } from './data/barks.js?v=82';
-import { STORAGE_KEY } from './data/config.js?v=82';
-import { getFaction } from './data/factions.js?v=82';
-import { getMap, MAPS } from './data/maps.js?v=82';
-import { StartScreen } from './ui/StartScreen.js?v=82';
+import { nearestAdj } from './world/Pathfinding.js?v=83';
+import { GameState } from './sim/GameState.js?v=83';
+import * as Economy from './sim/Economy.js?v=83';
+import * as BuildSys from './sim/Buildings.js?v=83';
+import * as Waves from './sim/Waves.js?v=83';
+import * as Tech from './sim/Tech.js?v=83';
+import * as Nature from './sim/Nature.js?v=83';
+import * as Relics from './sim/Relics.js?v=83';
+import * as Camps from './sim/Camps.js?v=83';
+import * as Wildlife from './sim/Wildlife.js?v=83';
+import * as Events from './sim/Events.js?v=83';
+import * as Achievements from './sim/Achievements.js?v=83';
+import * as Meta from './sim/Meta.js?v=83';
+import * as Research from './sim/Research.js?v=83';
+import { updateUnits, damage } from './sim/Units.js?v=83';
+import { toggleEdict } from './sim/Edicts.js?v=83';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=83';
+import { AmbientAudio } from './audio/Music.js?v=83';
+import { HUD } from './ui/HUD.js?v=83';
+import { BuildMenu } from './ui/BuildMenu.js?v=83';
+import { Selection } from './ui/Selection.js?v=83';
+import { Minimap } from './ui/Minimap.js?v=83';
+import { ResearchPanel } from './ui/Research.js?v=83';
+import { Toasts } from './ui/Toasts.js?v=83';
+import { Leaderboard } from './ui/Leaderboard.js?v=83';
+import { BUILDINGS } from './data/buildings.js?v=83';
+import { RANKS } from './data/ranks.js?v=83';
+import { bark } from './data/barks.js?v=83';
+import { STORAGE_KEY } from './data/config.js?v=83';
+import { getFaction } from './data/factions.js?v=83';
+import { getMap, MAPS } from './data/maps.js?v=83';
+import { StartScreen } from './ui/StartScreen.js?v=83';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -104,8 +105,10 @@ class Game {
 
     this.ctx = this._makeCtx();
     this.rdr.onResize = (w, h) => this.cameraRig.resize(w, h);
-    this.rdr.setupComposer(this.camera);   // пост-обработка (bloom/SMAA/тонмаппинг), ленивая + фолбэк
-    this.rdr.setupEnvironment();           // IBL-отражения для PBR (вода/металл/идолы)
+    if (this.rdr.tier !== 'low') {          // low-тир (мобила): без тяжёлой пост-обработки и IBL — ради плавности
+      this.rdr.setupComposer(this.camera);  // пост-обработка (bloom/SMAA/тонмаппинг), ленивая + фолбэк
+      this.rdr.setupEnvironment();          // IBL-отражения для PBR (вода/металл/идолы)
+    }
     this._input();
     this.loop = new Loop((dt) => this.tick(dt), (a) => this.render(a));
   }
@@ -368,7 +371,7 @@ class Game {
       let _first = true;                                            // не тостим стартовую «ясно»
       this.sky.onWeather = (w) => { if (_first) { _first = false; return; } if (WMSG[w]) this.toasts.show(WMSG[w]); };
     }
-    this.atmo = new Atmosphere(this.scene, this.state.grid, map.key);   // дым/искры/птицы/облака/светлячки
+    this.atmo = new Atmosphere(this.scene, this.state.grid, map.key, this.rdr.tier);   // дым/искры/птицы/облака/светлячки (меньше на low)
     Wildlife.spawn(this.state);   // дичь бродит по карте (охота)
   }
 
@@ -566,7 +569,12 @@ class Game {
     const tb = document.getElementById('techBtn');
     if (tb) tb.onclick = () => { const open = this.researchUI.toggle(); tb.classList.toggle('on', open); sfx('click'); };
     const xb = document.getElementById('fxBtn');
-    if (xb) xb.onclick = () => { this.rdr.fxEnabled = !this.rdr.fxEnabled && !!this.rdr.composer; xb.classList.toggle('on', this.rdr.fxEnabled); sfx('click'); };
+    if (xb) {
+      const low0 = this.rdr.tier === 'low';
+      xb.classList.toggle('on', !low0); xb.textContent = low0 ? '⚡' : '✨';
+      xb.title = low0 ? 'Качество: ⚡ Плавно (Low) — нажми для Красиво (High)' : 'Качество: ✨ Красиво (High) — нажми для Плавно (Low), если тормозит';
+      xb.onclick = () => { const t = Quality.toggleTier(); sfx('click'); this.toasts.show('Качество: ' + (t === 'low' ? '⚡ Плавно (Low)' : '✨ Красиво (High)') + ' — перезапуск…', { gold: true }); setTimeout(() => location.reload(), 700); };
+    }
     const rb = document.getElementById('restartBtn');
     if (rb) rb.onclick = () => this.restart();
     const pb = document.getElementById('portalBtn');

@@ -15,9 +15,10 @@ function radialTex(c0, c1) {
 const SMOKE_Y = { izba: 1.35, kuznica: 1.6, townhall: 3.1, ambar: 1.4 };
 
 export class Atmosphere {
-  constructor(scene, grid, mapKey) {
+  constructor(scene, grid, mapKey, tier) {
     this.scene = scene; this.grid = grid; this.mapKey = mapKey;
     this.neon = mapKey === 'neon';
+    this.low = tier === 'low';   // меньше частиц/птиц/светлячков на слабом железе
     this._smokeT = 0; this._sparkT = 0;
     this._smokeTex = radialTex('rgba(196,196,202,0.85)', 'rgba(196,196,202,0)');
     this._sparkTex = radialTex('rgba(255,228,150,1)', 'rgba(255,120,20,0)');
@@ -35,10 +36,10 @@ export class Atmosphere {
     }
     return arr;
   }
-  _buildSmoke() { this.smoke = this._pool(this._smokeTex, 38); }
-  _buildSparks() { this.sparks = this._pool(this._sparkTex, 20, THREE.AdditiveBlending); }
-  _buildDust() { this.dust = this._pool(this._dustTex, 26); }
-  _buildBurst() { this.burstPool = this._pool(this._sparkTex, 46, THREE.AdditiveBlending); }
+  _buildSmoke() { this.smoke = this._pool(this._smokeTex, this.low ? 14 : 38); }
+  _buildSparks() { this.sparks = this._pool(this._sparkTex, this.low ? 8 : 20, THREE.AdditiveBlending); }
+  _buildDust() { this.dust = this._pool(this._dustTex, this.low ? 10 : 26); }
+  _buildBurst() { this.burstPool = this._pool(this._sparkTex, this.low ? 20 : 46, THREE.AdditiveBlending); }
 
   // вспышка-фонтан частиц (стройка готова / гибель врага / сбор ресурса). Зовётся через ctx.burst.
   burst(x, y, z, color = 0xffd060, count = 12) {
@@ -72,7 +73,7 @@ export class Atmosphere {
     this.clouds = [];
     const half = this.grid.n * 0.5;
     const tint = this.neon ? new THREE.Color(0x9a6cff) : new THREE.Color(0xffffff);
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < (this.low ? 3 : 6); i++) {
       const m = new THREE.SpriteMaterial({ map: this._cloudTex, transparent: true, depthWrite: false, opacity: 0.16 + Math.random() * 0.1, color: tint, fog: false });
       const sp = new THREE.Sprite(m);
       const sc = 10 + Math.random() * 12; sp.scale.set(sc * 1.6, sc, 1);
@@ -86,7 +87,7 @@ export class Atmosphere {
     this.birds = [];
     const mat = new THREE.MeshBasicMaterial({ color: this.neon ? 0x301a44 : 0x20242c, fog: true });
     const half = this.grid.n * 0.4;
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < (this.low ? 3 : 7); i++) {
       const g = new THREE.Group();
       const wl = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.04, 0.18), mat);
       const wr = wl.clone(); wl.position.x = -0.26; wr.position.x = 0.26;
@@ -103,7 +104,7 @@ export class Atmosphere {
   }
 
   _buildFireflies() {
-    const N = 42; this.ffN = N;
+    const N = this.low ? 16 : 42; this.ffN = N;
     const pos = new Float32Array(N * 3);
     this._ffVel = new Float32Array(N * 3);
     for (let i = 0; i < N; i++) {
