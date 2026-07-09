@@ -2,7 +2,7 @@
 // Стиль повторяет идол-слой «Гойды»: flatShading, гекс-формы, эмиссивные руны.
 // Origin КАЖДОЙ модели — в центре основания (низ на y=0), модель растёт вверх.
 import * as THREE from 'three';
-import { PAL } from '../data/config.js?v=85';
+import { PAL } from '../data/config.js?v=86';
 
 const _mats = {};
 function mat(color, o = {}) {
@@ -33,6 +33,20 @@ function sph(r, m, x = 0, y = 0, z = 0, seg = 10) {
   const me = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 0), m);
   me.position.set(x, y, z); me.castShadow = true; me.receiveShadow = true; return me;
 }
+// стек тонких «брёвен» вместо сплошной стены — дешёвый лог-кабин силуэт (изба/ратуша/амбар)
+function logWall(w, h, d, mA, mB, x = 0, y = 0, z = 0) {
+  const g = new THREE.Group();
+  const rows = 4, rh = h / rows;
+  for (let i = 0; i < rows; i++) g.add(box(w, rh * 0.84, d, i % 2 ? mB : mA, 0, -h / 2 + rh * (i + 0.5), 0));
+  g.position.set(x, y, z);
+  return g;
+}
+// окошко в стене: тёплый огонёк (жилой вид в сумерках) или тёмное стекло; общий кэш материалов
+let _winLit = null, _winDark = null;
+function windowMesh(w, h, x, y, z, glow = true) {
+  if (!_winLit) { _winLit = mat(0x2a1806, { emissive: 0xffb050, emi: 1.4, rough: 0.4 }); _winDark = mat(0x0c1016, { rough: 0.3, metal: 0.1 }); }
+  return box(w, h, 0.04, glow ? _winLit : _winDark, x, y, z);
+}
 
 // ---- центральный идол ДРОН (чудо) ----
 function idol() {
@@ -54,14 +68,17 @@ function idol() {
 // ---- ратуша «Палаты Гойды» (3×3) ----
 function townhall() {
   const g = new THREE.Group();
-  const wd = mat(PAL.wood), st = mat(PAL.stone), rf = mat(PAL.roof), gold = mat(PAL.gold, { rough: 0.4, metal: 0.85 });
+  const wd = mat(PAL.wood), wdk = mat(PAL.woodDk), st = mat(PAL.stone), rf = mat(PAL.roof), gold = mat(PAL.gold, { rough: 0.4, metal: 0.85 });
   g.add(box(2.6, 0.3, 2.6, st, 0, 0.15, 0));               // фундамент
-  g.add(box(2.4, 1.5, 2.4, wd, 0, 1.0, 0));                // корпус
+  g.add(logWall(2.4, 1.5, 2.4, wd, wdk, 0, 1.0, 0));       // брёвна корпуса
   g.add(box(2.5, 0.16, 2.5, gold, 0, 1.78, 0));            // золотой карниз
   g.add(cone(2.0, 1.4, 4, rf, 0, 2.55, 0));                // крыша
   g.add(cyl(0.06, 0.06, 1.0, 4, gold, 0, 3.6, 0));         // шпиль
   g.add(box(0.5, 0.9, 0.06, mat(PAL.crimson), 0, 1.0, 1.22)); // знамя
   g.add(box(0.5, 0.85, 0.05, mat(PAL.gold, { emissive: PAL.gold, emi: 0.3 }), 0, 1.0, 1.25));
+  g.add(box(0.42, 0.68, 0.06, wdk, 0, 0.64, 1.21));        // дверь
+  g.add(windowMesh(0.32, 0.32, -0.78, 1.35, 1.21));        // окна фасада (тёплый огонёк)
+  g.add(windowMesh(0.32, 0.32, 0.78, 1.35, 1.21));
   return g;
 }
 
@@ -69,19 +86,21 @@ function townhall() {
 function izba() {
   const g = new THREE.Group();
   const wd = mat(PAL.wood), th = mat(PAL.thatch), dk = mat(PAL.woodDk);
-  g.add(box(0.78, 0.6, 0.78, wd, 0, 0.3, 0));
+  g.add(logWall(0.78, 0.6, 0.78, wd, dk, 0, 0.3, 0));
   g.add(cone(0.62, 0.5, 4, th, 0, 0.85, 0));
   g.add(box(0.22, 0.36, 0.05, dk, 0, 0.18, 0.4));          // дверь
+  g.add(windowMesh(0.16, 0.16, -0.22, 0.36, 0.4));         // окошко (тёплый огонёк)
   return g;
 }
 
 // ---- амбар (2×2, еда) ----
 function ambar() {
   const g = new THREE.Group();
-  const wd = mat(PAL.wood), th = mat(PAL.thatch), gr = mat(PAL.grass3);
-  g.add(box(1.6, 0.8, 1.2, wd, 0, 0.4, -0.2));
+  const wd = mat(PAL.wood), wdk = mat(PAL.woodDk), th = mat(PAL.thatch), gr = mat(PAL.grass3);
+  g.add(logWall(1.6, 0.8, 1.2, wd, wdk, 0, 0.4, -0.2));
   g.add(cone(1.3, 0.7, 4, th, 0, 1.15, -0.2));
   g.add(box(0.7, 0.05, 0.7, gr, 0.5, 0.03, 0.6));          // делянка
+  g.add(box(0.36, 0.5, 0.06, wdk, 0, 0.35, 0.4));          // большая дверь
   return g;
 }
 
@@ -107,17 +126,20 @@ function kazarma() {
   const s2 = cyl(0.03, 0.03, 1.4, 4, steel, -0.5, 1.0, 0.82); s2.rotation.z = -0.5;
   g.add(s1, s2);
   g.add(box(0.4, 0.7, 0.05, mat(PAL.crimson), 0.55, 0.85, 0.78));
+  g.add(box(0.34, 0.6, 0.06, mat(PAL.woodDk), 0, 0.35, 0.76));   // дверь
   return g;
 }
 
 // ---- церковь-кумирня (2×2, вера) ----
 function church() {
   const g = new THREE.Group();
-  const st = mat(PAL.stone), wd = mat(PAL.wood);
+  const st = mat(PAL.stone), wd = mat(PAL.wood), wdk = mat(PAL.woodDk);
   const glow = mat(0x101820, { emissive: PAL.faithCyan, emi: 1.8 });
   g.add(box(1.3, 1.0, 1.3, st, 0, 0.5, 0));
   g.add(cone(0.9, 1.8, 6, wd, 0, 1.9, 0));
   g.add(sph(0.28, glow, 0, 3.0, 0));
+  g.add(box(0.3, 0.6, 0.06, wdk, 0, 0.35, 0.66));          // дверь
+  g.add(windowMesh(0.22, 0.22, 0, 0.85, 0.66, true));      // окно-розетка (тёплый свет)
   return g;
 }
 
@@ -203,6 +225,9 @@ function humanoid(opts = {}) {
   const cloth = mat(opts.cloth ?? PAL.cloth), skin = mat(PAL.skin), acc = mat(opts.acc ?? PAL.woodDk, opts.accMat || {});
   g.add(cyl(0.12 * sc, 0.16 * sc, 0.42 * sc, 6, cloth, 0, 0.27 * sc, 0)); // тело
   g.add(sph(0.12 * sc, skin, 0, 0.56 * sc, 0));                            // голова
+  const arm1 = cyl(0.035 * sc, 0.04 * sc, 0.34 * sc, 5, cloth, -0.145 * sc, 0.32 * sc, 0); arm1.rotation.z = 0.14;
+  const arm2 = cyl(0.035 * sc, 0.04 * sc, 0.34 * sc, 5, cloth, 0.145 * sc, 0.32 * sc, 0); arm2.rotation.z = -0.14;
+  g.add(arm1, arm2);                                                       // руки — читаемее силуэт
   if (opts.helmet) g.add(cone(0.14 * sc, 0.18 * sc, 6, acc, 0, 0.66 * sc, 0));
   if (opts.spear) { const s = cyl(0.02, 0.02, 0.9 * sc, 4, acc, 0.2 * sc, 0.5 * sc, 0); s.add(cone(0.04, 0.12, 4, mat(0x9aa0aa, { metal: 0.8, rough: 0.4 }), 0, 0.5 * sc, 0)); g.add(s); }
   if (opts.tool) g.add(box(0.05, 0.3 * sc, 0.05, acc, 0.18 * sc, 0.4 * sc, 0));
@@ -366,6 +391,8 @@ function tower() {
   for (let i = 0; i < 6; i++) { const a = i / 6 * 6.283; g.add(box(0.12, 0.18, 0.12, dk, Math.cos(a) * 0.32, 1.68, Math.sin(a) * 0.32)); }
   g.add(box(0.22, 0.18, 0.22, fire, 0, 1.78, 0));
   g.add(box(0.16, 0.3, 0.05, wd, 0, 0.15, 0.34));
+  g.add(cyl(0.02, 0.02, 0.5, 4, wd, 0, 2.0, 0));                 // флагшток
+  g.add(box(0.18, 0.12, 0.02, mat(PAL.crimson), 0.1, 2.15, 0));  // флаг
   return g;
 }
 
