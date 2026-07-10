@@ -2,7 +2,7 @@
 // Стиль повторяет идол-слой «Гойды»: flatShading, гекс-формы, эмиссивные руны.
 // Origin КАЖДОЙ модели — в центре основания (низ на y=0), модель растёт вверх.
 import * as THREE from 'three';
-import { PAL } from '../data/config.js?v=89';
+import { PAL } from '../data/config.js?v=90';
 
 const _mats = {};
 function mat(color, o = {}) {
@@ -46,6 +46,26 @@ let _winLit = null, _winDark = null;
 function windowMesh(w, h, x, y, z, glow = true) {
   if (!_winLit) { _winLit = mat(0x2a1806, { emissive: 0xffb050, emi: 1.4, rough: 0.4 }); _winDark = mat(0x0c1016, { rough: 0.3, metal: 0.1 }); }
   return box(w, h, 0.04, glow ? _winLit : _winDark, x, y, z);
+}
+
+// ---- строительные леса вокруг площадки w×h тайлов (видны, пока здание строится) ----
+export function buildScaffold(w, h) {
+  const g = new THREE.Group();
+  const wd = mat(PAL.wood), dk = mat(PAL.woodDk);
+  const hw = w * 0.5 + 0.14, hh = h * 0.5 + 0.14;
+  const ph = Math.max(w, h) * 0.55 + 0.8;                       // высота лесов ~ размеру постройки
+  for (const [x, z] of [[-hw, -hh], [hw, -hh], [-hw, hh], [hw, hh]])
+    g.add(cyl(0.05, 0.06, ph, 5, dk, x, ph / 2, z));            // угловые столбы
+  for (const y of [ph * 0.45, ph * 0.88]) {                     // перекладины по периметру, 2 яруса
+    g.add(box(hw * 2 + 0.12, 0.05, 0.05, wd, 0, y, -hh));
+    g.add(box(hw * 2 + 0.12, 0.05, 0.05, wd, 0, y, hh));
+    g.add(box(0.05, 0.05, hh * 2 + 0.12, wd, -hw, y, 0));
+    g.add(box(0.05, 0.05, hh * 2 + 0.12, wd, hw, y, 0));
+  }
+  const diag = box(0.05, Math.hypot(hw * 2, ph * 0.5), 0.05, wd, 0, ph * 0.5, hh + 0.02);  // диагональ фасада
+  diag.rotation.z = Math.atan2(hw * 2, ph * 0.5) * 0.8;
+  g.add(diag);
+  return g;
 }
 
 // ---- центральный идол ДРОН (чудо) ----

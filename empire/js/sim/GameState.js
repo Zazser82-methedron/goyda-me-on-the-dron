@@ -1,11 +1,12 @@
 // ===== Единый источник правды: ресурсы, сущности, ранги, сейв =====
 import * as THREE from 'three';
-import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=89';
-import { Grid } from '../world/Grid.js?v=89';
-import { NodeField } from '../world/NodeField.js?v=89';
-import { BUILDINGS } from '../data/buildings.js?v=89';
-import { UNITS } from '../data/units.js?v=89';
-import { RANKS } from '../data/ranks.js?v=89';
+import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=90';
+import { Grid } from '../world/Grid.js?v=90';
+import { NodeField } from '../world/NodeField.js?v=90';
+import { BUILDINGS } from '../data/buildings.js?v=90';
+import { UNITS } from '../data/units.js?v=90';
+import { RANKS } from '../data/ranks.js?v=90';
+import { buildScaffold } from '../engine/Placeholders.js?v=90';
 
 export class GameState {
   constructor(scene, assets) {
@@ -222,6 +223,14 @@ export class GameState {
       dp.renderOrder = 1; dp.receiveShadow = false;
       this.scene.add(dp); b._dirt = dp;
     }
+    // стройплощадка: леса вокруг + высота модели (для подъёма из земли по мере стройки)
+    if (!b.built) {
+      const bb = new THREE.Box3().setFromObject(view);
+      b._bh = Math.max(0.6, bb.max.y - bb.min.y);
+      const sc = buildScaffold(def.w, def.h);
+      sc.position.set(c.wx, cy, c.wz);
+      this.scene.add(sc); b._scaffold = sc;
+    }
     this.grid.occupy(gx, gy, def.w, def.h, b.id, { walkable: !!def.walkable, road: !!def.road });
     this.buildings.push(b); this._byId.set(b.id, b);
     if (def.unique && kind === 'townhall') this.townhall = b;
@@ -241,19 +250,24 @@ export class GameState {
   }
 
   _applyBuildVisual(b) {
-    const s = b.built ? 1 : 0.35 + 0.65 * (1 - b.buildLeft / (b.def.build || 1));
-    b.view.scale.setScalar(b.built ? 1 : Math.max(0.2, s));
-    b.view.traverse(o => {
-      if (o.isMesh) {
-        if (!b.built) { o.material = o.material; o.material.transparent = true; o.material.opacity = 0.7; }
-        else if (o.material.transparent && o.material.opacity < 1) { o.material.transparent = false; o.material.opacity = 1; }
-      }
-    });
+    // стройка: модель ПОДНИМАЕТСЯ из земли (не скейл) — часть под рельефом прячет depth-тест
+    if (!b.built) {
+      const frac = Math.max(0, Math.min(1, 1 - b.buildLeft / (b.def.build || 1)));
+      b.view.scale.setScalar(1);
+      b.view.position.y = b.cy - (b._bh || 1) * (1 - frac) * 0.92;
+      b.view.traverse(o => { if (o.isMesh) { o.material.transparent = true; o.material.opacity = 0.85; } });
+    } else {
+      b.view.scale.setScalar(1);
+      b.view.position.y = b.cy;
+      b.view.traverse(o => { if (o.isMesh && o.material.transparent && o.material.opacity < 1) { o.material.transparent = false; o.material.opacity = 1; } });
+    }
   }
 
   finishBuild(b) {
     b.built = true; b.buildLeft = 0;
     b.view.scale.setScalar(1);
+    b.view.position.set(b.cx, b.cy, b.cz);
+    if (b._scaffold) { this.scene.remove(b._scaffold); b._scaffold = null; }
     b.view.traverse(o => { if (o.isMesh && o.material.opacity < 1) { o.material.transparent = false; o.material.opacity = 1; } });
     this.recomputePop();
   }
@@ -262,6 +276,7 @@ export class GameState {
     this.scene.remove(b.view);
     if (b._ring) this.scene.remove(b._ring);
     if (b._dirt) this.scene.remove(b._dirt);
+    if (b._scaffold) { this.scene.remove(b._scaffold); b._scaffold = null; }
     this.grid.occupy(b.gx, b.gy, b.w, b.h, null);
     this.buildings = this.buildings.filter(x => x !== b);
     this._byId.delete(b.id);

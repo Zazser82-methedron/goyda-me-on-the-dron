@@ -1,48 +1,48 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=89';
-import * as Quality from './engine/Quality.js?v=89';
-import { RTSCamera } from './engine/RTSCamera.js?v=89';
-import { Picker } from './engine/Picker.js?v=89';
-import { Loop } from './engine/Loop.js?v=89';
-import { AssetManager } from './engine/AssetManager.js?v=89';
-import { TerrainMesh } from './world/TerrainMesh.js?v=89';
-import { WorldBase } from './world/WorldBase.js?v=89';
-import { Sky } from './world/Sky.js?v=89';
-import { Atmosphere } from './world/Atmosphere.js?v=89';
+import { Renderer } from './engine/Renderer.js?v=90';
+import * as Quality from './engine/Quality.js?v=90';
+import { RTSCamera } from './engine/RTSCamera.js?v=90';
+import { Picker } from './engine/Picker.js?v=90';
+import { Loop } from './engine/Loop.js?v=90';
+import { AssetManager } from './engine/AssetManager.js?v=90';
+import { TerrainMesh } from './world/TerrainMesh.js?v=90';
+import { WorldBase } from './world/WorldBase.js?v=90';
+import { Sky } from './world/Sky.js?v=90';
+import { Atmosphere } from './world/Atmosphere.js?v=90';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=89';
-import { GameState } from './sim/GameState.js?v=89';
-import * as Economy from './sim/Economy.js?v=89';
-import * as BuildSys from './sim/Buildings.js?v=89';
-import * as Waves from './sim/Waves.js?v=89';
-import * as Tech from './sim/Tech.js?v=89';
-import * as Nature from './sim/Nature.js?v=89';
-import * as Relics from './sim/Relics.js?v=89';
-import * as Camps from './sim/Camps.js?v=89';
-import * as Wildlife from './sim/Wildlife.js?v=89';
-import * as Events from './sim/Events.js?v=89';
-import * as Achievements from './sim/Achievements.js?v=89';
-import * as Meta from './sim/Meta.js?v=89';
-import * as Research from './sim/Research.js?v=89';
-import { updateUnits, damage } from './sim/Units.js?v=89';
-import { toggleEdict } from './sim/Edicts.js?v=89';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=89';
-import { AmbientAudio } from './audio/Music.js?v=89';
-import { HUD } from './ui/HUD.js?v=89';
-import { BuildMenu } from './ui/BuildMenu.js?v=89';
-import { Selection } from './ui/Selection.js?v=89';
-import { Minimap } from './ui/Minimap.js?v=89';
-import { ResearchPanel } from './ui/Research.js?v=89';
-import { Toasts } from './ui/Toasts.js?v=89';
-import { Leaderboard } from './ui/Leaderboard.js?v=89';
-import { BUILDINGS } from './data/buildings.js?v=89';
-import { RANKS } from './data/ranks.js?v=89';
-import { bark } from './data/barks.js?v=89';
-import { STORAGE_KEY } from './data/config.js?v=89';
-import { getFaction } from './data/factions.js?v=89';
-import { getMap, MAPS } from './data/maps.js?v=89';
-import { StartScreen } from './ui/StartScreen.js?v=89';
+import { nearestAdj } from './world/Pathfinding.js?v=90';
+import { GameState } from './sim/GameState.js?v=90';
+import * as Economy from './sim/Economy.js?v=90';
+import * as BuildSys from './sim/Buildings.js?v=90';
+import * as Waves from './sim/Waves.js?v=90';
+import * as Tech from './sim/Tech.js?v=90';
+import * as Nature from './sim/Nature.js?v=90';
+import * as Relics from './sim/Relics.js?v=90';
+import * as Camps from './sim/Camps.js?v=90';
+import * as Wildlife from './sim/Wildlife.js?v=90';
+import * as Events from './sim/Events.js?v=90';
+import * as Achievements from './sim/Achievements.js?v=90';
+import * as Meta from './sim/Meta.js?v=90';
+import * as Research from './sim/Research.js?v=90';
+import { updateUnits, damage } from './sim/Units.js?v=90';
+import { toggleEdict } from './sim/Edicts.js?v=90';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=90';
+import { AmbientAudio } from './audio/Music.js?v=90';
+import { HUD } from './ui/HUD.js?v=90';
+import { BuildMenu } from './ui/BuildMenu.js?v=90';
+import { Selection } from './ui/Selection.js?v=90';
+import { Minimap } from './ui/Minimap.js?v=90';
+import { ResearchPanel } from './ui/Research.js?v=90';
+import { Toasts } from './ui/Toasts.js?v=90';
+import { Leaderboard } from './ui/Leaderboard.js?v=90';
+import { BUILDINGS } from './data/buildings.js?v=90';
+import { RANKS } from './data/ranks.js?v=90';
+import { bark } from './data/barks.js?v=90';
+import { STORAGE_KEY } from './data/config.js?v=90';
+import { getFaction } from './data/factions.js?v=90';
+import { getMap, MAPS } from './data/maps.js?v=90';
+import { StartScreen } from './ui/StartScreen.js?v=90';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -124,6 +124,7 @@ class Game {
       float: (x, z, t, c) => this.float(x, z, t, c, 0.6),
       flash: (b) => { b._hit = 0.18; },
       burst: (x, y, z, col, n) => { this.atmo && this.atmo.burst(x, y, z, col, n); this.cameraRig.addShake(Math.min(0.4, (n || 8) * 0.012)); },
+      dust: (x, y, z) => { this.atmo && this.atmo.spawnDust(x, y, z); },      // пыль стройки/шагов
       tracer: (u, t, opt) => this.spawnTracer(u, t, opt),
       shake: (a) => this.cameraRig.addShake(a),                       // тряска камеры (game-feel)
       dmgNum: (target, amt, kind) => this.dmgNumber(target, amt, kind),  // всплывающее число урона/лечения
@@ -1216,6 +1217,7 @@ class Game {
       let bob = 0, fwd = 0;
       if (moving) bob = Math.abs(Math.sin(now * 0.016 + u.id * 1.7)) * 0.045;
       if (u.atkAnim > 0) { u.atkAnim -= fdt; fwd = Math.sin((1 - Math.max(0, u.atkAnim) / 0.2) * Math.PI) * 0.16; }
+      if (u.state === 'build') { const k = Math.max(0, Math.sin(now * 0.011 + u.id * 2.1)); fwd = k * k * 0.14; bob = k * 0.03; }   // стук молотком на стройке
       v.position.set(ix + Math.sin(u.dir) * fwd, gy + bob, iz + Math.cos(u.dir) * fwd);
       v.rotation.y = u.dir || 0;
       let vis = true;
@@ -1297,7 +1299,7 @@ class Game {
     this._updateCaravan(fdt);   // торговый караван пересекает карту (жизнь + бонус золота)
     // дрожание зданий под уроном
     for (const b of this.state.buildings) {
-      if (b._hit > 0) { b._hit -= fdt; const j = b._hit > 0 ? (Math.random() - 0.5) * 0.06 : 0; b.view.position.set(b.cx + j, b.cy || 0, b.cz + j); }
+      if (b._hit > 0) { b._hit -= fdt; const j = b._hit > 0 ? (Math.random() - 0.5) * 0.06 : 0; b.view.position.set(b.cx + j, b.built ? (b.cy || 0) : b.view.position.y, b.cz + j); }   // у недостроенных не сбрасываем «подъём из земли»
     }
     // анимация калитки: открывается, когда рядом свой юнит, иначе плавно закрывается
     for (const b of this.state.buildings) {

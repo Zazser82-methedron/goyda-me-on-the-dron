@@ -40,6 +40,7 @@ const PRESETS = {
   edict: () => { tone(392, 0.12, { type: 'square', vol: 0.12 }); tone(523, 0.14, { type: 'square', vol: 0.1, when: 0.08 }); },
   deny: () => { tone(200, 0.09, { type: 'square', vol: 0.09, slide: -70 }); tone(150, 0.11, { type: 'square', vol: 0.07, when: 0.06, slide: -40 }); },   // отказ/ошибка
   bow: () => { tone(880, 0.07, { type: 'sawtooth', vol: 0.06, slide: -480 }); tone(1500, 0.04, { type: 'sine', vol: 0.04, when: 0.01, slide: -700 }); },   // тетива/свист стрелы
+  hammer: () => { tone(1100 + Math.random() * 400, 0.03, { type: 'square', vol: 0.045, slide: -500 }); tone(170 + Math.random() * 30, 0.07, { type: 'triangle', vol: 0.08, when: 0.004 }); },   // тук молотка по дереву
 };
 
 export function sfx(name) { if (muted) return; const p = PRESETS[name]; if (p) try { p(); } catch (e) {} }

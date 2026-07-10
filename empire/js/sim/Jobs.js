@@ -1,7 +1,7 @@
 // ===== Цикл добытчика: к ноде → добыча → к складу → сдача =====
-import { setPath, setPathToBuilding, moveStep } from './Units.js?v=89';
-import { RES_LABEL } from '../data/config.js?v=89';
-import { bark } from '../data/barks.js?v=89';
+import { setPath, setPathToBuilding, moveStep } from './Units.js?v=90';
+import { RES_LABEL } from '../data/config.js?v=90';
+import { bark } from '../data/barks.js?v=90';
 
 function adjacentTo(state, u, ent) {
   const g = state.grid.worldToGrid(u.x, u.z);
@@ -11,6 +11,7 @@ function adjacentTo(state, u, ent) {
 
 export function updateWorker(state, u, dt, ctx) {
   if (u.gatherT > 0) u.gatherT -= dt;
+  if (u._bCd > 0) u._bCd -= dt;   // кулдаун повторного найма на стройку (после «нет пути»)
 
   // ── приказ идти (ПКМ по земле) — приоритет ──
   if (u.moveOrder) {
@@ -22,6 +23,36 @@ export function updateWorker(state, u, dt, ctx) {
   if (u.manualIdle && !u.job && u.carry === 0) { u.state = 'idle'; u.path = null; return; }
 
   if (u.carry >= u.def.carry) u.state = 'toDrop';
+
+  // ── СТРОЙКА: недостроенные здания требуют строителей (приоритет над добычей) ──
+  if (u.carry === 0) {
+    let site = u.buildSite != null ? state.byId(u.buildSite) : null;
+    if (!site || site.built || site.type !== 'building') { u.buildSite = null; site = null; }
+    if (!site && !(u._bCd > 0)) {
+      // ближайшая стройка с недобором строителей (≤3 на площадку)
+      let best = null, bd = Infinity;
+      for (const b of state.buildings) {
+        if (b.built || (b._builderN || 0) >= 3) continue;
+        const d = (b.cx - u.x) ** 2 + (b.cz - u.z) ** 2;
+        if (d < bd) { bd = d; best = b; }
+      }
+      if (best) {
+        u.buildSite = best.id; best._builderN = (best._builderN || 0) + 1;   // оптимистично: 4-й в этом же тике не запишется
+        u.job = null; u.path = null; site = best;
+      }
+    }
+    if (site) {
+      if (adjacentTo(state, u, site)) {
+        u.state = 'build'; u.path = null;
+        u.dir = Math.atan2(site.cx - u.x, site.cz - u.z);   // лицом к стройке (стук молотком — анимация в render)
+        return;
+      }
+      u.state = 'toBuild';
+      if (!u.path) setPathToBuilding(state, u, site);
+      if (moveStep(state, u, dt) === 'noPath') { u.path = null; u.buildSite = null; u._bCd = 1.5; }   // не добраться — отпустить, попробовать позже
+      return;
+    }
+  } else if (u.buildSite != null) u.buildSite = null;   // с грузом — сперва донеси, площадку освободи
 
   // ── несём добычу на склад ──
   if (u.state === 'toDrop' && u.carry > 0) {

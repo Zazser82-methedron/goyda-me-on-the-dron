@@ -1,10 +1,10 @@
 // ===== Постройка, стройка-прогресс и тренировка юнитов =====
-import { BUILDINGS } from '../data/buildings.js?v=89';
-import { UNITS } from '../data/units.js?v=89';
-import { RANKS } from '../data/ranks.js?v=89';
-import { nearestAdj } from '../world/Pathfinding.js?v=89';
-import { bark } from '../data/barks.js?v=89';
-import { edictMods } from './Edicts.js?v=89';
+import { BUILDINGS } from '../data/buildings.js?v=90';
+import { UNITS } from '../data/units.js?v=90';
+import { RANKS } from '../data/ranks.js?v=90';
+import { nearestAdj } from '../world/Pathfinding.js?v=90';
+import { bark } from '../data/barks.js?v=90';
+import { edictMods } from './Edicts.js?v=90';
 
 function trainTime(state, kind) {
   const base = UNITS[kind].trainTime;
@@ -22,11 +22,36 @@ function spawnTrained(state, b, kind, ctx) {
 }
 
 export function update(state, dt, ctx) {
+  // пересчёт строителей на площадках (каждый тик со свежих данных — без дрейфа счётчиков)
+  let anySite = false;
+  for (const b of state.buildings) { if (!b.built) { anySite = true; b._builderN = 0; b._activeBuilders = 0; } }
+  if (anySite) {
+    for (const u of state.units) {
+      if (u.faction !== 'ours' || !u.def.worker || u.buildSite == null) continue;
+      const site = state.byId(u.buildSite);
+      if (!site || site.built) continue;
+      site._builderN++;
+      if (u.state === 'build') site._activeBuilders++;
+    }
+  }
   for (const b of state.buildings) {
     if (!b.built) {
-      b.buildLeft -= dt;
-      const frac = Math.min(1, 1 - b.buildLeft / (b.def.build || 1));
-      b.view.scale.setScalar(Math.max(0.2, 0.35 + 0.65 * frac));
+      // СТРОИТЕЛИ ОБЯЗАТЕЛЬНЫ: без них стройка еле капает; 1/2/3 строителя = ×1.15/×1.85/×2.45
+      const n = b._activeBuilders || 0;
+      const rate = n <= 0 ? 0.15 : (n === 1 ? 1.15 : n === 2 ? 1.85 : 2.45);
+      b.buildLeft -= dt * rate;
+      const frac = Math.max(0, Math.min(1, 1 - b.buildLeft / (b.def.build || 1)));
+      b.view.position.y = (b.cy || 0) - (b._bh || 1) * (1 - frac) * 0.92;   // модель поднимается из земли
+      const q = Math.floor(frac * 4);                                       // вехи 25/50/75%
+      if (q > (b._q || 0) && q < 4) { b._q = q; ctx.float && ctx.float(b.cx, b.cz, '🔨 ' + q * 25 + '%', '#ffe08a'); }
+      if (n > 0) {                                                          // стук молотков + пыль
+        b._hamT = (b._hamT || 0) - dt;
+        if (b._hamT <= 0) {
+          b._hamT = 0.55 + Math.random() * 0.45;
+          ctx.sfx && ctx.sfx('hammer');
+          ctx.dust && ctx.dust(b.cx + (Math.random() - 0.5) * b.w, (b.cy || 0) + 0.15, b.cz + (Math.random() - 0.5) * b.h);
+        }
+      }
       if (b.buildLeft <= 0) {
         state.finishBuild(b);
         ctx.sfx && ctx.sfx('build');

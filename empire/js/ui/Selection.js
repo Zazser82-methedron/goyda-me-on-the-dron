@@ -1,7 +1,7 @@
 // ===== Панель выбранной сущности: HP, тренировка, инфо =====
-import { UNITS } from '../data/units.js?v=89';
-import { RES_LABEL } from '../data/config.js?v=89';
-import { costStr } from './BuildMenu.js?v=89';
+import { UNITS } from '../data/units.js?v=90';
+import { RES_LABEL } from '../data/config.js?v=90';
+import { costStr } from './BuildMenu.js?v=90';
 
 function hpBar(hp, max) {
   const p = Math.max(0, Math.min(1, hp / max));
@@ -90,7 +90,7 @@ export class Selection {
     }
     if (hp) { const p = Math.max(0, sel.hp / sel.maxHp); hp.style.width = p * 100 + '%'; hp.style.background = p > 0.5 ? '#5eff8b' : p > 0.25 ? '#ffcc00' : '#ff5050'; }
     if (sub) {
-      if (sel.type === 'building' && !sel.built) sub.textContent = `строится… ${Math.ceil(sel.buildLeft)}с`;
+      if (sel.type === 'building' && !sel.built) sub.textContent = `строится… ${Math.max(1, Math.ceil(sel.buildLeft))}с · 👷 ${sel._activeBuilders || 0}/3` + ((sel._activeBuilders || 0) === 0 ? ' — нужны холопы!' : '');
       else if (sel.type === 'building' && sel.trainQueue && sel.trainQueue.length) sub.textContent = `очередь: ${sel.trainQueue.length} (${Math.ceil(sel.trainLeft)}с)`;
       else if (sel.type === 'unit' && sel.faction === 'ours' && sel.def.worker) sub.textContent = sel.carry > 0 ? `несёт ${sel.carry} ${RES_LABEL[sel.carryType] ? RES_LABEL[sel.carryType].icon : ''}` : (sel.state || '');
       else sub.textContent = sel.bossName ? '☠️ ' + sel.bossName : '';
