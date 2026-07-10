@@ -128,12 +128,24 @@
 .bp-close:hover{ border-color:var(--gold); color:var(--gold); }
 .bp-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; }
 
+/* превью-шапка карточки: 3D-рендер модели на градиенте цвета категории */
+.bcard-img{
+  height:78px; margin:-9px -10px 6px; display:flex; align-items:center; justify-content:center; overflow:hidden;
+  background:
+    radial-gradient(ellipse at 50% 88%, color-mix(in srgb, var(--cc, #caa) 30%, transparent), transparent 68%),
+    linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.28));
+  border-bottom:1px solid rgba(255,255,255,.07);
+}
+.bcard-img img{ max-width:100%; max-height:100%; image-rendering:auto; pointer-events:none; filter:drop-shadow(0 4px 6px rgba(0,0,0,.45)); }
+.bcard-ic-big{ font-size:40px; }
+.bcard-stats{ font-size:9px; opacity:.62; letter-spacing:.3px; }
+.bcard:hover .bcard-img img{ transform:scale(1.07); transition:transform .18s; }
 .bcard{
   position:relative; text-align:left; background:#150a02; border:1.5px solid var(--panel-br);
-  border-radius:9px; padding:9px 10px; display:flex; flex-direction:column; gap:5px; min-height:98px;
-  transition:border-color .12s, box-shadow .12s, filter .12s; overflow:hidden;
+  border-radius:10px; padding:9px 10px; display:flex; flex-direction:column; gap:4px; min-height:170px;
+  transition:border-color .12s, box-shadow .12s, filter .12s, transform .12s; overflow:hidden;
 }
-.bcard:hover{ border-color:var(--gold); box-shadow:0 0 12px rgba(255,204,0,.35); }
+.bcard:hover{ border-color:var(--cc, var(--gold)); box-shadow:0 4px 16px color-mix(in srgb, var(--cc, #ffcc00) 40%, transparent); transform:translateY(-2px); }
 .bcard.active{ border-color:var(--gold); background:#2a1604; box-shadow:0 0 14px rgba(255,204,0,.5); }
 .bcard.poor{ filter:brightness(.66); }
 .bcard.locked{ filter:grayscale(.7) brightness(.62); }
@@ -253,4 +265,6 @@
   #lboard, #research{ width:96vw; max-height:74vh; overflow-y:auto; }
   .ord-btn{ min-height:46px; font-size:13px; padding:12px 6px; }   /* тач — крупнее, палец не мажет */
   .stbtn{ min-height:40px; padding:8px 2px; }
+  .bcard{ min-height:148px; }
+  .bcard-img{ height:58px; }
 }

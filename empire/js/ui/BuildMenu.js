@@ -1,9 +1,10 @@
 // ===== Нижняя панель: вкладки-категории построек + модальная сетка карточек + указы =====
-import { BUILDINGS, BUILD_ORDER, CATS } from '../data/buildings.js?v=90';
-import { RANKS } from '../data/ranks.js?v=90';
-import { RES_LABEL } from '../data/config.js?v=90';
-import { EDICTS } from '../sim/Edicts.js?v=90';
-import { TECHS } from '../data/tech.js?v=90';
+import { BUILDINGS, BUILD_ORDER, CATS } from '../data/buildings.js?v=91';
+import { RANKS } from '../data/ranks.js?v=91';
+import { RES_LABEL } from '../data/config.js?v=91';
+import { EDICTS } from '../sim/Edicts.js?v=91';
+import { TECHS } from '../data/tech.js?v=91';
+import { Thumbs } from './Thumbs.js?v=91';
 
 export function costStr(cost) {
   const keys = Object.keys(cost || {});
@@ -31,6 +32,7 @@ function prodStr(d) {
 export class BuildMenu {
   constructor(game) {
     this.game = game;
+    this.thumbs = new Thumbs(game.assets);   // 3D-превью моделей (лениво, с кэшем)
     this.tabsEl = document.getElementById('buildbtns');
     this.edictsEl = document.getElementById('edicts');
     this.openCat = null;
@@ -124,9 +126,14 @@ export class BuildMenu {
       const d = BUILDINGS[kind];
       const card = document.createElement('button');
       card.className = 'bcard cat-' + d.cat;
+      card.style.setProperty('--cc', meta.color);
+      const url = this.thumbs.get(d.model);   // 3D-превью реальной модели (null → крупный эмодзи)
+      const stats = [`⏱${d.build || 0}с`, `🛡${d.hp}`, `📐${d.w}×${d.h}`].join(' · ');
       card.innerHTML =
+        `<div class="bcard-img">${url ? `<img src="${url}" alt="" draggable="false">` : `<span class="bcard-ic-big">${d.icon}</span>`}</div>` +
         `<div class="bcard-top"><span class="bcard-ic">${d.icon}</span><span class="bcard-nm">${d.name}</span></div>` +
         `<div class="bcard-desc">${d.desc || ''}</div>` +
+        `<div class="bcard-stats">${stats}</div>` +
         `<div class="bcard-foot"><span class="bcard-cost">${costStr(d.cost)}</span>${prodStr(d)}</div>` +
         `<div class="bcard-lock"></div>`;
       card.onclick = () => this._pick(kind, d);
