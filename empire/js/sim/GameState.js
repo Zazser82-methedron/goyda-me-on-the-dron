@@ -1,13 +1,13 @@
 // ===== Единый источник правды: ресурсы, сущности, ранги, сейв =====
 import * as THREE from 'three';
-import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=92';
-import { Grid } from '../world/Grid.js?v=92';
-import { NodeField } from '../world/NodeField.js?v=92';
-import { BUILDINGS } from '../data/buildings.js?v=92';
-import { UNITS } from '../data/units.js?v=92';
-import { RANKS } from '../data/ranks.js?v=92';
-import { buildScaffold } from '../engine/Placeholders.js?v=92';
-import * as Tiling from '../world/Tiling.js?v=92';
+import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=93';
+import { Grid } from '../world/Grid.js?v=93';
+import { NodeField } from '../world/NodeField.js?v=93';
+import { BUILDINGS } from '../data/buildings.js?v=93';
+import { UNITS } from '../data/units.js?v=93';
+import { RANKS } from '../data/ranks.js?v=93';
+import { buildScaffold } from '../engine/Placeholders.js?v=93';
+import * as Tiling from '../world/Tiling.js?v=93';
 
 export class GameState {
   constructor(scene, assets) {

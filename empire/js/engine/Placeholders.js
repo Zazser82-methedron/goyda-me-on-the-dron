@@ -2,7 +2,7 @@
 // Стиль повторяет идол-слой «Гойды»: flatShading, гекс-формы, эмиссивные руны.
 // Origin КАЖДОЙ модели — в центре основания (низ на y=0), модель растёт вверх.
 import * as THREE from 'three';
-import { PAL } from '../data/config.js?v=92';
+import { PAL } from '../data/config.js?v=93';
 
 const _mats = {};
 function mat(color, o = {}) {
@@ -94,6 +94,34 @@ export function homesteadConn(a, c, grid) {
   }
   g.position.set(mx, grid.heightAt ? grid.heightAt(mx, mz) : 0, mz);
   g.rotation.y = Math.atan2(bx - ax, bz - az);
+  return g;
+}
+
+// ---- гужевая телега (транспорт по дорогам): лошадка + повозка с крутящимися колёсами ----
+// Едет вдоль +Z; колёса в view.userData.wheels — рендер-цикл крутит их по скорости.
+function cartUnit() {
+  const g = new THREE.Group();
+  const wd = mat(PAL.wood), dk = mat(PAL.woodDk), body = mat(0x8a5a30), sack = mat(0xc8b060);
+  // лошадка впереди
+  g.add(box(0.22, 0.2, 0.38, body, 0, 0.38, 0.46));
+  g.add(box(0.11, 0.15, 0.17, body, 0, 0.58, 0.68));                          // голова
+  g.add(box(0.1, 0.08, 0.06, dk, 0, 0.68, 0.6));                              // грива
+  for (const [x, z] of [[-0.07, 0.34], [0.07, 0.34], [-0.07, 0.58], [0.07, 0.58]])
+    g.add(cyl(0.025, 0.032, 0.28, 4, dk, x, 0.14, z));                        // ноги
+  for (const x of [-0.13, 0.13]) g.add(box(0.03, 0.03, 0.42, wd, x, 0.3, 0.12));   // оглобли
+  // повозка
+  g.add(box(0.36, 0.07, 0.46, wd, 0, 0.28, -0.22));                           // дно
+  for (const x of [-0.17, 0.17]) g.add(box(0.03, 0.14, 0.46, dk, x, 0.38, -0.22)); // борта
+  g.add(sph(0.11, sack, -0.05, 0.42, -0.14)); g.add(sph(0.09, sack, 0.07, 0.4, -0.32));   // мешки с товаром
+  // колёса (геометрия повёрнута — ось вдоль X, качение = rotation.x). Имя 'wheel' — Transport ищет
+  // по нему в КЛОНЕ (ссылки в userData нельзя: Object3D.clone() сериализует userData через JSON).
+  for (const x of [-0.21, 0.21]) {
+    const wg = new THREE.CylinderGeometry(0.13, 0.13, 0.045, 9);
+    wg.rotateZ(Math.PI / 2);
+    const wh = new THREE.Mesh(wg, dk);
+    wh.position.set(x, 0.13, -0.22); wh.castShadow = true; wh.name = 'wheel';
+    g.add(wh);
+  }
   return g;
 }
 
@@ -494,6 +522,7 @@ const BUILDERS = {
   bld_chastokol: chastokol, bld_chastokol_gate: chastokolGate,
   res_tree: tree, res_stone: stoneNode, res_ore: oreNode,
   unit_kholop: kholop, unit_ratnik: ratnik, unit_oprichnik: oprichnik, unit_bogatyr: bogatyr,
+  unit_cart: cartUnit,
   animal_deer: deer, animal_boar: boar,
   enemy_raider: raider, enemy_boss: bossUnit,
   idol_krio: relicIdol(0x00eeff), idol_giper: relicIdol(0xff3020), idol_shipo: relicIdol(0x66ff44),

@@ -1,48 +1,49 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=92';
-import * as Quality from './engine/Quality.js?v=92';
-import { RTSCamera } from './engine/RTSCamera.js?v=92';
-import { Picker } from './engine/Picker.js?v=92';
-import { Loop } from './engine/Loop.js?v=92';
-import { AssetManager } from './engine/AssetManager.js?v=92';
-import { TerrainMesh } from './world/TerrainMesh.js?v=92';
-import { WorldBase } from './world/WorldBase.js?v=92';
-import { Sky } from './world/Sky.js?v=92';
-import { Atmosphere } from './world/Atmosphere.js?v=92';
+import { Renderer } from './engine/Renderer.js?v=93';
+import * as Quality from './engine/Quality.js?v=93';
+import { RTSCamera } from './engine/RTSCamera.js?v=93';
+import { Picker } from './engine/Picker.js?v=93';
+import { Loop } from './engine/Loop.js?v=93';
+import { AssetManager } from './engine/AssetManager.js?v=93';
+import { TerrainMesh } from './world/TerrainMesh.js?v=93';
+import { WorldBase } from './world/WorldBase.js?v=93';
+import { Sky } from './world/Sky.js?v=93';
+import { Atmosphere } from './world/Atmosphere.js?v=93';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=92';
-import { GameState } from './sim/GameState.js?v=92';
-import * as Economy from './sim/Economy.js?v=92';
-import * as BuildSys from './sim/Buildings.js?v=92';
-import * as Waves from './sim/Waves.js?v=92';
-import * as Tech from './sim/Tech.js?v=92';
-import * as Nature from './sim/Nature.js?v=92';
-import * as Relics from './sim/Relics.js?v=92';
-import * as Camps from './sim/Camps.js?v=92';
-import * as Wildlife from './sim/Wildlife.js?v=92';
-import * as Events from './sim/Events.js?v=92';
-import * as Achievements from './sim/Achievements.js?v=92';
-import * as Meta from './sim/Meta.js?v=92';
-import * as Research from './sim/Research.js?v=92';
-import { updateUnits, damage } from './sim/Units.js?v=92';
-import { toggleEdict } from './sim/Edicts.js?v=92';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=92';
-import { AmbientAudio } from './audio/Music.js?v=92';
-import { HUD } from './ui/HUD.js?v=92';
-import { BuildMenu } from './ui/BuildMenu.js?v=92';
-import { Selection } from './ui/Selection.js?v=92';
-import { Minimap } from './ui/Minimap.js?v=92';
-import { ResearchPanel } from './ui/Research.js?v=92';
-import { Toasts } from './ui/Toasts.js?v=92';
-import { Leaderboard } from './ui/Leaderboard.js?v=92';
-import { BUILDINGS } from './data/buildings.js?v=92';
-import { RANKS } from './data/ranks.js?v=92';
-import { bark } from './data/barks.js?v=92';
-import { STORAGE_KEY } from './data/config.js?v=92';
-import { getFaction } from './data/factions.js?v=92';
-import { getMap, MAPS } from './data/maps.js?v=92';
-import { StartScreen } from './ui/StartScreen.js?v=92';
+import { nearestAdj } from './world/Pathfinding.js?v=93';
+import { GameState } from './sim/GameState.js?v=93';
+import * as Economy from './sim/Economy.js?v=93';
+import * as BuildSys from './sim/Buildings.js?v=93';
+import * as Waves from './sim/Waves.js?v=93';
+import * as Tech from './sim/Tech.js?v=93';
+import * as Nature from './sim/Nature.js?v=93';
+import * as Relics from './sim/Relics.js?v=93';
+import * as Camps from './sim/Camps.js?v=93';
+import * as Wildlife from './sim/Wildlife.js?v=93';
+import * as Events from './sim/Events.js?v=93';
+import * as Achievements from './sim/Achievements.js?v=93';
+import * as Meta from './sim/Meta.js?v=93';
+import * as Research from './sim/Research.js?v=93';
+import { updateUnits, damage } from './sim/Units.js?v=93';
+import { toggleEdict } from './sim/Edicts.js?v=93';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=93';
+import { AmbientAudio } from './audio/Music.js?v=93';
+import { HUD } from './ui/HUD.js?v=93';
+import { BuildMenu } from './ui/BuildMenu.js?v=93';
+import { Selection } from './ui/Selection.js?v=93';
+import { Minimap } from './ui/Minimap.js?v=93';
+import { ResearchPanel } from './ui/Research.js?v=93';
+import { Toasts } from './ui/Toasts.js?v=93';
+import { Leaderboard } from './ui/Leaderboard.js?v=93';
+import { BUILDINGS } from './data/buildings.js?v=93';
+import { RANKS } from './data/ranks.js?v=93';
+import { bark } from './data/barks.js?v=93';
+import { STORAGE_KEY } from './data/config.js?v=93';
+import { getFaction } from './data/factions.js?v=93';
+import { getMap, MAPS } from './data/maps.js?v=93';
+import { StartScreen } from './ui/StartScreen.js?v=93';
+import * as Transport from './sim/Transport.js?v=93';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -1131,6 +1132,7 @@ class Game {
     if (this.state.gameOver) return;
     if (this._hitStop > 0) return;          // hit-pause: рендер живёт (тряска), сим заморожен
     Economy.update(this.state, dt, this.ctx);
+    Transport.update(this.state, dt, this.ctx);   // телеги по дорогам (рынок → ратуша)
     BuildSys.update(this.state, dt, this.ctx);
     updateUnits(this.state, dt, this.ctx);
     Waves.update(this.state, dt, this.ctx);
@@ -1297,6 +1299,10 @@ class Game {
     // атмосфера: дым/искры/птицы/облака(+тени)/светлячки (ночь = 1-день; неон без цикла → лёгкие сумерки)
     if (this.atmo) this.atmo.update(fdt, now, this.state.buildings, this.cameraRig.target, this.sky ? 1 - (this.sky.day || 0) : 0.45, this.sky ? this.sky.windGust : 0);
     this._updateCaravan(fdt);   // торговый караван пересекает карту (жизнь + бонус золота)
+    // колёса телег крутятся по ходу движения
+    if (this.state._carts) for (const c of this.state._carts) {
+      if (c.wheels) for (const w of c.wheels) w.rotation.x += fdt * c.speed * 6;
+    }
     // дрожание зданий под уроном
     for (const b of this.state.buildings) {
       if (b._hit > 0) { b._hit -= fdt; const j = b._hit > 0 ? (Math.random() - 0.5) * 0.06 : 0; b.view.position.set(b.cx + j, b.built ? (b.cy || 0) : b.view.position.y, b.cz + j); }   // у недостроенных не сбрасываем «подъём из земли»

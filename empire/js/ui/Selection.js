@@ -1,7 +1,8 @@
 // ===== Панель выбранной сущности: HP, тренировка, инфо =====
-import { UNITS } from '../data/units.js?v=92';
-import { RES_LABEL } from '../data/config.js?v=92';
-import { costStr } from './BuildMenu.js?v=92';
+import { UNITS } from '../data/units.js?v=93';
+import { RES_LABEL } from '../data/config.js?v=93';
+import { costStr } from './BuildMenu.js?v=93';
+import { roadPath } from '../sim/Transport.js?v=93';
 
 function hpBar(hp, max) {
   const p = Math.max(0, Math.min(1, hp / max));
@@ -35,6 +36,7 @@ export class Selection {
       }
       if (sel.def.drop) html += `<div class="sel-tag">📦 точка сдачи</div>`;
       if (sel.def.produce) html += `<div class="sel-tag">${produceStr(sel.def.produce)}</div>`;
+      if (sel.kind === 'market') html += `<div class="sel-tag" id="sel-road"></div>`;   // связь дорогой с ратушей (телеги)
     } else if (sel.type === 'unit') {
       html += `<div class="sel-h">${sel.def.icon} ${sel.def.name}</div>`;
       html += hpBar(sel.hp, sel.maxHp);
@@ -83,6 +85,12 @@ export class Selection {
   _dynamic(sel) {
     const hp = document.getElementById('sel-hp');
     const sub = document.getElementById('sel-sub');
+    const road = document.getElementById('sel-road');
+    if (road && sel.kind === 'market') {   // BFS только по дорожным тайлам — дёшево на 10Гц UI
+      const ok = roadPath(this.game.state, sel, this.game.state.townhall);
+      road.textContent = ok ? '🐴 дорога к ПАЛАТАМ есть — телеги возят золото' : '🐴 нет дороги к ПАЛАТАМ — проложи 🛣️ для телег';
+      road.style.color = ok ? '#9fef9f' : '#ffb35c';
+    }
     if (sel.type === 'node') {
       if (hp) { const p = Math.max(0, sel.amount / sel.maxAmount); hp.style.width = p * 100 + '%'; }
       if (sub) sub.textContent = `осталось: ${Math.ceil(sel.amount)}`;
