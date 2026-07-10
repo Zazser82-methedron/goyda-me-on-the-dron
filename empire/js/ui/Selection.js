@@ -1,8 +1,9 @@
 // ===== Панель выбранной сущности: HP, тренировка, инфо =====
-import { UNITS } from '../data/units.js?v=93';
-import { RES_LABEL } from '../data/config.js?v=93';
-import { costStr } from './BuildMenu.js?v=93';
-import { roadPath } from '../sim/Transport.js?v=93';
+import { UNITS } from '../data/units.js?v=94';
+import { RES_LABEL } from '../data/config.js?v=94';
+import { costStr } from './BuildMenu.js?v=94';
+import { roadPath } from '../sim/Transport.js?v=94';
+import { railPath } from '../sim/Railroad.js?v=94';
 
 function hpBar(hp, max) {
   const p = Math.max(0, Math.min(1, hp / max));
@@ -37,6 +38,7 @@ export class Selection {
       if (sel.def.drop) html += `<div class="sel-tag">📦 точка сдачи</div>`;
       if (sel.def.produce) html += `<div class="sel-tag">${produceStr(sel.def.produce)}</div>`;
       if (sel.kind === 'market') html += `<div class="sel-tag" id="sel-road"></div>`;   // связь дорогой с ратушей (телеги)
+      if (sel.kind === 'station') html += `<div class="sel-tag" id="sel-rail"></div>`;  // связь рельсами с другой станцией
     } else if (sel.type === 'unit') {
       html += `<div class="sel-h">${sel.def.icon} ${sel.def.name}</div>`;
       html += hpBar(sel.hp, sel.maxHp);
@@ -90,6 +92,13 @@ export class Selection {
       const ok = roadPath(this.game.state, sel, this.game.state.townhall);
       road.textContent = ok ? '🐴 дорога к ПАЛАТАМ есть — телеги возят золото' : '🐴 нет дороги к ПАЛАТАМ — проложи 🛣️ для телег';
       road.style.color = ok ? '#9fef9f' : '#ffb35c';
+    }
+    const railEl = document.getElementById('sel-rail');
+    if (railEl && sel.kind === 'station') {
+      const s = this.game.state;
+      const other = s.buildings.find(b => b.built && b.kind === 'station' && b.id !== sel.id && railPath(s, sel, b));
+      railEl.textContent = other ? '🚂 линия действует — паровоз возит грузы' : '🚂 нужна ВТОРАЯ станция + рельсы 🛤️ между ними';
+      railEl.style.color = other ? '#9fef9f' : '#ffb35c';
     }
     if (sel.type === 'node') {
       if (hp) { const p = Math.max(0, sel.amount / sel.maxAmount); hp.style.width = p * 100 + '%'; }

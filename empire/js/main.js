@@ -1,49 +1,50 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=93';
-import * as Quality from './engine/Quality.js?v=93';
-import { RTSCamera } from './engine/RTSCamera.js?v=93';
-import { Picker } from './engine/Picker.js?v=93';
-import { Loop } from './engine/Loop.js?v=93';
-import { AssetManager } from './engine/AssetManager.js?v=93';
-import { TerrainMesh } from './world/TerrainMesh.js?v=93';
-import { WorldBase } from './world/WorldBase.js?v=93';
-import { Sky } from './world/Sky.js?v=93';
-import { Atmosphere } from './world/Atmosphere.js?v=93';
+import { Renderer } from './engine/Renderer.js?v=94';
+import * as Quality from './engine/Quality.js?v=94';
+import { RTSCamera } from './engine/RTSCamera.js?v=94';
+import { Picker } from './engine/Picker.js?v=94';
+import { Loop } from './engine/Loop.js?v=94';
+import { AssetManager } from './engine/AssetManager.js?v=94';
+import { TerrainMesh } from './world/TerrainMesh.js?v=94';
+import { WorldBase } from './world/WorldBase.js?v=94';
+import { Sky } from './world/Sky.js?v=94';
+import { Atmosphere } from './world/Atmosphere.js?v=94';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
-import { nearestAdj } from './world/Pathfinding.js?v=93';
-import { GameState } from './sim/GameState.js?v=93';
-import * as Economy from './sim/Economy.js?v=93';
-import * as BuildSys from './sim/Buildings.js?v=93';
-import * as Waves from './sim/Waves.js?v=93';
-import * as Tech from './sim/Tech.js?v=93';
-import * as Nature from './sim/Nature.js?v=93';
-import * as Relics from './sim/Relics.js?v=93';
-import * as Camps from './sim/Camps.js?v=93';
-import * as Wildlife from './sim/Wildlife.js?v=93';
-import * as Events from './sim/Events.js?v=93';
-import * as Achievements from './sim/Achievements.js?v=93';
-import * as Meta from './sim/Meta.js?v=93';
-import * as Research from './sim/Research.js?v=93';
-import { updateUnits, damage } from './sim/Units.js?v=93';
-import { toggleEdict } from './sim/Edicts.js?v=93';
-import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=93';
-import { AmbientAudio } from './audio/Music.js?v=93';
-import { HUD } from './ui/HUD.js?v=93';
-import { BuildMenu } from './ui/BuildMenu.js?v=93';
-import { Selection } from './ui/Selection.js?v=93';
-import { Minimap } from './ui/Minimap.js?v=93';
-import { ResearchPanel } from './ui/Research.js?v=93';
-import { Toasts } from './ui/Toasts.js?v=93';
-import { Leaderboard } from './ui/Leaderboard.js?v=93';
-import { BUILDINGS } from './data/buildings.js?v=93';
-import { RANKS } from './data/ranks.js?v=93';
-import { bark } from './data/barks.js?v=93';
-import { STORAGE_KEY } from './data/config.js?v=93';
-import { getFaction } from './data/factions.js?v=93';
-import { getMap, MAPS } from './data/maps.js?v=93';
-import { StartScreen } from './ui/StartScreen.js?v=93';
-import * as Transport from './sim/Transport.js?v=93';
+import { nearestAdj } from './world/Pathfinding.js?v=94';
+import { GameState } from './sim/GameState.js?v=94';
+import * as Economy from './sim/Economy.js?v=94';
+import * as BuildSys from './sim/Buildings.js?v=94';
+import * as Waves from './sim/Waves.js?v=94';
+import * as Tech from './sim/Tech.js?v=94';
+import * as Nature from './sim/Nature.js?v=94';
+import * as Relics from './sim/Relics.js?v=94';
+import * as Camps from './sim/Camps.js?v=94';
+import * as Wildlife from './sim/Wildlife.js?v=94';
+import * as Events from './sim/Events.js?v=94';
+import * as Achievements from './sim/Achievements.js?v=94';
+import * as Meta from './sim/Meta.js?v=94';
+import * as Research from './sim/Research.js?v=94';
+import { updateUnits, damage } from './sim/Units.js?v=94';
+import { toggleEdict } from './sim/Edicts.js?v=94';
+import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=94';
+import { AmbientAudio } from './audio/Music.js?v=94';
+import { HUD } from './ui/HUD.js?v=94';
+import { BuildMenu } from './ui/BuildMenu.js?v=94';
+import { Selection } from './ui/Selection.js?v=94';
+import { Minimap } from './ui/Minimap.js?v=94';
+import { ResearchPanel } from './ui/Research.js?v=94';
+import { Toasts } from './ui/Toasts.js?v=94';
+import { Leaderboard } from './ui/Leaderboard.js?v=94';
+import { BUILDINGS } from './data/buildings.js?v=94';
+import { RANKS } from './data/ranks.js?v=94';
+import { bark } from './data/barks.js?v=94';
+import { STORAGE_KEY } from './data/config.js?v=94';
+import { getFaction } from './data/factions.js?v=94';
+import { getMap, MAPS } from './data/maps.js?v=94';
+import { StartScreen } from './ui/StartScreen.js?v=94';
+import * as Transport from './sim/Transport.js?v=94';
+import * as Railroad from './sim/Railroad.js?v=94';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -126,6 +127,7 @@ class Game {
       flash: (b) => { b._hit = 0.18; },
       burst: (x, y, z, col, n) => { this.atmo && this.atmo.burst(x, y, z, col, n); this.cameraRig.addShake(Math.min(0.4, (n || 8) * 0.012)); },
       dust: (x, y, z) => { this.atmo && this.atmo.spawnDust(x, y, z); },      // пыль стройки/шагов
+      smoke: (x, y, z) => { this.atmo && this.atmo.puffSmoke(x, y, z); },     // дым паровоза
       tracer: (u, t, opt) => this.spawnTracer(u, t, opt),
       shake: (a) => this.cameraRig.addShake(a),                       // тряска камеры (game-feel)
       dmgNum: (target, amt, kind) => this.dmgNumber(target, amt, kind),  // всплывающее число урона/лечения
@@ -1133,6 +1135,7 @@ class Game {
     if (this._hitStop > 0) return;          // hit-pause: рендер живёт (тряска), сим заморожен
     Economy.update(this.state, dt, this.ctx);
     Transport.update(this.state, dt, this.ctx);   // телеги по дорогам (рынок → ратуша)
+    Railroad.update(this.state, dt, this.ctx);    // паровоз между станциями
     BuildSys.update(this.state, dt, this.ctx);
     updateUnits(this.state, dt, this.ctx);
     Waves.update(this.state, dt, this.ctx);
@@ -1302,6 +1305,10 @@ class Game {
     // колёса телег крутятся по ходу движения
     if (this.state._carts) for (const c of this.state._carts) {
       if (c.wheels) for (const w of c.wheels) w.rotation.x += fdt * c.speed * 6;
+    }
+    // колёса поезда (стоит на станции — не крутятся)
+    if (this.state._train && this.state._train.dwell <= 0) {
+      for (const w of this.state._train.wheels) w.rotation.x += fdt * this.state._train.speed * 5;
     }
     // дрожание зданий под уроном
     for (const b of this.state.buildings) {

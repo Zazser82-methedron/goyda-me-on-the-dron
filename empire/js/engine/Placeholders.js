@@ -2,7 +2,7 @@
 // Стиль повторяет идол-слой «Гойды»: flatShading, гекс-формы, эмиссивные руны.
 // Origin КАЖДОЙ модели — в центре основания (низ на y=0), модель растёт вверх.
 import * as THREE from 'three';
-import { PAL } from '../data/config.js?v=93';
+import { PAL } from '../data/config.js?v=94';
 
 const _mats = {};
 function mat(color, o = {}) {
@@ -120,6 +120,77 @@ function cartUnit() {
     wg.rotateZ(Math.PI / 2);
     const wh = new THREE.Mesh(wg, dk);
     wh.position.set(x, 0.13, -0.22); wh.castShadow = true; wh.name = 'wheel';
+    g.add(wh);
+  }
+  return g;
+}
+
+// ---- тайл рельсов под маску соединений (N=1,E=2,S=4,W=8): гравий + шпалы + пара рельсов к каждому соседу ----
+export function railTile(mask) {
+  const g = new THREE.Group();
+  const grav = mat(0x5c5650, { rough: 1 }), tie = mat(PAL.woodDk), steel = mat(0x9aa0aa, { metal: 0.85, rough: 0.35 });
+  g.add(box(0.9, 0.04, 0.9, grav, 0, 0.02, 0));                               // гравийная подушка
+  if (!mask) mask = 1 | 4;                                                    // одиночный тайл — прямая N-S
+  for (const [bit, dx, dz] of [[1, 0, -1], [2, 1, 0], [4, 0, 1], [8, -1, 0]]) {
+    if (!(mask & bit)) continue;
+    const horiz = dx !== 0;
+    for (const off of [-0.14, 0.14])                                          // два рельса от центра к краю
+      g.add(box(horiz ? 0.52 : 0.05, 0.045, horiz ? 0.05 : 0.52, steel, horiz ? dx * 0.25 : off, 0.075, horiz ? off : dz * 0.25));
+    for (const k of [0.14, 0.38])                                             // шпалы поперёк направления
+      g.add(box(horiz ? 0.07 : 0.44, 0.035, horiz ? 0.44 : 0.07, tie, dx * k, 0.048, dz * k));
+  }
+  return g;
+}
+
+// ---- станция (2×2): платформа + депо-домик + семафор и ящики ----
+function station() {
+  const g = new THREE.Group();
+  const st = mat(PAL.stone), wd = mat(PAL.wood), wdk = mat(PAL.woodDk), rf = mat(PAL.roof);
+  const lamp = mat(0x102008, { emissive: 0x66ff44, emi: 2.0 });
+  g.add(box(1.8, 0.18, 1.8, st, 0, 0.09, 0));                                 // платформа
+  g.add(logWall(1.1, 0.7, 0.9, wd, wdk, -0.2, 0.53, -0.35));                  // депо-домик
+  g.add(cone(0.85, 0.55, 4, rf, -0.2, 1.16, -0.35));
+  g.add(box(0.26, 0.44, 0.05, wdk, -0.2, 0.42, 0.12));                        // дверь на перрон
+  g.add(windowMesh(0.2, 0.2, 0.22, 0.66, 0.12));                              // окошко кассы
+  g.add(cyl(0.035, 0.045, 0.9, 5, wdk, 0.68, 0.62, 0.55));                    // семафор
+  g.add(box(0.16, 0.05, 0.05, wdk, 0.62, 1.02, 0.55));
+  g.add(sph(0.06, lamp, 0.55, 1.02, 0.55));                                   // зелёный огонь — путь свободен
+  g.add(box(0.24, 0.2, 0.24, wd, 0.55, 0.28, -0.5));                          // ящики с грузом
+  g.add(box(0.18, 0.16, 0.18, wdk, 0.32, 0.26, -0.62));
+  return g;
+}
+
+// ---- паровоз (едет вдоль +Z): котёл + будка + труба (name 'funnel' — из неё идёт дым) + колёса ----
+function loco() {
+  const g = new THREE.Group();
+  const body = mat(0x2e3138, { rough: 0.5, metal: 0.4 }), dk = mat(PAL.woodDk), red = mat(PAL.crimson);
+  const gold = mat(PAL.gold, { metal: 0.85, rough: 0.35 });
+  g.add(box(0.34, 0.06, 0.78, dk, 0, 0.14, 0));                               // рама
+  const boiler = new THREE.Mesh(new THREE.CylinderGeometry(0.155, 0.155, 0.48, 10), body);
+  boiler.rotation.x = Math.PI / 2; boiler.position.set(0, 0.34, 0.14); boiler.castShadow = true;
+  g.add(boiler);
+  g.add(box(0.3, 0.36, 0.26, body, 0, 0.35, -0.24));                          // будка машиниста
+  g.add(box(0.34, 0.05, 0.3, red, 0, 0.56, -0.24));                           // крыша будки
+  const fun = cyl(0.05, 0.075, 0.2, 7, dk, 0, 0.58, 0.3); fun.name = 'funnel'; g.add(fun);   // труба
+  g.add(sph(0.055, gold, 0, 0.44, 0.395));                                    // фонарь на морде
+  for (const z of [-0.22, 0.02, 0.26]) for (const x of [-0.19, 0.19]) {       // колёса ×6
+    const wg = new THREE.CylinderGeometry(0.1, 0.1, 0.04, 9); wg.rotateZ(Math.PI / 2);
+    const wh = new THREE.Mesh(wg, dk); wh.position.set(x, 0.1, z); wh.castShadow = true; wh.name = 'wheel';
+    g.add(wh);
+  }
+  return g;
+}
+
+// ---- вагон (грузовой, едет вдоль +Z) ----
+function wagon() {
+  const g = new THREE.Group();
+  const wd = mat(PAL.wood), dk = mat(PAL.woodDk), sack = mat(0xc8b060);
+  g.add(box(0.32, 0.06, 0.66, dk, 0, 0.14, 0));                               // рама
+  g.add(box(0.34, 0.2, 0.6, wd, 0, 0.28, 0));                                 // короб
+  g.add(sph(0.11, sack, -0.05, 0.44, 0.12)); g.add(sph(0.09, sack, 0.08, 0.42, -0.14));   // груз
+  for (const z of [-0.2, 0.2]) for (const x of [-0.18, 0.18]) {
+    const wg = new THREE.CylinderGeometry(0.09, 0.09, 0.04, 9); wg.rotateZ(Math.PI / 2);
+    const wh = new THREE.Mesh(wg, dk); wh.position.set(x, 0.09, z); wh.castShadow = true; wh.name = 'wheel';
     g.add(wh);
   }
   return g;
@@ -522,7 +593,8 @@ const BUILDERS = {
   bld_chastokol: chastokol, bld_chastokol_gate: chastokolGate,
   res_tree: tree, res_stone: stoneNode, res_ore: oreNode,
   unit_kholop: kholop, unit_ratnik: ratnik, unit_oprichnik: oprichnik, unit_bogatyr: bogatyr,
-  unit_cart: cartUnit,
+  unit_cart: cartUnit, unit_loco: loco, unit_wagon: wagon,
+  bld_rail: () => railTile(2 | 8), bld_station: station,
   animal_deer: deer, animal_boar: boar,
   enemy_raider: raider, enemy_boss: bossUnit,
   idol_krio: relicIdol(0x00eeff), idol_giper: relicIdol(0xff3020), idol_shipo: relicIdol(0x66ff44),

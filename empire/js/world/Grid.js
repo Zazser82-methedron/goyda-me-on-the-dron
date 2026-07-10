@@ -1,6 +1,6 @@
 // ===== Сетка мира: тайлы, координаты, занятость, рельеф =====
-import { TILE, GRID_N } from '../data/config.js?v=93';
-import { makeNoise, fbm, hashSeed } from './Noise.js?v=93';
+import { TILE, GRID_N } from '../data/config.js?v=94';
+import { makeNoise, fbm, hashSeed } from './Noise.js?v=94';
 
 export class Grid {
   constructor(n = GRID_N) {
@@ -64,8 +64,8 @@ export class Grid {
         const t = this.get(gx + dx, gy + dy);
         if (!t) continue;
         t.occupiedBy = id;
-        if (id === null) { t.walkable = t.baseWalkable !== false; t.buildable = t.baseBuildable !== false; t.road = false; }
-        else { t.walkable = !!opts.walkable; t.buildable = false; t.road = !!opts.road; }
+        if (id === null) { t.walkable = t.baseWalkable !== false; t.buildable = t.baseBuildable !== false; t.road = false; t.rail = false; }
+        else { t.walkable = !!opts.walkable; t.buildable = false; t.road = !!opts.road; t.rail = !!opts.rail; }
       }
     }
   }

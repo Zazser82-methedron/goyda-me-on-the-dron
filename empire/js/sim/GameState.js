@@ -1,13 +1,13 @@
 // ===== Единый источник правды: ресурсы, сущности, ранги, сейв =====
 import * as THREE from 'three';
-import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=93';
-import { Grid } from '../world/Grid.js?v=93';
-import { NodeField } from '../world/NodeField.js?v=93';
-import { BUILDINGS } from '../data/buildings.js?v=93';
-import { UNITS } from '../data/units.js?v=93';
-import { RANKS } from '../data/ranks.js?v=93';
-import { buildScaffold } from '../engine/Placeholders.js?v=93';
-import * as Tiling from '../world/Tiling.js?v=93';
+import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=94';
+import { Grid } from '../world/Grid.js?v=94';
+import { NodeField } from '../world/NodeField.js?v=94';
+import { BUILDINGS } from '../data/buildings.js?v=94';
+import { UNITS } from '../data/units.js?v=94';
+import { RANKS } from '../data/ranks.js?v=94';
+import { buildScaffold } from '../engine/Placeholders.js?v=94';
+import * as Tiling from '../world/Tiling.js?v=94';
 
 export class GameState {
   constructor(scene, assets) {
@@ -232,7 +232,7 @@ export class GameState {
       sc.position.set(c.wx, cy, c.wz);
       this.scene.add(sc); b._scaffold = sc;
     }
-    this.grid.occupy(gx, gy, def.w, def.h, b.id, { walkable: !!def.walkable, road: !!def.road });
+    this.grid.occupy(gx, gy, def.w, def.h, b.id, { walkable: !!def.walkable, road: !!def.road, rail: !!def.rail });
     this.buildings.push(b); this._byId.set(b.id, b);
     if (def.unique && kind === 'townhall') this.townhall = b;
     if (def.wonder) this.idol = b;

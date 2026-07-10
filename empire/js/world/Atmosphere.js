@@ -50,6 +50,12 @@ export class Atmosphere {
     }
   }
 
+  // клуб дыма (труба паровоза и т.п.) — зовётся через ctx.smoke, троттлинг на вызывающей стороне
+  puffSmoke(x, y, z) {
+    this._emit(this.smoke, x, y, z,
+      { life: 1.5 + Math.random() * 0.8, vx: (Math.random() - 0.5) * 0.3, vy: 0.9 + Math.random() * 0.4, vz: (Math.random() - 0.5) * 0.3, op: 0.55, sc: 0.18, sc1: 0.85, col: 0xd8d8de });
+  }
+
   // пыль из-под ног идущих юнитов (зовётся из main render-loop, троттлинг там же)
   spawnDust(x, y, z) {
     this._emit(this.dust, x, y + 0.05, z,

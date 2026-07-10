@@ -65,6 +65,18 @@ export const BUILDINGS = {
     cost: { wood: 8 }, build: 0,
     desc: 'Мост через воду — по нему можно ходить и возить. Тяни линией через реку.',
   },
+  rail: {
+    kind: 'rail', name: 'РЕЛЬСЫ', icon: '🛤️', model: 'bld_rail',
+    w: 1, h: 1, hp: 80, cat: 'econ', rank: 2, wall: true, walkable: true, rail: true, requiresTech: 'zhelezny_put',
+    cost: { iron: 2, stone: 2 }, build: 0,
+    desc: 'Железный путь. Соедини рельсами ДВЕ станции — поезд повезёт грузы. Тяни линией.',
+  },
+  station: {
+    kind: 'station', name: 'СТАНЦИЯ', icon: '🚂', model: 'bld_station',
+    w: 2, h: 2, hp: 260, cat: 'econ', rank: 2, requiresTech: 'zhelezny_put',
+    cost: { wood: 60, stone: 40, iron: 30, gold: 30 }, build: 8, produce: { gold: 2 },
+    desc: 'Вокзал державы. Две станции + рельсы = паровоз возит грузы и золото.',
+  },
   church: {
     kind: 'church', name: 'КУМИРНЯ ДРОНА', icon: '☩', model: 'bld_church',
     w: 2, h: 2, hp: 200, cat: 'faith', rank: 2,
@@ -192,7 +204,7 @@ export const BUILDINGS = {
 };
 
 // порядок в меню постройки
-export const BUILD_ORDER = ['izba', 'banya', 'ambar', 'ferma', 'roshcha', 'rudnik', 'zhila', 'kuznica', 'kazarma', 'chastokol', 'gate', 'road', 'bridge', 'tower', 'church', 'observatory', 'veche', 'market', 'traktir',
+export const BUILD_ORDER = ['izba', 'banya', 'ambar', 'ferma', 'roshcha', 'rudnik', 'zhila', 'kuznica', 'kazarma', 'chastokol', 'gate', 'road', 'bridge', 'rail', 'station', 'tower', 'church', 'observatory', 'veche', 'market', 'traktir',
   'rel_shipo', 'rel_krio', 'rel_obereg', 'rel_giper', 'rel_goydushka', 'rel_zlato', 'rel_fonk', 'rel_vera', 'rel_samotsvet', 'idol'];
 
 export const CATS = {

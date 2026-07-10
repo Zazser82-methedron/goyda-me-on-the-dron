@@ -41,6 +41,8 @@ const PRESETS = {
   deny: () => { tone(200, 0.09, { type: 'square', vol: 0.09, slide: -70 }); tone(150, 0.11, { type: 'square', vol: 0.07, when: 0.06, slide: -40 }); },   // отказ/ошибка
   bow: () => { tone(880, 0.07, { type: 'sawtooth', vol: 0.06, slide: -480 }); tone(1500, 0.04, { type: 'sine', vol: 0.04, when: 0.01, slide: -700 }); },   // тетива/свист стрелы
   hammer: () => { tone(1100 + Math.random() * 400, 0.03, { type: 'square', vol: 0.045, slide: -500 }); tone(170 + Math.random() * 30, 0.07, { type: 'triangle', vol: 0.08, when: 0.004 }); },   // тук молотка по дереву
+  whistle: () => { tone(620, 0.55, { type: 'triangle', vol: 0.12, slide: 30 }); tone(932, 0.55, { type: 'triangle', vol: 0.09, when: 0.03, slide: 30 }); },   // паровозный гудок (двухголосый)
+  chuff: () => { tone(110 + Math.random() * 25, 0.05, { type: 'square', vol: 0.028, slide: -50 }); },   // тихое чух-чух
 };
 
 export function sfx(name) { if (muted) return; const p = PRESETS[name]; if (p) try { p(); } catch (e) {} }

@@ -11,6 +11,7 @@ export const TECHS = {
   secha:    { name: 'СЕЧА',          icon: '⚔️', rank: 2, requiresBuilding: 'observatory', cost: { iron: 25, gold: 30 }, apply: { dmgMul: 0.20 }, desc: '+20% урона воинов' },
   zakal:    { name: 'ЗАКАЛ',         icon: '🏃', rank: 2, requiresBuilding: 'observatory', cost: { iron: 15, food: 30 }, apply: { spdMul: 0.12 }, desc: '+12% скорости новым воинам' },
   fortifikaciya: { name: 'ФОРТИФИКАЦИЯ', icon: '🗼', rank: 2, requiresBuilding: 'observatory', cost: { stone: 60, iron: 20 }, apply: {}, unlocksBuilding: 'tower', desc: 'Открывает СТОРОЖЕВУЮ БАШНЮ (бьёт врагов).' },
+  zhelezny_put: { name: 'ЖЕЛЕЗНЫЙ ПУТЬ', icon: '🚂', rank: 2, requiresBuilding: 'observatory', cost: { iron: 40, stone: 50, gold: 35 }, apply: {}, unlocksBuilding: 'station', desc: 'Открывает РЕЛЬСЫ и СТАНЦИЮ — паровоз возит грузы меж станций.' },
 };
 
-export const TECH_ORDER = ['strada', 'zhnivo', 'lihva', 'plodovitost', 'bronya', 'dogmat', 'secha', 'zakal', 'fortifikaciya'];
+export const TECH_ORDER = ['strada', 'zhnivo', 'lihva', 'plodovitost', 'bronya', 'dogmat', 'secha', 'zakal', 'fortifikaciya', 'zhelezny_put'];

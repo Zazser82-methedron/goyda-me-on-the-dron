@@ -4,7 +4,7 @@
 // соседние ПОСТРОЕННЫЕ дома объединяются «усадьбой» (тропинка + заборчики).
 // Зовётся из GameState.addBuilding/removeBuilding/finishBuild. Рельсы (v94) переиспользуют neighborMask.
 import * as THREE from 'three';
-import { roadTile, wallConnSegment, homesteadConn } from '../engine/Placeholders.js?v=93';
+import { roadTile, railTile, wallConnSegment, homesteadConn } from '../engine/Placeholders.js?v=94';
 
 const DIRS = [[0, -1, 1], [1, 0, 2], [0, 1, 4], [-1, 0, 8]];                   // N,E,S,W → биты
 const DIR_ROT = { 1: Math.PI, 2: Math.PI / 2, 4: 0, 8: -Math.PI / 2 };         // поворот сегмента-соединителя (построен вдоль +Z=S)
@@ -22,6 +22,8 @@ export function neighborMask(state, gx, gy, pred) {
 
 const isWallKind = (b) => b.kind === 'chastokol' || b.kind === 'gate';
 const isRoadKind = (b) => !!(b.def && b.def.road);
+const isRailKind = (b) => !!(b.def && b.def.rail);
+const railConnects = (b) => isRailKind(b) || b.kind === 'station';   // рельсы тянутся и к станции
 
 function refreshWall(state, b) {
   const mask = neighborMask(state, b.gx, b.gy, isWallKind);
@@ -55,24 +57,46 @@ function refreshRoad(state, b) {
   for (const c of [...g.children]) b.view.add(c);
 }
 
+function refreshRail(state, b) {
+  const mask = neighborMask(state, b.gx, b.gy, railConnects);
+  if (b._railMask === mask) return;
+  b._railMask = mask;
+  while (b.view.children.length) b.view.remove(b.view.children[0]);   // пересборка вида под маску
+  const g = railTile(mask);
+  for (const c of [...g.children]) b.view.add(c);
+}
+
 function refreshAt(state, gx, gy) {
   const t = state.grid.get(gx, gy);
   if (!t || t.occupiedBy == null) return;
   const b = state.byId(t.occupiedBy);
   if (!b || b.type !== 'building') return;
   if (isWallKind(b)) refreshWall(state, b);
+  else if (isRailKind(b)) refreshRail(state, b);
   else if (isRoadKind(b)) refreshRoad(state, b);
+}
+
+// соседи для refresh: у 1×1 это 4 клетки, у станции 2×2 — весь периметр (рельсы вокруг переориентируются)
+function refreshNeighbors(state, b) {
+  const w = b.w || 1, h = b.h || 1;
+  for (let x = b.gx - 1; x <= b.gx + w; x++) {
+    for (let y = b.gy - 1; y <= b.gy + h; y++) {
+      if (x >= b.gx && x < b.gx + w && y >= b.gy && y < b.gy + h) continue;
+      refreshAt(state, x, y);
+    }
+  }
 }
 
 export function onPlaced(state, b) {
   if (isWallKind(b)) refreshWall(state, b);
+  else if (isRailKind(b)) refreshRail(state, b);
   else if (isRoadKind(b)) refreshRoad(state, b);
-  for (const [dx, dy] of DIRS) refreshAt(state, b.gx + dx, b.gy + dy);
+  refreshNeighbors(state, b);
 }
 
 export function onRemoved(state, b) {
   if (b._conn) { state.scene.remove(b._conn); b._conn = null; }
-  for (const [dx, dy] of DIRS) refreshAt(state, b.gx + dx, b.gy + dy);
+  refreshNeighbors(state, b);
 }
 
 // ---- «усадьбы»: соединители между соседними построенными домами (кап 2 на здание) ----
