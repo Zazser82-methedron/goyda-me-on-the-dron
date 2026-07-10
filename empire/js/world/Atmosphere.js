@@ -79,10 +79,11 @@ export class Atmosphere {
       const sc = 10 + Math.random() * 12; sp.scale.set(sc * 1.6, sc, 1);
       sp.position.set((Math.random() - 0.5) * half * 2, 20 + Math.random() * 8, (Math.random() - 0.5) * half * 2);
       sp.renderOrder = 5; this.scene.add(sp);
-      // тень облака на земле (только High — дорого считать heightAt каждый кадр на слабом железе)
+      // тень облака на земле (только High — дорого считать heightAt каждый кадр на слабом железе).
+      // ВАЖНО: NormalBlending! MultiplyBlending игнорирует альфу спрайта → чёрные прямоугольники (бага v88)
       let shadow = null;
       if (!this.low) {
-        const sm = new THREE.SpriteMaterial({ map: this._cloudTex, transparent: true, depthWrite: false, opacity: 0.13 + Math.random() * 0.05, color: 0x000000, blending: THREE.MultiplyBlending, fog: false });
+        const sm = new THREE.SpriteMaterial({ map: this._cloudTex, transparent: true, depthWrite: false, opacity: 0.13 + Math.random() * 0.05, color: 0x000000, fog: false });
         shadow = new THREE.Sprite(sm);
         shadow.scale.set(sc * 2.1, sc * 1.3, 1);
         shadow.position.set(sp.position.x, 0.12, sp.position.z);
