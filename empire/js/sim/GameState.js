@@ -1,12 +1,13 @@
 // ===== Единый источник правды: ресурсы, сущности, ранги, сейв =====
 import * as THREE from 'three';
-import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=91';
-import { Grid } from '../world/Grid.js?v=91';
-import { NodeField } from '../world/NodeField.js?v=91';
-import { BUILDINGS } from '../data/buildings.js?v=91';
-import { UNITS } from '../data/units.js?v=91';
-import { RANKS } from '../data/ranks.js?v=91';
-import { buildScaffold } from '../engine/Placeholders.js?v=91';
+import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=92';
+import { Grid } from '../world/Grid.js?v=92';
+import { NodeField } from '../world/NodeField.js?v=92';
+import { BUILDINGS } from '../data/buildings.js?v=92';
+import { UNITS } from '../data/units.js?v=92';
+import { RANKS } from '../data/ranks.js?v=92';
+import { buildScaffold } from '../engine/Placeholders.js?v=92';
+import * as Tiling from '../world/Tiling.js?v=92';
 
 export class GameState {
   constructor(scene, assets) {
@@ -246,6 +247,8 @@ export class GameState {
       rg.rotation.x = -Math.PI / 2; rg.position.set(c.wx, cy + 0.08, c.wz);
       this.scene.add(rg); b._ring = rg;
     }
+    Tiling.onPlaced(this, b);                       // авто-соединение: стены/дороги + обновить соседей
+    if (b.built) Tiling.refreshHomesteads(this);    // «усадьбы» (built сразу — напр. рестор сейва)
     return b;
   }
 
@@ -270,6 +273,7 @@ export class GameState {
     if (b._scaffold) { this.scene.remove(b._scaffold); b._scaffold = null; }
     b.view.traverse(o => { if (o.isMesh && o.material.opacity < 1) { o.material.transparent = false; o.material.opacity = 1; } });
     this.recomputePop();
+    Tiling.refreshHomesteads(this);                 // достроили — мог появиться «двор» с соседом
   }
 
   removeBuilding(b) {
@@ -283,6 +287,8 @@ export class GameState {
     if (b === this.townhall) this.townhall = null;
     if (this.selected === b) this.selected = null;
     this.recomputePop();
+    Tiling.onRemoved(this, b);                      // убрать соединители, обновить соседей и «усадьбы»
+    Tiling.refreshHomesteads(this);
   }
 
   buildingsBuilt(kind) { return this.buildings.filter(b => b.built && (kind ? b.kind === kind : true)); }

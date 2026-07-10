@@ -2,7 +2,7 @@
 // Стиль повторяет идол-слой «Гойды»: flatShading, гекс-формы, эмиссивные руны.
 // Origin КАЖДОЙ модели — в центре основания (низ на y=0), модель растёт вверх.
 import * as THREE from 'three';
-import { PAL } from '../data/config.js?v=91';
+import { PAL } from '../data/config.js?v=92';
 
 const _mats = {};
 function mat(color, o = {}) {
@@ -46,6 +46,55 @@ let _winLit = null, _winDark = null;
 function windowMesh(w, h, x, y, z, glow = true) {
   if (!_winLit) { _winLit = mat(0x2a1806, { emissive: 0xffb050, emi: 1.4, rough: 0.4 }); _winDark = mat(0x0c1016, { rough: 0.3, metal: 0.1 }); }
   return box(w, h, 0.04, glow ? _winLit : _winDark, x, y, z);
+}
+
+// ---- секция-соединитель частокола: 2 бревна + колья от столба к соседней стене (Tiling.js крутит по направлению) ----
+// Построена вдоль +Z (на юг); материалы из общего кэша — секции живут в отдельной группе b._conn,
+// которую _applyBuildVisual не трогает (не портим shared-материалы прозрачностью).
+export function wallConnSegment() {
+  const g = new THREE.Group();
+  const wd = mat(PAL.wood), dk = mat(PAL.woodDk);
+  for (const y of [0.36, 0.6]) g.add(box(0.07, 0.07, 0.64, wd, 0, y, 0.3));   // 2 горизонтальных бревна
+  for (const z of [0.2, 0.42]) {                                              // заострённые колья между столбами
+    g.add(cyl(0.055, 0.065, 0.76, 5, dk, 0, 0.38, z));
+    g.add(cone(0.06, 0.15, 5, dk, 0, 0.83, z));
+  }
+  return g;
+}
+
+// ---- тайл дороги под маску соединений (N=1,E=2,S=4,W=8): вытоптанные полосы от центра к соседям ----
+export function roadTile(mask) {
+  const g = new THREE.Group();
+  const d1 = mat(0x6a5a42, { rough: 1 }), d2 = mat(0x7c6c52, { rough: 1 });
+  g.add(box(0.96, 0.05, 0.96, d1, 0, 0.025, 0));                              // основа-плита
+  g.add(box(0.38, 0.045, 0.38, d2, 0, 0.052, 0));                             // центр
+  const strip = (dx, dz) => g.add(box(dx ? 0.52 : 0.36, 0.045, dz ? 0.52 : 0.36, d2, dx * 0.25, 0.052, dz * 0.25));
+  if (mask & 1) strip(0, -1);
+  if (mask & 2) strip(1, 0);
+  if (mask & 4) strip(0, 1);
+  if (mask & 8) strip(-1, 0);
+  for (const [x, z] of [[-0.38, -0.3], [0.34, 0.38], [0.4, -0.36]]) g.add(box(0.1, 0.05, 0.1, d1, x, 0.05, z));   // камешки по обочине
+  return g;
+}
+
+// ---- «усадьба»: тропинка + заборчики между двумя соседними ПОСТРОЕННЫМИ зданиями (Tiling.refreshHomesteads) ----
+export function homesteadConn(a, c, grid) {
+  const g = new THREE.Group();
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  // ближние точки на краях футпринтов (в мировых координатах)
+  const ax = clamp(c.cx, a.cx - a.w * 0.5, a.cx + a.w * 0.5), az = clamp(c.cz, a.cz - a.h * 0.5, a.cz + a.h * 0.5);
+  const bx = clamp(a.cx, c.cx - c.w * 0.5, c.cx + c.w * 0.5), bz = clamp(a.cz, c.cz - c.h * 0.5, c.cz + c.h * 0.5);
+  const mx = (ax + bx) / 2, mz = (az + bz) / 2;
+  const len = Math.max(0.5, Math.hypot(bx - ax, bz - az) + 0.3);
+  const pathM = mat(0x74644c, { rough: 1 }), wd = mat(PAL.wood), dk = mat(PAL.woodDk);
+  g.add(box(0.34, 0.04, len, pathM, 0, 0.03, 0));                             // тропинка
+  for (const sx of [-0.42, 0.42]) {                                           // низкий заборчик по бокам тропинки
+    for (const sz of [-len / 2 + 0.08, len / 2 - 0.08]) g.add(cyl(0.035, 0.045, 0.32, 5, dk, sx, 0.16, sz));
+    for (const yy of [0.15, 0.27]) g.add(box(0.045, 0.045, Math.max(0.3, len - 0.16), wd, sx, yy, 0));
+  }
+  g.position.set(mx, grid.heightAt ? grid.heightAt(mx, mz) : 0, mz);
+  g.rotation.y = Math.atan2(bx - ax, bz - az);
+  return g;
 }
 
 // ---- строительные леса вокруг площадки w×h тайлов (видны, пока здание строится) ----
