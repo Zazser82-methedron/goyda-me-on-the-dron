@@ -1,11 +1,11 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=96';
+import { Renderer } from './engine/Renderer.js?v=98';
 import * as Quality from './engine/Quality.js?v=94';
 import { RTSCamera } from './engine/RTSCamera.js?v=96';
 import { Picker } from './engine/Picker.js?v=94';
-import { Loop } from './engine/Loop.js?v=94';
-import { AssetManager } from './engine/AssetManager.js?v=94';
+import { Loop } from './engine/Loop.js?v=98';
+import { AssetManager } from './engine/AssetManager.js?v=98';
 import { TerrainMesh } from './world/TerrainMesh.js?v=94';
 import { WorldBase } from './world/WorldBase.js?v=94';
 import { Sky } from './world/Sky.js?v=94';
@@ -55,6 +55,7 @@ const MODELS = [
   'idol_krio', 'idol_giper', 'idol_shipo', 'idol_obereg', 'idol_food', 'idol_gold', 'idol_fonk', 'idol_vera', 'idol_samotsvet',
   // v87: доделаны в Blender — раньше были только процедурные плейсхолдеры
   'unit_bogatyr', 'bld_tower', 'bld_ferma', 'bld_rudnik', 'bld_zhila', 'bld_observatory',
+  'env_waystone', // новый Blender-ассет: четыре лёгких пограничных камня у центра базы
 ];
 const ri = (a, b) => Math.floor(a + Math.random() * (b - a + 1));
 
@@ -149,7 +150,7 @@ class Game {
     const G = window.__gboot || function () {};
     try {
       // модели грузятся в фоне — не блокируют запуск (есть плейсхолдеры)
-      this.assets.preload(MODELS).then(c => { this._glb = c; G('models ' + c); }).catch(() => {});
+      this.assets.preload(MODELS).then(c => { this._glb = c; this._installWaystones(); G('models ' + c); }).catch(() => {});
       // ПОРТАЛ ДРОНА: прибытие на новую Землю (перенос ресурсов+ранга+дружины) — до обычного сейва
       const portal = (() => { try { return JSON.parse(localStorage.getItem('GOYDA_EMPIRE_PORTAL')); } catch (e) { return null; } })();
       if (portal && portal.mapKey) {
@@ -484,6 +485,25 @@ class Game {
       document.getElementById('app').appendChild(el);
     }
     el.textContent = '🌀 Земля №' + (this.state.portalDepth || 1) + ' · набеги жёстче, но земля щедрей';
+  }
+
+  // Декоративные ориентиры вокруг стартовой ратуши. Это реальные Blender-модели,
+  // но без теней и физики: четыре экземпляра почти не влияют на FPS.
+  _installWaystones() {
+    if (!this.state || !this.state.townhall || !this.assets.isGlb.env_waystone) return;
+    if (this._waystones) { this.scene.remove(this._waystones); }
+    const th = this.state.townhall, group = new THREE.Group();
+    const offsets = [[-3.1, -3.1], [3.1, -3.1], [-3.1, 3.1], [3.1, 3.1]];
+    offsets.forEach((p, i) => {
+      const stone = this.assets.get('env_waystone');
+      const x = th.cx + p[0], z = th.cz + p[1];
+      stone.position.set(x, this.state.grid.heightAt(x, z), z);
+      stone.rotation.y = i * Math.PI * 0.5 + 0.18;
+      stone.scale.setScalar(0.78);
+      stone.traverse(o => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = false; } });
+      group.add(stone);
+    });
+    group.name = 'dron_waystones'; this.scene.add(group); this._waystones = group;
   }
 
   initMap(map) {

@@ -67,7 +67,9 @@ export class Renderer {
     this.renderer.toneMappingExposure = 1.02;        // было 1.25 — сцена пересвечивалась/«белила»
     this.renderer.shadowMap.enabled = !low;          // low: тени-карты ВЫКЛ (у юнитов остаются пятна-тени) — крупный выигрыш на мобиле
     this.renderer.shadowMap.type = low ? THREE.BasicShadowMap : THREE.PCFSoftShadowMap;
-    this._shadowSize = low ? 1024 : 2048;
+    // 1536² почти не отличается визуально на RTS-камере, но существенно легче
+    // прежней 2048² карты теней. Тени обновляются по требованию ниже.
+    this._shadowSize = low ? 1024 : 1536;
 
     this.scene = new THREE.Scene();
     // непрозрачный градиент-небо в сцене (нужно для пост-обработки) — заменяет CSS-фон
@@ -97,6 +99,8 @@ export class Renderer {
     this.key.shadow.bias = -0.0004;
     this.scene.add(this.key);
     this.scene.add(this.key.target);
+    this.renderer.shadowMap.autoUpdate = false;
+    this._shadowAt = 0; this._shadowX = NaN; this._shadowZ = NaN;
 
     // Холодный контровой подсвет
     this.rim = new THREE.DirectionalLight(0x9ab4d6, 0.6);
@@ -178,11 +182,18 @@ export class Renderer {
     if (this.onResize) this.onResize(window.innerWidth, window.innerHeight);
   }
 
-  // тень следует за камерой — маленький frustum (крупная карта 96² не тормозит)
+  // Тень следует за камерой, но shadow-pass дорог: достаточно 15 обновлений/с
+  // или заметного перемещения камеры. Сам рендер мира по-прежнему плавный.
   updateShadow(tx, tz) {
+    if (this.tier === 'low') return;
+    const now = performance.now();
+    const moved = !Number.isFinite(this._shadowX) || Math.hypot(tx - this._shadowX, tz - this._shadowZ) > 0.45;
+    if (!moved && now - this._shadowAt < 66) return;
     this.key.position.set(tx + 36, 64, tz + 26);
     this.key.target.position.set(tx, 0, tz);
     this.key.target.updateMatrixWorld();
+    this._shadowAt = now; this._shadowX = tx; this._shadowZ = tz;
+    this.renderer.shadowMap.needsUpdate = true;
   }
 
   render(camera) {

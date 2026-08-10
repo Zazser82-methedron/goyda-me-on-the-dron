@@ -25,6 +25,13 @@ export class Loop {
 
   _frame(now) {
     if (!this.running) return;
+    // Скрытая вкладка не должна тратить CPU/GPU и копить симуляционные тики.
+    // При возврате кадр сразу продолжается с актуального времени без рывка.
+    if (document.hidden) {
+      this.last = now; this.acc = 0;
+      requestAnimationFrame(this._frame);
+      return;
+    }
     let dt = (now - this.last) / 1000;
     this.last = now;
     if (dt > 0.25) dt = 0.25;          // защита от spiral-of-death (вкладка ушла в фон)
