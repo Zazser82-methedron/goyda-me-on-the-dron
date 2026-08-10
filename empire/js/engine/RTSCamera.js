@@ -148,4 +148,14 @@ export class RTSCamera {
 
   // центрировать на мировой точке
   focus(wx, wz) { this.target.set(wx, 0, wz); }
+
+  // Быстрый читаемый ракурс для RTS: сверху и достаточно далеко, чтобы сразу
+  // видеть базу, подходы и отряды. Детальный осмотр остаётся на колесе мыши.
+  tacticalView(wx = 0, wz = 0) {
+    this.focus(wx, wz);
+    this.radius = 52;
+    this.polar = 0.72;
+    this.azimuth = Math.PI * 0.25;
+    this.trauma = 0;
+  }
 }

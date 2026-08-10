@@ -1,8 +1,8 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=94';
+import { Renderer } from './engine/Renderer.js?v=96';
 import * as Quality from './engine/Quality.js?v=94';
-import { RTSCamera } from './engine/RTSCamera.js?v=94';
+import { RTSCamera } from './engine/RTSCamera.js?v=96';
 import { Picker } from './engine/Picker.js?v=94';
 import { Loop } from './engine/Loop.js?v=94';
 import { AssetManager } from './engine/AssetManager.js?v=94';
@@ -25,7 +25,7 @@ import * as Events from './sim/Events.js?v=94';
 import * as Achievements from './sim/Achievements.js?v=94';
 import * as Meta from './sim/Meta.js?v=94';
 import * as Research from './sim/Research.js?v=94';
-import { updateUnits, damage } from './sim/Units.js?v=94';
+import { updateUnits, damage, awardExpeditionValor } from './sim/Units.js?v=96';
 import { toggleEdict } from './sim/Edicts.js?v=94';
 import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=94';
 import { AmbientAudio } from './audio/Music.js?v=94';
@@ -426,16 +426,31 @@ class Game {
 
   _begin(restored) {
     this.cameraRig.focus(0, 0);
-    // стартовый кадр: ближе + кинематографичный 3/4-наклон (детализация видна сразу),
-    // с мягким въездом-зумом от чуть дальше (короткое вступление, без рывка)
+    // Старт именно стратегический: вся база и подходы читаются сразу, без тесного
+    // кинематографичного крупного плана. Детали доступны колёсиком.
     const cam = this.cameraRig;
-    cam.radius = 26; cam.polar = 1.04; cam.azimuth = Math.PI * 0.22;
-    cam._radius = 40; cam._polar = 0.92; cam._azimuth = cam.azimuth;
+    cam.radius = 52; cam.polar = 0.72; cam.azimuth = Math.PI * 0.25;
+    cam._radius = 60; cam._polar = 0.64; cam._azimuth = cam.azimuth;
     const f = this.state.faction;
     if (this._arenaReturn) {
-      const d = this._arenaReturn.delta; this._arenaReturn = null;
-      if (d > 0) this.toasts.show('🏆 Возврат из арены ГОЙДЫ: ' + d + ' побед(ы)! Награда +' + (d * 30) + '🪙 +' + (d * 16) + '☩ +' + (d * 20) + '🍖', { big: true, gold: true });
-      else this.toasts.show('🌀 Возврат из карточной арены. Поход продолжается!', { gold: true });
+      const ret = this._arenaReturn; this._arenaReturn = null;
+      if (ret.expedition) {
+        const p = ret.expedition, r = p.reward || {};
+        const bits = [];
+        if (r.gold) bits.push('+' + r.gold + '🪙');
+        if (r.food) bits.push('+' + r.food + '🍖');
+        if (r.faith) bits.push('+' + r.faith + '☩');
+        if (r.gems) bits.push('+' + r.gems + '💎');
+        if (r.valor) bits.push('+' + r.valor + '⭐');
+        if (r.veterancy) bits.push('+' + r.veterancy + '⚔ опыт');
+        if (r.morale) bits.push((r.morale > 0 ? '+' : '') + r.morale + '😊');
+        const win = p.outcome === 'win';
+        this.toasts.show((win ? '🏆 Экспедиция «' : '🌀 Экспедиция «') + (p.contract && p.contract.title || 'Дрона') + (win ? '» завершена! ' : '» завершилась. ') + (bits.join(' · ') || 'Поход продолжается.'), { big: true, gold: true });
+      } else {
+        const d = ret.delta || 0;
+        if (d > 0) this.toasts.show('🏆 Возврат из арены ГОЙДЫ: ' + d + ' побед(ы)! Награда +' + (d * 30) + '🪙 +' + (d * 16) + '☩ +' + (d * 20) + '🍖', { big: true, gold: true });
+        else this.toasts.show('🌀 Возврат из карточной арены. Поход продолжается!', { gold: true });
+      }
     } else if (this._portalArrival) {
       this.toasts.show('🌀 Портал Дрона: высадка на ' + this.map.emoji + ' ' + this.map.name + ' · Земля №' + (this.state.portalDepth || 2) + '! ' + bark('win'), { big: true, gold: true });
       this._portalArrival = false;
@@ -583,6 +598,8 @@ class Game {
       xb.title = low0 ? 'Качество: ⚡ Плавно (Low) — нажми для Красиво (High)' : 'Качество: ✨ Красиво (High) — нажми для Плавно (Low), если тормозит';
       xb.onclick = () => { const t = Quality.toggleTier(); sfx('click'); this.toasts.show('Качество: ' + (t === 'low' ? '⚡ Плавно (Low)' : '✨ Красиво (High)') + ' — перезапуск…', { gold: true }); setTimeout(() => location.reload(), 700); };
     }
+    const view = document.getElementById('viewBtn');
+    if (view) view.onclick = () => { this.cameraRig.tacticalView(0, 0); sfx('click'); this.toasts.show('⌖ Тактический обзор: вся база в кадре'); };
     const rb = document.getElementById('restartBtn');
     if (rb) rb.onclick = () => this.restart();
     const pb = document.getElementById('portalBtn');
@@ -988,12 +1005,22 @@ class Game {
     const cur = this.state.mapKey;
     const dests = MAPS.filter(m => m.key !== cur);
     const army = this.state.units.filter(u => u.faction === 'ours').length;
+    const journal = (() => { try { return window.GoydaExpedition && window.GoydaExpedition.history().slice(0, 3); } catch (e) { return []; } })();
+    const journalLine = journal.length ? '<div style="margin:8px 0 4px;padding:7px 9px;border-radius:8px;background:rgba(120,75,170,.14);color:#dcc7ff;font-size:11px;text-align:left"><b>📜 Журнал экспедиций</b>' + journal.map((entry, i) => {
+      const reward = window.GoydaExpedition.formatReward(entry.reward) || 'без трофеев';
+      const icon = entry.outcome === 'win' ? '🏆' : entry.outcome === 'draw' ? '⚖️' : '🌀';
+      return '<div style="margin-top:4px;opacity:' + (i ? '.72' : '1') + '">' + icon + ' <b>' + (entry.contract && entry.contract.title || 'Дрон') + '</b> · ' + reward + '</div>';
+    }).join('') + '</div>' : '';
     const el = document.createElement('div');
     el.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:120;background:linear-gradient(180deg,#1b1430,#0e0820);border:2px solid #9a5cff;border-radius:14px;padding:16px 18px;max-width:440px;width:88%;box-shadow:0 14px 50px rgba(60,10,140,.6);color:#ece0ff;text-align:center;font-size:14px';
     const rows = dests.map(m => `<button data-k="${m.key}" style="display:block;width:100%;margin:5px 0;padding:9px 12px;border-radius:9px;border:1px solid #7a4ad0;background:#241840;color:#f0e6ff;cursor:pointer;font:inherit;text-align:left">${m.emoji} <b>${m.name}</b> <span style="opacity:.7">— ${m.desc}</span></button>`).join('');
     el.innerHTML = '<div style="font-size:19px;font-weight:800;margin-bottom:4px">🌀 Портал Дрона</div>'
       + '<div style="opacity:.85;margin-bottom:10px">Прыжок на новую Землю. Переносишь <b>ресурсы, ранг и дружину</b> (' + army + ' ед., ветеранство сохранится). Постройки остаются здесь — базу ставишь заново.</div>'
-      + '<button data-k="__arena" style="display:block;width:100%;margin:0 0 9px;padding:11px 12px;border-radius:9px;border:2px solid #ff5cf0;background:linear-gradient(135deg,#3a0e2e,#1a0820);color:#ffd6f4;cursor:pointer;font:inherit;font-weight:800">⚔️ В КАРТОЧНУЮ АРЕНУ ГОЙДЫ <span style="opacity:.8;font-weight:400">— бой картами в мире «Гойды» (поход сохранится)</span></button>'
+      + '<div style="margin:4px 0 7px;color:#e8d5ff;font-size:12px;font-weight:800">⚔️ Контракты Арены — выбери цель</div>'
+      + '<button data-k="__arena_assault" style="display:block;width:100%;margin:5px 0;padding:10px 12px;border-radius:9px;border:1px solid #e76d48;background:linear-gradient(135deg,#43140d,#24100c);color:#ffe5dc;cursor:pointer;font:inherit;text-align:left"><b>⚔️ ШТУРМ РАЗЛОМА</b><span style="opacity:.75"> · военная добыча и Доблесть</span></button>'
+      + '<button data-k="__arena_treasury" style="display:block;width:100%;margin:5px 0;padding:10px 12px;border-radius:9px;border:1px solid #e5c053;background:linear-gradient(135deg,#463310,#241c0b);color:#fff1bf;cursor:pointer;font:inherit;text-align:left"><b>💰 КАЗНА НАЛЁТЧИКА</b><span style="opacity:.75"> · золото и припасы</span></button>'
+      + '<button data-k="__arena_relic" style="display:block;width:100%;margin:5px 0 9px;padding:10px 12px;border-radius:9px;border:1px solid #8fd8ff;background:linear-gradient(135deg,#102f49,#0d1726);color:#d9f4ff;cursor:pointer;font:inherit;text-align:left"><b>🗿 СВЯТИЛИЩЕ ДРОНА</b><span style="opacity:.75"> · вера и самоцветы</span></button>'
+      + journalLine
       + '<div style="opacity:.6;font-size:12px;margin:2px 0 6px">…или прыжок на новую Землю:</div>'
       + rows
       + '<button data-k="__rand" style="display:block;width:100%;margin:5px 0;padding:9px 12px;border-radius:9px;border:1px solid #c8922e;background:#2c2113;color:#ffe6a8;cursor:pointer;font:inherit">🎲 Случайная Земля</button>'
@@ -1004,7 +1031,7 @@ class Game {
     el.querySelectorAll('button').forEach(b => b.onclick = () => {
       const k = b.dataset.k;
       if (k === '__cancel') { sfx('click'); close(); return; }
-      if (k === '__arena') { this._portalEl.remove(); this._portalEl = null; this._toArena(); return; }
+      if (k && k.indexOf('__arena_') === 0) { this._portalEl.remove(); this._portalEl = null; this._toArena(k.slice('__arena_'.length)); return; }
       let dest = k;
       if (k === '__rand') dest = dests[Math.floor(Math.random() * dests.length)].key;
       this._portalEl.remove(); this._portalEl = null;
@@ -1013,20 +1040,42 @@ class Game {
   }
 
   // мост в карточную «ГОЙДУ»: сохраняем поход, кладём контекст, прыгаем порталом в корневую игру
-  _toArena() {
+  _toArena(mission) {
     const s = this.state;
     try { s.save(); } catch (e) {}                       // RTS-поход сохранится — вернёшься тем же
-    const army = s.units.filter(u => u.faction === 'ours').length;
-    const bridge = { from: 'empire', day: Math.floor(s.day || 0), rankIndex: s.rankIndex || 0, depth: s.portalDepth || 1, army, gold: Math.round(s.resources.gold || 0) };
-    try { localStorage.setItem('GOYDA_BRIDGE', JSON.stringify(bridge)); } catch (e) {}
-    // метка вылазки: запоминаем победы карточной, чтобы на возврате наградить за прирост (петля награды)
-    let cardWins = 0; try { const st = JSON.parse(localStorage.getItem('goyda_stats_v1')); cardWins = (st && st.wins) || 0; } catch (e) {}
-    try { localStorage.setItem('GOYDA_ARENA_TRIP', JSON.stringify({ cardWins })); } catch (e) {}
+    const ours = s.units.filter(u => u.faction === 'ours');
+    const army = ours.length;
+    const roster = {};
+    ours.forEach(u => { roster[u.kind] = (roster[u.kind] || 0) + 1; });
+    const bridge = { from: 'empire', mission: mission || 'assault', day: Math.floor(s.day || 0), rankIndex: s.rankIndex || 0, depth: s.portalDepth || 1, army, roster, gold: Math.round(s.resources.gold || 0) };
+    // У каждого выхода — один явный контракт. Теперь награда привязана к бою,
+    // а не к любому количеству побед, сделанных в открытой вкладке арены.
+    try {
+      const contract = window.GoydaExpedition && window.GoydaExpedition.prepare(bridge);
+      if (contract) bridge.contractId = contract.id;
+      localStorage.removeItem('GOYDA_ARENA_TRIP'); // не смешиваем старую и новую схемы наград
+      localStorage.setItem('GOYDA_BRIDGE', JSON.stringify(bridge));
+    } catch (e) {}
     this._portalSwirl(() => { location.href = '../'; });
   }
 
   // возврат из карточной арены: награда за прирост побед, пока был там (обе игры делят localStorage)
   _checkArenaReturn() {
+    // Новый контрактный возврат: ресурсы и Доблесть начисляются ровно один раз.
+    try {
+      const packet = window.GoydaExpedition && window.GoydaExpedition.consumeReturn();
+      if (packet && packet.v === 1 && packet.reward) {
+        const r = packet.reward;
+        this.state.gain({ gold: r.gold || 0, food: r.food || 0, faith: r.faith || 0, gems: r.gems || 0 });
+        if (r.valor) Meta.addValor(r.valor);
+        if (r.morale) this.state.happiness = Math.max(0, Math.min(100, this.state.happiness + r.morale));
+        const veterans = awardExpeditionValor(this.state, r.veterancy || 0, this.ctx);
+        if (veterans.length) this.toasts.show('⚔️ Дружина вернулась закалённой: +' + (r.veterancy || 0) + ' опыт', { gold: true });
+        this._arenaReturn = { expedition: packet };
+        return;
+      }
+    } catch (e) {}
+    // Поддержка старых незавершённых переходов из v94.
     let trip = null; try { trip = JSON.parse(localStorage.getItem('GOYDA_ARENA_TRIP')); } catch (e) {}
     if (!trip) return;
     try { localStorage.removeItem('GOYDA_ARENA_TRIP'); } catch (e) {}

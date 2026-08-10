@@ -923,6 +923,7 @@ body.fire-wind::after{opacity:.5!important;background:radial-gradient(ellipse at
 
 <!-- НИЖНИЙ БАР -->
 <div id="bottom-bar" class="hidden">
+  <span id="expedition-badge" style="display:none;padding:5px 9px;border:1px solid #a875e7;border-radius:8px;background:rgba(50,18,78,.88);color:#eedbff;font-size:10px;font-weight:900;letter-spacing:.4px"></span>
   <button class="bb-btn" id="mute-bb" onclick="toggleMute()">🔇 ЗВУК ВЫКЛ</button>
   <button class="bb-btn" id="music-bb" onclick="toggleMusic()">🎵 МУЗЫКА ВЫКЛ</button>
   <button class="bb-btn" id="gemini-bb" onclick="setGeminiKey()" title="ИИ-озвучка бота и боссов по твоему ключу">🤖 GEMINI</button>
@@ -932,6 +933,7 @@ body.fire-wind::after{opacity:.5!important;background:radial-gradient(ellipse at
   <button class="bb-btn" id="bb-lobby" onclick="backToLobby()" style="display:none">🏠 МЕНЮ</button>
 </div>
 
+<script src="./shared/expedition.js?v=96"></script>
 <script>
 // catch any global JS error and show it in the lobby
 window.onerror=function(msg,src,line){
@@ -959,6 +961,7 @@ const TAP=[
 let myIndex=-1,isOnline=false,isRemoteUpdate=false,isLocal=false;
 let isBot=false,botLevel='warrior';const BOT=1,HUMAN=0;
 let G={},actx,master,sndComp=null,sndMuted=true,lockShield=false,_resultRecorded=false;
+let _expeditionBattle=false,_expeditionReturnReady=false;
 let LOW_FX=false;try{LOW_FX=window.matchMedia('(max-width:640px)').matches||window.matchMedia('(prefers-reduced-motion: reduce)').matches;window.addEventListener('resize',()=>{LOW_FX=window.matchMedia('(max-width:640px)').matches||window.matchMedia('(prefers-reduced-motion: reduce)').matches;});}catch(e){}
 function fxCount(base){return LOW_FX?Math.max(2,Math.round(base*0.45)):base;}
 // ── PROGRESS / STATS ──
@@ -1137,7 +1140,7 @@ function rollAbilities(p){let t=TAP.map((_,i)=>i),idx=[];for(let i=0;i<3;i++){le
 function initGame(){_resultRecorded=false;_iWantRematch=false;_oppWantsRematch=false;_recent=[];G={deck:runDeck(),turn:0,over:false,last:[null,null],disc:[[],[]],logLines:[],players:[mkP(),mkP()]};draw(G.players[0],5);draw(G.players[1],5);G.players[0].coins=1;rollAbilities(G.players[0]);rollAbilities(G.players[1]);document.getElementById('log').innerHTML='';document.getElementById('clash-p1').innerHTML='';document.getElementById('clash-p2').innerHTML='';document.getElementById('disc-p1-stack').innerHTML='';document.getElementById('disc-p2-stack').innerHTML='';document.getElementById('over').style.display='none';document.body.classList.remove('super-mode-active');addLog('⚔️ Бойцы вышли на ратное поле! ГОЙДА!','#ffbd15');}
 
 // ═══ MQTT NETWORKING (multi-broker fallback) ═══
-let mqttClient=null,roomCode=null,syncCounter=0,gameStarted=false;
+let mqttClient=null,roomCode=null,syncCounter=0,remoteSyncCounter=-1,gameStarted=false;
 const MQTT_BROKERS=[
   'wss://broker.hivemq.com:8884/mqtt',
   'wss://broker.emqx.io:8084/mqtt',
@@ -1167,7 +1170,7 @@ function mqttConnect(cb){
 let _hbInterval=null,_hbTimer=null,_oppOffline=false;
 const HB_SEND=8000,HB_TIMEOUT=15000;
 // ── Reconnect ──
-let _intentionalClose=false,_reconnecting=false,_reconnectAttempts=0,_reconnectTimer=null;
+let _intentionalClose=false,_reconnecting=false,_reconnectAttempts=0,_reconnectTimer=null,_acceptRemoteResync=false;
 const RECONNECT_MAX=6;
 // ── Rematch ──
 let _iWantRematch=false,_oppWantsRematch=false;
@@ -1204,7 +1207,7 @@ function _onReconnected(cl){
   let cb=document.getElementById('conn-badge');cb.textContent='⚡ В СЕТИ';cb.style.color='#39ff14';
   addLog('🟢 Связь восстановлена!','#44ff00');
   startHeartbeat();
-  if(myIndex===1)_mqttPub('join');else{syncState('state');_sendPing();}
+  if(myIndex===1){_acceptRemoteResync=true;_mqttPub('join');}else{syncState('state');_sendPing();}
 }
 
 function _sendPing(){
@@ -1337,13 +1340,27 @@ function onMsg(msgBuf){
   if(!gameStarted||d._p===myIndex)return;
   if(d._t==='ping')return;
   if(d._t!=='state'&&d._t!=='reset')return;
+  // Клиентская проверка не заменяет сервер-арбитр, но отсекает старые,
+  // повторные и очевидно невозможные пакеты до изменения локального боя.
+  if(!isPlausibleRemoteState(d))return;
+  if(d._t==='state'&&!_reconnecting&&!_acceptRemoteResync&&d._p!==G.turn)return;
+  if(d._t==='reset'&&d._p!==0)return;
+  if(Number(d._c)<=remoteSyncCounter)return;
+  remoteSyncCounter=Number(d._c);
   let isReset=d._t==='reset';
   isRemoteUpdate=true;applyRemoteState(d);
   if(isReset)document.getElementById('log').innerHTML='';
   renderLogFromState();render();renderDiscard(0);renderDiscard(1);
   isRemoteUpdate=false;updateWaitingOverlay();
+  _acceptRemoteResync=false;
   if(G.over)showOnlineOver();
   if(isReset){_iWantRematch=false;_oppWantsRematch=false;updateRematchUI();document.getElementById('over').style.display='none';addLog('⚔️ Новая битва начата!','#39ff14');}
+}
+function isPlausibleRemoteState(d){
+  if(!Number.isInteger(d._p)||d._p<0||d._p>1||!Number.isInteger(d._c)||d._c<0)return false;
+  if(d._t==='reset')return !!(d.players&&Array.isArray(d.players)&&d.players.length===2);
+  if(!d.players||!Array.isArray(d.players)||d.players.length!==2||!Number.isInteger(d.turn)||d.turn<0||d.turn>1)return false;
+  return d.players.every(p=>p&&Number.isFinite(p.hp)&&p.hp>=0&&p.hp<=100&&Array.isArray(p.hand)&&p.hand.length<=7);
 }
 
 function onDisconnect(){
@@ -1361,7 +1378,7 @@ function onDisconnect(){
 }
 
 function startOnlineGame(){
-  gameStarted=true;_campaignIdx=-1;window._campaignBoss='';window._campaignPersona='';
+  gameStarted=true;remoteSyncCounter=-1;_campaignIdx=-1;window._campaignBoss='';window._campaignPersona='';
   document.getElementById('lobby').style.display='none';
   document.getElementById('bottom-bar').classList.remove('hidden');
   document.getElementById('log-toggle').style.display='block';
@@ -1420,6 +1437,9 @@ function applyCard(pi,card,me,foe){
     case'SHIPOGOYDA':{me.thorns=Math.min((me.thorns||0)+2,6);flashA(pi,'grn');spawnFl(pi,'🌵 ШИПЫ +2','block');sfx('shield');msg=`${pn(pi)} · Шипогойда: шипы (${me.thorns})`;col='#aadd33';extra.result='🌵+2';extra.resType='shield';break;}
     case'GLUSHILKA':{let dmg=Math.floor(10*sm);let r=doAtk(pi,dmg,false,me,foe,card.ic);foe.stunNext=true;spawnFl(1-pi,'⚡ ОГЛУШЁН','baseloss');totemEvent('stun');if(isBot&&pi===BOT)botReact('stun');msg=`${pn(pi)} · Глушилка оглушила! ➔ ${r.msg}`;col='#ffcc33';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
     case'KARMANNIK':{if(foe.hand&&foe.hand.length){let idx=Math.floor(Math.random()*foe.hand.length);let stolen=foe.hand.splice(idx,1)[0];if(me.hand.length<7)me.hand.push(stolen);spawnFl(pi,'🫳 КРАЖА','coin');sfx('coin');totemEvent('steal');msg=`${pn(pi)} · Карманник стащил [${stolen.n}]!`;}else{msg=`${pn(pi)} · Карманник: у врага пусто`;}col='#cc66ff';extra.result='🫳';extra.resType='draw';break;}
+    case'ORDER_ASSAULT':{let dmg=Math.floor(20*sm);let r=doAtk(pi,dmg,true,me,foe,card.ic);changeBase(pi,me,10);msg=`${pn(pi)} · Разломный натиск пробил оборону → ${r.msg}`;col='#ff6b35';extra.result=r.hit?`-${dmg}`:'блок';extra.resType='dmg';extra.hp=`${foePre}→${foe.hp}`;break;}
+    case'ORDER_TREASURY':{let stolen=Math.min(3,foe.coins);foe.coins-=stolen;me.coins+=stolen+1;bumpCoins(pi);spawnFl(pi,'💰 +'+(stolen+1),'coin');sfx('coin');changeBase(pi,me,10);msg=`${pn(pi)} · Оброчный рейд забрал ${stolen} вечевых и поднял Базометр`;col='#ffd166';extra.result=`+${stolen+1} 💰`;extra.resType='coin';break;}
+    case'ORDER_RELIC':{me.sh=Math.min(me.sh+1,2);me.re=Math.min(me.re+1,1);let h=healRaw(pi,12);flashA(pi,'gld');msg=`${pn(pi)} · Печать Дрона: щит, отражение и +${h} ОЗ`;col='#70e0ff';extra.result=`+${h} ОЗ`;extra.resType='heal';extra.hp=`${mePre}→${me.hp}`;break;}
   }
   addLog(msg,col,card.id==='GOYDO_FONK'?'goyda':type,extra);
   checkWin(me,foe,pi);
@@ -1530,15 +1550,18 @@ function checkWin(me,foe,pi){
   if(!ended||isOnline)return; // online handled in showOnlineOver
   if(_runBattle){resolveRunBattle();return;}
   let res=null,o=null;
-  if(isBot){o=botOutcome();res=recordResult('bot',o);let cmpHtml='';if(_campaignIdx>=0){let bossName=(CAMPAIGN[_campaignIdx]||{}).name||'босс';if(o==='win'){if(_campaignIdx===(STATS.campaign||0)){STATS.campaign=(STATS.campaign||0)+1;saveStats();}let last=_campaignIdx>=CAMPAIGN.length-1;cmpHtml=last?'<div class="rank-up-toast" style="color:#ffd24a">👑 ПУТЬ ГОЙДЫ ПРОЙДЕН ДО КОНЦА!</div>':'<div class="rank-up-toast" style="color:#5eff8b">🎬 Босс «'+bossName+'» повержен! Открыт следующий.</div>';}else if(o==='loss'){cmpHtml='<div class="unlock-toast">🎬 «'+bossName+'» устоял. Попробуй снова!</div>';}}html=(o==='win'?'🏆 ВЫ ТРИУМФОВАЛИ!<br><span class="text-sm font-normal">Бот повержен. Гойда абсолютна!</span>':o==='loss'?'💀 ВЫ ПАЛИ!<br><span class="text-sm font-normal">Бот оказался базированнее.</span>':'⚔️ СОВМЕСТНАЯ СМЕРТЬ!')+cmpHtml;showBotThinking(false);renderLobbyStats();setTimeout(()=>{_botReactLast=0;botReact('gg',true,{win:o==='win'});},500);geminiRecap(o==='win');}
+  if(isBot){o=botOutcome();res=recordResult('bot',o);let cmpHtml='';if(_campaignIdx>=0){let bossName=(CAMPAIGN[_campaignIdx]||{}).name||'босс';if(o==='win'){if(_campaignIdx===(STATS.campaign||0)){STATS.campaign=(STATS.campaign||0)+1;saveStats();}let last=_campaignIdx>=CAMPAIGN.length-1;cmpHtml=last?'<div class="rank-up-toast" style="color:#ffd24a">👑 ПУТЬ ГОЙДЫ ПРОЙДЕН ДО КОНЦА!</div>':'<div class="rank-up-toast" style="color:#5eff8b">🎬 Босс «'+bossName+'» повержен! Открыт следующий.</div>';}else if(o==='loss'){cmpHtml='<div class="unlock-toast">🎬 «'+bossName+'» устоял. Попробуй снова!</div>';}}
+    if(_expeditionBattle&&window.GoydaExpedition){let packet=GoydaExpedition.resolve(o,{hp:G.players[HUMAN].hp});if(packet){_expeditionReturnReady=true;let label=GoydaExpedition.formatReward(packet.reward);cmpHtml+='<div class="rank-up-toast" style="color:#cda8ff">🌀 Экспедиция завершена: '+label+'</div>';}}
+    html=(o==='win'?'🏆 ВЫ ТРИУМФОВАЛИ!<br><span class="text-sm font-normal">Бот повержен. Гойда абсолютна!</span>':o==='loss'?'💀 ВЫ ПАЛИ!<br><span class="text-sm font-normal">Бот оказался базированнее.</span>':'⚔️ СОВМЕСТНАЯ СМЕРТЬ!')+cmpHtml;showBotThinking(false);renderLobbyStats();setTimeout(()=>{_botReactLast=0;botReact('gg',true,{win:o==='win'});},500);geminiRecap(o==='win');}
   else if(!_resultRecorded){_resultRecorded=true;STATS.games++;saveStats();renderLobbyStats();o=(me.hp<=0&&foe.hp<=0)?'draw':'win';}
   showOver(html,res,o);
 }
-function showOver(html,res,outcome){if(outcome==='win')sfx('win');else if(outcome==='loss')sfx('lose');let show=()=>{document.getElementById('over-txt').innerHTML=html+rewardHtml(res);let ob=document.getElementById('over-btn');if(ob){ob.disabled=false;ob.textContent=isOnline?(_oppWantsRematch?'🔄 РЕВАНШ — соперник готов!':'🔄 РЕВАНШ'):'⚔ Новая Схватка!';}let ov=document.getElementById('over');ov.style.display='flex';ov.classList.remove('over-fade');void ov.offsetWidth;ov.classList.add('over-fade');};if(outcome){playCutscene(outcome,show);}else show();}
+function showOver(html,res,outcome){if(outcome==='win')sfx('win');else if(outcome==='loss')sfx('lose');let show=()=>{document.getElementById('over-txt').innerHTML=html+rewardHtml(res);let ob=document.getElementById('over-btn');if(ob){ob.disabled=false;if(_expeditionReturnReady){ob.textContent='🏰 ВЕРНУТЬСЯ В ИМПЕРИЮ';ob.onclick=returnToEmpire;}else{ob.onclick=resetGame;ob.textContent=isOnline?(_oppWantsRematch?'🔄 РЕВАНШ — соперник готов!':'🔄 РЕВАНШ'):'⚔ Новая Схватка!';}}let ov=document.getElementById('over');ov.style.display='flex';ov.classList.remove('over-fade');void ov.offsetWidth;ov.classList.add('over-fade');};if(outcome){playCutscene(outcome,show);}else show();}
 function getStage(v){return v>=66?3:v>=33?2:1;}
 function showPass(pi){if(isOnline)return;document.getElementById('pass-h').textContent='ПЕРЕДАЧА ХОДА: '+pn(pi);document.getElementById('pass-p').textContent='Передайте устройство следующему опричнику!';document.getElementById('pass-leg').innerHTML='';document.getElementById('pass').style.display='flex';render();}
 function confirmPass(){document.getElementById('pass').style.display='none';render();}
-function resetGame(){if(isOnline){requestRematch();return;}initGame();render();renderDiscard(0);renderDiscard(1);if(isBot){offerMulligan(HUMAN);}else{showPass(0);}}
+function setExpeditionBadge(ex){let el=document.getElementById('expedition-badge');if(!el)return;if(!ex){el.style.display='none';el.textContent='';return;}el.style.display='inline-block';el.textContent='🌀 '+ex.title+' · '+(ex.encounter?ex.encounter.icon+' '+ex.encounter.name:'рейд')+' · '+(ex.doctrine?ex.doctrine.icon+' '+ex.doctrine.name:'доктрина');}
+function resetGame(){if(isOnline){requestRematch();return;}_expeditionBattle=false;_expeditionReturnReady=false;setExpeditionBadge(null);initGame();render();renderDiscard(0);renderDiscard(1);if(isBot){offerMulligan(HUMAN);}else{showPass(0);}}
 function pn(pi){if(isOnline)return pi===myIndex?'ВЫ':'СОПЕРНИК';if(isBot)return pi===HUMAN?'ВЫ':'БОТ';return pi===0?'ВОИН I':'ВОИН II';}
 
 // RENDER
@@ -1630,7 +1653,11 @@ function toggleMute(){initSound();sndMuted=!sndMuted;STATS.muted=sndMuted;saveSt
 function startLocalGame(){isOnline=false;isLocal=true;isBot=false;_campaignIdx=-1;window._campaignBoss='';window._campaignPersona='';document.getElementById('lobby').style.display='none';document.getElementById('bottom-bar').classList.remove('hidden');document.getElementById('log-toggle').style.display='block';document.getElementById('bb-lobby').style.display='inline-block';initGame();render();renderDiscard(0);renderDiscard(1);sfx('start');startMusicIfEnabled();resetIdle();showPass(0);}
 const BOT_NAMES={easy:'БОТ-НОВОБРАНЕЦ',warrior:'БОТ-ВОИН',oprichnik:'БОТ-ОПРИЧНИК'};
 function startBotGame(level,isCampaign){isOnline=false;isLocal=false;isBot=true;botLevel=level||'warrior';myIndex=HUMAN;if(!isCampaign){_campaignIdx=-1;window._campaignBoss='';window._campaignPersona='';}document.getElementById('lobby').style.display='none';document.getElementById('bottom-bar').classList.remove('hidden');document.getElementById('log-toggle').style.display='block';document.getElementById('bb-lobby').style.display='inline-block';initGame();addLog(isCampaign?('🎬 ПУТЬ ГОЙДЫ: бой против «'+(window._campaignBoss||'босса')+'»!'):('🤖 Бой против '+BOT_NAMES[botLevel]+'! Ты ходишь первым. ГОЙДА!'),'#ff9eb5');render();renderDiscard(0);renderDiscard(1);sfx('start');startMusicIfEnabled();resetIdle();if(!isCampaign)setTimeout(()=>botReact('greet',true),700);offerMulligan(HUMAN);}
-function backToLobby(force){if(!force&&!confirm('Вернуться в меню? Текущая схватка будет завершена. ГОЙДА?'))return;_intentionalClose=true;_reconnecting=false;clearTimeout(_reconnectTimer);showReconnectBanner(false);_iWantRematch=false;_oppWantsRematch=false;_campaignIdx=-1;window._campaignBoss='';window._campaignPersona='';_runBattle=false;isOnline=false;isLocal=false;isBot=false;myIndex=-1;gameStarted=false;showBotThinking(false);closeEmoteWheel(true);stopMusic();clearTimeout(_idleTimer);clearTimeout(_stormTimer);_stormTimer=null;document.body.classList.remove('flip-view');if(mqttClient){try{mqttClient.end(true);}catch(e){}mqttClient=null;}document.getElementById('lobby').style.display='flex';document.getElementById('over').style.display='none';document.getElementById('bottom-bar').classList.add('hidden');document.getElementById('log-toggle').style.display='none';document.getElementById('bb-lobby').style.display='none';renderLobbyStats();}
+const EXPEDITION_ORDERS={assault:{id:'ORDER_ASSAULT',n:'РАЗЛОМНЫЙ НАТИСК',ic:'🌀',bg:'#4a120d',bc:'#ff7a45',cnt:1,role:'ШТУРМ',num:'20',unit:'сквозь щит',kind:'dmg',eff:'Пробивает броню: 20 урона. +10% Базометра.',expedition:true},treasury:{id:'ORDER_TREASURY',n:'ОБРОЧНЫЙ РЕЙД',ic:'💰',bg:'#49360b',bc:'#ffd166',cnt:1,role:'ДОБЫЧА',num:'3',unit:'вечевых',kind:'coin',eff:'Крадёт до 3 вечевых, даёт ещё 1 и +10% Базы.',expedition:true},relic:{id:'ORDER_RELIC',n:'ПЕЧАТЬ ДРОНА',ic:'🜂',bg:'#082e46',bc:'#70e0ff',cnt:1,role:'РЕЛИКТ',num:'12',unit:'ОЗ',kind:'heal',eff:'Восстановит ОЗ, даст щит и отражение.',expedition:true}};
+function grantExpeditionOrder(player,mission){let order=EXPEDITION_ORDERS[mission];if(!order)return null;let card={...order,uid:order.id+'_'+Date.now()+'_'+Math.random().toString(36).slice(2)};if(player.hand.length>=7)player.hand[player.hand.length-1]=card;else player.hand.push(card);return card;}
+function startExpeditionBattle(doctrine){if(window.GoydaExpedition&&doctrine)GoydaExpedition.chooseDoctrine(doctrine);let ex=window.GoydaExpedition&&GoydaExpedition.begin();if(!ex)return;_expeditionBattle=true;_expeditionReturnReady=false;startBotGame(ex.threat.id);let p=G.players[HUMAN],foe=G.players[BOT],bonus=Math.max(0,(ex.threat.tier||1)-1);p.coins+=bonus;p.base=Math.min(28,bonus*10);let doc=ex.doctrine&&ex.doctrine.id;if(doc==='vanguard')p.base=Math.max(p.base,20);if(doc==='ward')p.sh=Math.min(2,p.sh+1);if(doc==='supply'){p.coins+=2;draw(p,1);}let squad=ex.squad&&ex.squad.id;if(squad==='elite')p.base=Math.min(35,p.base+10);if(squad==='guard')p.sh=Math.min(2,p.sh+1);if(squad==='workers')p.coins+=1;if(squad==='scouts')draw(p,1);let encounter=ex.encounter&&ex.encounter.effect;if(encounter==='shield')foe.sh=1;if(encounter==='doubleShield')foe.sh=2;if(encounter==='coins')foe.coins=3;if(encounter==='base')foe.base=28;let order=grantExpeditionOrder(p,ex.mission&&ex.mission.id);setExpeditionBadge(ex);addLog('🌀 '+GoydaExpedition.describe(ex)+' · '+(ex.encounter?ex.encounter.icon+' '+ex.encounter.name+' — '+ex.encounter.desc:'разлом молчит')+'.','#ffb8dc');addLog((ex.squad?ex.squad.icon+' '+ex.squad.name:'дружина')+' · '+(ex.doctrine?ex.doctrine.icon+' '+ex.doctrine.name:'без доктрины')+' · победа вернёт трофеи в Империю.','#d3a7ff');if(order)addLog(order.ic+' Приказ экспедиции: «'+order.n+'». Он уже в твоей руке.','#ffe6a3');render();}
+function returnToEmpire(){location.href='empire/';}
+function backToLobby(force){if(!force&&!confirm('Вернуться в меню? Текущая схватка будет завершена. ГОЙДА?'))return;if(_expeditionBattle&&!_expeditionReturnReady&&window.GoydaExpedition)GoydaExpedition.clear();_expeditionBattle=false;_expeditionReturnReady=false;setExpeditionBadge(null);_intentionalClose=true;_reconnecting=false;clearTimeout(_reconnectTimer);showReconnectBanner(false);_iWantRematch=false;_oppWantsRematch=false;_campaignIdx=-1;window._campaignBoss='';window._campaignPersona='';_runBattle=false;isOnline=false;isLocal=false;isBot=false;myIndex=-1;gameStarted=false;showBotThinking(false);closeEmoteWheel(true);stopMusic();clearTimeout(_idleTimer);clearTimeout(_stormTimer);_stormTimer=null;document.body.classList.remove('flip-view');if(mqttClient){try{mqttClient.end(true);}catch(e){}mqttClient=null;}document.getElementById('lobby').style.display='flex';document.getElementById('over').style.display='none';document.getElementById('bottom-bar').classList.add('hidden');document.getElementById('log-toggle').style.display='none';document.getElementById('bb-lobby').style.display='none';renderLobbyStats();}
 
 // === SIDE PANELS ===
 const BATTLE_CRIES=['ГОЙДА!!!','СЛАВА!','В АТАКУ!','СТОЯТЬ!','ДЕРЖИСЬ!','ЗА ДРОН!','СИЛА!','УДАЧА!','ВПЕРЁД!','НЕ СДАВАЙ!','ОГОНЬ!','ГОЙДА-МАТ!','ЯРОСТЬ!','ПОБЕДА!'];
@@ -1668,7 +1695,7 @@ function spawnEmote(pi,text,who){if(!text)return;let c=_areaCenter(pi);if(_emote
 // ── J5: dialogue log ──
 let DIALOG_LOG=[];
 function logDialog(who,text){DIALOG_LOG.push({who,text});if(DIALOG_LOG.length>40)DIALOG_LOG.shift();let p=document.getElementById('chatlog');if(p&&p.style.display!=='none')renderChatlog();}
-function renderChatlog(){let host=document.getElementById('chatlog-body');if(!host)return;if(!DIALOG_LOG.length){host.innerHTML='<div class="cl-empty">Пока тихо... реплики появятся по ходу боя.</div>';return;}host.innerHTML=DIALOG_LOG.map(d=>'<div class="cl-line"><b>'+d.who+':</b> '+d.text+'</div>').join('');host.scrollTop=host.scrollHeight;}
+function renderChatlog(){let host=document.getElementById('chatlog-body');if(!host)return;host.replaceChildren();if(!DIALOG_LOG.length){let empty=document.createElement('div');empty.className='cl-empty';empty.textContent='Пока тихо... реплики появятся по ходу боя.';host.appendChild(empty);return;}DIALOG_LOG.forEach(d=>{let line=document.createElement('div'),who=document.createElement('b');line.className='cl-line';who.textContent=String(d.who||'');line.appendChild(who);line.appendChild(document.createTextNode(': '+String(d.text||'')));host.appendChild(line);});host.scrollTop=host.scrollHeight;}
 function openChatlog(){renderChatlog();document.getElementById('chatlog').style.display='flex';}
 function closeChatlog(){document.getElementById('chatlog').style.display='none';}
 function clearChatlog(){DIALOG_LOG=[];renderChatlog();}
@@ -1952,6 +1979,9 @@ function castFX(pi,card){
     case'GOYDO_OBEREG':lightPillar(pi,'#00ffff');break;
     case'SHIPOGOYDA':{let c=_areaCenter(pi);spawnShardsXY(c.x,c.y,'#aadd33',fxCount(7));break;}
     case'KARMANNIK':{let c=_areaCenter(1-pi);spawnShardsXY(c.x,c.y,'#cc66ff',fxCount(6));break;}
+    case'ORDER_ASSAULT':screenFlash('fx-rage',420);quake(20);skyLightning(1-pi);break;
+    case'ORDER_TREASURY':{let c=_areaCenter(pi);spawnShardsXY(c.x,c.y,'#ffd166',fxCount(12));break;}
+    case'ORDER_RELIC':lightPillar(pi,'#70e0ff');screenFlash('fx-holy',420);break;
   }
 }
 function applyCardParallax(cc){const card=cc.querySelector('.card');cc.addEventListener('mousemove',e=>{const r=cc.getBoundingClientRect();const x=e.clientX-r.left,y=e.clientY-r.top;card.style.transform=`rotateX(${-((y-r.height/2)/r.height/2)*20}deg) rotateY(${((x-r.width/2)/r.width/2)*20}deg)`;card.style.setProperty('--shine-x',(x/r.width*100)+'%');card.style.setProperty('--shine-y',(y/r.height*100)+'%');});cc.addEventListener('mouseleave',()=>card.style.transform='rotateX(0) rotateY(0)');}
@@ -2296,21 +2326,26 @@ setTimeout(()=>{
 })();
 </script>
 <script>
-/* Мост из ГОЙДА-ИМПЕРИИ: если пришли порталом — баннер прибытия + кнопка назад. Самодостаточно, не трогает игру. */
+/* Мост из ГОЙДА-ИМПЕРИИ: контракт делает один бой осмысленной экспедицией с наградой на возврате. */
 (function () {
   try {
     var b = JSON.parse(localStorage.getItem('GOYDA_BRIDGE') || 'null');
     if (!b || b.from !== 'empire') return;
     localStorage.removeItem('GOYDA_BRIDGE');
+    var ex = window.GoydaExpedition && (GoydaExpedition.active() || GoydaExpedition.prepare(b));
     var show = function () {
       var d = document.createElement('div');
       d.style.cssText = 'position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:99990;background:linear-gradient(180deg,#241840,#160e2a);border:2px solid #9a5cff;border-radius:12px;padding:10px 16px;color:#ece0ff;font:700 14px/1.45 system-ui,sans-serif;box-shadow:0 8px 30px rgba(60,10,140,.6);text-align:center;max-width:92%';
-      d.innerHTML = '🌀 Ты прибыл порталом из <b>ГОЙДА-ИМПЕРИИ</b> · Земля №' + (b.depth || 1) + ', ранг ' + (b.rankIndex || 0) + ', дружина ' + (b.army || 0) + '. Побеждай в картах — победы 🏆 вознаградятся в Империи по возвращении! '
+      var orderHint = ex && ({ assault: '🌀 Разломный натиск — 20 урона сквозь щит', treasury: '💰 Оброчный рейд — вечевые и Базометр', relic: '🜂 Печать Дрона — лечение, щит, отражение' })[ex.mission && ex.mission.id];
+      var mission = ex ? ('<br><span style="color:#d7bbff;font-size:12px">'+GoydaExpedition.describe(ex)+' · '+(ex.encounter?ex.encounter.icon+' '+ex.encounter.name+' ('+ex.encounter.desc+') · ':'')+(ex.squad?ex.squad.icon+' '+ex.squad.name+' ('+ex.squad.desc+') · ':'')+'выбери доктрину отряда.</span> '+(orderHint ? '<br><span style="color:#ffe6a3;font-size:12px">Приказ в руке: '+orderHint+'</span>' : '')) : '';
+      d.innerHTML = '🌀 Ты прибыл порталом из <b>ГОЙДА-ИМПЕРИИ</b> · Земля №' + (b.depth || 1) + ', ранг ' + (b.rankIndex || 0) + ', дружина ' + (b.army || 0) + '.' + mission
+        + (ex ? '<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:7px"><button data-doctrine="vanguard" style="padding:5px 9px;border-radius:8px;border:1px solid #ff7a54;background:#53180f;color:#ffe5dc;cursor:pointer;font:inherit">⚔️ НАТИСК</button><button data-doctrine="ward" style="padding:5px 9px;border-radius:8px;border:1px solid #6ec8ff;background:#0b3154;color:#dff5ff;cursor:pointer;font:inherit">🛡️ ОБЕРЕГ</button><button data-doctrine="supply" style="padding:5px 9px;border-radius:8px;border:1px solid #ffd66b;background:#493612;color:#fff3cb;cursor:pointer;font:inherit">📦 СНАБЖЕНИЕ</button></div>' : '')
         + '<button id="bridgeBack" style="margin-left:8px;padding:5px 12px;border-radius:8px;border:1px solid #c8922e;background:#2c2113;color:#ffe6a8;cursor:pointer;font:inherit">🏰 Назад в Империю</button>'
-        + '<button id="bridgeClose" style="margin-left:6px;padding:5px 10px;border-radius:8px;border:1px solid #555;background:#1a1626;color:#cbb8e8;cursor:pointer;font:inherit">✕</button>';
+        + '<button id="bridgeClose" style="margin-left:6px;padding:5px 10px;border-radius:8px;border:1px solid #76535f;background:#25161c;color:#ffd0d9;cursor:pointer;font:inherit">Отменить</button>';
       document.body.appendChild(d);
-      var bk = d.querySelector('#bridgeBack'); if (bk) bk.onclick = function () { location.href = 'empire/'; };
-      var cl = d.querySelector('#bridgeClose'); if (cl) cl.onclick = function () { d.remove(); };
+      d.querySelectorAll('[data-doctrine]').forEach(function (btn) { btn.onclick = function () { d.remove(); startExpeditionBattle(btn.dataset.doctrine); }; });
+      var bk = d.querySelector('#bridgeBack'); if (bk) bk.onclick = function () { if (window.GoydaExpedition) GoydaExpedition.clear(); location.href = 'empire/'; };
+      var cl = d.querySelector('#bridgeClose'); if (cl) cl.onclick = function () { if (window.GoydaExpedition) GoydaExpedition.clear(); d.remove(); };
       setTimeout(function () { if (d.parentNode) d.style.transition = 'opacity 1s', d.style.opacity = '0.55'; }, 9000);
     };
     if (document.body) show(); else window.addEventListener('DOMContentLoaded', show);

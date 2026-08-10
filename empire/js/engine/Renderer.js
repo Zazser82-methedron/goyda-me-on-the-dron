@@ -72,8 +72,9 @@ export class Renderer {
     this.scene = new THREE.Scene();
     // непрозрачный градиент-небо в сцене (нужно для пост-обработки) — заменяет CSS-фон
     this.scene.background = this._skyBg(PAL.sky, PAL.skyLow);
-    // дистанционный туман тоньше (0.0045 → 0.0026) — даль больше не тонет в белой дымке при отдалении
-    this.scene.fog = new THREE.FogExp2(PAL.fog, 0.0026);
+    // При стратегическом широком ракурсе дальние отряды и границы карты должны
+    // оставаться различимыми; туман оставляет глубину, но не прячет поле боя.
+    this.scene.fog = new THREE.FogExp2(PAL.fog, 0.00165);
     this.fxEnabled = false; this.composer = null;
 
     // Полусферический свет неба/земли — ровная читаемая засветка всей сцены

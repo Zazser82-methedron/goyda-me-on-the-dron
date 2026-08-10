@@ -64,6 +64,19 @@ function promoteVeteran(state, u, ctx) {
   }
 }
 
+// Награда за карточную экспедицию: опыт получает небольшая группа наименее
+// закалённых воинов, поэтому портал помогает растить дружину, а не только склад.
+export function awardExpeditionValor(state, steps, ctx) {
+  steps = Math.max(0, Math.min(3, Math.round(steps || 0)));
+  if (!steps) return [];
+  const fighters = state.units
+    .filter(u => u.faction === 'ours' && u.def && u.def.atk > 0)
+    .sort((a, b) => ((a.vet || 0) - (b.vet || 0)) || ((a.kills || 0) - (b.kills || 0)))
+    .slice(0, 3);
+  for (const u of fighters) for (let i = 0; i < steps; i++) promoteVeteran(state, u, ctx || {});
+  return fighters;
+}
+
 // урон сущности (юнит/здание). true если уничтожена. attacker — кто бьёт (для ветеранства).
 export function damage(state, target, amt, ctx, attacker) {
   if (!target || target.hp <= 0) return true;
