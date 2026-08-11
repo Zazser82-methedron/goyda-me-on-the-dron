@@ -1,5 +1,5 @@
 // ===== Цикл добытчика: к ноде → добыча → к складу → сдача =====
-import { setPath, setPathToBuilding, moveStep } from './Units.js?v=94';
+import { setPath, setPathToBuilding, moveStep } from './Units.js?v=104';
 import { RES_LABEL } from '../data/config.js?v=94';
 import { bark } from '../data/barks.js?v=94';
 

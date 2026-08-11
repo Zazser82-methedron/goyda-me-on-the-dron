@@ -4,19 +4,21 @@ import { Renderer } from './engine/Renderer.js?v=98';
 import * as Quality from './engine/Quality.js?v=94';
 import { RTSCamera } from './engine/RTSCamera.js?v=99';
 import { Picker } from './engine/Picker.js?v=94';
-import { Loop } from './engine/Loop.js?v=98';
+import { Loop } from './engine/Loop.js?v=99';
+import { Profiler } from './engine/Profiler.js?v=95';
 import { AssetManager } from './engine/AssetManager.js?v=99';
 import { TerrainMesh } from './world/TerrainMesh.js?v=102';
 import { WorldBase } from './world/WorldBase.js?v=102';
 import { Sky } from './world/Sky.js?v=94';
-import { Atmosphere } from './world/Atmosphere.js?v=94';
+import { Atmosphere } from './world/Atmosphere.js?v=95';
 import { BuildingActivity } from './world/BuildingActivity.js?v=102';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
 import { nearestAdj } from './world/Pathfinding.js?v=94';
-import { GameState } from './sim/GameState.js?v=101';
+import { UnitRenderer } from './world/UnitRenderer.js?v=94';
+import { GameState } from './sim/GameState.js?v=103';
 import * as Economy from './sim/Economy.js?v=102';
 import * as BuildSys from './sim/Buildings.js?v=102';
-import * as Waves from './sim/Waves.js?v=94';
+import * as Waves from './sim/Waves.js?v=95';
 import * as Tech from './sim/Tech.js?v=94';
 import * as Nature from './sim/Nature.js?v=94';
 import * as Relics from './sim/Relics.js?v=94';
@@ -26,7 +28,7 @@ import * as Events from './sim/Events.js?v=94';
 import * as Achievements from './sim/Achievements.js?v=94';
 import * as Meta from './sim/Meta.js?v=94';
 import * as Research from './sim/Research.js?v=94';
-import { updateUnits, damage, awardExpeditionValor } from './sim/Units.js?v=96';
+import { updateUnits, damage, awardExpeditionValor } from './sim/Units.js?v=104';
 import { toggleEdict } from './sim/Edicts.js?v=94';
 import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=94';
 import { AmbientAudio } from './audio/Music.js?v=94';
@@ -79,7 +81,8 @@ class Game {
     this.camera = this.cameraRig.camera;
     this.picker = new Picker(this.canvas);
     this.assets = new AssetManager();
-    this.state = new GameState(this.scene, this.assets);
+    this.unitRenderer = new UnitRenderer(this.scene, this.assets);
+    this.state = new GameState(this.scene, this.assets, this.unitRenderer);
     this.buildingActivity = new BuildingActivity(this.rdr.tier);
     this.terrain = null;   // строится при выборе карты (buildWorld)
 
@@ -103,8 +106,7 @@ class Game {
     this.lastRender = performance.now();
     this._uiT = 0;
     this.tracers = [];
-    this._uShadows = []; this._aShadows = [];   // пулы мягких теней-пятен под юнитами/дичью
-    this._vetMarkers = [];                       // пул шевронов-звёзд ★ над ветеранами
+    this._aShadows = [];                         // пул мягких теней-пятен под дичью (юниты — инстансно, UnitRenderer)
     this.floaters = document.getElementById('floaters');
     this._hitStop = 0;          // таймер hit-pause (сек реального времени)
     this._ripples = [];         // кольца-подтверждения команд
@@ -120,6 +122,9 @@ class Game {
     }
     this._input();
     this.loop = new Loop((dt) => this.tick(dt), (a) => this.render(a));
+    this.profiler = new Profiler(this.rdr.renderer, this.state);   // метрики тика/рендера/FPS, оверлей по F3
+    this.loop.profiler = this.profiler;
+    window.__stress = (n) => this.profiler.stress(n);              // window.__stress(200) — стресс-тест из консоли
   }
 
   _makeCtx() {
@@ -725,7 +730,6 @@ class Game {
   _pickables() {
     const a = [];
     for (const b of this.state.buildings) a.push(b.view);
-    for (const u of this.state.units) a.push(u.view);
     for (const c of this.state.camps) a.push(c.view);
     for (const an of this.state.animals) a.push(an.view);
     return a;
@@ -734,7 +738,8 @@ class Game {
   // cx,cy (экранные px) переданы только с тача — тогда, если точный райкаст промазал, пробуем с запасом радиуса
   // (палец толще курсора мыши; так тап-цели юнитов/ресурсов эффективно крупнее)
   _entUnder(cx, cy) {
-    const list = this._pickables(), fields = Object.values(this.state.fields);
+    // юниты — инстансные (InstancedMesh), поэтому идут через fields (nodeAt(instanceId)), а не pickables
+    const list = this._pickables(), fields = Object.values(this.state.fields).concat(this.unitRenderer.pickFields());
     const exact = this.picker.entityUnder(this.camera, list, fields);
     if (exact || cx === undefined) return exact;
     return this.picker.entityUnderNear(this.camera, list, fields, cx, cy, 22);
@@ -1339,32 +1344,6 @@ class Game {
     return pool[i];
   }
 
-  // шеврон-звёзды ★ над ветераном (billboard-спрайт; уровень = число звёзд)
-  _vetMarker(i, level) {
-    if (!this._vetTex) {
-      this._vetTex = {};
-      for (let lv = 1; lv <= 3; lv++) {
-        const cv = document.createElement('canvas'); cv.width = 40 * lv; cv.height = 44;
-        const cx = cv.getContext('2d');
-        cx.font = 'bold 30px serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
-        for (let s = 0; s < lv; s++) {
-          const x = 20 + s * 40;
-          cx.lineWidth = 5; cx.strokeStyle = 'rgba(30,14,0,0.92)'; cx.strokeText('★', x, 24);
-          cx.fillStyle = '#ffd84a'; cx.fillText('★', x, 24);
-        }
-        const tex = new THREE.CanvasTexture(cv); tex.magFilter = THREE.LinearFilter;
-        this._vetTex[lv] = tex;
-      }
-    }
-    if (!this._vetMarkers[i]) {
-      const m = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, depthTest: false, fog: false }));
-      m.renderOrder = 6; this.scene.add(m); this._vetMarkers[i] = m;
-    }
-    const sp = this._vetMarkers[i], lv = Math.min(3, level);
-    if (sp._lv !== lv) { sp.material.map = this._vetTex[lv]; sp.material.needsUpdate = true; sp.scale.set(0.3 * lv, 0.3, 1); sp._lv = lv; }
-    return sp;
-  }
-
   // ---------- рендер ----------
   render(alpha) {
     if (!this._rendered) { this._rendered = true; window.__gboot && window.__gboot('RENDERING ✓'); }
@@ -1377,21 +1356,29 @@ class Game {
     this.rdr.updateShadow(this.cameraRig.target.x, this.cameraRig.target.z);
     if (this.fog) this.fog.update(this.state, fdt);
 
-    // интерполяция + анимация юнитов (рост/ходьба/выпад) + тень-пятно + пыль
+    // интерполяция + анимация юнитов (рост/ходьба/выпад) — записывается прямо в инстансы UnitRenderer
+    // (тело: InstancedMesh на модель×сабмеш; тень-пятно и шеврон ветерана — тоже инстансно, там же).
     const units = this.state.units;
+    this.unitRenderer.beginFrame(this.camera, now * 0.001);
     for (let ui = 0; ui < units.length; ui++) {
-      const u = units[ui], v = u.view;
+      const u = units[ui];
       if (u.grow < 1) { u.grow = Math.min(1, u.grow + fdt * 3.5); u._vetApplied = false; }
-      if (!u._noCast) { v.traverse(o => { if (o.isMesh) o.castShadow = false; }); u._noCast = true; }   // тень даёт пятно, не shadow-map
       const ix = u.px + (u.x - u.px) * alpha, iz = u.pz + (u.z - u.pz) * alpha;
-      const gy = this.state.grid.heightAt(ix, iz);
+      // heightAt дорогой — кэшируем на юните и пересчитываем только при заметном смещении (не каждый кадр)
+      if (u._hgx === undefined || (ix - u._hgx) ** 2 + (iz - u._hgz) ** 2 > 0.05) {
+        u._hgy = this.state.grid.heightAt(ix, iz); u._hgx = ix; u._hgz = iz;
+      }
+      const gy = u._hgy;
       const moving = Math.hypot(u.x - u.px, u.z - u.pz) > 0.0025;
       const phase = now * 0.016 + u.id * 1.7, step = Math.sin(phase), stride = Math.abs(step);
       const base = (u.growMax || 1) * (u.grow < 1 ? (0.25 + 0.75 * u.grow) : (1 + 0.07 * (u.vet || 0)));
-      let bob = 0, fwd = 0, pitch = 0, roll = 0, sx = 1, sy = 1, sz = 1;
+      let bob = 0, fwd = 0, pitch = 0, roll = 0, sx = 1, sy = 1, sz = 1, walkAmp = 0;
       if (moving) {
-        bob = stride * 0.065; roll = step * 0.045; pitch = -0.035;
+        // Y-бобр ходьбы теперь считается на GPU (вертексный шейдер, aInstancePhase+uTime) — та же формула,
+        // просто больше не пишется в CPU-матрицу; здесь только амплитуда для шейдера.
+        roll = step * 0.045; pitch = -0.035;
         sx = 1 + stride * 0.026; sy = 1 - stride * 0.035; sz = 1 + stride * 0.018;
+        walkAmp = 0.065;
       } else {
         const breath = Math.sin(now * 0.0022 + u.id * 0.91);
         sy += breath * 0.012; sx -= breath * 0.006; sz -= breath * 0.006; roll = breath * 0.008;
@@ -1406,21 +1393,18 @@ class Game {
         fwd = k * k * 0.16; bob = k * 0.032; pitch = -k * 0.18; roll += Math.sin(phase * .55) * .025;
         sx += k * .035; sy -= k * .045;
       }
-      v.position.set(ix + Math.sin(u.dir) * fwd, gy + bob, iz + Math.cos(u.dir) * fwd);
-      v.rotation.set(pitch, u.dir || 0, roll);
-      v.scale.set(base * sx, base * sy, base * sz);
+      const px = ix + Math.sin(u.dir) * fwd, py = gy + bob, pz = iz + Math.cos(u.dir) * fwd;
       let vis = true;
-      if (u.faction === 'enemy') { const gp = this.state.grid.worldToGrid(u.x, u.z); const t = this.state.grid.get(gp.x, gp.y); vis = !this.fog || !this.fog.enabled || !t || t.visible; v.visible = vis; }
-      const sh = this._blobShadow(ui, this._uShadows);
-      sh.visible = vis; sh.position.set(ix, gy + 0.04, iz); const ss = (u.growMax || 1) * 0.78; sh.scale.set(ss, ss, ss);
-      if (moving && vis) { u._dustT = (u._dustT || 0) - fdt; if (u._dustT <= 0) { this.atmo && this.atmo.spawnDust(ix, gy, iz); u._dustT = 0.26; } }
-      if (u.faction === 'ours' && (u.vet || 0) > 0 && vis) {        // шеврон ветерана над головой
-        const mk = this._vetMarker(ui, u.vet); mk.visible = true;
-        mk.position.set(v.position.x, gy + bob + 1.05 * (u.growMax || 1) + 0.4, v.position.z);
-      } else if (this._vetMarkers[ui]) this._vetMarkers[ui].visible = false;
+      if (u.faction === 'enemy') { const gp = this.state.grid.worldToGrid(u.x, u.z); const t = this.state.grid.get(gp.x, gp.y); vis = !this.fog || !this.fog.enabled || !t || t.visible; }
+      if (!vis) continue;   // невидимый в тумане войны юнит — просто не попадает в стройку инстансов кадра
+      this.unitRenderer.writeUnit(u, px, py, pz, pitch, u.dir || 0, roll, base * sx, base * sy, base * sz, u.tint, walkAmp);
+      const ss = (u.growMax || 1) * 0.78;
+      this.unitRenderer.writeShadow(ix, iz, gy, ss);
+      if (moving) { u._dustT = (u._dustT || 0) - fdt; if (u._dustT <= 0) { this.atmo && this.atmo.spawnDust(ix, gy, iz); u._dustT = 0.26; } }
+      if (u.faction === 'ours' && (u.vet || 0) > 0) {        // шеврон ветерана над головой
+        this.unitRenderer.writeVet(u.vet, px, gy + bob + 1.05 * (u.growMax || 1) + 0.4, pz);
+      }
     }
-    for (let i = units.length; i < this._uShadows.length; i++) this._uShadows[i].visible = false;
-    for (let i = units.length; i < this._vetMarkers.length; i++) this._vetMarkers[i].visible = false;
     // интерполяция дичи (бродит/убегает) + тень-пятно + прячем в тумане
     const animals = this.state.animals;
     for (let ai = 0; ai < animals.length; ai++) {
@@ -1448,9 +1432,17 @@ class Game {
       if (f.kind === 'death') {
         if (!f._burst && this.atmo) { f._burst = true; this.atmo.burst(f.view.position.x, (f.y0 || 0) + 0.4, f.view.position.z, 0xff7744, 9); }
         f.view.rotation.z = t * 1.5; f.view.position.y = (f.y0 || 0) - t * 0.35; f.view.scale.multiplyScalar(0.965);
+      } else if (f.kind === 'unit-death') {
+        // юнит уже убран из state.units — тело-«труп» дорисовываем ещё write-вызовом в те же инстансы
+        // (без тени/шеврона — как и раньше, смерть их не показывала).
+        if (!f._burst && this.atmo) { f._burst = true; this.atmo.burst(f.x, (f.y0 || 0) + 0.4, f.z, 0xff7744, 9); }
+        f.curScale *= 0.965;
+        const py = (f.y0 || 0) - t * 0.35;
+        this.unitRenderer.writeUnit(f, f.x, py, f.z, 0, f.dir, t * 1.5, f.curScale, f.curScale, f.curScale, f.tint, 0, false);
       }
-      if (f.life <= 0) { this.scene.remove(f.view); this.state.fx.splice(i, 1); }
+      if (f.life <= 0) { if (f.view) this.scene.remove(f.view); this.state.fx.splice(i, 1); }
     }
+    this.unitRenderer.endFrame();
     // пульс эмиссии идола
     if (this.state.idol) { const p = 1.4 + Math.sin(now * 0.005) * 0.9; this.state.idol.view.traverse(o => { if (o.isMesh && o.material && o.material.emissiveIntensity > 0) o.material.emissiveIntensity = p; }); }
     // живые идолы-реликвии: медленно вращаются + парят; кольцо ауры дышит и крутится

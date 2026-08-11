@@ -3,3 +3,6 @@ gen_art.py
 .canva_tmp/
 .gemini_review.txt
 STATE.md
+
+# служебный бандл для Gemini — не деплоить
+_gemini/

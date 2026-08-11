@@ -34,6 +34,7 @@ export class Atmosphere {
       const sp = new THREE.Sprite(m); sp.scale.setScalar(0.01); sp.visible = false; sp.renderOrder = 12;
       this.scene.add(sp); arr.push({ sp, life: 0, max: 1, vx: 0, vz: 0, vy: 0 });
     }
+    arr._next = 0;   // кольцевой указатель выдачи слота (см. _emit) — без сканирования пула
     return arr;
   }
   _buildSmoke() { this.smoke = this._pool(this._smokeTex, this.low ? 14 : 38); }
@@ -134,8 +135,12 @@ export class Atmosphere {
     this.scene.add(this.fireflies);
   }
 
+  // кольцевой буфер: следующий слот берём по указателю, без линейного поиска свободного.
+  // при переполнении пула (все живы) — старая частица обрывается раньше времени и переиспользуется;
+  // это ожидаемо и приемлемо (пулы достаточно большие, переполнение — редкий случай).
   _emit(pool, x, y, z, opt) {
-    const p = pool.find(q => q.life <= 0); if (!p) return;
+    const i = pool._next; pool._next = (i + 1) % pool.length;
+    const p = pool[i];
     p.life = p.max = opt.life;
     p.sp.position.set(x, y, z);
     p.vx = opt.vx; p.vy = opt.vy; p.vz = opt.vz;

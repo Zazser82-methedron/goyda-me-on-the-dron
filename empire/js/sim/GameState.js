@@ -10,9 +10,10 @@ import { buildScaffold } from '../engine/Placeholders.js?v=94';
 import * as Tiling from '../world/Tiling.js?v=94';
 
 export class GameState {
-  constructor(scene, assets) {
+  constructor(scene, assets, unitRenderer) {
     this.scene = scene;
     this.assets = assets;
+    this.unitRenderer = unitRenderer;   // инстансный рендер юнитов (тело/тень/шеврон) — main.js пишет в него каждый кадр
     this.grid = new Grid(GRID_N);
 
     // инстансные поля ресурсов (1 draw call на тип вместо ~800 объектов)
@@ -296,48 +297,53 @@ export class GameState {
   drops() { return this.buildings.filter(b => b.built && b.def.drop); }
 
   // ---- юниты ----
+  // Рендер тела/тени/шеврона юнита — инстансный (UnitRenderer, world/UnitRenderer.js): здесь юнит только
+  // данные, никакого Object3D/клона GLB на юнита больше нет (это и было источником 2500+ draw call).
+  // Тинт фракции хранится как u.tint и применяется в render() через InstancedMesh.setColorAt (не клон материала).
   addUnit(kind, wx, wz, opts = {}) {
     const def = UNITS[kind];
-    const view = this.assets.get(def.model);
-    view.position.set(wx, 0, wz);
-    if (opts.tint) view.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setHex(opts.tint); } });
-    const gm = opts.scale || 1;
-    view.scale.setScalar(gm * 0.25);          // вырастает при спавне (анимация в render)
-    this.scene.add(view);
     // бонусы исследований применяются к НОВЫМ своим воинам (HP/скорость)
     let hp = (opts.hp ?? def.hp), maxHp = (opts.maxHp ?? def.hp), speed = def.speed;
     const R = this.research;
     if (R && def.faction === 'ours' && !def.worker) { hp = Math.round(hp * R.hpMul); maxHp = Math.round(maxHp * R.hpMul); speed *= R.spdMul; }
     const u = {
-      id: this._id++, type: 'unit', kind, def, faction: def.faction, view,
+      id: this._id++, type: 'unit', kind, def, faction: def.faction,
       x: wx, z: wz, px: wx, pz: wz, dir: 0,
       hp, maxHp,
       dmg: def.dmg, speed,
       state: 'idle', path: null, pi: 0, target: null, job: null,
       carry: 0, carryType: null, gatherT: 0, atkT: 0, bossKey: opts.bossKey || null,
-      barkT: 0, grow: 0, growMax: gm, atkAnim: 0, stance: 'aggro',
+      barkT: 0, grow: 0, growMax: opts.scale || 1, atkAnim: 0, stance: 'aggro',
+      tint: opts.tint || null,
     };
-    view.userData.entity = u;
     this.units.push(u); this._byId.set(u.id, u);
     if (def.faction === 'ours') this.recomputePop();
     return u;
   }
 
   removeUnit(u) {
-    this.scene.remove(u.view);
+    // инстанс просто перестанет писаться в UnitRenderer со следующего кадра — убирать явно нечего
     this.units = this.units.filter(x => x !== u);
     this._byId.delete(u.id);
     if (this.selected === u) this.selected = null;
     if (u.faction === 'ours') this.recomputePop();
   }
 
-  // смерть с анимацией: убираем из логики, view остаётся для падения (render)
+  // смерть с анимацией: убираем из логики сразу, а «труп» (падение+уменьшение) дорисовывает render()
+  // через fx-запись unit-death — она несёт достаточно данных (модель/id/тинт/позиция), чтобы UnitRenderer
+  // мог продолжать писать этот инстанс ещё 0.5с, хотя юнита уже нет в state.units.
   killUnit(u) {
     this.units = this.units.filter(x => x !== u);
     this._byId.delete(u.id);
     if (this.selected === u) this.selected = null;
     if (u.faction === 'ours') this.recomputePop();
-    if (u.view) { u.view.userData.entity = null; this.fx.push({ view: u.view, kind: 'death', life: 0.5, max: 0.5, y0: u.view.position.y }); }
+    const y0 = this.grid.heightAt ? this.grid.heightAt(u.x, u.z) : 0;
+    this.fx.push({
+      kind: 'unit-death', life: 0.5, max: 0.5, y0,
+      x: u.x, z: u.z, dir: u.dir || 0, tint: u.tint || null,
+      id: u.id, def: { model: u.def.model },
+      curScale: (u.growMax || 1) * (1 + 0.07 * (u.vet || 0)),
+    });
   }
 
   ours() { return this.units.filter(u => u.faction === 'ours'); }

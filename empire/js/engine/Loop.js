@@ -11,6 +11,7 @@ export class Loop {
     this.speed = 1;            // множитель скорости симуляции (0 = пауза, 1/2/3); рендер не масштабируется
     this.running = false;
     this.tickCount = 0;
+    this.profiler = null;      // опциональный Profiler — при null замеры не выполняются вовсе
     this._frame = this._frame.bind(this);
   }
 
@@ -37,13 +38,18 @@ export class Loop {
     if (dt > 0.25) dt = 0.25;          // защита от spiral-of-death (вкладка ушла в фон)
     this.acc += dt * this.speed;       // пауза/ускорение симуляции (рендер по-прежнему каждый кадр)
     let guard = 0;
+    const p = this.profiler;           // локальная ссылка: при null — ни одного вызова performance.now()
     while (this.acc >= this.simDt && guard < 12) {
+      if (p) p.beginTick();
       this.update(this.simDt);
+      if (p) p.endTick();
       this.acc -= this.simDt;
       this.tickCount++;
       guard++;
     }
+    if (p) p.beginRender();
     this.render(this.acc / this.simDt);
+    if (p) p.endRender();
     requestAnimationFrame(this._frame);
   }
 }

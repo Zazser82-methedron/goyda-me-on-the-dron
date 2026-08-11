@@ -4,7 +4,7 @@ import { RANKS } from '../data/ranks.js?v=94';
 import { RES_LABEL } from '../data/config.js?v=94';
 import { EDICTS } from '../sim/Edicts.js?v=94';
 import { TECHS } from '../data/tech.js?v=94';
-import { Thumbs } from './Thumbs.js?v=94';
+import { Thumbs } from './Thumbs.js?v=100';
 
 export function costStr(cost) {
   const keys = Object.keys(cost || {});
@@ -32,7 +32,7 @@ function prodStr(d) {
 export class BuildMenu {
   constructor(game) {
     this.game = game;
-    this.thumbs = new Thumbs(game.assets);   // 3D-превью моделей (лениво, с кэшем)
+    this.thumbs = new Thumbs(game.assets, game.rdr.renderer);   // 3D-превью моделей (лениво, с кэшем, на основном рендерере)
     this.tabsEl = document.getElementById('buildbtns');
     this.edictsEl = document.getElementById('edicts');
     this.openCat = null;

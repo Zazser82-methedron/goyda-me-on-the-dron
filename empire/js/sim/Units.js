@@ -1,12 +1,36 @@
 // ===== Движение, бой и ИИ юнитов (свои воины + враги). Воркеры — в Jobs.js =====
-import { TILE } from '../data/config.js?v=94';
+import { TILE, GRID_N } from '../data/config.js?v=94';
 import { findPath, nearestAdj } from '../world/Pathfinding.js?v=94';
 import { updateWorker } from './Jobs.js?v=94';
 import { bark } from '../data/barks.js?v=94';
+import { SpatialHash } from './SpatialHash.js?v=94';
 
 export function tileCenter(state, tx, ty) { const w = state.grid.gridToWorld(tx, ty); return { x: w.wx, z: w.wz }; }
 function dist2(ax, az, bx, bz) { return (ax - bx) ** 2 + (az - bz) ** 2; }
 function bRadius(b) { return Math.max(b.w, b.h) * 0.5 * TILE + 0.3; }
+
+// ---- пространственный индекс: убирает O(N²) полных сканов state.units/state.buildings ----
+// Размер ячейки 8 ≈ 1.14× максимальной дальности атаки/агро среди юнитов (ШАМАН-ГОЙДЫ range=7.0,
+// data/units.js) — типовой поиск (атака, кайт, ближний бой) укладывается в 3×3 ячейки; более
+// редкие дальние запросы (стойка defend r=22, фланг r=32, aggro r=9999) сами расширяются кольцами
+// в queryNearest — тоже на порядки дешевле полного скана. Границы — вся карта + запас на джиттер.
+const HASH_CELL = 8;
+const WORLD_HALF = GRID_N / 2 * TILE + 4;
+const unitsHash = new SpatialHash(HASH_CELL, -WORLD_HALF, WORLD_HALF);
+const buildingsHash = new SpatialHash(HASH_CELL, -WORLD_HALF, WORLD_HALF);
+let buildingsMaxBR = 0.3;   // max bRadius() среди текущих зданий — верхняя граница поиска для nearestOursBuildingInRange
+const getUX = u => u.x, getUZ = u => u.z;
+const getBX = b => b.cx, getBZ = b => b.cz;
+
+// ---- time-slicing ИИ-решений: не в бою — цель/поведение пересчитываются не каждый тик ----
+// Период 3 тика × SIM_DT(0.1с) = до 0.3с задержки реакции для юнита БЕЗ цели в упор — незаметно
+// глазом, зато режет спрос на широкие queryNearest (aggro r=9999, фланг r=32) в разы на простое.
+// Фаза берётся из u.id (уникален и стабилен на весь жизненный цикл юнита) — юниты равномерно
+// размазаны по тикам периода, а не все разом "просыпаются" на одном кадре (без пиковой нагрузки).
+// state.tickCount нет (счётчик тиков живёт в engine/Loop.js у самого Loop, не в GameState) —
+// поэтому считаем локально, инкремент раз за вызов updateUnits (= ровно раз за тик симуляции).
+const AI_THINK_PERIOD = 3;
+let aiTick = 0;
 
 // проложить путь к тайлу (tx,ty); если занят — к ближайшему проходимому соседу
 export function setPath(state, u, tx, ty) {
@@ -127,26 +151,18 @@ function inRange(u, target) {
   return dist2(u.x, u.z, target.cx, target.cz) <= (u.def.range + bRadius(target)) ** 2;
 }
 
+// ближайший враждебный юнит в радиусе maxR (та же семантика, что и старый линейный скан:
+// строгое сравнение d<bd, поэтому при точном совпадении дистанций побеждает найденный раньше)
 function nearestEnemyUnit(state, u, maxR) {
-  let best = null, bd = maxR * maxR;
-  for (const e of state.units) {
-    if (e.faction === u.faction || e.hp <= 0) continue;
-    const d = dist2(u.x, u.z, e.x, e.z);
-    if (d < bd) { bd = d; best = e; }
-  }
-  return best;
+  return unitsHash.queryNearest(u.x, u.z, maxR, (e) => e.faction !== u.faction && e.hp > 0);
 }
 
-// ближайшая своя постройка/стена в пределах досягаемости врага
+// ближайшая своя постройка/стена в пределах досягаемости врага. Порог зависит от размера самого
+// здания (bRadius), поэтому границу поиска в хэше берём с запасом (buildingsMaxBR — максимум по
+// всем текущим зданиям), а точный критерий d²<=reach(b) проверяем в фильтре для каждого кандидата.
 function nearestOursBuildingInRange(state, u) {
-  let best = null, bd = Infinity;
-  for (const b of state.buildings) {
-    if (b.hp <= 0) continue;
-    const reach = (u.def.range + bRadius(b)) ** 2;
-    const d = dist2(u.x, u.z, b.cx, b.cz);
-    if (d <= reach && d < bd) { bd = d; best = b; }
-  }
-  return best;
+  const searchR = u.def.range + buildingsMaxBR;
+  return buildingsHash.queryNearest(u.x, u.z, searchR, (b, d2) => b.hp > 0 && d2 <= (u.def.range + bRadius(b)) ** 2);
 }
 
 function faceTarget(u, tx, tz) { u.dir = Math.atan2(tx - u.x, tz - u.z); }
@@ -166,18 +182,23 @@ function attackCamp(state, u, camp, ctx) {
 }
 
 // ---- свои воины: стойки aggro / defend / hold; сносят станы ----
-function updateSoldier(state, u, dt, ctx) {
+// canThink: разрешён ли в этот тик широкий поиск новой цели (троттлится вне боя, см. AI_THINK_PERIOD)
+function updateSoldier(state, u, dt, ctx, canThink) {
   const stance = u.stance || 'aggro';
   const aggroR = stance === 'aggro' ? 9999 : stance === 'defend' ? 22 : 0;
 
-  // 1) враг по стойке
-  const enemy = aggroR > 0 ? nearestEnemyUnit(state, u, aggroR) : null;
-  if (enemy) {
-    if (inRange(u, enemy)) { faceTarget(u, enemy.x, enemy.z); tryAttack(state, u, enemy, ctx); u.path = null; u.moveOrder = null; return; }
-    u.repathT -= dt;
-    if (!u.path || u.pi >= u.path.length || u.repathT <= 0) { const eg = state.grid.worldToGrid(enemy.x, enemy.z); setPath(state, u, eg.x, eg.y); u.repathT = 0.45; }
-    if (moveStep(state, u, dt) === 'noPath') u.repathT = 0.5;
-    return;
+  // 1) враг по стойке — поиск (широкий, вплоть до всей карты на aggro) троттлится вне боя;
+  // если враг уже найден — u._aiActive держит юнит на full rate, пока враг не потерян/не убит
+  if (aggroR > 0 && canThink) {
+    const enemy = nearestEnemyUnit(state, u, aggroR);
+    u._aiActive = !!enemy;
+    if (enemy) {
+      if (inRange(u, enemy)) { faceTarget(u, enemy.x, enemy.z); tryAttack(state, u, enemy, ctx); u.path = null; u.moveOrder = null; return; }
+      u.repathT -= dt;
+      if (!u.path || u.pi >= u.path.length || u.repathT <= 0) { const eg = state.grid.worldToGrid(enemy.x, enemy.z); setPath(state, u, eg.x, eg.y); u.repathT = 0.45; }
+      if (moveStep(state, u, dt) === 'noPath') u.repathT = 0.5;
+      return;
+    }
   }
 
   // 2) приказ снести стан (ПКМ по стану)
@@ -200,10 +221,11 @@ function updateSoldier(state, u, dt, ctx) {
 
   if (stance === 'hold') { u.path = null; return; }
 
-  // 4) оппортунистично сносим близкий стан (агрессия)
-  if (stance === 'aggro') {
+  // 4) оппортунистично сносим близкий стан (агрессия) — тоже троттлится вне боя
+  if (stance === 'aggro' && canThink) {
     const camp = nearestCamp(state, u, 14);
     if (camp) {
+      u._aiActive = true;
       if (campInRange(u, camp)) { faceTarget(u, camp.cx, camp.cz); attackCamp(state, u, camp, ctx); u.path = null; }
       else { u.repathT -= dt; if (!u.path || u.repathT <= 0) { setPathToBuilding(state, u, camp); u.repathT = 0.7; } moveStep(state, u, dt); }
       return;
@@ -221,22 +243,24 @@ function updateSoldier(state, u, dt, ctx) {
 }
 
 function nearestOurUnit(state, u, maxR, workerOnly) {
-  let best = null, bd = maxR * maxR;
-  for (const e of state.units) {
-    if (e.faction !== 'ours' || e.hp <= 0) continue;
-    if (workerOnly && !e.def.worker) continue;
-    const d = dist2(u.x, u.z, e.x, e.z); if (d < bd) { bd = d; best = e; }
-  }
-  return best;
+  return unitsHash.queryNearest(u.x, u.z, maxR, (e) => e.faction === 'ours' && e.hp > 0 && (!workerOnly || e.def.worker));
 }
 
 // ---- враги (архетипы: обычный / ловкач-flank / верзила-siege / шаман-ranged-kite) ----
-function updateEnemy(state, u, dt, ctx) {
+// canThink: разрешён ли в этот тик пересчёт цели/поведения (троттлится, пока враг не в бою вплотную,
+// см. AI_THINK_PERIOD); движение по уже выбранному пути идёт в любом случае, каждый тик
+function updateEnemy(state, u, dt, ctx, canThink) {
+  if (!canThink) {                          // не наш тик решения и не в бою — просто доходим по старому пути
+    u.repathT -= dt;
+    if (u.path) moveStep(state, u, dt);
+    return;
+  }
   const style = u.def.raidStyle;
   // дальнобойный шаман — стреляет издали, кайтит
   if (u.def.ranged) {
     const t = nearestEnemyUnit(state, u, u.def.range) || nearestOursBuildingInRange(state, u);
     if (t) {
+      u._aiActive = true;
       faceTarget(u, t.x ?? t.cx, t.z ?? t.cz);
       if (u.atkT <= 0) { u.atkT = u.def.atkCd; u.atkAnim = 0.2; if (ctx.tracer) ctx.tracer(u, t); }
       const close = nearestEnemyUnit(state, u, 3);
@@ -246,9 +270,10 @@ function updateEnemy(state, u, dt, ctx) {
   }
   // удар в упор
   const tgtUnit = nearestEnemyUnit(state, u, u.def.range + 0.6);
-  if (tgtUnit && inRange(u, tgtUnit)) { faceTarget(u, tgtUnit.x, tgtUnit.z); tryAttack(state, u, tgtUnit, ctx); u.path = null; return; }
+  if (tgtUnit && inRange(u, tgtUnit)) { u._aiActive = true; faceTarget(u, tgtUnit.x, tgtUnit.z); tryAttack(state, u, tgtUnit, ctx); u.path = null; return; }
   const tgtB = nearestOursBuildingInRange(state, u);
-  if (tgtB) { faceTarget(u, tgtB.cx, tgtB.cz); tryAttack(state, u, tgtB, ctx); u.path = null; return; }
+  if (tgtB) { u._aiActive = true; faceTarget(u, tgtB.cx, tgtB.cz); tryAttack(state, u, tgtB, ctx); u.path = null; return; }
+  u._aiActive = false;                      // нет цели в упор — дальше можно троттлить
 
   // марш к цели по стилю
   const obj = state.idol || state.townhall;
@@ -262,6 +287,14 @@ function updateEnemy(state, u, dt, ctx) {
 }
 
 export function updateUnits(state, dt, ctx) {
+  // индекс перестраивается раз за тик (не на каждый запрос) — юниты и здания раздельно, здания
+  // меняются редко, но перестройка на ~100 зданий на порядки дешевле полного скана на каждый запрос
+  unitsHash.rebuild(state.units, getUX, getUZ);
+  buildingsHash.rebuild(state.buildings, getBX, getBZ);
+  buildingsMaxBR = 0.3;
+  for (const b of state.buildings) { const r = bRadius(b); if (r > buildingsMaxBR) buildingsMaxBR = r; }
+  aiTick++;   // ровно раз за тик симуляции — база для распределения ИИ-решений по кадрам
+
   for (const u of state.units) {
     u.px = u.x; u.pz = u.z;
     if (u.atkT > 0) u.atkT -= dt;
@@ -273,9 +306,12 @@ export function updateUnits(state, dt, ctx) {
     }
     if (u.slowT > 0) u.slowT -= dt;                                // ❄ замедление от КРИО-идола
     if (u.stunT > 0) { u.stunT -= dt; u.path = null; continue; }   // оглушение — стоит
-    if (u.faction === 'enemy') updateEnemy(state, u, dt, ctx);
+    // юнит уже в бою (u._aiActive с прошлого тика) — full rate; иначе троттлим по фазе от u.id
+    // (u.id стабилен и уникален на весь жизненный цикл юнита — фазы размазаны без пиковой нагрузки)
+    const canThink = u._aiActive || (u.id + aiTick) % AI_THINK_PERIOD === 0;
+    if (u.faction === 'enemy') updateEnemy(state, u, dt, ctx, canThink);
     else if (u.def.worker) updateWorker(state, u, dt, ctx);
-    else updateSoldier(state, u, dt, ctx);
+    else updateSoldier(state, u, dt, ctx, canThink);
 
     // анти-застревание: нет прогресса при попытке двигаться → репас, потом нудж к свободному тайлу
     const mv = Math.hypot(u.x - u.px, u.z - u.pz);
