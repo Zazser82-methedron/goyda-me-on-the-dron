@@ -4,6 +4,7 @@ import { RANKS } from '../data/ranks.js?v=94';
 import { RES_LABEL } from '../data/config.js?v=94';
 import { EDICTS } from '../sim/Edicts.js?v=94';
 import { TECHS } from '../data/tech.js?v=94';
+import { ERA_NAMES } from '../sim/Eras.js?v=1';
 import { Thumbs } from './Thumbs.js?v=100';
 
 export function costStr(cost) {
@@ -159,7 +160,8 @@ export class BuildMenu {
       if (!card) continue;
       const techLock = d.requiresTech && !(s.research && s.research.done[d.requiresTech]);
       const rankLock = (d.rank || 0) > s.rankIndex;
-      const locked = rankLock || techLock;
+      const eraLock = (d.era || 0) > (s.era || 0);   // постройки эпох II/III (sim/Eras.js) — не кликабельны раньше срока
+      const locked = rankLock || techLock || eraLock;
       // антидребезг доступности: ресурсы скачут у границы цены → меняем подсветку только если держится ≈0.4с
       const afford = s.canAfford(d.cost);
       if (card._affShow === undefined) { card._affShow = afford; card._affCnt = 0; }
@@ -170,7 +172,9 @@ export class BuildMenu {
       card.classList.toggle('active', this.game.buildKind === kind);
       const lockEl = card.querySelector('.bcard-lock');
       if (locked) {
-        lockEl.textContent = rankLock ? '🔒 ранг: ' + RANKS[d.rank].name : '🔒 изучить: ' + ((TECHS[d.requiresTech] && TECHS[d.requiresTech].name) || '');
+        lockEl.textContent = rankLock ? '🔒 ранг: ' + RANKS[d.rank].name
+          : eraLock ? '🔒 эпоха: ' + (ERA_NAMES[d.era] || d.era)
+          : '🔒 изучить: ' + ((TECHS[d.requiresTech] && TECHS[d.requiresTech].name) || '');
         lockEl.style.display = 'flex';
       } else lockEl.style.display = 'none';
     }
@@ -186,7 +190,7 @@ export class BuildMenu {
       for (const kind of (this.catKinds[cat] || [])) {
         const d = BUILDINGS[kind];
         const techLock = d.requiresTech && !(s.research && s.research.done[d.requiresTech]);
-        if (!((d.rank || 0) > s.rankIndex || techLock)) unlocked++;
+        if (!((d.rank || 0) > s.rankIndex || techLock || (d.era || 0) > (s.era || 0))) unlocked++;
       }
       t.classList.toggle('alllocked', unlocked === 0);
       const bk = this.game.buildKind;
