@@ -2,10 +2,10 @@
 import * as THREE from 'three';
 import { Renderer } from './engine/Renderer.js?v=98';
 import * as Quality from './engine/Quality.js?v=94';
-import { RTSCamera } from './engine/RTSCamera.js?v=96';
+import { RTSCamera } from './engine/RTSCamera.js?v=99';
 import { Picker } from './engine/Picker.js?v=94';
 import { Loop } from './engine/Loop.js?v=98';
-import { AssetManager } from './engine/AssetManager.js?v=98';
+import { AssetManager } from './engine/AssetManager.js?v=99';
 import { TerrainMesh } from './world/TerrainMesh.js?v=94';
 import { WorldBase } from './world/WorldBase.js?v=94';
 import { Sky } from './world/Sky.js?v=94';
@@ -55,7 +55,7 @@ const MODELS = [
   'idol_krio', 'idol_giper', 'idol_shipo', 'idol_obereg', 'idol_food', 'idol_gold', 'idol_fonk', 'idol_vera', 'idol_samotsvet',
   // v87: доделаны в Blender — раньше были только процедурные плейсхолдеры
   'unit_bogatyr', 'bld_tower', 'bld_ferma', 'bld_rudnik', 'bld_zhila', 'bld_observatory',
-  'env_waystone', // новый Blender-ассет: четыре лёгких пограничных камня у центра базы
+  'env_waystone', 'env_banner', 'env_watchfire',
 ];
 const ri = (a, b) => Math.floor(a + Math.random() * (b - a + 1));
 
@@ -150,7 +150,7 @@ class Game {
     const G = window.__gboot || function () {};
     try {
       // модели грузятся в фоне — не блокируют запуск (есть плейсхолдеры)
-      this.assets.preload(MODELS).then(c => { this._glb = c; this._installWaystones(); G('models ' + c); }).catch(() => {});
+      this.assets.preload(MODELS).then(c => { this._glb = c; this._installHomeDetails(); G('models ' + c); }).catch(() => {});
       // ПОРТАЛ ДРОНА: прибытие на новую Землю (перенос ресурсов+ранга+дружины) — до обычного сейва
       const portal = (() => { try { return JSON.parse(localStorage.getItem('GOYDA_EMPIRE_PORTAL')); } catch (e) { return null; } })();
       if (portal && portal.mapKey) {
@@ -426,12 +426,14 @@ class Game {
   }
 
   _begin(restored) {
-    this.cameraRig.focus(0, 0);
-    // Старт именно стратегический: вся база и подходы читаются сразу, без тесного
-    // кинематографичного крупного плана. Детали доступны колёсиком.
     const cam = this.cameraRig;
-    cam.radius = 52; cam.polar = 0.72; cam.azimuth = Math.PI * 0.25;
-    cam._radius = 60; cam._polar = 0.64; cam._azimuth = cam.azimuth;
+    // Запись игры показала, что общий план прячет поселение. Стартуем в
+    // командном ракурсе, а весь остров по-прежнему доступен по Home/⌖.
+    const th = this.state.townhall;
+    cam.commanderView(th ? th.cx : 0, th ? th.cz : 0, true);
+    // Модели могут прилететь из кэша до создания ратуши, поэтому ставим
+    // ориентиры ещё раз после инициализации карты.
+    if (this._glb > 0) this._installHomeDetails();
     const f = this.state.faction;
     if (this._arenaReturn) {
       const ret = this._arenaReturn; this._arenaReturn = null;
@@ -489,21 +491,27 @@ class Game {
 
   // Декоративные ориентиры вокруг стартовой ратуши. Это реальные Blender-модели,
   // но без теней и физики: четыре экземпляра почти не влияют на FPS.
-  _installWaystones() {
-    if (!this.state || !this.state.townhall || !this.assets.isGlb.env_waystone) return;
-    if (this._waystones) { this.scene.remove(this._waystones); }
+  _installHomeDetails() {
+    if (!this.state || !this.state.townhall) return;
+    if (this._homeDetails) this.scene.remove(this._homeDetails);
     const th = this.state.townhall, group = new THREE.Group();
-    const offsets = [[-3.1, -3.1], [3.1, -3.1], [-3.1, 3.1], [3.1, 3.1]];
-    offsets.forEach((p, i) => {
-      const stone = this.assets.get('env_waystone');
-      const x = th.cx + p[0], z = th.cz + p[1];
-      stone.position.set(x, this.state.grid.heightAt(x, z), z);
-      stone.rotation.y = i * Math.PI * 0.5 + 0.18;
-      stone.scale.setScalar(0.78);
-      stone.traverse(o => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = false; } });
-      group.add(stone);
-    });
-    group.name = 'dron_waystones'; this.scene.add(group); this._waystones = group;
+    const place = (name, offsets, scale, turn = 0) => {
+      if (!this.assets.isGlb[name]) return;
+      offsets.forEach((p, i) => {
+        const detail = this.assets.get(name);
+        const x = th.cx + p[0], z = th.cz + p[1];
+        detail.position.set(x, this.state.grid.heightAt(x, z), z);
+        detail.rotation.y = turn + i * Math.PI * 0.5;
+        detail.scale.setScalar(scale);
+        detail.traverse(o => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = false; } });
+        group.add(detail);
+      });
+    };
+    place('env_waystone', [[-3.1, -3.1], [3.1, -3.1], [-3.1, 3.1], [3.1, 3.1]], 0.78, 0.18);
+    place('env_banner', [[-5.0, -0.8], [5.0, 0.8]], 0.92, Math.PI * 0.5);
+    place('env_watchfire', [[-2.3, 4.4], [2.3, -4.4]], 0.88, 0.3);
+    if (!group.children.length) return;
+    group.name = 'dron_home_details'; this.scene.add(group); this._homeDetails = group;
   }
 
   initMap(map) {
@@ -589,6 +597,10 @@ class Game {
       else if (e.code === 'Digit1') this._setSpeed(1);
       else if (e.code === 'Digit2') this._setSpeed(2);
       else if (e.code === 'Digit3') this._setSpeed(3);
+      else if (e.code === 'Home') { e.preventDefault(); this._tacticalHome(); }
+      else if (e.code === 'KeyC') this._focusTownhall();
+      else if (e.code === 'KeyI') this._cycleUnit(u => u.def.worker && !u.job && !u.moveOrder && !u.path && u.state !== 'build', 'Свободных холопов нет');
+      else if (e.code === 'Tab') { e.preventDefault(); this._cycleUnit(u => !u.def.worker, 'Воинов пока нет'); }
     });
     document.getElementById('superBtn').onclick = () => this.activateSuper();
     const mb = document.getElementById('muteBtn');
@@ -783,6 +795,32 @@ class Game {
     sfx('click');
     if (this._orderPending) this.toasts.show('🎯 Укажи цель на карте — идти / рубить / охотиться / в атаку', { gold: true });
     this._syncOrderBtn();
+  }
+
+  // Быстрые RTS-команды: не надо искать базу или свободного работника мышью,
+  // когда одновременно идут стройка и набег.
+  _focusTownhall() {
+    const th = this.state.townhall;
+    if (!th) return;
+    this.cameraRig.commanderView(th.cx, th.cz); sfx('click');
+    this.toasts.show('🏰 Камера: Палаты Гойды');
+  }
+
+  _tacticalHome() {
+    const th = this.state.townhall;
+    this.cameraRig.tacticalView(th ? th.cx : 0, th ? th.cz : 0); sfx('click');
+    this.toasts.show('⌖ Тактический обзор');
+  }
+
+  _cycleUnit(predicate, emptyText) {
+    const units = this.state.units.filter(u => u.faction === 'ours' && u.hp > 0 && predicate(u));
+    if (!units.length) { this.toasts.show(emptyText, { bad: true }); return; }
+    const cur = this.state.selected;
+    const idx = units.indexOf(cur);
+    const next = units[(idx + 1) % units.length];
+    this.state.selected = next;
+    this.cameraRig.focus(next.x, next.z); sfx('click');
+    this.float(next.x, next.z, next.def.name || 'В строю', '#ffe8b5', 1.4);
   }
   _syncOrderBtn() {
     const b = this.selUI.el.querySelector('.ord-btn');

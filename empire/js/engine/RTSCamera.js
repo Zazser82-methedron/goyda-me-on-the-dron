@@ -158,4 +158,20 @@ export class RTSCamera {
     this.azimuth = Math.PI * 0.25;
     this.trauma = 0;
   }
+
+  // Основной ракурс поселения: объекты достаточно крупные для управления,
+  // но в кадре остаются подходы к базе. Общий обзор живёт отдельно выше.
+  commanderView(wx = 0, wz = 0, snap = false) {
+    this.focus(wx, wz);
+    this.radius = 38;
+    this.polar = 0.82;
+    this.azimuth = Math.PI * 0.25;
+    this.trauma = 0;
+    if (snap) {
+      this._target.copy(this.target);
+      this._radius = this.radius;
+      this._polar = this.polar;
+      this._azimuth = this.azimuth;
+    }
+  }
 }
