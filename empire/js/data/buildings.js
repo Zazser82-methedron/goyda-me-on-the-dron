@@ -7,50 +7,57 @@ export const BUILDINGS = {
   townhall: {
     kind: 'townhall', name: 'ПАЛАТЫ ГОЙДЫ', icon: '🏰', model: 'bld_townhall',
     w: 3, h: 3, hp: 800, cat: 'core', rank: 0, unique: true, drop: true,
-    cost: {}, build: 0, pop: 5, produce: { faith: 2 },
+    cost: {}, build: 0, pop: 5, produce: { faith: 2 }, wearRate: 0.15,
     trains: ['kholop'],
     desc: 'Сердце державы. Сюда несут добычу, здесь куют ХОЛОПов. Падёт — конец.',
   },
   izba: {
     kind: 'izba', name: 'ИЗБА', icon: '🛖', model: 'bld_izba',
     w: 1, h: 1, hp: 90, cat: 'econ', rank: 0,
-    cost: { wood: 20 }, build: 3, pop: 4, produce: { happy: 1 },
+    cost: { wood: 20 }, build: 3, pop: 4, produce: { happy: 1 }, wearRate: 0.45,
     desc: 'Жильё. +4 к лимиту населения. Без изб народ не плодится.',
+  },
+  izba_plotnika: {
+    kind: 'izba_plotnika', name: 'ИЗБА ПЛОТНИКА', icon: '🪚', model: 'bld_izba',
+    w: 1, h: 1, hp: 90, cat: 'econ', rank: 0, workers: 1,
+    cost: { wood: 30, stone: 10 }, build: 5,
+    carpenter: { radius: 8, targets: 6, upkeep: { wood: 3, stone: 1 }, repair: 4 },
+    desc: 'Содержит шесть ближайших построек в радиусе 8 клеток: +4 износа самой изношенной в день.',
   },
   ambar: {
     kind: 'ambar', name: 'АМБАР', icon: '🌾', model: 'bld_ambar',
     w: 2, h: 2, hp: 160, cat: 'econ', rank: 0, drop: true,
-    cost: { wood: 30, stone: 10 }, build: 5, produce: { food: 7 },
+    cost: { wood: 30, stone: 10 }, build: 5, produce: { food: 7 }, wearRate: 0.35,
     desc: 'Делянка и закрома. +7 ЕДЫ в день. Голод роняет счастье.',
   },
   roshcha: {
     kind: 'roshcha', name: 'ЛЕСОПОСАДКА', icon: '🌱', model: 'bld_roshcha',
     w: 2, h: 2, hp: 140, cat: 'econ', rank: 0,
-    cost: { wood: 25, stone: 10 }, build: 5,
+    cost: { wood: 25, stone: 10 }, build: 5, wearRate: 0.20,
     desc: 'Сажает деревья вокруг — лес восстанавливается, ДЕРЕВО не кончится.',
   },
   kuznica: {
     kind: 'kuznica', name: 'КУЗНИЦА', icon: '⚒️', model: 'bld_kuznica',
     w: 1, h: 1, hp: 140, cat: 'mil', rank: 1,
-    cost: { wood: 25, stone: 25 }, build: 5, produce: { gold: 2 },
+    cost: { wood: 25, stone: 25 }, build: 5, produce: { gold: 2 }, wearRate: 0.60,
     desc: 'Куёт оружие. Нужна для ОПРИЧНИКОВ. +2 золота в день.',
   },
   kazarma: {
     kind: 'kazarma', name: 'КАЗАРМА', icon: '⚔️', model: 'bld_kazarma',
     w: 2, h: 2, hp: 260, cat: 'mil', rank: 1,
-    cost: { wood: 40, stone: 30 }, build: 7, trains: ['ratnik', 'luchnik', 'oprichnik', 'bogatyr', 'voevoda'],
+    cost: { wood: 40, stone: 30 }, build: 7, trains: ['ratnik', 'luchnik', 'oprichnik', 'bogatyr', 'voevoda'], wearRate: 0.45,
     desc: 'Куёт воинов: РАТНИКИ, ОПРИЧНИКИ (с кузницей) и БОГАТЫРИ (на железе).',
   },
   chastokol: {
     kind: 'chastokol', name: 'ЧАСТОКОЛ', icon: '🪵', model: 'bld_chastokol',
     w: 1, h: 1, hp: 220, cat: 'def', rank: 1, wall: true,
-    cost: { wood: 6 }, build: 1,
+    cost: { wood: 6 }, build: 1, wearRate: 0.70,
     desc: 'Стена. Блокирует набег. Ставь линией ПКМ-таскать перед волной.',
   },
   gate: {
     kind: 'gate', name: 'ВОРОТА', icon: '🚪', model: 'bld_chastokol_gate',
     w: 1, h: 1, hp: 180, cat: 'def', rank: 1, wall: true, walkable: true,
-    cost: { wood: 10 }, build: 1,
+    cost: { wood: 10 }, build: 1, wearRate: 0.80,
     desc: 'Проходимый участок стены для своих.',
   },
   road: {
@@ -80,13 +87,13 @@ export const BUILDINGS = {
   church: {
     kind: 'church', name: 'КУМИРНЯ ДРОНА', icon: '☩', model: 'bld_church',
     w: 2, h: 2, hp: 200, cat: 'faith', rank: 2,
-    cost: { wood: 30, stone: 20 }, build: 6, produce: { faith: 5, happy: 2 },
+    cost: { wood: 30, stone: 20 }, build: 6, produce: { faith: 5, happy: 2 }, wearRate: 0.25,
     desc: 'Капище идола. +5 ВЕРЫ и +счастье в день. ВЕРА открывает ранги.',
   },
   market: {
     kind: 'market', name: 'ТОРГ', icon: '🪙', model: 'bld_market',
     w: 2, h: 2, hp: 200, cat: 'econ', rank: 2, drop: true,
-    cost: { wood: 40, stone: 20, gold: 10 }, build: 6, produce: { gold: 5, happy: 1 },
+    cost: { wood: 40, stone: 20, gold: 10 }, build: 6, produce: { gold: 5, happy: 1 }, wearRate: 0.40,
     desc: 'Торговые ряды. +5 золота в день и точка сдачи.',
   },
   traktir: {
@@ -110,32 +117,32 @@ export const BUILDINGS = {
   observatory: {
     kind: 'observatory', name: 'ОБСЕРВАТОРИЯ', icon: '🔭', model: 'bld_observatory',
     w: 2, h: 2, hp: 240, cat: 'faith', rank: 2,
-    cost: { wood: 50, stone: 60, gold: 40, gems: 5 }, build: 8, produce: { faith: 5, happy: 1 },
+    cost: { wood: 50, stone: 60, gold: 40, gems: 5 }, build: 8, produce: { faith: 5, happy: 1 }, wearRate: 0.30,
     desc: 'Открывает ВЫСШИЕ исследования 🔬 (СЕЧА/ЗАКАЛ/ФОРТИФИКАЦИЯ) и +5 ВЕРЫ в день.',
   },
   tower: {
     kind: 'tower', name: 'СТОРОЖЕВАЯ БАШНЯ', icon: '🗼', model: 'bld_tower',
     w: 1, h: 1, hp: 340, cat: 'def', rank: 2, requiresTech: 'fortifikaciya',
     cost: { wood: 40, stone: 60, iron: 10 }, build: 6,
-    aura: { radius: 7, tick: 1.0, effect: 'aoe', power: 14 },
+    aura: { radius: 7, tick: 1.0, effect: 'aoe', power: 14 }, wearRate: 0.55,
     desc: 'Бьёт врагов в радиусе. Нужна технология ФОРТИФИКАЦИЯ (через обсерваторию).',
   },
   ferma: {
     kind: 'ferma', name: 'ФЕРМА', icon: '🌻', model: 'bld_ferma',
     w: 2, h: 2, hp: 150, cat: 'econ', rank: 0,
-    cost: { wood: 25 }, build: 4, produce: { food: 10, happy: 1 },
+    cost: { wood: 25 }, build: 4, produce: { food: 10, happy: 1 }, wearRate: 0.50,
     desc: 'Поля и грядки. +10 ЕДЫ в день — кормит растущий народ.',
   },
   rudnik: {
     kind: 'rudnik', name: 'РУДНИК', icon: '⛏️', model: 'bld_rudnik',
     w: 2, h: 2, hp: 220, cat: 'econ', rank: 1,
-    cost: { wood: 30, stone: 25 }, build: 6, produce: { iron: 4 },
+    cost: { wood: 30, stone: 25 }, build: 6, produce: { iron: 4 }, wearRate: 0.75,
     desc: 'Добывает ЖЕЛЕЗО ⛓️ — нужно для БОГАТЫРЕЙ и тяжёлой брони.',
   },
   zhila: {
     kind: 'zhila', name: 'САМОЦВЕТНАЯ ЖИЛА', icon: '💎', model: 'bld_zhila',
     w: 2, h: 2, hp: 240, cat: 'econ', rank: 2,
-    cost: { wood: 30, stone: 40, gold: 20 }, build: 7, produce: { gems: 2 },
+    cost: { wood: 30, stone: 40, gold: 20 }, build: 7, produce: { gems: 2 }, wearRate: 0.65,
     desc: 'Гранит самоцветы 💎 — топливо для мощных идолов и чуда.',
   },
   idol: {
@@ -204,7 +211,7 @@ export const BUILDINGS = {
 };
 
 // порядок в меню постройки
-export const BUILD_ORDER = ['izba', 'banya', 'ambar', 'ferma', 'roshcha', 'rudnik', 'zhila', 'kuznica', 'kazarma', 'chastokol', 'gate', 'road', 'bridge', 'rail', 'station', 'tower', 'church', 'observatory', 'veche', 'market', 'traktir',
+export const BUILD_ORDER = ['izba', 'izba_plotnika', 'banya', 'ambar', 'ferma', 'roshcha', 'rudnik', 'zhila', 'kuznica', 'kazarma', 'chastokol', 'gate', 'road', 'bridge', 'rail', 'station', 'tower', 'church', 'observatory', 'veche', 'market', 'traktir',
   'rel_shipo', 'rel_krio', 'rel_obereg', 'rel_giper', 'rel_goydushka', 'rel_zlato', 'rel_fonk', 'rel_vera', 'rel_samotsvet', 'idol'];
 
 export const CATS = {

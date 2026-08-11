@@ -1,12 +1,14 @@
 // ===== Экономика: производство/расход в день, счастье, ВЕРА, таймеры =====
 import { SIM_DT, DAY_TICKS } from '../data/config.js?v=94';
 import { edictMods } from './Edicts.js?v=94';
+import * as Wear from './Wear.js?v=1';
 
 const DAY_SECONDS = DAY_TICKS * SIM_DT;   // 8 сек
 const FOOD_PER_POP = 1;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 export function update(state, dt, ctx) {
+  Wear.update(state, dt, ctx);
   // покадровые таймеры
   state.superTimer = Math.max(0, state.superTimer - dt);
   state.krioTimer = Math.max(0, state.krioTimer - dt);
@@ -17,12 +19,13 @@ export function update(state, dt, ctx) {
 }
 
 function onDay(state, ctx) {
-  const built = state.buildings.filter(b => b.built);
+  const built = state.buildings.filter(b => b.built && !b.ruined);
   // суммируем производство по всем ресурсным ключам (включая железо/самоцветы)
   const prod = { food: 0, wood: 0, stone: 0, iron: 0, gold: 0, gems: 0, faith: 0 };
   let happyMod = 0;
   for (const b of built) {
     const p = b.def.produce; if (!p) continue;
+    const mul = Wear.productionMul(b); if (!mul) continue;
     // Stagger the visible production beat so a large settlement feels alive
     // instead of every workshop pulsing on exactly the same frame.
     const visibleKey = Object.keys(p).find(k => k !== 'happy' && p[k] > 0);
@@ -32,7 +35,7 @@ function onDay(state, ctx) {
       b._prodAnim = 1;
       b._prodBurst = false;
     }
-    for (const k in p) { if (k === 'happy') happyMod += p.happy; else if (prod[k] !== undefined) prod[k] += p[k]; }
+    for (const k in p) { if (k === 'happy') happyMod += p.happy * mul; else if (prod[k] !== undefined) prod[k] += p[k] * mul; }
   }
   const em = edictMods(state);
   prod.food += em.food; prod.gold += em.gold; prod.faith += em.faith; happyMod += em.happy;
@@ -75,7 +78,7 @@ function onDay(state, ctx) {
   target += Math.min(18, state.resources.faith * 0.08);
   target += Math.min(14, (state.popCap - state.population) * 2);
   // удобства: церковь/рынок радуют народ (Тропико-слой нужд)
-  const amen = state.buildings.reduce((n, b) => n + (b.built && (b.kind === 'church' || b.kind === 'market') ? 1 : 0), 0);
+  const amen = state.buildings.reduce((n, b) => n + (b.built && !b.ruined && (b.kind === 'church' || b.kind === 'market') ? 1 : 0), 0);
   target += Math.min(12, amen * 3);
   target += happyMod;
   if (state.threatTimer > 0) target -= 10;

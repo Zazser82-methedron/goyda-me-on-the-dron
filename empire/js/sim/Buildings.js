@@ -1,10 +1,11 @@
 // ===== Постройка, стройка-прогресс и тренировка юнитов =====
-import { BUILDINGS } from '../data/buildings.js?v=94';
+import { BUILDINGS } from '../data/buildings.js?v=95';
 import { UNITS } from '../data/units.js?v=94';
 import { RANKS } from '../data/ranks.js?v=94';
 import { nearestAdj } from '../world/Pathfinding.js?v=94';
 import { bark } from '../data/barks.js?v=94';
 import { edictMods } from './Edicts.js?v=94';
+import { apply as applyWear, repairQuote, ruinQuote } from './Wear.js?v=1';
 
 function trainTime(state, kind) {
   const base = UNITS[kind].trainTime;
@@ -22,6 +23,7 @@ function spawnTrained(state, b, kind, ctx) {
 }
 
 export function update(state, dt, ctx) {
+  updateRepairs(state, dt, ctx);
   // пересчёт строителей на площадках (каждый тик со свежих данных — без дрейфа счётчиков)
   let anySite = false;
   for (const b of state.buildings) { if (!b.built) { anySite = true; b._builderN = 0; b._activeBuilders = 0; } }
@@ -37,7 +39,7 @@ export function update(state, dt, ctx) {
   for (const b of state.buildings) {
     if (!b.built) {
       // СТРОИТЕЛИ ОБЯЗАТЕЛЬНЫ: без них стройка еле капает; 1/2/3 строителя = ×1.15/×1.85/×2.45
-      const n = b._activeBuilders || 0;
+      const n = Math.min(b._activeBuilders || 0, b.def.workers || 3);
       const rate = n <= 0 ? 0.15 : (n === 1 ? 1.15 : n === 2 ? 1.85 : 2.45);
       b.buildLeft -= dt * rate;
       const frac = Math.max(0, Math.min(1, 1 - b.buildLeft / (b.def.build || 1)));
@@ -62,6 +64,7 @@ export function update(state, dt, ctx) {
       }
       continue;
     }
+    if (b.ruined) continue;
     if (b.trainQueue.length) {
       b.trainLeft -= dt;
       if (b.trainLeft <= 0) {
@@ -71,6 +74,42 @@ export function update(state, dt, ctx) {
       }
     }
   }
+}
+
+function updateRepairs(state, dt, ctx) {
+  for (const b of state.buildings) {
+    if (!b.repairLeft) continue;
+    const worker = state.byId(b.repairWorkerId);
+    if (!worker || !worker.def.worker) continue;
+    const delta = Math.min(dt, b.repairLeft);
+    b.repairLeft -= delta;
+    b.wear = Math.min(100, b.wear + b._repairRate * delta);
+    applyWear(state, b);
+    if (b.repairLeft > 0) continue;
+    b.wear = 100; b.ruined = false;
+    applyWear(state, b);
+    worker.repairSite = null;
+    b.repairWorkerId = null; b._repairRate = 0;
+    state.recomputePop();
+    ctx.toast && ctx.toast((b._wearBaseDef.icon || '🪚') + ' ' + b._wearBaseDef.name + ' восстановлена');
+  }
+}
+
+export function startRepair(state, b, ctx) {
+  if (!b || !b.built || b.repairLeft) return { ok: false, reason: 'ремонт недоступен' };
+  applyWear(state, b);
+  if (b.wear >= 100) return { ok: false, reason: 'износ не требуется' };
+  const worker = state.workers().find(u => !u.buildSite && !u.repairSite);
+  if (!worker) return { ok: false, reason: 'нужен свободный рабочий' };
+  const quote = b.ruined ? ruinQuote(b) : repairQuote(b);
+  if (!state.canAfford(quote.cost)) return { ok: false, reason: 'мало ресурсов', quote };
+  state.spend(quote.cost);
+  worker.repairSite = b.id;
+  b.repairWorkerId = worker.id;
+  b.repairLeft = quote.time;
+  b._repairRate = quote.time ? quote.wear / quote.time : quote.wear;
+  if (!quote.time) { b.repairLeft = Number.EPSILON; }
+  return { ok: true, quote };
 }
 
 export function placeBuilding(state, kind, gx, gy, ctx, opts = {}) {
@@ -83,6 +122,8 @@ export function placeBuilding(state, kind, gx, gy, ctx, opts = {}) {
   if (!state.canAfford(def.cost)) return { ok: false, reason: 'мало ресурсов' };
   state.spend(def.cost);
   const b = state.addBuilding(kind, gx, gy, { built: (def.build || 0) <= 0, rotation: opts.rotation || 0 });
+  b.wear = 100; b.upgrade = null; b.districtId = null; b.disabled = false;
+  applyWear(state, b);
   if (b.built) state.recomputePop();
   ctx.sfx && ctx.sfx('place');
   if (def.wonder) {
