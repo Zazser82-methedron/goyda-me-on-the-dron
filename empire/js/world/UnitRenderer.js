@@ -197,6 +197,14 @@ export class UnitRenderer {
         sub.inst.count = g.count;
         sub.inst.instanceMatrix.needsUpdate = true;
         sub.inst.instanceColor.needsUpdate = true;
+        // У InstancedMesh своя АГРЕГИРОВАННАЯ boundingSphere (по всем инстансам разом) — отдельная от
+        // geometry.boundingSphere. Считается лениво один раз при первом обращении и с тех пор НЕ обновляется
+        // сама, хотя instanceMatrix двигается каждый кадр. THREE.InstancedMesh.raycast() грубо отсеивает луч
+        // именно по ней ДО проверки отдельных инстансов — со протухшей (нулевой на старте) сферой почти любой
+        // клик отсеивается ещё до реальной проверки. frustumCulled=false здесь не помогает — это про рендер,
+        // raycast — отдельный путь. Юниты двигаются каждый кадр → пересчитываем каждый кадр, это и есть
+        // реальная причина «нельзя выбрать юнита кликом».
+        sub.inst.computeBoundingSphere();
       }
       g.phaseAttr.needsUpdate = true;
       g.walkAttr.needsUpdate = true;

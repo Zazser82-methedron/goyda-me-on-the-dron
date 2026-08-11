@@ -1,6 +1,16 @@
 // ===== Верхняя панель: ресурсы, ранг, Базометр-ВЕРА, население, счастье, день =====
 import { RES, RES_LABEL } from '../data/config.js?v=94';
 import { RANKS } from '../data/ranks.js?v=94';
+import { RAID_FORMATS } from '../sim/RaidFormats.js?v=96';
+
+// краткая подсказка «что теряешь» по формату грядущего набега — статична, цель (для диверсии)
+// приходит из state.raidWarning.targetName (там она зависит от реального состояния построек).
+const RAID_HINTS = {
+  siege: 'лагерь давит аурой страха — падает счастье, пока жив',
+  tribute: 'откупись или получишь удвоенный штурм',
+  sabotage: 'идут поджигать конкретную постройку',
+  loot: 'под угрозой открытые склады — унесут еду и золото',
+};
 
 export class HUD {
   constructor(game) {
@@ -38,7 +48,18 @@ export class HUD {
     if (this.waveEl) {
       const tw = Math.max(0, Math.ceil(s.nextWaveIn || 0));
       const danger = s.threatTimer > 0;
-      this.waveEl.innerHTML = danger ? `<span class="threat">🚨 НАБЕГ</span>` : `🏹 волна ч/з ${tw}с`;
+      const warn = s.raidWarning;
+      if (danger) {
+        this.waveEl.innerHTML = `<span class="threat">🚨 НАБЕГ</span>`;
+      } else if (warn) {
+        // три ступени (см. Waves.js: updateRaidWarning) — нарастающая срочность через CSS-класс stageN
+        const fmt = RAID_FORMATS[warn.format] || { icon: '⚔️', name: 'НАБЕГ' };
+        const target = warn.targetName ? ' «' + warn.targetName + '»' : '';
+        const hint = RAID_HINTS[warn.format] || '';
+        this.waveEl.innerHTML = `<span class="raid-warn stage${warn.stage}">${fmt.icon} ${fmt.name}${target} · ч/з ${tw}с<i>${hint}</i></span>`;
+      } else {
+        this.waveEl.innerHTML = `🏹 волна ч/з ${tw}с`;
+      }
     }
 
     const ready = s.resources.faith >= 40 && s.superTimer <= 0;

@@ -43,7 +43,7 @@ export function update(state, dt, ctx) {
   // Набеги начинаются ТОЛЬКО когда игроку есть чем обороняться:
   // построена казарма, ИЛИ достигнут РАТНИК, ИЛИ уже есть воины.
   const canDefend = state.hasBuilt('kazarma') || state.rankIndex >= 1 || state.soldiers().length > 0;
-  if (!canDefend) { state.nextWaveIn = undefined; return; }
+  if (!canDefend) { state.nextWaveIn = undefined; resetRaidWarning(state); state._pendingFormat = null; return; }
 
   if (state.nextWaveIn === undefined) {
     state.nextWaveIn = 28;   // мирная фора после готовности к обороне
@@ -51,19 +51,55 @@ export function update(state, dt, ctx) {
   }
 
   state.nextWaveIn -= dt;
-  if (!state._warned && state.nextWaveIn <= 6 && state.nextWaveIn > 0) {
-    state._warned = true; state.threatTimer = 6;
+  updateRaidWarning(state, ctx);
+  // финальный отсчёт 6с — отдельно от ступеней ниже: включает боевую тревогу (музыка/аура/текст воинов).
+  if (!state._warned6 && state.nextWaveIn <= 6 && state.nextWaveIn > 0) {
+    state._warned6 = true; state.threatTimer = 6;
     ctx.sfx && ctx.sfx('raid');
-    ctx.toast && ctx.toast('⚠️ НАБЕГ через ' + Math.ceil(state.nextWaveIn) + 'с! К стенам!', { bad: true });
   }
   if (state.nextWaveIn <= 0) {
     // Не накладываем форматы друг на друга: осада/дань должны успеть закончиться.
     if (state._activeRaid || !spawnWave(state, ctx)) { state.nextWaveIn = 12; return; }
     state.waveNum = (state.waveNum || 0) + 1;
-    state._warned = false;
+    state._warned6 = false;
+    resetRaidWarning(state);
     // волны реже и плавнее — игра дольше и спокойнее
     state.nextWaveIn = Math.max(38, 85 - state.rankIndex * 3 - state.waveNum * 0.3) * diff(state).interval;
   }
+}
+
+// ===== Многоступенчатое предупреждение о наборе (было: один флаг _warned за 6с) =====
+// Три отметки на долях базовой отметки: 90с, если реально есть столько времени, иначе
+// пропорционально сжатые под текущий интервал (см. Math.min ниже) — не предупреждаем
+// раньше, чем есть время до набега, и не спамим повторно (стадии считаются один раз каждая).
+const WARN_STAGE_FRACS = [1, 2 / 3, 1 / 3]; // ~90/60/30с при полном интервале
+const WARN_ICONS = ['⚠️', '🔥', '🚨'];
+
+function raidWarnTargetName(state, format) {
+  if (format !== 'sabotage') return null;
+  const b = productiveBuilding(state);
+  return b && b !== state.townhall ? b.def.name : null;
+}
+
+function updateRaidWarning(state, ctx) {
+  const stage = state._warnStage || 0;
+  if (stage >= 3) return;
+  if (state._warnStart === undefined) state._warnStart = state.nextWaveIn;
+  const base = Math.min(90, state._warnStart);
+  if (state.nextWaveIn > base * WARN_STAGE_FRACS[stage]) return;
+  // выбираем формат набега заранее (не в момент спавна), чтобы было что показать игроку —
+  // дальше он же используется в spawnWave, а не перевыбирается.
+  if (!state._pendingFormat) state._pendingFormat = pickRaidFormat(state);
+  const format = state._pendingFormat, label = RAID_FORMATS[format];
+  state._warnStage = stage + 1;
+  state.raidWarning = { stage: state._warnStage, format, targetName: raidWarnTargetName(state, format) };
+  ctx.sfx && ctx.sfx('raid');
+  const tail = state._warnStage === 3 ? ' К стенам!' : '';
+  ctx.toast && ctx.toast(WARN_ICONS[stage] + ' ' + label.icon + ' ' + label.name + ' через ' + Math.ceil(state.nextWaveIn) + 'с!' + tail, { bad: true });
+}
+
+function resetRaidWarning(state) {
+  state._warnStage = 0; state._warnStart = undefined; state.raidWarning = null;
 }
 
 // Эпох в GameState ещё нет: +5 за переход оставлен для будущего хука, но не начисляется.
@@ -109,10 +145,13 @@ function edgePoints(state, count) {
 
 function spawnWave(state, ctx) {
   if (state.enemies().length >= MAX_ENEMIES) return false;
-  const format = pickRaidFormat(state);
+  // формат уже мог быть выбран заранее на предупреждении (см. updateRaidWarning) — используем
+  // его же, чтобы не разойтись с тем, что показали игроку в HUD/тостах.
+  const format = state._pendingFormat || pickRaidFormat(state);
   const budget = Math.max(0, state._raidBudget || 0);
   const made = composeRaid(format, budget, state.rankIndex, depthMul(state).count, Object.keys(BOSSES));
   if (!made.plan.length) return false;
+  state._pendingFormat = null; // потрачен успешным спавном
   state._raidBudget = Math.max(0, budget - made.spent);
   const hf = hostileFor(state);
   const raid = { format, plan: made.plan, hf, ids: [], t: 0, phase: 'approach', entry: edgePoints(state, 1)[0] };
