@@ -16,7 +16,7 @@ import { BuildingActivity } from './world/BuildingActivity.js?v=102';
 import { nearestAdj } from './world/Pathfinding.js?v=94';
 import { UnitRenderer } from './world/UnitRenderer.js?v=96';
 import { GameState } from './sim/GameState.js?v=106';
-import * as Economy from './sim/Economy.js?v=105';
+import * as Economy from './sim/Economy.js?v=106';
 import * as BuildSys from './sim/Buildings.js?v=105';
 import * as Waves from './sim/Waves.js?v=97';
 import * as Tech from './sim/Tech.js?v=94';
@@ -39,7 +39,7 @@ import { Minimap } from './ui/Minimap.js?v=94';
 import { ResearchPanel } from './ui/Research.js?v=94';
 import { Toasts } from './ui/Toasts.js?v=94';
 import { Leaderboard } from './ui/Leaderboard.js?v=94';
-import { BUILDINGS } from './data/buildings.js?v=98';
+import { BUILDINGS } from './data/buildings.js?v=99';
 import { RANKS } from './data/ranks.js?v=94';
 import { bark } from './data/barks.js?v=94';
 import { STORAGE_KEY } from './data/config.js?v=94';
@@ -47,7 +47,7 @@ import { getFaction } from './data/factions.js?v=94';
 import { getMap, MAPS } from './data/maps.js?v=94';
 import { StartScreen } from './ui/StartScreen.js?v=102';
 import * as Transport from './sim/Transport.js?v=103';
-import * as Railroad from './sim/Railroad.js?v=103';
+import * as Railroad from './sim/Railroad.js?v=104';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',

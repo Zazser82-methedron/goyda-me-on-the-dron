@@ -191,8 +191,8 @@ export const BUILDINGS = {
     kind: 'prikaz_sbora', name: 'ПРИКАЗ СБОРА', icon: '📋', model: 'bld_market',
     w: 2, h: 2, hp: 190, cat: 'econ', era: 1,
     roadPort: { dx: 1, dy: 2 },
-    cost: { wood: 45, stone: 25, gold: 15 }, build: 6, produce: { gold: 6 }, wearRate: 0.40,
-    desc: 'Приказная изба уездной державы — собирает подати. +6 золота в день.',
+    cost: { wood: 45, stone: 25, gold: 15 }, build: 6, produce: {}, wearRate: 0.40,
+    desc: 'Приказная изба уездной державы — собирает подати с населения.',
   },
   zastava_ostrog: {
     kind: 'zastava_ostrog', name: 'ОСТРОЖНАЯ ЗАСТАВА', icon: '🏯', model: 'bld_tower',
@@ -228,8 +228,8 @@ export const BUILDINGS = {
     kind: 'sklad_putevoy', name: 'ПУТЕВОЙ ПАКГАУЗ', icon: '📦', model: 'bld_ambar',
     w: 2, h: 2, hp: 200, cat: 'econ', era: 2,
     roadPort: { dx: 1, dy: 2 },
-    cost: { wood: 55, stone: 35, iron: 15 }, build: 7, produce: { gold: 4 }, wearRate: 0.35,
-    desc: 'Складской двор у путей — копит и сбывает грузы паровозов. +4 золота в день.',
+    cost: { wood: 55, stone: 35, iron: 15 }, build: 7, produce: {}, wearRate: 0.35,
+    desc: 'Складской двор у путей — копит выручку от излишков для паровозов.',
   },
 
   idol: {

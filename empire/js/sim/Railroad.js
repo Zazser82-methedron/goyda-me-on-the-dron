@@ -1,7 +1,9 @@
 // ===== Железная дорога: паровоз с вагонами курсирует между двумя связанными СТАНЦИЯМИ =====
 // Граф — BFS по тайлам t.rail. Поезд (локомотив + 2 вагона) ездит туда-обратно, стоит ~6с на
-// станциях, за каждый рейс приносит фиксированную выручку до грузового цикла P1. Дым из трубы, гудок, чух-чух.
+// станциях, выгружая выручку соседнего путевого пакгауза или базовую выручку. Дым из трубы, гудок, чух-чух.
 // Пока 1 поезд на карту (первая связанная пара станций); путь перепроверяется на каждой конечной.
+
+const TRAIN_CAPACITY = 60;
 
 function adjRailTiles(state, b) {
   if (b.railPortTile) {
@@ -92,8 +94,11 @@ function despawnTrain(state, ctx, msg) {
 }
 
 function arrive(state, tr, stationB, atEnd, ctx) {
-  // TODO P1: полноценный грузовой цикл для рельс.
-  const reward = 20;
+  const depot = state.buildings.find(b => b.built && !b.ruined && b.kind === 'sklad_putevoy'
+    && Math.hypot(b.cx - stationB.cx, b.cz - stationB.cz) <= 6);
+  const cargo = depot ? Math.min(depot._pendingCargo || 0, TRAIN_CAPACITY) : 0;
+  if (cargo > 0) depot._pendingCargo -= cargo;
+  const reward = cargo > 0 ? cargo : 20;
   state.gain({ gold: reward });
   ctx.float && ctx.float(stationB.cx, stationB.cz, '🚂 +' + reward + '🪙', '#ffd700');
   ctx.sfx && ctx.sfx('deposit');

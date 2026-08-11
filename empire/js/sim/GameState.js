@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=94';
 import { Grid } from '../world/Grid.js?v=94';
 import { NodeField } from '../world/NodeField.js?v=101';
-import { BUILDINGS } from '../data/buildings.js?v=98';
+import { BUILDINGS } from '../data/buildings.js?v=99';
 import { UNITS } from '../data/units.js?v=94';
 import { RANKS } from '../data/ranks.js?v=94';
 import { buildScaffold } from '../engine/Placeholders.js?v=94';

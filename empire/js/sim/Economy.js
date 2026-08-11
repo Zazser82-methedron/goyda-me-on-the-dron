@@ -51,6 +51,15 @@ function onDay(state, ctx) {
   const am = AntiSpiral.productionMods(state);
   prod.food += am.food; happyMod += am.happy;
 
+  // ПРИКАЗ СБОРА: административная подать зависит от населения, а не от торговли.
+  // Несколько приказов делят население поровну, чтобы не облагать каждого жителя дважды.
+  const prikazy = built.filter(b => b.kind === 'prikaz_sbora');
+  if (prikazy.length) {
+    const populationShare = state.population / prikazy.length;
+    const tributePerPrikaz = Math.round(clamp(populationShare * 0.4, 3, 25));
+    prod.gold += tributePerPrikaz * prikazy.length;
+  }
+
   const R = state.research;   // бонусы исследований в день
   if (R) { prod.food += R.foodDay; prod.gold += R.goldDay; prod.faith += R.faithDay; }
 
@@ -69,7 +78,7 @@ function onDay(state, ctx) {
   if (state.resources.food < 0) { starve = true; state.resources.food = 0; }
 
   // РЫНОК: торговля излишками — что копится сверх 85% склада, продаём за золото (экономический смысл рынка)
-  const markets = built.filter(b => b.kind === 'market' || b.kind === 'traktir');
+  const markets = built.filter(b => b.kind === 'market' || b.kind === 'traktir' || b.kind === 'sklad_putevoy');
   if (markets.length > 0) {
     const rate = { wood: 0.25, stone: 0.3, iron: 0.6, gems: 1.2 };
     let earned = 0;
