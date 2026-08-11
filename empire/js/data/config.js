@@ -13,6 +13,8 @@ export const PAL = {
   sky:        0x8fa8c8,   // верх неба (CSS-градиент/фон)
   skyLow:     0xd8b888,   // низ неба у горизонта (тёплый закат)
   fog:        0x7d7390,   // туман уходит в светлый сумрак, не в черноту
+  water:      0x2a5874,
+  waterDeep:  0x163e5c,
   crimson:    0xe0392b,
   crimsonDk:  0x7a1a12,
   stone:      0x6a6052,

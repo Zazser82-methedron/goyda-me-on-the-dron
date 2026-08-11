@@ -23,6 +23,15 @@ function onDay(state, ctx) {
   let happyMod = 0;
   for (const b of built) {
     const p = b.def.produce; if (!p) continue;
+    // Stagger the visible production beat so a large settlement feels alive
+    // instead of every workshop pulsing on exactly the same frame.
+    const visibleKey = Object.keys(p).find(k => k !== 'happy' && p[k] > 0);
+    if (visibleKey) {
+      b._prodKey = visibleKey;
+      b._prodDelay = Math.random() * 0.7;
+      b._prodAnim = 1;
+      b._prodBurst = false;
+    }
     for (const k in p) { if (k === 'happy') happyMod += p.happy; else if (prod[k] !== undefined) prod[k] += p[k]; }
   }
   const em = edictMods(state);

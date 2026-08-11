@@ -6,15 +6,16 @@ import { RTSCamera } from './engine/RTSCamera.js?v=99';
 import { Picker } from './engine/Picker.js?v=94';
 import { Loop } from './engine/Loop.js?v=98';
 import { AssetManager } from './engine/AssetManager.js?v=99';
-import { TerrainMesh } from './world/TerrainMesh.js?v=94';
-import { WorldBase } from './world/WorldBase.js?v=101';
+import { TerrainMesh } from './world/TerrainMesh.js?v=102';
+import { WorldBase } from './world/WorldBase.js?v=102';
 import { Sky } from './world/Sky.js?v=94';
 import { Atmosphere } from './world/Atmosphere.js?v=94';
+import { BuildingActivity } from './world/BuildingActivity.js?v=102';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
 import { nearestAdj } from './world/Pathfinding.js?v=94';
 import { GameState } from './sim/GameState.js?v=101';
-import * as Economy from './sim/Economy.js?v=94';
-import * as BuildSys from './sim/Buildings.js?v=94';
+import * as Economy from './sim/Economy.js?v=102';
+import * as BuildSys from './sim/Buildings.js?v=102';
 import * as Waves from './sim/Waves.js?v=94';
 import * as Tech from './sim/Tech.js?v=94';
 import * as Nature from './sim/Nature.js?v=94';
@@ -42,9 +43,9 @@ import { bark } from './data/barks.js?v=94';
 import { STORAGE_KEY } from './data/config.js?v=94';
 import { getFaction } from './data/factions.js?v=94';
 import { getMap, MAPS } from './data/maps.js?v=94';
-import { StartScreen } from './ui/StartScreen.js?v=94';
-import * as Transport from './sim/Transport.js?v=94';
-import * as Railroad from './sim/Railroad.js?v=94';
+import { StartScreen } from './ui/StartScreen.js?v=102';
+import * as Transport from './sim/Transport.js?v=102';
+import * as Railroad from './sim/Railroad.js?v=102';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -79,6 +80,7 @@ class Game {
     this.picker = new Picker(this.canvas);
     this.assets = new AssetManager();
     this.state = new GameState(this.scene, this.assets);
+    this.buildingActivity = new BuildingActivity(this.rdr.tier);
     this.terrain = null;   // строится при выборе карты (buildWorld)
 
     this.toasts = new Toasts(document.getElementById('toasts'));
@@ -107,6 +109,7 @@ class Game {
     this._hitStop = 0;          // таймер hit-pause (сек реального времени)
     this._ripples = [];         // кольца-подтверждения команд
     this._fltCount = 0;         // бюджет всплывающих чисел за кадр (анти-спам DOM)
+    this._lifeT = 3.5;          // редкие «живые» реплики жителей, как в city-builder
     this.music = new AmbientAudio();   // процедурная фоновая музыка + звук окружения
 
     this.ctx = this._makeCtx();
@@ -551,6 +554,24 @@ class Game {
         });
       }
     }
+  }
+
+  _updateLifeMoments(dt) {
+    this._lifeT -= dt;
+    if (this._lifeT > 0 || !this.state || this.state.gameOver) return;
+    this._lifeT = 4.5 + Math.random() * 4.5;
+    const tx = this.cameraRig.target.x, tz = this.cameraRig.target.z;
+    const visible = this.state.units.filter(u => u.faction === 'ours' && u.hp > 0 && (u.x - tx) ** 2 + (u.z - tz) ** 2 < 30 ** 2);
+    if (!visible.length) return;
+    const u = visible[(Math.random() * visible.length) | 0];
+    let text = '🙂 Живём!';
+    if (u.state === 'build') text = '🔨 Стройка кипит';
+    else if (u.state === 'gather') text = u.jobType === 'wood' ? '🪵 Рубим лес' : (u.jobType === 'gold' ? '⛏️ Ищем руду' : '🪨 Добываем камень');
+    else if (u.state === 'toDrop' && u.carry > 0) text = '📦 Несу на склад';
+    else if (!u.def.worker) text = this.state.threatTimer > 0 ? '⚔️ Держим строй!' : '🛡️ Дружина готова';
+    else if ((this.state.happiness || 0) > 72) text = Math.random() < .5 ? '🎵 Хороший день' : '🍞 Сытая держава';
+    else if ((this.state.happiness || 0) < 35) text = '😟 Народ тревожится';
+    this.float(u.x, u.z, text, '#ffe8b5', 1.35);
   }
 
   initMap(map) {
@@ -1292,6 +1313,7 @@ class Game {
     Wildlife.update(this.state, dt, this.ctx);
     Events.update(this.state, dt, this.ctx);   // случайные события мира
     Achievements.update(this.state, dt, this.ctx);   // вехи-достижения
+    this._updateLifeMoments(dt);
     // 2-е условие победы: КОНКВЕСТ — снести ВСЕ вражьи станы (альтернатива чуду-идолу)
     if (!this.state.gameOver) {
       if (this.state.camps.length) this.state._hadCamps = true;
@@ -1359,18 +1381,34 @@ class Game {
     const units = this.state.units;
     for (let ui = 0; ui < units.length; ui++) {
       const u = units[ui], v = u.view;
-      if (u.grow < 1) { u.grow = Math.min(1, u.grow + fdt * 3.5); v.scale.setScalar(u.growMax * (0.25 + 0.75 * u.grow)); u._vetApplied = false; }
-      else if (!u._vetApplied) { v.scale.setScalar(u.growMax * (1 + 0.07 * (u.vet || 0))); u._vetApplied = true; }   // ветеран заметно крупнее
+      if (u.grow < 1) { u.grow = Math.min(1, u.grow + fdt * 3.5); u._vetApplied = false; }
       if (!u._noCast) { v.traverse(o => { if (o.isMesh) o.castShadow = false; }); u._noCast = true; }   // тень даёт пятно, не shadow-map
       const ix = u.px + (u.x - u.px) * alpha, iz = u.pz + (u.z - u.pz) * alpha;
       const gy = this.state.grid.heightAt(ix, iz);
       const moving = Math.hypot(u.x - u.px, u.z - u.pz) > 0.0025;
-      let bob = 0, fwd = 0;
-      if (moving) bob = Math.abs(Math.sin(now * 0.016 + u.id * 1.7)) * 0.045;
-      if (u.atkAnim > 0) { u.atkAnim -= fdt; fwd = Math.sin((1 - Math.max(0, u.atkAnim) / 0.2) * Math.PI) * 0.16; }
-      if (u.state === 'build') { const k = Math.max(0, Math.sin(now * 0.011 + u.id * 2.1)); fwd = k * k * 0.14; bob = k * 0.03; }   // стук молотком на стройке
+      const phase = now * 0.016 + u.id * 1.7, step = Math.sin(phase), stride = Math.abs(step);
+      const base = (u.growMax || 1) * (u.grow < 1 ? (0.25 + 0.75 * u.grow) : (1 + 0.07 * (u.vet || 0)));
+      let bob = 0, fwd = 0, pitch = 0, roll = 0, sx = 1, sy = 1, sz = 1;
+      if (moving) {
+        bob = stride * 0.065; roll = step * 0.045; pitch = -0.035;
+        sx = 1 + stride * 0.026; sy = 1 - stride * 0.035; sz = 1 + stride * 0.018;
+      } else {
+        const breath = Math.sin(now * 0.0022 + u.id * 0.91);
+        sy += breath * 0.012; sx -= breath * 0.006; sz -= breath * 0.006; roll = breath * 0.008;
+      }
+      if (u.atkAnim > 0) {
+        u.atkAnim -= fdt;
+        const hit = Math.sin((1 - Math.max(0, u.atkAnim) / 0.2) * Math.PI);
+        fwd = hit * 0.19; pitch = -hit * 0.15; sx += hit * 0.07; sy -= hit * 0.055;
+      }
+      if (u.state === 'build' || u.state === 'gather') {
+        const k = Math.max(0, Math.sin(now * (u.state === 'build' ? 0.011 : 0.0095) + u.id * 2.1));
+        fwd = k * k * 0.16; bob = k * 0.032; pitch = -k * 0.18; roll += Math.sin(phase * .55) * .025;
+        sx += k * .035; sy -= k * .045;
+      }
       v.position.set(ix + Math.sin(u.dir) * fwd, gy + bob, iz + Math.cos(u.dir) * fwd);
-      v.rotation.y = u.dir || 0;
+      v.rotation.set(pitch, u.dir || 0, roll);
+      v.scale.set(base * sx, base * sy, base * sz);
       let vis = true;
       if (u.faction === 'enemy') { const gp = this.state.grid.worldToGrid(u.x, u.z); const t = this.state.grid.get(gp.x, gp.y); vis = !this.fog || !this.fog.enabled || !t || t.visible; v.visible = vis; }
       const sh = this._blobShadow(ui, this._uShadows);
@@ -1390,9 +1428,13 @@ class Game {
       const ix = a.px + (a.x - a.px) * alpha, iz = a.pz + (a.z - a.pz) * alpha;
       const gy = this.state.grid.heightAt(ix, iz);
       const moving = Math.hypot(a.x - a.px, a.z - a.pz) > 0.0015;
-      const bob = moving ? Math.abs(Math.sin(now * 0.02 + a.id * 1.3)) * 0.04 : 0;
+      if (!a._animScale) a._animScale = v.scale.clone();
+      const hop = Math.sin(now * 0.018 + a.id * 1.3), stride = Math.abs(hop);
+      const bob = moving ? stride * 0.075 : Math.sin(now * 0.002 + a.id) * 0.012;
       v.position.set(ix, gy + bob, iz);
-      v.rotation.y = a.dir || 0;
+      v.rotation.set(moving ? -0.035 : 0, a.dir || 0, moving ? hop * 0.055 : Math.sin(now * .0017 + a.id) * .012);
+      const squash = moving ? stride * .055 : 0;
+      v.scale.set(a._animScale.x * (1 + squash), a._animScale.y * (1 - squash), a._animScale.z * (1 + squash * .45));
       const gp = this.state.grid.worldToGrid(a.x, a.z); const t = this.state.grid.get(gp.x, gp.y);
       const vis = !this.fog || !this.fog.enabled || !t || t.visible; v.visible = vis;
       const sh = this._blobShadow(ai, this._aShadows);
@@ -1414,6 +1456,27 @@ class Game {
     // живые идолы-реликвии: медленно вращаются + парят; кольцо ауры дышит и крутится
     for (const b of this.state.buildings) {
       if (!b.built || !b.def) continue;
+      if (!b._animBaseScale) b._animBaseScale = b.view.scale.clone();
+      let animScale = 1;
+      if (b._completeAnim > 0) {
+        b._completeAnim = Math.max(0, b._completeAnim - fdt * 1.35);
+        const k = 1 - b._completeAnim, pop = Math.sin(k * Math.PI * 3) * (1 - k);
+        animScale += pop * .11;
+      } else if (b.trainQueue && b.trainQueue.length) {
+        animScale += Math.sin(now * .005 + b.id) * .012;
+      }
+      if (b._prodDelay > 0) b._prodDelay = Math.max(0, b._prodDelay - fdt);
+      else if (b._prodAnim > 0) {
+        b._prodAnim = Math.max(0, b._prodAnim - fdt * 1.45);
+        const beat = Math.sin((1 - b._prodAnim) * Math.PI);
+        animScale += beat * .045;
+        if (!b._prodBurst) {
+          b._prodBurst = true;
+          const colors = { food: 0xf4c45a, wood: 0x73c66a, stone: 0xb7c2c7, iron: 0x8797aa, gold: 0xffcf57, gems: 0x6fe7ff, faith: 0xc996ff };
+          this.atmo?.burst(b.cx, (b.cy || 0) + 1.1, b.cz, colors[b._prodKey] || 0xffd77a, 4);
+        }
+      }
+      b.view.scale.copy(b._animBaseScale).multiplyScalar(animScale);
       if (b.def.cat === 'relic') {
         b.view.rotation.y += fdt * 0.5;
         if (!(b._hit > 0)) b.view.position.y = (b.cy || 0) + Math.sin(now * 0.002 + b.cx) * 0.06;
@@ -1436,6 +1499,7 @@ class Game {
     // суточный цикл день/ночь + погода (дождь/снег)
     if (this.sky) this.sky.update(fdt, this.cameraRig.target, this.map.key, now, this.camera);
     if (this.state.fields && this.state.fields.wood) this.state.fields.wood.updateWind(now * 0.001);
+    this.buildingActivity.update(this.state.buildings, fdt, now * 0.001, this.sky ? this.sky.windGust : 0);
     // мокрая земля в дождь/грозу (темнее+глянцевее, сохнет после) — читает Sky.wetness
     if (this.terrain && this.terrain.setWetness && this.sky) this.terrain.setWetness(this.sky.wetness);
     // фоновая музыка/окружение: ночь, тревога (набег), погода; гром запаздывает за вспышкой («далёкая гроза»)
@@ -1453,10 +1517,25 @@ class Game {
     // колёса телег крутятся по ходу движения
     if (this.state._carts) for (const c of this.state._carts) {
       if (c.wheels) for (const w of c.wheels) w.rotation.x += fdt * c.speed * 6;
+      const suspension = Math.abs(Math.sin(now * .014 + c.t * 1.7));
+      c.view.position.y = (c.groundY ?? c.view.position.y) + suspension * .035;
+      c.view.rotation.z = Math.sin(now * .009 + c.t) * .022;
     }
     // колёса поезда (стоит на станции — не крутятся)
     if (this.state._train && this.state._train.dwell <= 0) {
-      for (const w of this.state._train.wheels) w.rotation.x += fdt * this.state._train.speed * 5;
+      const tr = this.state._train;
+      for (const w of tr.wheels) w.rotation.x += fdt * tr.speed * 5;
+      [tr.loco, tr.w1, tr.w2].forEach((v, i) => {
+        const railY = v.userData.trackY ?? v.position.y, bounce = Math.sin(now * .012 + i * 1.9) * .022;
+        v.position.y = railY + Math.abs(bounce); v.rotation.z = bounce * .45;
+      });
+    } else if (this.state._train) {
+      const settle = Math.min(1, fdt * 8);
+      [this.state._train.loco, this.state._train.w1, this.state._train.w2].forEach(v => {
+        const railY = v.userData.trackY ?? v.position.y;
+        v.position.y += (railY - v.position.y) * settle;
+        v.rotation.z *= 1 - settle;
+      });
     }
     // дрожание зданий под уроном
     for (const b of this.state.buildings) {

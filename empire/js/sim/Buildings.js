@@ -54,6 +54,7 @@ export function update(state, dt, ctx) {
       }
       if (b.buildLeft <= 0) {
         state.finishBuild(b);
+        b._completeAnim = 1;
         ctx.sfx && ctx.sfx('build');
         ctx.burst && ctx.burst(b.cx, (b.cy || 0) + 0.6, b.cz, 0xffcc44, 16);   // салют завершения стройки
         ctx.toast && ctx.toast(b.def.icon + ' ' + b.def.name + ' готов!');

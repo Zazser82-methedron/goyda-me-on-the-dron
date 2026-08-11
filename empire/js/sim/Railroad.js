@@ -59,7 +59,8 @@ function sampleAt(state, path, t) {
 
 function place(state, tr, view, t, forwardDir) {
   const p = sampleAt(state, tr.path, t);
-  view.position.set(p.x, state.grid.heightAt ? state.grid.heightAt(p.x, p.z) + 0.06 : 0.06, p.z);
+  const trackY = state.grid.heightAt ? state.grid.heightAt(p.x, p.z) + 0.06 : 0.06;
+  view.position.set(p.x, trackY, p.z); view.userData.trackY = trackY;
   view.rotation.y = forwardDir > 0 ? p.dir : p.dir + Math.PI;   // носом по ходу движения
 }
 

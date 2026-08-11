@@ -49,7 +49,7 @@ function spawnCart(state, market, path) {
   const w0 = state.grid.gridToWorld(path[0].x, path[0].y);
   view.position.set(w0.wx, state.grid.heightAt ? state.grid.heightAt(w0.wx, w0.wz) : 0, w0.wz);
   state.scene.add(view);
-  const c = { view, path, t: 0, speed: 1.7, x: w0.wx, z: w0.wz, fromId: market.id, wheels: [] };
+  const c = { view, path, t: 0, speed: 1.7, x: w0.wx, z: w0.wz, groundY: view.position.y, fromId: market.id, wheels: [] };
   view.traverse(o => { if (o.name === 'wheel') c.wheels.push(o); });   // рендер-цикл крутит их по ходу
   state._carts.push(c);
   return c;
@@ -90,7 +90,8 @@ export function update(state, dt, ctx) {
     c.x = wa.wx + (wb.wx - wa.wx) * k;
     c.z = wa.wz + (wb.wz - wa.wz) * k;
     c.dir = Math.atan2(wb.wx - wa.wx, wb.wz - wa.wz);
-    c.view.position.set(c.x, state.grid.heightAt ? state.grid.heightAt(c.x, c.z) : 0, c.z);
+    c.groundY = state.grid.heightAt ? state.grid.heightAt(c.x, c.z) : 0;
+    c.view.position.set(c.x, c.groundY, c.z);
     c.view.rotation.y = c.dir;
   }
 }

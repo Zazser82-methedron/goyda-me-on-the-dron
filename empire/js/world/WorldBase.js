@@ -1,6 +1,6 @@
 // ===== Мир-плита на слонах и черепахе в океане (лор «плоской земли») =====
 import * as THREE from 'three';
-import { TILE } from '../data/config.js?v=94';
+import { TILE, PAL } from '../data/config.js?v=102';
 import { makeRippleNormal } from './WaterFx.js?v=94';
 
 const _m = {};
@@ -48,7 +48,9 @@ export class WorldBase {
     const pos = geo.attributes.position, col = new Float32Array(pos.count * 3), cc = new THREE.Color();
     for (let i = 0; i < pos.count; i++) {
       const f = (pos.getY(i) + THICK / 2) / THICK;        // 0 низ .. 1 верх
-      cc.setHex(f > 0.82 ? 0x5a4a30 : f > 0.45 ? 0x7a5e44 : 0x44403a);
+      // Боковина мира находится за водопадом: держим её в палитре океана,
+      // чтобы через прозрачный поток не просвечивал коричневый «земляной ящик».
+      cc.setHex(f > 0.82 ? 0x285b6d : f > 0.45 ? 0x1b4b60 : 0x102f45);
       col[i * 3] = cc.r; col[i * 3 + 1] = cc.g; col[i * 3 + 2] = cc.b;
     }
     geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
@@ -75,7 +77,7 @@ export class WorldBase {
     const ocean = new THREE.Mesh(
       new THREE.PlaneGeometry(ww * 4, ww * 4, 1, 1),
       // зеркальный океан — отражает IBL-небо/окружение
-      new THREE.MeshStandardMaterial({ color: 0x163e5c, transparent: true, opacity: 0.94, roughness: 0.07, metalness: 0.75, envMapIntensity: 1.6 })
+      new THREE.MeshStandardMaterial({ color: PAL.waterDeep, transparent: true, opacity: 0.94, roughness: 0.07, metalness: 0.75, envMapIntensity: 1.6 })
     );
     ocean.rotation.x = -Math.PI / 2;
     ocean.position.y = turTop - tS - ww * 0.12;
@@ -86,7 +88,8 @@ export class WorldBase {
     this.group.add(ocean);
 
     // ---- водопады с края «плоской земли» (анимированные) ----
-    this._buildWaterfallsV2(top, ww);
+    const waterY = (grid.water ?? -0.5) - 0.02;
+    this._buildWaterfallsV2(slabBottom, ww, waterY);
 
     scene.add(this.group);
   }
@@ -95,16 +98,20 @@ export class WorldBase {
   // Stylised waterfall v2: coloured, broken-up water sheets with animated
   // flow lines, then separate foam and droplets only where water hits below.
   // This deliberately avoids a stretched white bitmap across the whole edge.
-  _buildWaterfallsV2(top, ww) {
-    const H = ww * 0.20, half = ww / 2, yTop = top + 0.22, yBottom = yTop - H;
+  _buildWaterfallsV2(slabBottom, ww, waterY) {
+    const H = ww * 0.20, half = ww / 2, yTop = waterY + 0.015, yBottom = yTop - H;
     const fx = { time: 0, mats: [], foam: [], drops: [] };
     this._waterfallV2 = fx;
     const makeFallMat = (seed, opacity) => {
       const mat = new THREE.ShaderMaterial({
-        transparent: true, depthWrite: false, side: THREE.DoubleSide, fog: false,
-        uniforms: { uTime: { value: 0 }, uSeed: { value: seed }, uOpacity: { value: opacity } },
+        transparent: true, depthWrite: false, side: THREE.DoubleSide, fog: true,
+        uniforms: {
+          ...THREE.UniformsUtils.clone(THREE.UniformsLib.fog),
+          uTime: { value: 0 }, uSeed: { value: seed }, uOpacity: { value: opacity }, uWaterColor: { value: new THREE.Color(PAL.water) },
+        },
         vertexShader: `
           uniform float uTime; uniform float uSeed; varying vec2 vUv;
+          #include <fog_pars_vertex>
           void main(){
             vUv = uv; vec3 p = position;
             float w = sin(uv.y * 19.0 + uTime * 3.0 + uSeed) * 0.10
@@ -112,10 +119,13 @@ export class WorldBase {
             p.x += w * (0.35 + sin(uv.x * 6.283) * 0.65);
             p.z += sin(uv.y * 27.0 - uTime * 4.0 + uSeed) * 0.055;
             p.y += sin(uv.x * 12.0 + uTime * 2.0 + uSeed) * 0.022;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+            vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
+            gl_Position = projectionMatrix * mvPosition;
+            #include <fog_vertex>
           }`,
         fragmentShader: `
-          uniform float uTime; uniform float uSeed; uniform float uOpacity; varying vec2 vUv;
+          uniform float uTime; uniform float uSeed; uniform float uOpacity; uniform vec3 uWaterColor; varying vec2 vUv;
+          #include <fog_pars_fragment>
           float hash(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7))) * 43758.5453123); }
           float noise(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f);
             return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y); }
@@ -125,14 +135,17 @@ export class WorldBase {
             float n = fbm(vec2(vUv.x * 7.0 + sin(vUv.y*7.0+t)*.24+uSeed, vUv.y * 5.5 - t));
             float edge = smoothstep(.015,.115,vUv.x) * smoothstep(.015,.115,1.0-vUv.x);
             float breaks = smoothstep(.17,.46,n + sin(vUv.y*18.0-t*4.0+uSeed)*.10);
-            float topFoam = smoothstep(.72,1.0,vUv.y) * .16;
-            float baseFoam = (1.0-smoothstep(.0,.44,vUv.y)) * (.18 + n*.48);
+            float topFoam = smoothstep(.90,1.0,vUv.y) * .18;
+            float baseFoam = (1.0-smoothstep(.0,.16,vUv.y)) * (.22 + n*.34);
             float foam = clamp(topFoam + baseFoam, 0.0, 1.0);
-            vec3 water = mix(vec3(.025,.25,.48), vec3(.10,.66,.86), n*.66 + .16);
-            vec3 color = mix(water, vec3(.78,.96,1.0), foam);
+            vec3 water = uWaterColor * mix(.82, 1.28, n);
+            vec3 color = mix(water, vec3(.68,.86,.91), foam);
             float alpha = (.42 + n*.30 + foam*.24) * edge * breaks * uOpacity;
             if(alpha < .035) discard;
             gl_FragColor = vec4(color, alpha);
+            #include <tonemapping_fragment>
+            #include <colorspace_fragment>
+            #include <fog_fragment>
           }`,
       });
       fx.mats.push(mat); return mat;
@@ -145,10 +158,19 @@ export class WorldBase {
       fc.fillStyle = g; fc.beginPath(); fc.arc(x, y, r, 0, Math.PI * 2); fc.fill();
     }
     const foamTex = new THREE.CanvasTexture(foamCanvas);
+    const waterBackMat = new THREE.MeshStandardMaterial({ color: PAL.water, roughness: .18, metalness: .52, envMapIntensity: 1.25 });
+    const waterLipMat = new THREE.MeshStandardMaterial({ color: PAL.water, roughness: .22, metalness: .46, envMapIntensity: 1.20 });
     const edges = [{ x: 0, z: half, ry: 0 }, { x: 0, z: -half, ry: Math.PI }, { x: half, z: 0, ry: Math.PI / 2 }, { x: -half, z: 0, ry: -Math.PI / 2 }];
     const fallsPerEdge = this.lowFx ? 2 : 4;
     for (let ei = 0; ei < edges.length; ei++) {
       const e = edges[ei], nx = Math.sin(e.ry), nz = Math.cos(e.ry), alongZ = Math.abs(e.ry) > 1.0;
+      // Непрозрачное ядро полностью закрывает плиту; поверх него живёт
+      // полупрозрачный shader-flow, поэтому цвет остаётся единым с океаном.
+      const coverBottom = Math.max(yBottom, slabBottom - .04), coverH = Math.max(.02, yTop - coverBottom);
+      const back = new THREE.Mesh(new THREE.PlaneGeometry(ww * 1.005, coverH), waterBackMat);
+      back.position.set(e.x + nx * .022, yTop - coverH * .5, e.z + nz * .022); back.rotation.y = e.ry; back.renderOrder = 7; this.group.add(back);
+      const lip = new THREE.Mesh(new THREE.BoxGeometry(ww * 1.01, .13, .22), waterLipMat);
+      lip.position.set(e.x + nx * .06, waterY + .025, e.z + nz * .06); lip.rotation.y = e.ry; lip.renderOrder = 9; this.group.add(lip);
       // Under-sheet provides blue mass; individual ribbons produce the lively silhouette.
       const under = new THREE.Mesh(new THREE.PlaneGeometry(ww * .98, H, 18, 20), makeFallMat(ei * 1.71, .80));
       under.position.set(e.x + nx * .04, yTop - H * .5, e.z + nz * .04); under.rotation.y = e.ry; under.renderOrder = 8; this.group.add(under);

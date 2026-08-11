@@ -14,13 +14,15 @@
   }
   window.addEventListener('error', function (e) { box((e.message || e.type) + '  @ ' + String(e.filename || '').split('/').pop() + ':' + (e.lineno || '')); });
   window.addEventListener('unhandledrejection', function (e) { box('promise: ' + ((e.reason && (e.reason.stack || e.reason.message)) || e.reason)); });
-  window.__gboot = function (s) { var d = document.getElementById('bootlog'); if (!d) { d = document.createElement('div'); d.id = 'bootlog'; d.style.cssText = 'position:fixed;left:8px;top:54px;z-index:99998;color:#9fef9f;font:11px monospace;opacity:.65'; (document.body || document.documentElement).appendChild(d); } d.textContent = 'boot: ' + s; };
+  var debugBoot = new URLSearchParams(location.search).has('debug');
+  window.__gboot = debugBoot ? function (s) { var d = document.getElementById('bootlog'); if (!d) { d = document.createElement('div'); d.id = 'bootlog'; d.style.cssText = 'position:fixed;left:8px;top:54px;z-index:99998;color:#9fef9f;font:11px monospace;opacity:.65'; (document.body || document.documentElement).appendChild(d); } d.textContent = 'boot: ' + s; } : function () {};
 })();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Ysabeau+SC:wght@400;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./css/theme.css?v=100">
 <link rel="stylesheet" href="./css/hud.css?v=94">
+<link rel="stylesheet" href="./css/start-screen.css?v=102" data-goyda-start-screen="1">
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
@@ -86,6 +88,6 @@
 </div>
 
 <script src="../shared/expedition.js?v=96"></script>
-<script type="module" src="./js/main.js?v=101"></script>
+<script type="module" src="./js/main.js?v=102"></script>
 </body>
 </html>
