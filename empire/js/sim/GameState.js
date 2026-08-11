@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=94';
 import { Grid } from '../world/Grid.js?v=94';
-import { NodeField } from '../world/NodeField.js?v=94';
+import { NodeField } from '../world/NodeField.js?v=101';
 import { BUILDINGS } from '../data/buildings.js?v=94';
 import { UNITS } from '../data/units.js?v=94';
 import { RANKS } from '../data/ranks.js?v=94';
@@ -17,7 +17,7 @@ export class GameState {
 
     // инстансные поля ресурсов (1 draw call на тип вместо ~800 объектов)
     this.fields = {
-      wood: new NodeField(scene, 'res_tree', 700),
+      wood: new NodeField(scene, 'res_tree', 700, { wind: true }),
       stone: new NodeField(scene, 'res_stone', 300),
       gold: new NodeField(scene, 'res_ore', 250),
     };

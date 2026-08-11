@@ -7,12 +7,12 @@ import { Picker } from './engine/Picker.js?v=94';
 import { Loop } from './engine/Loop.js?v=98';
 import { AssetManager } from './engine/AssetManager.js?v=99';
 import { TerrainMesh } from './world/TerrainMesh.js?v=94';
-import { WorldBase } from './world/WorldBase.js?v=100';
+import { WorldBase } from './world/WorldBase.js?v=101';
 import { Sky } from './world/Sky.js?v=94';
 import { Atmosphere } from './world/Atmosphere.js?v=94';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
 import { nearestAdj } from './world/Pathfinding.js?v=94';
-import { GameState } from './sim/GameState.js?v=94';
+import { GameState } from './sim/GameState.js?v=101';
 import * as Economy from './sim/Economy.js?v=94';
 import * as BuildSys from './sim/Buildings.js?v=94';
 import * as Waves from './sim/Waves.js?v=94';
@@ -371,7 +371,7 @@ class Game {
     this.map = map;
     this.state.grid.generateTerrain(map.terr, map.key);   // рельеф (высоты/биомы/реки)
     this.terrain = new TerrainMesh(this.scene, this.state.grid, map.pal, this.rdr.tier);
-    this.worldBase = new WorldBase(this.scene, this.state.grid);   // плита на слонах+черепахе
+    this.worldBase = new WorldBase(this.scene, this.state.grid, this.rdr.tier);   // плита на слонах+черепахе
     if (map.key === 'neon') this._addNeonSun();
     else {
       this.sky = new Sky(this.scene, this.rdr);                    // суточный цикл + погода (кроме неона)
@@ -1435,6 +1435,7 @@ class Game {
     if (this.terrain && this.terrain.update) this.terrain.update(fdt);
     // суточный цикл день/ночь + погода (дождь/снег)
     if (this.sky) this.sky.update(fdt, this.cameraRig.target, this.map.key, now, this.camera);
+    if (this.state.fields && this.state.fields.wood) this.state.fields.wood.updateWind(now * 0.001);
     // мокрая земля в дождь/грозу (темнее+глянцевее, сохнет после) — читает Sky.wetness
     if (this.terrain && this.terrain.setWetness && this.sky) this.terrain.setWetness(this.sky.wetness);
     // фоновая музыка/окружение: ночь, тревога (набег), погода; гром запаздывает за вспышкой («далёкая гроза»)

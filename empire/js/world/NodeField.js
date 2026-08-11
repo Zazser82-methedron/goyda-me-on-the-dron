@@ -27,9 +27,24 @@ function bakedGeometry(modelName) {
 }
 
 export class NodeField {
-  constructor(scene, modelName, maxCount) {
+  constructor(scene, modelName, maxCount, opt = {}) {
     const geo = bakedGeometry(modelName);
     const mat = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.92, metalness: 0.0 });
+    this.windUniform = opt.wind ? { value: 0 } : null;
+    if (this.windUniform) {
+      mat.onBeforeCompile = (shader) => {
+        shader.uniforms.uGoydaWind = this.windUniform;
+        shader.vertexShader = 'uniform float uGoydaWind;\n' + shader.vertexShader.replace(
+          '#include <begin_vertex>',
+          `#include <begin_vertex>
+           float windWeight = clamp(transformed.y * 0.78, 0.0, 1.0);
+           float windWave = sin(uGoydaWind * 1.42 + transformed.x * 3.10 + transformed.z * 2.37);
+           transformed.x += windWave * 0.075 * windWeight;
+           transformed.z += cos(uGoydaWind * 1.16 + transformed.z * 2.84) * 0.047 * windWeight;`
+        );
+      };
+      mat.customProgramCacheKey = () => 'goyda-tree-wind-v1';
+    }
     this.inst = new THREE.InstancedMesh(geo, mat, maxCount);
     this.inst.castShadow = false;
     this.inst.receiveShadow = false;
@@ -78,6 +93,10 @@ export class NodeField {
     const i = node.instIndex; if (i < 0) return;
     this.pr[i].y = y; this._write(i);
     this.inst.instanceMatrix.needsUpdate = true;
+  }
+
+  updateWind(time) {
+    if (this.windUniform) this.windUniform.value = time;
   }
 
   remove(node) {

@@ -35,8 +35,9 @@ function turtle(s) {
 }
 
 export class WorldBase {
-  constructor(scene, grid) {
+  constructor(scene, grid, quality = 'high') {
     this.group = new THREE.Group();
+    this.lowFx = quality === 'low';
     const n = grid.n, ww = n * TILE;
     let minH = 0;
     if (grid.heights) { minH = Infinity; for (let i = 0; i < grid.heights.length; i++) if (grid.heights[i] < minH) minH = grid.heights[i]; }
@@ -85,12 +86,93 @@ export class WorldBase {
     this.group.add(ocean);
 
     // ---- водопады с края «плоской земли» (анимированные) ----
-    this._buildWaterfalls(top, ww);
+    this._buildWaterfallsV2(top, ww);
 
     scene.add(this.group);
   }
 
   // короткие водопады у самой кромки: струи с пеной сверху, тают книзу (не «стеклянный куб»)
+  // Stylised waterfall v2: coloured, broken-up water sheets with animated
+  // flow lines, then separate foam and droplets only where water hits below.
+  // This deliberately avoids a stretched white bitmap across the whole edge.
+  _buildWaterfallsV2(top, ww) {
+    const H = ww * 0.20, half = ww / 2, yTop = top + 0.22, yBottom = yTop - H;
+    const fx = { time: 0, mats: [], foam: [], drops: [] };
+    this._waterfallV2 = fx;
+    const makeFallMat = (seed, opacity) => {
+      const mat = new THREE.ShaderMaterial({
+        transparent: true, depthWrite: false, side: THREE.DoubleSide, fog: false,
+        uniforms: { uTime: { value: 0 }, uSeed: { value: seed }, uOpacity: { value: opacity } },
+        vertexShader: `
+          uniform float uTime; uniform float uSeed; varying vec2 vUv;
+          void main(){
+            vUv = uv; vec3 p = position;
+            float w = sin(uv.y * 19.0 + uTime * 3.0 + uSeed) * 0.10
+                    + sin(uv.y * 7.0 - uTime * 1.7 + uv.x * 8.0) * 0.06;
+            p.x += w * (0.35 + sin(uv.x * 6.283) * 0.65);
+            p.z += sin(uv.y * 27.0 - uTime * 4.0 + uSeed) * 0.055;
+            p.y += sin(uv.x * 12.0 + uTime * 2.0 + uSeed) * 0.022;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+          }`,
+        fragmentShader: `
+          uniform float uTime; uniform float uSeed; uniform float uOpacity; varying vec2 vUv;
+          float hash(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7))) * 43758.5453123); }
+          float noise(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f);
+            return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y); }
+          float fbm(vec2 p){ float v=0.; v+=noise(p)*.55; p=p*2.03+3.1; v+=noise(p)*.27; p=p*2.01+1.7; v+=noise(p)*.18; return v; }
+          void main(){
+            float t = uTime * 0.72;
+            float n = fbm(vec2(vUv.x * 7.0 + sin(vUv.y*7.0+t)*.24+uSeed, vUv.y * 5.5 - t));
+            float edge = smoothstep(.015,.115,vUv.x) * smoothstep(.015,.115,1.0-vUv.x);
+            float breaks = smoothstep(.17,.46,n + sin(vUv.y*18.0-t*4.0+uSeed)*.10);
+            float topFoam = smoothstep(.72,1.0,vUv.y) * .16;
+            float baseFoam = (1.0-smoothstep(.0,.44,vUv.y)) * (.18 + n*.48);
+            float foam = clamp(topFoam + baseFoam, 0.0, 1.0);
+            vec3 water = mix(vec3(.025,.25,.48), vec3(.10,.66,.86), n*.66 + .16);
+            vec3 color = mix(water, vec3(.78,.96,1.0), foam);
+            float alpha = (.42 + n*.30 + foam*.24) * edge * breaks * uOpacity;
+            if(alpha < .035) discard;
+            gl_FragColor = vec4(color, alpha);
+          }`,
+      });
+      fx.mats.push(mat); return mat;
+    };
+    const foamCanvas = document.createElement('canvas'); foamCanvas.width = foamCanvas.height = 96;
+    const fc = foamCanvas.getContext('2d');
+    for (let i = 0; i < 34; i++) {
+      const r = 3 + Math.random() * 11, x = Math.random() * 96, y = 40 + Math.random() * 45;
+      const g = fc.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, 'rgba(235,252,255,.88)'); g.addColorStop(1, 'rgba(164,230,255,0)');
+      fc.fillStyle = g; fc.beginPath(); fc.arc(x, y, r, 0, Math.PI * 2); fc.fill();
+    }
+    const foamTex = new THREE.CanvasTexture(foamCanvas);
+    const edges = [{ x: 0, z: half, ry: 0 }, { x: 0, z: -half, ry: Math.PI }, { x: half, z: 0, ry: Math.PI / 2 }, { x: -half, z: 0, ry: -Math.PI / 2 }];
+    const fallsPerEdge = this.lowFx ? 2 : 4;
+    for (let ei = 0; ei < edges.length; ei++) {
+      const e = edges[ei], nx = Math.sin(e.ry), nz = Math.cos(e.ry), alongZ = Math.abs(e.ry) > 1.0;
+      // Under-sheet provides blue mass; individual ribbons produce the lively silhouette.
+      const under = new THREE.Mesh(new THREE.PlaneGeometry(ww * .98, H, 18, 20), makeFallMat(ei * 1.71, .80));
+      under.position.set(e.x + nx * .04, yTop - H * .5, e.z + nz * .04); under.rotation.y = e.ry; under.renderOrder = 8; this.group.add(under);
+      for (let i = 0; i < fallsPerEdge; i++) {
+        const frac = (i + .5) / fallsPerEdge - .5, width = ww * (.16 + Math.random() * .08);
+        const offset = frac * ww * .80, x = alongZ ? e.x + nx * (.11 + i*.025) : offset, z = alongZ ? offset : e.z + nz * (.11 + i*.025);
+        const ribbon = new THREE.Mesh(new THREE.PlaneGeometry(width, H * (.84 + Math.random()*.12), 10, 20), makeFallMat(7.3 + ei*3.1 + i, .88));
+        ribbon.position.set(x, yTop - H * (.49 + Math.random()*.03), z); ribbon.rotation.y = e.ry; ribbon.renderOrder = 10; this.group.add(ribbon);
+        const foamMat = new THREE.MeshBasicMaterial({ map: foamTex, transparent: true, depthWrite: false, color: 0xcdf5ff, opacity: .64, blending: THREE.AdditiveBlending, fog: false });
+        const foam = new THREE.Mesh(new THREE.PlaneGeometry(width * 1.35, H * .20), foamMat);
+        foam.rotation.set(-Math.PI / 2, e.ry, 0);
+        foam.position.set(x + nx*.34, yBottom + .16, z + nz*.34); foam.renderOrder = 14; this.group.add(foam);
+        fx.foam.push({ m: foam, opacity: foamMat.opacity, phase: Math.random()*6.28, sx: 1, sy: 1 });
+        const dropMat = new THREE.SpriteMaterial({ map: foamTex, transparent: true, depthWrite: false, color: 0xbdefff, opacity: .44, blending: THREE.AdditiveBlending, fog: false });
+        for (let d = 0; d < (this.lowFx ? 3 : 7); d++) {
+          const drop = new THREE.Sprite(dropMat);
+          const spread = (Math.random()-.5)*width*.92, dx = alongZ ? nx*.42 : spread, dz = alongZ ? spread : nz*.42;
+          drop.position.set(x+dx, yBottom+Math.random()*H*.34, z+dz); drop.scale.set(.24+Math.random()*.28, .34+Math.random()*.34, 1); drop.renderOrder = 15;
+          this.group.add(drop); fx.drops.push({ sp: drop, x: x+dx, z: z+dz, top: yBottom+.32+Math.random()*H*.38, bottom: yBottom-.12, speed: .65+Math.random()*.85, phase: Math.random()*6.28, scale: drop.scale.x });
+        }
+      }
+    }
+  }
+
   _buildWaterfalls(top, ww) {
     const cv = document.createElement('canvas'); cv.width = 64; cv.height = 128;
     const x = cv.getContext('2d');
@@ -170,8 +252,28 @@ export class WorldBase {
     }
   }
 
+  _updateWaterfallV2(dt) {
+    const fx = this._waterfallV2;
+    if (!fx) return;
+    fx.time += dt;
+    for (const mat of fx.mats) mat.uniforms.uTime.value = fx.time;
+    for (const f of fx.foam) {
+      const p = Math.sin(fx.time * 2.5 + f.phase);
+      f.m.scale.set(1 + p * .08, 1 + Math.abs(p) * .14, 1);
+      f.m.material.opacity = f.opacity + p * .11;
+    }
+    for (const d of fx.drops) {
+      d.sp.position.y -= dt * d.speed;
+      if (d.sp.position.y < d.bottom) d.sp.position.y = d.top;
+      const p = Math.sin(fx.time * 6.0 + d.phase), s = d.scale * (.76 + Math.abs(p) * .45);
+      d.sp.position.x = d.x + p * .055; d.sp.position.z = d.z + Math.cos(fx.time * 4.0 + d.phase) * .055;
+      d.sp.scale.set(s, s * (1.15 + Math.abs(p) * .4), 1);
+    }
+  }
+
   update(dt) {
-    this._t += dt;
+    this._updateWaterfallV2(dt);
+    this._t = (this._t || 0) + dt;
     if (this._fallTextures) for (const flow of this._fallTextures) {
       flow.tex.offset.y -= dt * flow.speed;
       if (flow.tex.offset.y < -10) flow.tex.offset.y += 10;
