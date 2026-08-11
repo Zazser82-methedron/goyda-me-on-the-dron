@@ -12,6 +12,7 @@ export const BUILDINGS = {
   townhall: {
     kind: 'townhall', name: 'ПАЛАТЫ ГОЙДЫ', icon: '🏰', model: 'bld_townhall',
     w: 3, h: 3, hp: 800, cat: 'core', rank: 0, unique: true, drop: true,
+    roadPort: { dx: 1, dy: 3 },
     cost: {}, build: 0, pop: 5, produce: { faith: 2 }, wearRate: 0.15,
     trains: ['kholop'],
     desc: 'Сердце державы. Сюда несут добычу, здесь куют ХОЛОПов. Падёт — конец.',
@@ -29,6 +30,7 @@ export const BUILDINGS = {
   izba_plotnika: {
     kind: 'izba_plotnika', name: 'ИЗБА ПЛОТНИКА', icon: '🪚', model: 'bld_izba',
     w: 1, h: 1, hp: 90, cat: 'econ', rank: 0, workers: 1,
+    roadPort: { dx: 0, dy: 1 },
     cost: { wood: 30, stone: 10 }, build: 5,
     carpenter: { radius: 8, targets: 6, upkeep: { wood: 3, stone: 1 }, repair: 4 },
     desc: 'Содержит шесть ближайших построек в радиусе 8 клеток: +4 износа самой изношенной в день.',
@@ -106,6 +108,7 @@ export const BUILDINGS = {
   station: {
     kind: 'station', name: 'СТАНЦИЯ', icon: '🚂', model: 'bld_station',
     w: 2, h: 2, hp: 260, cat: 'econ', rank: 2, requiresTech: 'zhelezny_put',
+    railPort: { dx: 1, dy: 2 },
     cost: { wood: 60, stone: 40, iron: 30, gold: 30 }, build: 8, produce: { gold: 2 },
     desc: 'Вокзал державы. Две станции + рельсы = паровоз возит грузы и золото.',
   },
@@ -118,12 +121,14 @@ export const BUILDINGS = {
   market: {
     kind: 'market', name: 'ТОРГ', icon: '🪙', model: 'bld_market',
     w: 2, h: 2, hp: 200, cat: 'econ', rank: 2, drop: true,
+    roadPort: { dx: 1, dy: 2 },
     cost: { wood: 40, stone: 20, gold: 10 }, build: 6, produce: { gold: 5, happy: 1 }, wearRate: 0.40,
     desc: 'Торговые ряды. +5 золота в день и точка сдачи.',
   },
   traktir: {
     kind: 'traktir', name: 'ТРАКТИР', icon: '🍺', model: 'bld_market',
     w: 2, h: 2, hp: 170, cat: 'econ', rank: 1,
+    roadPort: { dx: 1, dy: 2 },
     cost: { wood: 35, gold: 15 }, build: 5, produce: { happy: 5 },
     desc: 'Хмель, пляски, байки — народ гуляет. +5 счастья в день.',
   },
@@ -185,6 +190,7 @@ export const BUILDINGS = {
   prikaz_sbora: {
     kind: 'prikaz_sbora', name: 'ПРИКАЗ СБОРА', icon: '📋', model: 'bld_market',
     w: 2, h: 2, hp: 190, cat: 'econ', era: 1,
+    roadPort: { dx: 1, dy: 2 },
     cost: { wood: 45, stone: 25, gold: 15 }, build: 6, produce: { gold: 6 }, wearRate: 0.40,
     desc: 'Приказная изба уездной державы — собирает подати. +6 золота в день.',
   },
@@ -198,6 +204,7 @@ export const BUILDINGS = {
   tamozhnya: {
     kind: 'tamozhnya', name: 'ТАМОЖЕННЫЕ ВОРОТА', icon: '🛃', model: 'bld_chastokol_gate',
     w: 1, h: 1, hp: 200, cat: 'def', era: 1, wall: true, walkable: true,
+    roadPort: { dx: 0, dy: 1 },
     cost: { wood: 25, stone: 15 }, build: 4, produce: { gold: 3 }, wearRate: 0.50,
     desc: 'Мытный двор на въезде — пошлина с обозов. +3 золота в день, проходимо для своих.',
   },
@@ -206,6 +213,7 @@ export const BUILDINGS = {
   remontny_dvor: {
     kind: 'remontny_dvor', name: 'РЕМОНТНЫЙ ДВОР', icon: '🔧', model: 'bld_kuznica',
     w: 1, h: 1, hp: 160, cat: 'econ', era: 2, workers: 1,
+    roadPort: { dx: 0, dy: 1 },
     cost: { wood: 50, stone: 35, iron: 15 }, build: 7,
     carpenter: { radius: 10, targets: 10, upkeep: { wood: 4, stone: 2, iron: 1 }, repair: 7 },
     desc: 'Артельная мастерская — держит в исправности 10 построек в радиусе 10 клеток, сильнее Избы Плотника.',
@@ -219,6 +227,7 @@ export const BUILDINGS = {
   sklad_putevoy: {
     kind: 'sklad_putevoy', name: 'ПУТЕВОЙ ПАКГАУЗ', icon: '📦', model: 'bld_ambar',
     w: 2, h: 2, hp: 200, cat: 'econ', era: 2,
+    roadPort: { dx: 1, dy: 2 },
     cost: { wood: 55, stone: 35, iron: 15 }, build: 7, produce: { gold: 4 }, wearRate: 0.35,
     desc: 'Складской двор у путей — копит и сбывает грузы паровозов. +4 золота в день.',
   },

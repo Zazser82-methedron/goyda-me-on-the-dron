@@ -1,9 +1,16 @@
 // ===== Транспорт по дорогам: телеги РЫНОК → ПАЛАТЫ (торговая выручка) =====
-// BFS по тайлам с t.road (дороги+мосты). Телега спавнится у рынка, если тот связан дорогой с ратушей,
-// едет по пути и по прибытии приносит золото (больше за длинный маршрут). ≤2 телег одновременно.
+// BFS по тайлам с t.road (дороги+мосты). Телега везёт накопленную рынком выручку к ратуше.
+// ≤2 телеги одновременно.
 
-// проходимые ДОРОЖНЫЕ тайлы, смежные с footprint здания
+// Проходимые дорожные тайлы у порта здания; старые здания без порта используют весь периметр.
+const CART_CAPACITY = 40;
+const MIN_CART_CARGO = 4;
+
 function adjRoadTiles(state, b) {
+  if (b.roadPortTile) {
+    const t = state.grid.get(b.roadPortTile.x, b.roadPortTile.y);
+    return t && t.road ? [t] : [];
+  }
   const out = [];
   for (let x = b.gx - 1; x <= b.gx + b.w; x++) {
     for (let y = b.gy - 1; y <= b.gy + b.h; y++) {
@@ -45,11 +52,13 @@ export function roadPath(state, from, to) {
 }
 
 function spawnCart(state, market, path) {
+  const cargo = Math.min(market._pendingCargo || 0, CART_CAPACITY);
+  market._pendingCargo -= cargo;
   const view = state.assets.get('unit_cart');
   const w0 = state.grid.gridToWorld(path[0].x, path[0].y);
   view.position.set(w0.wx, state.grid.heightAt ? state.grid.heightAt(w0.wx, w0.wz) : 0, w0.wz);
   state.scene.add(view);
-  const c = { view, path, t: 0, speed: 1.7, x: w0.wx, z: w0.wz, groundY: view.position.y, fromId: market.id, wheels: [] };
+  const c = { view, path, t: 0, speed: 1.7, x: w0.wx, z: w0.wz, groundY: view.position.y, fromId: market.id, cargo, wheels: [] };
   view.traverse(o => { if (o.name === 'wheel') c.wheels.push(o); });   // рендер-цикл крутит их по ходу
   state._carts.push(c);
   return c;
@@ -64,7 +73,8 @@ export function update(state, dt, ctx) {
     state._cartT = 30 + Math.random() * 12;
     if (state._carts.length < 2 && state.townhall) {
       for (const m of state.buildings) {
-        if (m.kind !== 'market' || !m.built) continue;
+        if ((m.kind !== 'market' && m.kind !== 'traktir') || !m.built) continue;
+        if ((m._pendingCargo || 0) < MIN_CART_CARGO) continue;
         if (state._carts.some(c => c.fromId === m.id)) continue;   // от этого рынка телега уже в пути
         const path = roadPath(state, m, state.townhall);
         m._roadOk = !!path;                                        // кэш для панели выбора
@@ -77,7 +87,7 @@ export function update(state, dt, ctx) {
     c.t += dt * c.speed;
     const i = Math.floor(c.t);
     if (i >= c.path.length - 1) {                                  // доехала до ратуши — выручка
-      const reward = 6 + Math.floor(c.path.length * 0.4);
+      const reward = Math.round(c.cargo);
       state.gain({ gold: reward });
       ctx.float && ctx.float(state.townhall.cx, state.townhall.cz, '🐴 +' + reward + '🪙', '#ffd700');
       ctx.sfx && ctx.sfx('deposit');

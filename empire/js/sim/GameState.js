@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=94';
 import { Grid } from '../world/Grid.js?v=94';
 import { NodeField } from '../world/NodeField.js?v=101';
-import { BUILDINGS } from '../data/buildings.js?v=96';
+import { BUILDINGS } from '../data/buildings.js?v=97';
 import { UNITS } from '../data/units.js?v=94';
 import { RANKS } from '../data/ranks.js?v=94';
 import { buildScaffold } from '../engine/Placeholders.js?v=94';
@@ -214,6 +214,8 @@ export class GameState {
       trainQueue: [], trainLeft: 0,
       cx: c.wx, cz: c.wz, cy,
     };
+    if (def.roadPort) b.roadPortTile = { x: gx + def.roadPort.dx, y: gy + def.roadPort.dy };
+    if (def.railPort) b.railPortTile = { x: gx + def.railPort.dx, y: gy + def.railPort.dy };
     view.userData.entity = b;
     // «затоптанный» земляной патч под зданием — мягко вписывает постройку в траву (нет жёсткого стыка)
     if (!def.bridge && !def.onWater && !def.road) {
@@ -381,10 +383,14 @@ export class GameState {
 
   // ---- сейв ----
   serialize() {
+    const inTransitCargo = new Map();
+    for (const cart of this._carts || []) {
+      inTransitCargo.set(cart.fromId, (inTransitCargo.get(cart.fromId) || 0) + (cart.cargo || 0));
+    }
     return {
       v: 2, res: this.resources, happiness: this.happiness, rankIndex: this.rankIndex, day: this.day,
       faction: this.faction ? this.faction.key : 'goyda', mapKey: this.mapKey || 'les',
-      buildings: this.buildings.map(b => ({ kind: b.kind, gx: b.gx, gy: b.gy, built: b.built, hp: b.hp, rot: b.rot || 0 })),
+      buildings: this.buildings.map(b => ({ kind: b.kind, gx: b.gx, gy: b.gy, built: b.built, hp: b.hp, rot: b.rot || 0, pendingCargo: (b._pendingCargo || 0) + (inTransitCargo.get(b.id) || 0) })),
       nodes: this.nodes.map(n => ({ kind: n.kind, gx: n.gx, gy: n.gy, amount: n.amount })),
       units: this.units.filter(u => u.faction === 'ours').map(u => ({ kind: u.kind, x: u.x, z: u.z, hp: u.hp })),
     };

@@ -2,8 +2,8 @@
 import { UNITS } from '../data/units.js?v=94';
 import { RES_LABEL } from '../data/config.js?v=94';
 import { costStr } from './BuildMenu.js?v=94';
-import { roadPath } from '../sim/Transport.js?v=94';
-import { railPath } from '../sim/Railroad.js?v=94';
+import { roadPath } from '../sim/Transport.js?v=103';
+import { railPath } from '../sim/Railroad.js?v=103';
 
 function hpBar(hp, max) {
   const p = Math.max(0, Math.min(1, hp / max));
@@ -48,7 +48,7 @@ export class Selection {
       }
       if (sel.def.drop) html += `<div class="sel-tag">📦 точка сдачи</div>`;
       if (sel.def.produce) html += `<div class="sel-tag">${produceStr(sel.def.produce)}</div>`;
-      if (sel.kind === 'market') html += `<div class="sel-tag" id="sel-road"></div>`;   // связь дорогой с ратушей (телеги)
+      if (sel.kind === 'market' || sel.kind === 'traktir') html += `<div class="sel-tag" id="sel-road"></div>`;   // связь дорогой с ратушей (телеги) + накопленный груз
       if (sel.kind === 'station') html += `<div class="sel-tag" id="sel-rail"></div>`;  // связь рельсами с другой станцией
     } else if (sel.type === 'unit') {
       html += `<div class="sel-h">${sel.def.icon} ${sel.def.name}</div>`;
@@ -99,9 +99,11 @@ export class Selection {
     const hp = document.getElementById('sel-hp');
     const sub = document.getElementById('sel-sub');
     const road = document.getElementById('sel-road');
-    if (road && sel.kind === 'market') {   // BFS только по дорожным тайлам — дёшево на 10Гц UI
+    if (road && (sel.kind === 'market' || sel.kind === 'traktir')) {   // BFS только по дорожным тайлам — дёшево на 10Гц UI
       const ok = roadPath(this.game.state, sel, this.game.state.townhall);
-      road.textContent = ok ? '🐴 дорога к ПАЛАТАМ есть — телеги возят золото' : '🐴 нет дороги к ПАЛАТАМ — проложи 🛣️ для телег';
+      const stock = Math.round(sel._pendingCargo || 0);
+      const stockStr = stock > 0 ? ` (накоплено ${stock}🪙)` : '';
+      road.textContent = (ok ? '🐴 дорога к ПАЛАТАМ есть — телеги возят золото' : '🐴 нет дороги к ПАЛАТАМ — проложи 🛣️ для телег') + stockStr;
       road.style.color = ok ? '#9fef9f' : '#ffb35c';
     }
     const railEl = document.getElementById('sel-rail');

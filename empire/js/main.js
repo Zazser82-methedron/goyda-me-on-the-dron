@@ -15,8 +15,8 @@ import { BuildingActivity } from './world/BuildingActivity.js?v=102';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
 import { nearestAdj } from './world/Pathfinding.js?v=94';
 import { UnitRenderer } from './world/UnitRenderer.js?v=96';
-import { GameState } from './sim/GameState.js?v=104';
-import * as Economy from './sim/Economy.js?v=103';
+import { GameState } from './sim/GameState.js?v=105';
+import * as Economy from './sim/Economy.js?v=104';
 import * as BuildSys from './sim/Buildings.js?v=104';
 import * as Waves from './sim/Waves.js?v=97';
 import * as Tech from './sim/Tech.js?v=94';
@@ -34,20 +34,20 @@ import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=94';
 import { AmbientAudio } from './audio/Music.js?v=94';
 import { HUD } from './ui/HUD.js?v=95';
 import { BuildMenu } from './ui/BuildMenu.js?v=95';
-import { Selection } from './ui/Selection.js?v=95';
+import { Selection } from './ui/Selection.js?v=96';
 import { Minimap } from './ui/Minimap.js?v=94';
 import { ResearchPanel } from './ui/Research.js?v=94';
 import { Toasts } from './ui/Toasts.js?v=94';
 import { Leaderboard } from './ui/Leaderboard.js?v=94';
-import { BUILDINGS } from './data/buildings.js?v=96';
+import { BUILDINGS } from './data/buildings.js?v=97';
 import { RANKS } from './data/ranks.js?v=94';
 import { bark } from './data/barks.js?v=94';
 import { STORAGE_KEY } from './data/config.js?v=94';
 import { getFaction } from './data/factions.js?v=94';
 import { getMap, MAPS } from './data/maps.js?v=94';
 import { StartScreen } from './ui/StartScreen.js?v=102';
-import * as Transport from './sim/Transport.js?v=102';
-import * as Railroad from './sim/Railroad.js?v=102';
+import * as Transport from './sim/Transport.js?v=103';
+import * as Railroad from './sim/Railroad.js?v=103';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
@@ -623,6 +623,7 @@ class Game {
     for (const b of (s.buildings || [])) {
       const bb = this.state.addBuilding(b.kind, b.gx, b.gy, { built: b.built !== false, rotation: b.rot || 0 });
       if (b.hp) bb.hp = b.hp;
+      if (b.pendingCargo) bb._pendingCargo = b.pendingCargo;
     }
     for (const u of (s.units || [])) { const uu = this.state.addUnit(u.kind, u.x, u.z, {}); if (u.hp) uu.hp = u.hp; }
     this.state.recomputePop();

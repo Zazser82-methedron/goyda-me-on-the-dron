@@ -62,17 +62,22 @@ function onDay(state, ctx) {
   if (state.resources.food < 0) { starve = true; state.resources.food = 0; }
 
   // РЫНОК: торговля излишками — что копится сверх 85% склада, продаём за золото (экономический смысл рынка)
-  const markets = built.filter(b => b.kind === 'market' || b.kind === 'traktir').length;
-  if (markets > 0) {
+  const markets = built.filter(b => b.kind === 'market' || b.kind === 'traktir');
+  if (markets.length > 0) {
     const rate = { wood: 0.25, stone: 0.3, iron: 0.6, gems: 1.2 };
     let earned = 0;
     for (const k in rate) {
       const overflow = (state.resources[k] || 0) - (state.cap[k] || 400) * 0.85;
-      if (overflow > 0) { const sell = Math.min(overflow, 20 * markets); state.resources[k] -= sell; earned += sell * rate[k]; }
+      if (overflow > 0) {
+        const sell = Math.min(overflow, 20 * markets.length);
+        state.resources[k] -= sell;
+        earned += sell * rate[k];
+      }
     }
     if (earned > 0) {
-      state.gain({ gold: Math.round(earned) });
-      if (earned > 10 && Math.random() < 0.4) ctx.toast && ctx.toast('🛒 Рынок сбыл излишки: +' + Math.round(earned) + '🪙', { gold: true });
+      const earnedPerMarket = earned / markets.length;
+      for (const market of markets) market._pendingCargo = (market._pendingCargo || 0) + earnedPerMarket;
+      if (earned > 10 && Math.random() < 0.4) ctx.toast && ctx.toast('🛒 Рынок подготовил выручку: +' + Math.round(earned) + '🪙', { gold: true });
     }
   }
 

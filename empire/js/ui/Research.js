@@ -1,6 +1,6 @@
 // ===== Панель исследований (древо технологий) =====
 import { TECHS, TECH_ORDER } from '../data/tech.js?v=94';
-import { BUILDINGS } from '../data/buildings.js?v=96';
+import { BUILDINGS } from '../data/buildings.js?v=97';
 import { costStr } from './BuildMenu.js?v=94';
 
 export class ResearchPanel {
