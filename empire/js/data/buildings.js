@@ -167,13 +167,13 @@ export const BUILDINGS = {
   ferma: {
     kind: 'ferma', name: 'ФЕРМА', icon: '🌻', model: 'bld_ferma',
     w: 2, h: 2, hp: 150, cat: 'econ', rank: 0,
-    cost: { wood: 25 }, build: 4, produce: { food: 10, happy: 1 }, wearRate: 0.50,
+    cost: { wood: 25 }, build: 4, produce: { food: 10, happy: 1 }, workSlots: 2, wearRate: 0.50,
     desc: 'Поля и грядки. +10 ЕДЫ в день — кормит растущий народ.',
   },
   rudnik: {
     kind: 'rudnik', name: 'РУДНИК', icon: '⛏️', model: 'bld_rudnik',
     w: 2, h: 2, hp: 220, cat: 'econ', rank: 1,
-    cost: { wood: 30, stone: 25 }, build: 6, produce: { iron: 4 }, wearRate: 0.75,
+    cost: { wood: 30, stone: 25 }, build: 6, produce: { iron: 4 }, workSlots: 2, wearRate: 0.75,
     desc: 'Добывает ЖЕЛЕЗО ⛓️ — нужно для БОГАТЫРЕЙ и тяжёлой брони.',
     upgrades: {
       a: { key: 'a', name: 'Глубокий', icon: '⛏️', desc: '+3 железа/день, но износ +0.8/день', cost: { wood: 35, stone: 25 }, workers: 2, time: 9, effects: { produce: { iron: 3 }, wearRateDelta: 0.8 } },
@@ -183,7 +183,7 @@ export const BUILDINGS = {
   zhila: {
     kind: 'zhila', name: 'САМОЦВЕТНАЯ ЖИЛА', icon: '💎', model: 'bld_zhila',
     w: 2, h: 2, hp: 240, cat: 'econ', rank: 2,
-    cost: { wood: 30, stone: 40, gold: 20 }, build: 7, produce: { gems: 2 }, wearRate: 0.65,
+    cost: { wood: 30, stone: 40, gold: 20 }, build: 7, produce: { gems: 2 }, workSlots: 2, wearRate: 0.65,
     desc: 'Гранит самоцветы 💎 — топливо для мощных идолов и чуда.',
   },
   // ===== ЭПОХА II «Уездная держава» (era:1) — додумано по мотивам PHASE2_DESIGN_SPEC.md §1 =====

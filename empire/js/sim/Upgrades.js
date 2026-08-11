@@ -10,7 +10,7 @@ const RESET_COST = { gold: 20 };   // спека не даёт числа для
 const RESETS_PER_ERA = 1;
 
 function idleWorkers(state, n) {
-  const list = state.workers().filter(u => !u.buildSite && !u.repairSite && !u.upgradeSite);
+  const list = state.workers().filter(u => !u.buildSite && !u.repairSite && !u.workSite && !u.upgradeSite);
   return list.length >= n ? list.slice(0, n) : null;
 }
 

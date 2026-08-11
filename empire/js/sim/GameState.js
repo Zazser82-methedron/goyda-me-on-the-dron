@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=94';
 import { Grid } from '../world/Grid.js?v=94';
 import { NodeField } from '../world/NodeField.js?v=101';
-import { BUILDINGS } from '../data/buildings.js?v=97';
+import { BUILDINGS } from '../data/buildings.js?v=98';
 import { UNITS } from '../data/units.js?v=94';
 import { RANKS } from '../data/ranks.js?v=94';
 import { buildScaffold } from '../engine/Placeholders.js?v=94';
@@ -281,6 +281,15 @@ export class GameState {
   }
 
   removeBuilding(b) {
+    // Освободить всех, чьи постоянные/временные назначения указывали на сносимое здание.
+    for (const u of this.units) {
+      if (u.buildSite === b.id) u.buildSite = null;
+      if (u.repairSite === b.id) u.repairSite = null;
+      if (u.workSite === b.id) {
+        u.workSite = null;
+        if (u.state === 'working' || u.state === 'toWork') { u.state = 'idle'; u.path = null; u.manualIdle = true; }
+      }
+    }
     this.scene.remove(b.view);
     if (b._ring) this.scene.remove(b._ring);
     if (b._dirt) this.scene.remove(b._dirt);
@@ -326,6 +335,7 @@ export class GameState {
 
   removeUnit(u) {
     // инстанс просто перестанет писаться в UnitRenderer со следующего кадра — убирать явно нечего
+    u.buildSite = null; u.repairSite = null; u.workSite = null;
     this.units = this.units.filter(x => x !== u);
     this._byId.delete(u.id);
     if (this.selected === u) this.selected = null;
@@ -336,6 +346,7 @@ export class GameState {
   // через fx-запись unit-death — она несёт достаточно данных (модель/id/тинт/позиция), чтобы UnitRenderer
   // мог продолжать писать этот инстанс ещё 0.5с, хотя юнита уже нет в state.units.
   killUnit(u) {
+    u.buildSite = null; u.repairSite = null; u.workSite = null;
     this.units = this.units.filter(x => x !== u);
     this._byId.delete(u.id);
     if (this.selected === u) this.selected = null;

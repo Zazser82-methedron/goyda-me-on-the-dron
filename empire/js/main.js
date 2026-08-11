@@ -15,9 +15,9 @@ import { BuildingActivity } from './world/BuildingActivity.js?v=102';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
 import { nearestAdj } from './world/Pathfinding.js?v=94';
 import { UnitRenderer } from './world/UnitRenderer.js?v=96';
-import { GameState } from './sim/GameState.js?v=105';
-import * as Economy from './sim/Economy.js?v=104';
-import * as BuildSys from './sim/Buildings.js?v=104';
+import { GameState } from './sim/GameState.js?v=106';
+import * as Economy from './sim/Economy.js?v=105';
+import * as BuildSys from './sim/Buildings.js?v=105';
 import * as Waves from './sim/Waves.js?v=97';
 import * as Tech from './sim/Tech.js?v=94';
 import * as Nature from './sim/Nature.js?v=94';
@@ -34,12 +34,12 @@ import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=94';
 import { AmbientAudio } from './audio/Music.js?v=94';
 import { HUD } from './ui/HUD.js?v=95';
 import { BuildMenu } from './ui/BuildMenu.js?v=95';
-import { Selection } from './ui/Selection.js?v=96';
+import { Selection } from './ui/Selection.js?v=97';
 import { Minimap } from './ui/Minimap.js?v=94';
 import { ResearchPanel } from './ui/Research.js?v=94';
 import { Toasts } from './ui/Toasts.js?v=94';
 import { Leaderboard } from './ui/Leaderboard.js?v=94';
-import { BUILDINGS } from './data/buildings.js?v=97';
+import { BUILDINGS } from './data/buildings.js?v=98';
 import { RANKS } from './data/ranks.js?v=94';
 import { bark } from './data/barks.js?v=94';
 import { STORAGE_KEY } from './data/config.js?v=94';
@@ -817,14 +817,25 @@ class Game {
     const ent = this._entUnder(cx, cy);
     // рубить ресурс (для добытчика)
     if (ent && ent.type === 'node' && sel.def.worker) {
-      sel.huntId = null; sel.job = ent.id; sel.jobType = ent.resType; sel.manualIdle = false; sel.moveOrder = null; sel.path = null; sel.state = 'toNode';
+      sel.huntId = null; sel.workSite = null; sel.job = ent.id; sel.jobType = ent.resType; sel.manualIdle = false; sel.moveOrder = null; sel.path = null; sel.state = 'toNode';
       sfx('click'); this.float(sel.x, sel.z, 'Иду рубить!', '#9effd0', 1.4);
       { const w = this.state.grid.gridToWorld(ent.gx, ent.gy); this.orderRipple(w.wx, w.wz, 0x9effd0); } return;
+    }
+    // постоянная работа на добывающем здании (слот резервируется ещё пока холоп идёт)
+    if (ent && ent.type === 'building' && sel.def.worker && ent.built && !ent.ruined && ent.def.workSlots) {
+      const assigned = this.state.units.reduce((n, u) => n + (u.id !== sel.id && u.faction === 'ours' && u.def.worker && u.workSite === ent.id ? 1 : 0), 0);
+      if (assigned >= ent.def.workSlots) {
+        this.toast('Все рабочие места заняты', { bad: true });
+        return;
+      }
+      sel.huntId = null; sel.buildSite = null; sel.workSite = ent.id; sel.job = null; sel.manualIdle = true; sel.moveOrder = null; sel.path = null; sel.state = sel.carry > 0 ? 'toDrop' : 'toWork';
+      sfx('click'); this.float(sel.x, sel.z, 'На работу: ' + ent.def.icon, '#9effd0', 1.4);
+      this.orderRipple(ent.cx, ent.cz, 0x9effd0); return;
     }
     // охота на зверя (любой свой юнит)
     if (ent && ent.type === 'animal') {
       sel.huntId = ent.id; sel.moveOrder = null; sel.path = null; sel._huntTx = null;
-      if (sel.def.worker) { sel.job = null; sel.manualIdle = true; }
+      if (sel.def.worker) { sel.workSite = null; sel.job = null; sel.manualIdle = true; }
       sfx('click'); this.float(sel.x, sel.z, 'На охоту! ' + ent.def.icon, '#ffe08a', 1.4);
       this.orderRipple(ent.x, ent.z, 0xffe08a); return;
     }
@@ -845,7 +856,7 @@ class Game {
     const t = this.picker.tileUnder(this.camera, this.state.grid);
     if (t) {
       sel.huntId = null; sel.moveOrder = { x: t.x, y: t.y }; sel.path = null;
-      if (sel.def.worker) { sel.job = null; sel.manualIdle = true; }
+      if (sel.def.worker) { sel.workSite = null; sel.job = null; sel.manualIdle = true; }
       sfx('click'); this.float(sel.x, sel.z, 'Идём!', '#9effd0', 1.4);
       { const w = this.state.grid.gridToWorld(t.x, t.y); this.orderRipple(w.wx, w.wz, 0x9effd0); }
     }

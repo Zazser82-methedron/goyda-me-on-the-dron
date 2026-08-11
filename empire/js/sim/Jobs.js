@@ -20,9 +20,28 @@ export function updateWorker(state, u, dt, ctx) {
     if (u.moveOrder) return;
   }
   // ручной простой: ХОЛОП стоит, пока не прикажут рубить (ПКМ по ноде)
-  if (u.manualIdle && !u.job && u.carry === 0) { u.state = 'idle'; u.path = null; return; }
+  if (u.manualIdle && !u.workSite && !u.job && u.carry === 0) { u.state = 'idle'; u.path = null; return; }
 
   if (u.carry >= u.def.carry) u.state = 'toDrop';
+
+  // ── ПОСТОЯННАЯ РАБОТА: назначенный холоп идёт к добывающему зданию и остаётся там ──
+  let workSite = u.workSite != null ? state.byId(u.workSite) : null;
+  if (!workSite || !workSite.built || workSite.type !== 'building' || !workSite.def.workSlots || workSite.ruined) {
+    const wasStationed = u.workSite != null;
+    u.workSite = null; workSite = null;
+    if (wasStationed && u.manualIdle && !u.job && u.carry === 0) { u.state = 'idle'; u.path = null; return; }
+  }
+  if (workSite && u.carry === 0) {
+    if (adjacentTo(state, u, workSite)) {
+      u.state = 'working'; u.path = null;
+      u.dir = Math.atan2(workSite.cx - u.x, workSite.cz - u.z);
+      return;
+    }
+    u.state = 'toWork';
+    if (!u.path) setPathToBuilding(state, u, workSite);
+    if (moveStep(state, u, dt) === 'noPath') { u.path = null; u.workSite = null; u.manualIdle = true; }
+    return;
+  }
 
   // ── СТРОЙКА: недостроенные здания требуют строителей (приоритет над добычей) ──
   if (u.carry === 0) {

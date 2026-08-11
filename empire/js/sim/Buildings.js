@@ -1,5 +1,5 @@
 // ===== Постройка, стройка-прогресс и тренировка юнитов =====
-import { BUILDINGS } from '../data/buildings.js?v=97';
+import { BUILDINGS } from '../data/buildings.js?v=98';
 import { UNITS } from '../data/units.js?v=94';
 import { RANKS } from '../data/ranks.js?v=94';
 import { nearestAdj } from '../world/Pathfinding.js?v=94';
@@ -7,7 +7,7 @@ import { bark } from '../data/barks.js?v=94';
 import { edictMods } from './Edicts.js?v=94';
 import { apply as applyWear, repairQuote, ruinQuote } from './Wear.js?v=1';
 import * as Eras from './Eras.js?v=1';
-import * as Upgrades from './Upgrades.js?v=1';
+import * as Upgrades from './Upgrades.js?v=2';
 
 function trainTime(state, kind, b) {
   const base = UNITS[kind].trainTime;
@@ -29,16 +29,29 @@ export function update(state, dt, ctx) {
   Eras.update(state, dt, ctx);
   Upgrades.update(state, dt, ctx);
   updateRepairs(state, dt, ctx);
-  // пересчёт строителей на площадках (каждый тик со свежих данных — без дрейфа счётчиков)
-  let anySite = false;
-  for (const b of state.buildings) { if (!b.built) { anySite = true; b._builderN = 0; b._activeBuilders = 0; } }
-  if (anySite) {
+  // Пересчёт строителей и постоянных работников со свежих данных раз за тик — без дрейфа счётчиков.
+  let anySite = false, anyWorkSite = false;
+  for (const b of state.buildings) {
+    if (!b.built) { anySite = true; b._builderN = 0; b._activeBuilders = 0; }
+    else if (b.def.workSlots) { anyWorkSite = true; b._workerN = 0; b._activeWorkers = 0; }
+  }
+  if (anySite || anyWorkSite) {
     for (const u of state.units) {
-      if (u.faction !== 'ours' || !u.def.worker || u.buildSite == null) continue;
-      const site = state.byId(u.buildSite);
-      if (!site || site.built) continue;
-      site._builderN++;
-      if (u.state === 'build') site._activeBuilders++;
+      if (u.faction !== 'ours' || !u.def.worker) continue;
+      if (u.buildSite != null) {
+        const site = state.byId(u.buildSite);
+        if (site && !site.built) {
+          site._builderN++;
+          if (u.state === 'build') site._activeBuilders++;
+        }
+      }
+      if (u.workSite != null) {
+        const site = state.byId(u.workSite);
+        if (site && site.built && site.def.workSlots) {
+          site._workerN++;
+          if (u.state === 'working') site._activeWorkers++;
+        }
+      }
     }
   }
   for (const b of state.buildings) {
@@ -104,7 +117,7 @@ export function startRepair(state, b, ctx) {
   if (!b || !b.built || b.repairLeft) return { ok: false, reason: 'ремонт недоступен' };
   applyWear(state, b);
   if (b.wear >= 100) return { ok: false, reason: 'износ не требуется' };
-  const worker = state.workers().find(u => !u.buildSite && !u.repairSite);
+  const worker = state.workers().find(u => !u.buildSite && !u.repairSite && !u.workSite);
   if (!worker) return { ok: false, reason: 'нужен свободный рабочий' };
   const quote = b.ruined ? ruinQuote(b) : repairQuote(b);
   if (!state.canAfford(quote.cost)) return { ok: false, reason: 'мало ресурсов', quote };

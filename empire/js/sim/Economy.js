@@ -27,7 +27,14 @@ function onDay(state, ctx) {
   let happyMod = 0;
   for (const b of built) {
     const p = b.def.produce; if (!p) continue;
-    const mul = Wear.productionMul(b); if (!mul) continue;
+    let mul = Wear.productionMul(b); if (!mul) continue;
+    if (b.def.workSlots) {
+      const slots = b.def.workSlots;
+      const n = Math.min(b._activeWorkers || 0, slots);
+      // Без холопов остаётся лишь 15% отдачи; первый даёт половину, полный штат — 100%.
+      const workMul = n <= 0 ? 0.15 : (slots === 1 ? 1 : 0.5 + (n - 1) * 0.5 / (slots - 1));
+      mul *= workMul;
+    }
     // Stagger the visible production beat so a large settlement feels alive
     // instead of every workshop pulsing on exactly the same frame.
     const visibleKey = Object.keys(p).find(k => k !== 'happy' && p[k] > 0);
