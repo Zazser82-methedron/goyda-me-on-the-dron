@@ -246,6 +246,7 @@ export class GameState {
         new THREE.MeshBasicMaterial({ color: rc, transparent: true, opacity: 0.18, side: THREE.DoubleSide, depthWrite: false })
       );
       rg.rotation.x = -Math.PI / 2; rg.position.set(c.wx, cy + 0.08, c.wz);
+      rg.visible = false;   // видно только при выборе постройки — переключает ui/Selection.js
       this.scene.add(rg); b._ring = rg;
     }
     Tiling.onPlaced(this, b);                       // авто-соединение: стены/дороги + обновить соседей

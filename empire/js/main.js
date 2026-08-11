@@ -15,7 +15,7 @@ import { BuildingActivity } from './world/BuildingActivity.js?v=102';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
 import { nearestAdj } from './world/Pathfinding.js?v=94';
 import { UnitRenderer } from './world/UnitRenderer.js?v=96';
-import { GameState } from './sim/GameState.js?v=103';
+import { GameState } from './sim/GameState.js?v=104';
 import * as Economy from './sim/Economy.js?v=103';
 import * as BuildSys from './sim/Buildings.js?v=104';
 import * as Waves from './sim/Waves.js?v=97';
@@ -34,7 +34,7 @@ import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=94';
 import { AmbientAudio } from './audio/Music.js?v=94';
 import { HUD } from './ui/HUD.js?v=95';
 import { BuildMenu } from './ui/BuildMenu.js?v=95';
-import { Selection } from './ui/Selection.js?v=94';
+import { Selection } from './ui/Selection.js?v=95';
 import { Minimap } from './ui/Minimap.js?v=94';
 import { ResearchPanel } from './ui/Research.js?v=94';
 import { Toasts } from './ui/Toasts.js?v=94';

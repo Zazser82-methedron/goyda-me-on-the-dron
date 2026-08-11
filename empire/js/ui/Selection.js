@@ -12,10 +12,21 @@ function hpBar(hp, max) {
 }
 
 export class Selection {
-  constructor(game) { this.game = game; this.el = document.getElementById('selection'); this.curId = null; }
+  constructor(game) { this.game = game; this.el = document.getElementById('selection'); this.curId = null; this._ringOn = null; }
+
+  // радиус ауры (b._ring, GameState.placeBuilding) виден ТОЛЬКО пока постройка выбрана —
+  // раньше кольцо добавлялось в сцену насовсем и никогда не скрывалось (жалоба: «много
+  // радиусов загромождают экран»). Переключаем visible на уже существующем меше, без
+  // create/destroy geometry — дёшево, ноль аллокаций на клик.
+  _syncRing(sel) {
+    if (this._ringOn && this._ringOn !== (sel && sel._ring)) this._ringOn.visible = false;
+    this._ringOn = (sel && sel.type === 'building' && sel._ring) || null;
+    if (this._ringOn) this._ringOn.visible = true;
+  }
 
   update() {
     const sel = this.game.state.selected;
+    this._syncRing(sel);
     if (!sel) { if (this.curId !== null) { this.el.style.display = 'none'; this.curId = null; } return; }
     if (sel.id !== this.curId) { this._full(sel); this.curId = sel.id; this.el.style.display = 'block'; }
     this._dynamic(sel);
