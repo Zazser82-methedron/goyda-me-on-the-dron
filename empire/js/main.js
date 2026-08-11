@@ -7,7 +7,7 @@ import { Picker } from './engine/Picker.js?v=94';
 import { Loop } from './engine/Loop.js?v=98';
 import { AssetManager } from './engine/AssetManager.js?v=99';
 import { TerrainMesh } from './world/TerrainMesh.js?v=94';
-import { WorldBase } from './world/WorldBase.js?v=94';
+import { WorldBase } from './world/WorldBase.js?v=100';
 import { Sky } from './world/Sky.js?v=94';
 import { Atmosphere } from './world/Atmosphere.js?v=94';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
@@ -503,7 +503,17 @@ class Game {
         detail.position.set(x, this.state.grid.heightAt(x, z), z);
         detail.rotation.y = turn + i * Math.PI * 0.5;
         detail.scale.setScalar(scale);
-        detail.traverse(o => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = false; } });
+        detail.userData.homeDetail = {
+          name, phase: i * 1.73 + Math.random() * 0.5,
+          y: detail.position.y, turn: detail.rotation.y, scale: detail.scale.clone(),
+        };
+        detail.traverse(o => {
+          if (!o.isMesh) return;
+          o.castShadow = false; o.receiveShadow = false;
+          o.userData.baseScale = o.scale.clone();
+          o.userData.baseY = o.position.y;
+          if (o.material && o.material.emissive) o.userData.baseEmissive = o.material.emissiveIntensity || 0;
+        });
         group.add(detail);
       });
     };
@@ -512,6 +522,35 @@ class Game {
     place('env_watchfire', [[-2.3, 4.4], [2.3, -4.4]], 0.88, 0.3);
     if (!group.children.length) return;
     group.name = 'dron_home_details'; this.scene.add(group); this._homeDetails = group;
+  }
+
+  _animateHomeDetails(now) {
+    if (!this._homeDetails) return;
+    for (const detail of this._homeDetails.children) {
+      const d = detail.userData.homeDetail;
+      if (!d) continue;
+      const wave = Math.sin(now * 0.0018 + d.phase);
+      if (d.name === 'env_waystone') {
+        detail.position.y = d.y + wave * 0.035;
+        detail.rotation.y = d.turn + now * 0.00022 + wave * 0.025;
+        const p = 1 + Math.sin(now * 0.004 + d.phase) * 0.025;
+        detail.scale.copy(d.scale).multiplyScalar(p);
+      } else if (d.name === 'env_banner') {
+        detail.rotation.y = d.turn + wave * 0.055;
+        detail.position.y = d.y + Math.abs(wave) * 0.012;
+      } else if (d.name === 'env_watchfire') {
+        detail.position.y = d.y + wave * 0.012;
+        detail.traverse(o => {
+          if (!o.isMesh || !o.userData.baseScale) return;
+          if (/flame|coal/i.test(o.name)) {
+            const p = 0.88 + Math.sin(now * 0.012 + d.phase + o.id) * 0.16;
+            o.scale.copy(o.userData.baseScale); o.scale.y *= p;
+            o.position.y = o.userData.baseY + (p - 1) * 0.12;
+            if (o.material && o.material.emissive) o.material.emissiveIntensity = Math.max(0.8, (o.userData.baseEmissive || 1) * (0.8 + p * 0.65));
+          }
+        });
+      }
+    }
   }
 
   initMap(map) {
@@ -1385,6 +1424,7 @@ class Game {
         const sc = 1 + Math.sin(now * 0.004 + b.cz) * 0.02; b._ring.scale.set(sc, sc, 1);
       }
     }
+    this._animateHomeDetails(now);
     // ретровейв-солнце смотрит на камеру + лёгкий пульс
     if (this._neon) {
       this._neon.sun.quaternion.copy(this.camera.quaternion);

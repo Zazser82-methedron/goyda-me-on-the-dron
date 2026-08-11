@@ -108,6 +108,7 @@ export class WorldBase {
     tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
     tex.repeat.set(10, 1); tex.magFilter = THREE.LinearFilter;
     this._fallTex = tex;
+    this._fallTextures = [{ tex, speed: 0.70 }];
 
     const H = ww * 0.2;   // короткий каскад, не на всю высоту
     const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, side: THREE.DoubleSide, opacity: 0.5, fog: false });
@@ -125,28 +126,76 @@ export class WorldBase {
     const mg = mx.createRadialGradient(16, 18, 1, 16, 18, 16); mg.addColorStop(0, 'rgba(255,255,255,0.75)'); mg.addColorStop(1, 'rgba(255,255,255,0)');
     mx.fillStyle = mg; mx.fillRect(0, 0, 32, 32);
     const mistTex = new THREE.CanvasTexture(mistCv);
-    this._mist = []; this._t = 0;
+    this._mist = []; this._falls = []; this._crests = []; this._splash = []; this._t = 0;
     for (const e of edges) {
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(ww, H), mat);
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(ww, H), mat.clone());
       m.position.set(e.x, yC, e.z); m.rotation.y = e.ry; m.renderOrder = 8; this.group.add(m);
+      this._falls.push({ m, y: yC, op: 0.5, phase: Math.random() * 6.28 });
+      // Два внутренних слоя струй создают глубину и бегут иначе, чем внешний.
+      const nx = Math.sin(e.ry), nz = Math.cos(e.ry);
+      for (let layer = 1; layer <= 2; layer++) {
+        const flow = tex.clone(); flow.needsUpdate = true;
+        flow.repeat.set(8 + layer * 2, 1);
+        this._fallTextures.push({ tex: flow, speed: 0.70 + layer * 0.30 });
+        const flowMat = new THREE.MeshBasicMaterial({ map: flow, transparent: true, depthWrite: false, side: THREE.DoubleSide, opacity: 0.32 - layer * 0.07, fog: false });
+        const flowMesh = new THREE.Mesh(new THREE.PlaneGeometry(ww * (1 - layer * 0.07), H * (1 - layer * 0.055)), flowMat);
+        const offset = layer * 0.07;
+        flowMesh.position.set(e.x + nx * offset, yC - layer * 0.04, e.z + nz * offset);
+        flowMesh.rotation.y = e.ry; flowMesh.renderOrder = 8 + layer; this.group.add(flowMesh);
+        this._falls.push({ m: flowMesh, y: flowMesh.position.y, op: flowMat.opacity, phase: Math.random() * 6.28 });
+      }
       // пенный гребень по кромке
-      const foam = new THREE.Mesh(new THREE.BoxGeometry(ww, 0.22, 0.45), foamMat);
+      const foam = new THREE.Mesh(new THREE.BoxGeometry(ww, 0.22, 0.45), foamMat.clone());
       foam.position.set(e.x, yTop, e.z); foam.rotation.y = e.ry; this.group.add(foam);
+      this._crests.push({ m: foam, op: foamMat.opacity, phase: Math.random() * 6.28 });
       // ряд мягких клубов брызг у основания
       const along = Math.abs(e.ry) > 1.0;   // ±PI/2 → кромка вдоль оси Z
       for (let k = 0; k < 7; k++) {
         const f = (k / 6 - 0.5) * ww * 0.86;
         const mm = new THREE.SpriteMaterial({ map: mistTex, transparent: true, depthWrite: false, opacity: 0.25, fog: false });
         const sp = new THREE.Sprite(mm); sp.scale.set(ww * 0.11, H * 0.55, 1);
-        sp.position.set(along ? e.x : f, yC - H * 0.42, along ? f : e.z); sp.renderOrder = 9;
-        this.group.add(sp); this._mist.push({ sp, ph: Math.random() * 6.28 });
+        const bx = along ? e.x + nx * 0.22 : f, bz = along ? f : e.z + nz * 0.22;
+        sp.position.set(bx, yC - H * 0.42, bz); sp.renderOrder = 12;
+        this.group.add(sp); this._mist.push({ sp, ph: Math.random() * 6.28, y: sp.position.y, x: bx, z: bz });
+      }
+      // Крупная пена у подножия: хорошо читается даже с тактического ракурса.
+      for (let k = 0; k < 3; k++) {
+        const splashMat = new THREE.SpriteMaterial({ map: mistTex, transparent: true, depthWrite: false, opacity: 0.28, fog: false });
+        const sp = new THREE.Sprite(splashMat);
+        const f = (k / 2 - 0.5) * ww * 0.56;
+        const bx = along ? e.x + nx * 0.42 : f, bz = along ? f : e.z + nz * 0.42;
+        sp.scale.set(ww * 0.24, H * 0.22, 1); sp.position.set(bx, yTop - H + 0.2, bz); sp.renderOrder = 13;
+        this.group.add(sp); this._splash.push({ sp, ph: Math.random() * 6.28, y: sp.position.y, x: bx, z: bz, nx, nz, sx: sp.scale.x, sy: sp.scale.y });
       }
     }
   }
 
   update(dt) {
-    if (this._fallTex) { this._fallTex.offset.y -= dt * 0.7; if (this._fallTex.offset.y < -10) this._fallTex.offset.y += 10; }
+    this._t += dt;
+    if (this._fallTextures) for (const flow of this._fallTextures) {
+      flow.tex.offset.y -= dt * flow.speed;
+      if (flow.tex.offset.y < -10) flow.tex.offset.y += 10;
+    }
+    if (this._falls) for (const fall of this._falls) {
+      fall.m.position.y = fall.y + Math.sin(this._t * 2.1 + fall.phase) * 0.025;
+      fall.m.material.opacity = fall.op + Math.sin(this._t * 1.7 + fall.phase) * 0.045;
+    }
+    if (this._crests) for (const crest of this._crests) {
+      const p = 0.90 + Math.sin(this._t * 2.8 + crest.phase) * 0.10;
+      crest.m.scale.z = p;
+      crest.m.material.opacity = crest.op + Math.sin(this._t * 2.5 + crest.phase) * 0.10;
+    }
     if (this._oceanN) { this._oceanN.offset.x += dt * 0.01; this._oceanN.offset.y += dt * 0.014; }
-    if (this._mist) { this._t += dt; for (const m of this._mist) m.sp.material.opacity = 0.14 + Math.abs(Math.sin(this._t * 0.8 + m.ph)) * 0.22; }
+    if (this._mist) for (const m of this._mist) {
+      const p = Math.sin(this._t * 0.8 + m.ph);
+      m.sp.material.opacity = 0.12 + Math.abs(p) * 0.25;
+      m.sp.position.set(m.x, m.y + p * 0.14, m.z);
+    }
+    if (this._splash) for (const splash of this._splash) {
+      const p = Math.sin(this._t * 2.3 + splash.ph);
+      splash.sp.material.opacity = 0.20 + Math.abs(p) * 0.27;
+      splash.sp.position.set(splash.x + splash.nx * p * 0.13, splash.y + p * 0.08, splash.z + splash.nz * p * 0.13);
+      const q = 0.88 + Math.abs(p) * 0.24; splash.sp.scale.set(splash.sx * q, splash.sy * q, 1);
+    }
   }
 }
