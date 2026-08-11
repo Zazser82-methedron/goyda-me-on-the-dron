@@ -2,6 +2,11 @@
 // cost: ресурсы; build: секунды стройки; rank: с какого ранга открыто.
 // produce: пассив в день; pop: прирост лимита населения; drop: точка сдачи ресурсов.
 // trains: каких юнитов можно тренировать. cat: категория для меню.
+// era: с какой эпохи доступно (0/1/2 — Eras.js, ключ ТОГО ЖЕ стиля что rank; отсутствие поля = 0,
+//   гейт в Buildings.placeBuilding «(def.era||0) > state.era»; BuildMenu.js фильтрацию по era ещё не
+//   читает — см. STATE.md/отчёт задачи, нужна 1 строка там).
+// upgrades: { a:{...}, b:{...} } — 2 ветки модернизации (Upgrades.js), выбор навсегда (с одним дешёвым
+//   откатом за эпоху). Каждая ветка: name/icon/desc/cost/workers/time/effects — см. sim/Upgrades.js.
 
 export const BUILDINGS = {
   townhall: {
@@ -16,6 +21,10 @@ export const BUILDINGS = {
     w: 1, h: 1, hp: 90, cat: 'econ', rank: 0,
     cost: { wood: 20 }, build: 3, pop: 4, produce: { happy: 1 }, wearRate: 0.45,
     desc: 'Жильё. +4 к лимиту населения. Без изб народ не плодится.',
+    upgrades: {
+      a: { key: 'a', name: 'Общинная', icon: '🏘️', desc: '+3 к лимиту населения', cost: { wood: 20, stone: 10 }, workers: 1, time: 5, effects: { pop: 3 } },
+      b: { key: 'b', name: 'Доходная', icon: '🪙', desc: '+1 золота/день, −1 счастья/день', cost: { wood: 15, gold: 10 }, workers: 1, time: 5, effects: { produce: { gold: 1, happy: -1 } } },
+    },
   },
   izba_plotnika: {
     kind: 'izba_plotnika', name: 'ИЗБА ПЛОТНИКА', icon: '🪚', model: 'bld_izba',
@@ -29,6 +38,10 @@ export const BUILDINGS = {
     w: 2, h: 2, hp: 160, cat: 'econ', rank: 0, drop: true,
     cost: { wood: 30, stone: 10 }, build: 5, produce: { food: 7 }, wearRate: 0.35,
     desc: 'Делянка и закрома. +7 ЕДЫ в день. Голод роняет счастье.',
+    upgrades: {
+      a: { key: 'a', name: 'Резерв', icon: '🗄️', desc: '+80 к лимиту склада еды', cost: { wood: 25, stone: 15 }, workers: 1, time: 6, effects: { cap: { food: 80 } } },
+      b: { key: 'b', name: 'Сухпай', icon: '🥖', desc: '+4 еды/день', cost: { wood: 30 }, workers: 1, time: 6, effects: { produce: { food: 4 } } },
+    },
   },
   roshcha: {
     kind: 'roshcha', name: 'ЛЕСОПОСАДКА', icon: '🌱', model: 'bld_roshcha',
@@ -47,12 +60,24 @@ export const BUILDINGS = {
     w: 2, h: 2, hp: 260, cat: 'mil', rank: 1,
     cost: { wood: 40, stone: 30 }, build: 7, trains: ['ratnik', 'luchnik', 'oprichnik', 'bogatyr', 'voevoda'], wearRate: 0.45,
     desc: 'Куёт воинов: РАТНИКИ, ОПРИЧНИКИ (с кузницей) и БОГАТЫРИ (на железе).',
+    upgrades: {
+      a: { key: 'a', name: 'Дриль', icon: '🥁', desc: '−25% времени обучения воинов', cost: { wood: 30, stone: 20, gold: 20 }, workers: 2, time: 8, effects: { trainTimeMul: 0.75 } },
+      b: { key: 'b', name: 'Кладовая', icon: '💰', desc: '−15% цены воинов', cost: { wood: 35, stone: 15, gold: 20 }, workers: 2, time: 8, effects: { trainCostMul: 0.85 } },
+    },
   },
   chastokol: {
     kind: 'chastokol', name: 'ЧАСТОКОЛ', icon: '🪵', model: 'bld_chastokol',
     w: 1, h: 1, hp: 220, cat: 'def', rank: 1, wall: true,
     cost: { wood: 6 }, build: 1, wearRate: 0.70,
     desc: 'Стена. Блокирует набег. Ставь линией ПКМ-таскать перед волной.',
+    upgrades: {
+      a: { key: 'a', name: 'Острог', icon: '🧱', desc: '+100 HP', cost: { wood: 8, stone: 4 }, workers: 1, time: 3, effects: { hp: 100 } },
+      b: {
+        key: 'b', name: 'Шипы', icon: '🌵', desc: '4 урона/с врагам вплотную (не только ближний бой — упрощение)',
+        cost: { wood: 10, stone: 2 }, workers: 1, time: 3,
+        effects: { auraAdd: { radius: 1.5, tick: 1.0, effect: 'aoe', power: 4 } },
+      },
+    },
   },
   gate: {
     kind: 'gate', name: 'ВОРОТА', icon: '🚪', model: 'bld_chastokol_gate',
@@ -126,6 +151,13 @@ export const BUILDINGS = {
     cost: { wood: 40, stone: 60, iron: 10 }, build: 6,
     aura: { radius: 7, tick: 1.0, effect: 'aoe', power: 14 }, wearRate: 0.55,
     desc: 'Бьёт врагов в радиусе. Нужна технология ФОРТИФИКАЦИЯ (через обсерваторию).',
+    upgrades: {
+      a: {
+        key: 'a', name: 'Сигнальная', icon: '🔥', desc: 'Аура шире: радиус +2 (спека просит +12с раннего предупреждения — требует Waves.js, вне зоны)',
+        cost: { wood: 25, stone: 30, iron: 10 }, workers: 2, time: 8, effects: { auraRadiusDelta: 2 },
+      },
+      b: { key: 'b', name: 'Стрелецкая', icon: '🏹', desc: '+50% урон ауры', cost: { wood: 30, stone: 35, iron: 15 }, workers: 2, time: 10, effects: { auraPowerMul: 1.5 } },
+    },
   },
   ferma: {
     kind: 'ferma', name: 'ФЕРМА', icon: '🌻', model: 'bld_ferma',
@@ -138,6 +170,10 @@ export const BUILDINGS = {
     w: 2, h: 2, hp: 220, cat: 'econ', rank: 1,
     cost: { wood: 30, stone: 25 }, build: 6, produce: { iron: 4 }, wearRate: 0.75,
     desc: 'Добывает ЖЕЛЕЗО ⛓️ — нужно для БОГАТЫРЕЙ и тяжёлой брони.',
+    upgrades: {
+      a: { key: 'a', name: 'Глубокий', icon: '⛏️', desc: '+3 железа/день, но износ +0.8/день', cost: { wood: 35, stone: 25 }, workers: 2, time: 9, effects: { produce: { iron: 3 }, wearRateDelta: 0.8 } },
+      b: { key: 'b', name: 'Артель', icon: '👥', desc: '+2 железа/день, +2 счастья/день', cost: { wood: 30, stone: 20, gold: 10 }, workers: 2, time: 9, effects: { produce: { iron: 2, happy: 2 } } },
+    },
   },
   zhila: {
     kind: 'zhila', name: 'САМОЦВЕТНАЯ ЖИЛА', icon: '💎', model: 'bld_zhila',
@@ -145,6 +181,48 @@ export const BUILDINGS = {
     cost: { wood: 30, stone: 40, gold: 20 }, build: 7, produce: { gems: 2 }, wearRate: 0.65,
     desc: 'Гранит самоцветы 💎 — топливо для мощных идолов и чуда.',
   },
+  // ===== ЭПОХА II «Уездная держава» (era:1) — додумано по мотивам PHASE2_DESIGN_SPEC.md §1 =====
+  prikaz_sbora: {
+    kind: 'prikaz_sbora', name: 'ПРИКАЗ СБОРА', icon: '📋', model: 'bld_market',
+    w: 2, h: 2, hp: 190, cat: 'econ', era: 1,
+    cost: { wood: 45, stone: 25, gold: 15 }, build: 6, produce: { gold: 6 }, wearRate: 0.40,
+    desc: 'Приказная изба уездной державы — собирает подати. +6 золота в день.',
+  },
+  zastava_ostrog: {
+    kind: 'zastava_ostrog', name: 'ОСТРОЖНАЯ ЗАСТАВА', icon: '🏯', model: 'bld_tower',
+    w: 1, h: 1, hp: 300, cat: 'def', era: 1,
+    cost: { wood: 55, stone: 45 }, build: 8,
+    aura: { radius: 6, tick: 1.2, effect: 'aoe', power: 10 }, wearRate: 0.50,
+    desc: 'Порубежный острог с дозором — бьёт налётчиков в радиусе, дешевле башни (без железа).',
+  },
+  tamozhnya: {
+    kind: 'tamozhnya', name: 'ТАМОЖЕННЫЕ ВОРОТА', icon: '🛃', model: 'bld_chastokol_gate',
+    w: 1, h: 1, hp: 200, cat: 'def', era: 1, wall: true, walkable: true,
+    cost: { wood: 25, stone: 15 }, build: 4, produce: { gold: 3 }, wearRate: 0.50,
+    desc: 'Мытный двор на въезде — пошлина с обозов. +3 золота в день, проходимо для своих.',
+  },
+
+  // ===== ЭПОХА III «Гойда-индустрия» (era:2) — додумано по мотивам PHASE2_DESIGN_SPEC.md §1 =====
+  remontny_dvor: {
+    kind: 'remontny_dvor', name: 'РЕМОНТНЫЙ ДВОР', icon: '🔧', model: 'bld_kuznica',
+    w: 1, h: 1, hp: 160, cat: 'econ', era: 2, workers: 1,
+    cost: { wood: 50, stone: 35, iron: 15 }, build: 7,
+    carpenter: { radius: 10, targets: 10, upkeep: { wood: 4, stone: 2, iron: 1 }, repair: 7 },
+    desc: 'Артельная мастерская — держит в исправности 10 построек в радиусе 10 клеток, сильнее Избы Плотника.',
+  },
+  agitpunkt: {
+    kind: 'agitpunkt', name: 'АГИТПУНКТ', icon: '📯', model: 'bld_observatory',
+    w: 2, h: 2, hp: 220, cat: 'faith', era: 2,
+    cost: { wood: 45, stone: 50, gold: 25 }, build: 7, produce: { faith: 6, happy: 2 }, wearRate: 0.35,
+    desc: 'Агитация Абсолюта Дрона на площадях — поднимает дух и веру. +6 ВЕРЫ и +2 счастья в день.',
+  },
+  sklad_putevoy: {
+    kind: 'sklad_putevoy', name: 'ПУТЕВОЙ ПАКГАУЗ', icon: '📦', model: 'bld_ambar',
+    w: 2, h: 2, hp: 200, cat: 'econ', era: 2,
+    cost: { wood: 55, stone: 35, iron: 15 }, build: 7, produce: { gold: 4 }, wearRate: 0.35,
+    desc: 'Складской двор у путей — копит и сбывает грузы паровозов. +4 золота в день.',
+  },
+
   idol: {
     kind: 'idol', name: 'ИДОЛ ДРОН (ЧУДО)', icon: '🗿', model: 'idol_dron',
     w: 3, h: 3, hp: 1500, cat: 'wonder', rank: 4, unique: true, wonder: true,
@@ -212,6 +290,7 @@ export const BUILDINGS = {
 
 // порядок в меню постройки
 export const BUILD_ORDER = ['izba', 'izba_plotnika', 'banya', 'ambar', 'ferma', 'roshcha', 'rudnik', 'zhila', 'kuznica', 'kazarma', 'chastokol', 'gate', 'road', 'bridge', 'rail', 'station', 'tower', 'church', 'observatory', 'veche', 'market', 'traktir',
+  'prikaz_sbora', 'zastava_ostrog', 'tamozhnya', 'remontny_dvor', 'agitpunkt', 'sklad_putevoy',
   'rel_shipo', 'rel_krio', 'rel_obereg', 'rel_giper', 'rel_goydushka', 'rel_zlato', 'rel_fonk', 'rel_vera', 'rel_samotsvet', 'idol'];
 
 export const CATS = {

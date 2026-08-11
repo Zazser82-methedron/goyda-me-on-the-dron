@@ -2,12 +2,14 @@
 import { SIM_DT, DAY_TICKS } from '../data/config.js?v=94';
 import { edictMods } from './Edicts.js?v=94';
 import * as Wear from './Wear.js?v=1';
+import * as AntiSpiral from './AntiSpiral.js?v=1';
 
 const DAY_SECONDS = DAY_TICKS * SIM_DT;   // 8 сек
 const FOOD_PER_POP = 1;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 export function update(state, dt, ctx) {
+  AntiSpiral.update(state, dt, ctx);
   Wear.update(state, dt, ctx);
   // покадровые таймеры
   state.superTimer = Math.max(0, state.superTimer - dt);
@@ -39,6 +41,8 @@ function onDay(state, ctx) {
   }
   const em = edictMods(state);
   prod.food += em.food; prod.gold += em.gold; prod.faith += em.faith; happyMod += em.happy;
+  const am = AntiSpiral.productionMods(state);
+  prod.food += am.food; happyMod += am.happy;
 
   const R = state.research;   // бонусы исследований в день
   if (R) { prod.food += R.foodDay; prod.gold += R.goldDay; prod.faith += R.faithDay; }
@@ -47,11 +51,12 @@ function onDay(state, ctx) {
   if (fm) { prod.faith *= fm.faithMul || 1; happyMod += fm.happy || 0; }
 
   const food = prod.food;   // для баланса счастья/голода ниже
-  if (prod.gold) prod.gold *= 0.78 + state.happiness / 100 * 0.44;   // довольный народ платит больше податей (0.78..1.22)
+  if (prod.gold) prod.gold *= (0.78 + state.happiness / 100 * 0.44) * am.goldMul;   // довольный народ платит больше податей (0.78..1.22)
+  prod.gold = AntiSpiral.applyTaxDebt(state, prod.gold);
   state.gain(prod);
 
   // расход еды
-  const cons = state.population * FOOD_PER_POP * em.foodConsMul;
+  const cons = state.population * FOOD_PER_POP * em.foodConsMul * am.foodConsMul;
   state.resources.food -= cons;
   let starve = false;
   if (state.resources.food < 0) { starve = true; state.resources.food = 0; }

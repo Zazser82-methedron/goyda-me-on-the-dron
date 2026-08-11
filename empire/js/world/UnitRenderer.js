@@ -54,6 +54,10 @@ export class UnitRenderer {
       if (!o.isMesh) return;
       const geo = o.geometry.clone();
       geo.applyMatrix4(o.matrixWorld);            // запечь локальный оффсет сабмеша относительно корня прототипа
+      // clone() тащит закэшированную boundingSphere/Box ДО оффсета — без пересчёта raycast мимо клика
+      // (сабмеш смещён от центра, а старая сфера маленькая и не по месту). Отсюда неточный пикинг юнитов.
+      geo.computeBoundingSphere();
+      geo.computeBoundingBox();
       geo.setAttribute('aInstancePhase', phaseAttr);
       geo.setAttribute('aWalkAmp', walkAttr);
       const mat = o.material;

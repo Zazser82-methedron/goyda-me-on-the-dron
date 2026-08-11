@@ -1,15 +1,18 @@
 // ===== Постройка, стройка-прогресс и тренировка юнитов =====
-import { BUILDINGS } from '../data/buildings.js?v=95';
+import { BUILDINGS } from '../data/buildings.js?v=96';
 import { UNITS } from '../data/units.js?v=94';
 import { RANKS } from '../data/ranks.js?v=94';
 import { nearestAdj } from '../world/Pathfinding.js?v=94';
 import { bark } from '../data/barks.js?v=94';
 import { edictMods } from './Edicts.js?v=94';
 import { apply as applyWear, repairQuote, ruinQuote } from './Wear.js?v=1';
+import * as Eras from './Eras.js?v=1';
+import * as Upgrades from './Upgrades.js?v=1';
 
-function trainTime(state, kind) {
+function trainTime(state, kind, b) {
   const base = UNITS[kind].trainTime;
-  const mul = edictMods(state).trainMul * (state.happiness < 35 ? 1.4 : 1);
+  const umul = (b && b._upgradeEffects && b._upgradeEffects.trainTimeMul) || 1;
+  const mul = edictMods(state).trainMul * (state.happiness < 35 ? 1.4 : 1) * umul;
   return base * mul;
 }
 
@@ -23,6 +26,8 @@ function spawnTrained(state, b, kind, ctx) {
 }
 
 export function update(state, dt, ctx) {
+  Eras.update(state, dt, ctx);
+  Upgrades.update(state, dt, ctx);
   updateRepairs(state, dt, ctx);
   // пересчёт строителей на площадках (каждый тик со свежих данных — без дрейфа счётчиков)
   let anySite = false;
@@ -70,7 +75,7 @@ export function update(state, dt, ctx) {
       if (b.trainLeft <= 0) {
         const kind = b.trainQueue.shift();
         spawnTrained(state, b, kind, ctx);
-        if (b.trainQueue.length) b.trainLeft = trainTime(state, b.trainQueue[0]);
+        if (b.trainQueue.length) b.trainLeft = trainTime(state, b.trainQueue[0], b);
       }
     }
   }
@@ -116,6 +121,7 @@ export function placeBuilding(state, kind, gx, gy, ctx, opts = {}) {
   const def = BUILDINGS[kind];
   if (!def) return { ok: false, reason: 'нет такого здания' };
   if ((def.rank || 0) > state.rankIndex) return { ok: false, reason: 'нужен ранг ' + RANKS[def.rank].name };
+  if ((def.era || 0) > (state.era || 0)) return { ok: false, reason: 'откроется в эпохе «' + Eras.ERA_NAMES[def.era] + '»' };
   if (def.requiresTech && !(state.research && state.research.done[def.requiresTech])) return { ok: false, reason: 'изучите технологию (через обсерваторию)' };
   if (def.unique && state.buildings.some(b => b.kind === kind)) return { ok: false, reason: 'уже построено' };
   if (!state.grid.canPlace(gx, gy, def.w, def.h, !!def.onWater)) return { ok: false, reason: 'место занято' };
@@ -141,10 +147,11 @@ export function queueTrain(state, b, kind, ctx) {
   const pending = state.buildings.reduce((s, x) => s + x.trainQueue.length, 0);
   if (state.population + pending >= state.popCap) { ctx.toast && ctx.toast('Нет места — строй ИЗБЫ', { bad: true }); return false; }
   const cmul = (state.faction && state.faction.mods.trainCostMul) || 1;
-  const cost = {}; for (const k in def.cost) cost[k] = Math.max(1, Math.round(def.cost[k] * cmul));
+  const umul = (b._upgradeEffects && b._upgradeEffects.trainCostMul) || 1;
+  const cost = {}; for (const k in def.cost) cost[k] = Math.max(1, Math.round(def.cost[k] * cmul * umul));
   if (!state.canAfford(cost)) { ctx.toast && ctx.toast('Мало ресурсов на ' + def.name, { bad: true }); return false; }
   state.spend(cost);
-  if (!b.trainQueue.length) b.trainLeft = trainTime(state, kind);
+  if (!b.trainQueue.length) b.trainLeft = trainTime(state, kind, b);
   b.trainQueue.push(kind);
   ctx.sfx && ctx.sfx('click');
   return true;
