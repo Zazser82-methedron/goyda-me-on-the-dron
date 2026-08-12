@@ -4,7 +4,7 @@
 // соседние ПОСТРОЕННЫЕ дома объединяются «усадьбой» (тропинка + заборчики).
 // Зовётся из GameState.addBuilding/removeBuilding/finishBuild. Рельсы (v94) переиспользуют neighborMask.
 import * as THREE from 'three';
-import { roadTile, railTile, wallConnSegment, homesteadConn } from '../engine/Placeholders.js?v=96';
+import { roadTile, railTile, bridgeTile, wallConnSegment, homesteadConn } from '../engine/Placeholders.js?v=97';
 
 const DIRS = [[0, -1, 1], [1, 0, 2], [0, 1, 4], [-1, 0, 8]];                   // N,E,S,W → биты
 const DIR_ROT = { 1: Math.PI, 2: Math.PI / 2, 4: 0, 8: -Math.PI / 2 };         // поворот сегмента-соединителя (построен вдоль +Z=S)
@@ -22,6 +22,7 @@ export function neighborMask(state, gx, gy, pred) {
 
 const isWallKind = (b) => b.kind === 'chastokol' || b.kind === 'gate';
 const isRoadKind = (b) => !!(b.def && b.def.road);
+const isBridgeEnd = (b) => isRoadKind(b) && b.kind !== 'bridge';
 const isRailKind = (b) => !!(b.def && b.def.rail);
 const railConnects = (b) => isRailKind(b) || b.kind === 'station';   // рельсы тянутся и к станции
 
@@ -45,15 +46,12 @@ function refreshWall(state, b) {
 
 function refreshRoad(state, b) {
   const mask = neighborMask(state, b.gx, b.gy, isRoadKind);
-  if (b._roadMask === mask) return;
+  const endMask = b.kind === 'bridge' ? neighborMask(state, b.gx, b.gy, isBridgeEnd) : 0;
+  if (b._roadMask === mask && (b.kind !== 'bridge' || b._bridgeEndMask === endMask)) return;
   b._roadMask = mask;
-  if (b.kind === 'bridge') {                        // мост не пересобираем — только ориентируем вдоль линии
-    if ((mask & (2 | 8)) && !(mask & (1 | 4))) b.view.rotation.y = Math.PI / 2;
-    else if (mask & (1 | 4)) b.view.rotation.y = 0;
-    return;
-  }
+  if (b.kind === 'bridge') { b._bridgeEndMask = endMask; b.view.rotation.y = 0; }
   while (b.view.children.length) b.view.remove(b.view.children[0]);   // пересборка вида под маску
-  const g = roadTile(mask);
+  const g = b.kind === 'bridge' ? bridgeTile(mask, endMask) : roadTile(mask);
   for (const c of [...g.children]) b.view.add(c);
 }
 

@@ -685,15 +685,50 @@ function road() {
 }
 
 // ---- мост (1×1, настил с перилами и сваями; садится на уровень воды) ----
-function bridge() {
+export function bridgeTile(mask, endMask) {
   const g = new THREE.Group();
-  const wd = mat(PAL.wood), dk = mat(PAL.woodDk);
-  g.add(box(0.96, 0.1, 0.96, wd, 0, 0.18, 0));
-  for (let i = 0; i < 4; i++) g.add(box(0.9, 0.04, 0.06, dk, 0, 0.24, -0.36 + i * 0.24));
-  g.add(box(0.06, 0.18, 0.96, dk, -0.45, 0.3, 0)); g.add(box(0.06, 0.18, 0.96, dk, 0.45, 0.3, 0));
-  for (const x of [-0.4, 0.4]) for (const z of [-0.4, 0.4]) g.add(cyl(0.05, 0.05, 0.55, 5, dk, x, -0.12, z));
+  const wd = mat(PAL.wood), dk = mat(PAL.woodDk), st = mat(PAL.stone), stLt = mat(PAL.stoneLt);
+  if (!mask) { mask = 1 | 4; endMask = 1 | 4; }                 // одиночный мост — прямая N-S с обоими берегами
+  const eastWest = !!(mask & (2 | 8)) && !(mask & (1 | 4));
+  const deckWidth = 0.68, deckLength = 1.06, deckY = 0.25;
+  const deck = (w, h, d, m, along = 0, y = deckY, across = 0) => {
+    g.add(box(eastWest ? d : w, h, eastWest ? w : d, m,
+      eastWest ? along : across, y, eastWest ? across : along));
+  };
+
+  deck(deckWidth, 0.1, deckLength, wd);                          // вытянутый настил вдоль фактической оси
+  for (let along = -0.42; along <= 0.42; along += 0.21) deck(deckWidth - 0.06, 0.035, 0.05, dk, along, 0.317);
+
+  // Перила остаются только по бокам пролёта: стойки и два продольных поручня.
+  for (const across of [-0.31, 0.31]) {
+    deck(0.045, 0.055, deckLength, dk, 0, 0.48, across);
+    deck(0.035, 0.045, deckLength, dk, 0, 0.37, across);
+    for (const along of [-0.46, 0, 0.46]) deck(0.05, 0.32, 0.05, dk, along, 0.39, across);
+  }
+
+  deck(0.18, 0.11, deckLength - 0.08, dk, 0, 0.115);              // продольная балка снизу
+  for (const along of [-0.34, 0.34]) {
+    for (const across of [-0.23, 0.23]) deck(0.09, 0.58, 0.09, dk, along, -0.04, across);
+  }
+
+  const addEnd = (bit, sign) => {
+    if (!(endMask & bit)) return;
+    const abutmentAt = sign * 0.42, rampAt = sign * 0.47;
+    deck(deckWidth + 0.1, 0.28, 0.12, st, abutmentAt, 0.14);       // заметный каменный устой
+    deck(deckWidth + 0.18, 0.06, 0.18, stLt, abutmentAt, 0.31);    // верхняя плита устоя
+    const ramp = eastWest
+      ? box(0.16, 0.055, deckWidth - 0.08, wd, rampAt, 0.15, 0)
+      : box(deckWidth - 0.08, 0.055, 0.16, wd, 0, 0.15, rampAt);
+    if (eastWest) ramp.rotation.z = -sign * 0.48;
+    else ramp.rotation.x = sign * 0.48;
+    g.add(ramp);                                                   // короткий скос к уровню дороги
+  };
+  if (eastWest) { addEnd(8, -1); addEnd(2, 1); }
+  else { addEnd(1, -1); addEnd(4, 1); }
   return g;
 }
+
+function bridge() { return bridgeTile(1 | 4, 1 | 4); }
 
 const BUILDERS = {
   idol_dron: idol, bld_townhall: townhall, bld_izba: izba, bld_ambar: ambar, bld_roshcha: roshcha,
