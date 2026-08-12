@@ -211,7 +211,7 @@ export const BUILDINGS = {
 
   // ===== ЭПОХА III «Гойда-индустрия» (era:2) — додумано по мотивам PHASE2_DESIGN_SPEC.md §1 =====
   remontny_dvor: {
-    kind: 'remontny_dvor', name: 'РЕМОНТНЫЙ ДВОР', icon: '🔧', model: 'bld_kuznica',
+    kind: 'remontny_dvor', name: 'РЕМОНТНЫЙ ДВОР', icon: '🔧', model: 'bld_remdvor',
     w: 1, h: 1, hp: 160, cat: 'econ', era: 2, workers: 1,
     roadPort: { dx: 0, dy: 1 },
     cost: { wood: 50, stone: 35, iron: 15 }, build: 7,
@@ -225,7 +225,7 @@ export const BUILDINGS = {
     desc: 'Агитация Абсолюта Дрона на площадях — поднимает дух и веру. +6 ВЕРЫ и +2 счастья в день.',
   },
   sklad_putevoy: {
-    kind: 'sklad_putevoy', name: 'ПУТЕВОЙ ПАКГАУЗ', icon: '📦', model: 'bld_ambar',
+    kind: 'sklad_putevoy', name: 'ПУТЕВОЙ ПАКГАУЗ', icon: '📦', model: 'bld_sklad',
     w: 2, h: 2, hp: 200, cat: 'econ', era: 2,
     roadPort: { dx: 1, dy: 2 },
     cost: { wood: 55, stone: 35, iron: 15 }, build: 7, produce: {}, wearRate: 0.35,

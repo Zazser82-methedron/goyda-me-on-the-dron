@@ -383,6 +383,26 @@ function ambar() {
   return g;
 }
 
+// ---- путевой пакгауз (2×2, грузовая платформа у рельсов) ----
+function sklad() {
+  const g = new THREE.Group();
+  const wd = mat(PAL.wood), wdk = mat(PAL.woodDk), st = mat(PAL.stone), sack = mat(PAL.thatch);
+  g.add(box(1.82, 0.12, 1.58, wd, 0, 0.26, 0));                              // поднятый настил
+  for (const [x, z] of [[-0.7, -0.58], [-0.7, 0.58], [0.7, -0.58], [0.7, 0.58]])
+    g.add(cyl(0.07, 0.09, 0.28, 6, st, x, 0.14, z));                          // опоры пирона
+  g.add(box(0.7, 0.06, 0.12, wdk, -0.35, 0.36, -0.52));                       // край платформы
+  g.add(box(0.28, 0.22, 0.28, wd, -0.38, 0.43, 0.12));                        // ящик
+  g.add(box(0.22, 0.18, 0.22, wdk, -0.1, 0.41, 0.18));                        // стопка ящиков
+  g.add(cyl(0.13, 0.16, 0.2, 7, sack, 0.32, 0.4, 0.2));                       // тюк
+  g.add(cyl(0.11, 0.14, 0.18, 7, sack, 0.5, 0.39, 0.28));                     // тюк
+  g.add(cyl(0.055, 0.065, 0.92, 6, wdk, -0.15, 0.74, -0.28));                 // стойка крана
+  const boom = cyl(0.035, 0.045, 0.86, 5, wdk, 0.27, 1.08, -0.28);
+  boom.rotation.z = Math.PI / 2; g.add(boom);                                  // стрела
+  g.add(cyl(0.014, 0.014, 0.42, 5, wdk, 0.68, 0.81, -0.28));                   // трос
+  g.add(box(0.14, 0.09, 0.14, st, 0.68, 0.56, -0.28));                         // груз на крюке
+  return g;
+}
+
 // ---- кузница (1×1, производство) ----
 function kuznica() {
   const g = new THREE.Group();
@@ -391,6 +411,29 @@ function kuznica() {
   g.add(box(0.8, 0.55, 0.8, st, 0, 0.28, 0));
   g.add(cyl(0.14, 0.16, 0.7, 6, dk, 0.26, 0.85, -0.2));    // труба
   g.add(box(0.3, 0.22, 0.3, ember, 0, 0.12, 0.32));        // горн
+  return g;
+}
+
+// ---- ремонтный двор (1×1, открытая мастерская) ----
+function remontDvor() {
+  const g = new THREE.Group();
+  const wd = mat(PAL.wood), wdk = mat(PAL.woodDk), st = mat(PAL.stone), rf = mat(PAL.roof), dirt = mat(PAL.dirt);
+  const sparks = mat(PAL.goldBright, { emissive: PAL.goldBright, emi: 1.5 });
+  g.add(box(0.9, 0.035, 0.9, dirt, 0, 0.018, 0));                              // открытый двор
+  for (const [x, z] of [[-0.35, -0.28], [0.35, -0.28], [-0.35, 0.28], [0.35, 0.28]])
+    g.add(cyl(0.035, 0.045, 0.72, 5, wdk, x, 0.36, z));                        // навес на столбах
+  g.add(box(0.82, 0.06, 0.64, rf, 0, 0.73, 0));                                // лёгкий навес
+  g.add(box(0.42, 0.08, 0.24, wd, -0.1, 0.35, 0.12));                          // верстак
+  g.add(box(0.06, 0.28, 0.06, wdk, -0.26, 0.18, 0.12));
+  g.add(box(0.06, 0.28, 0.06, wdk, 0.06, 0.18, 0.12));
+  const wheel = cyl(0.18, 0.18, 0.075, 10, st, -0.12, 0.38, -0.22);
+  wheel.rotation.z = Math.PI / 2; g.add(wheel);                                // точильный круг
+  g.add(box(0.05, 0.32, 0.05, wdk, 0.25, 0.28, -0.26));                        // стойка инструмента
+  g.add(box(0.34, 0.045, 0.05, wdk, 0.12, 0.48, -0.26));                       // перекладина
+  const tool = cyl(0.018, 0.018, 0.26, 5, st, 0.06, 0.35, -0.22);
+  tool.rotation.z = -0.28; g.add(tool);                                        // подвешенный ключ
+  g.add(cyl(0.1, 0.12, 0.22, 8, wd, 0.28, 0.13, 0.22));                        // бочка
+  g.add(cyl(0.12, 0.12, 0.05, 8, sparks, -0.22, 0.52, -0.22));                 // искры у круга
   return g;
 }
 
@@ -731,9 +774,9 @@ export function bridgeTile(mask, endMask) {
 function bridge() { return bridgeTile(1 | 4, 1 | 4); }
 
 const BUILDERS = {
-  idol_dron: idol, bld_townhall: townhall, bld_izba: izba, bld_ambar: ambar, bld_roshcha: roshcha,
+  idol_dron: idol, bld_townhall: townhall, bld_izba: izba, bld_ambar: ambar, bld_sklad: sklad, bld_roshcha: roshcha,
   enemy_camp: enemyCamp,
-  bld_kuznica: kuznica, bld_kazarma: kazarma, bld_church: church, bld_market: market,
+  bld_kuznica: kuznica, bld_remdvor: remontDvor, bld_kazarma: kazarma, bld_church: church, bld_market: market,
   bld_ferma: ferma, bld_rudnik: rudnik, bld_zhila: zhila, bld_observatory: observatory, bld_tower: tower,
   bld_road: road, bld_bridge: bridge,
   bld_chastokol: chastokol, bld_chastokol_gate: chastokolGate,

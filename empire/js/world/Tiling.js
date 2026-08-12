@@ -4,7 +4,7 @@
 // соседние ПОСТРОЕННЫЕ дома объединяются «усадьбой» (тропинка + заборчики).
 // Зовётся из GameState.addBuilding/removeBuilding/finishBuild. Рельсы (v94) переиспользуют neighborMask.
 import * as THREE from 'three';
-import { roadTile, railTile, bridgeTile, wallConnSegment, homesteadConn } from '../engine/Placeholders.js?v=97';
+import { roadTile, railTile, bridgeTile, wallConnSegment, homesteadConn } from '../engine/Placeholders.js?v=98';
 
 const DIRS = [[0, -1, 1], [1, 0, 2], [0, 1, 4], [-1, 0, 8]];                   // N,E,S,W → биты
 const DIR_ROT = { 1: Math.PI, 2: Math.PI / 2, 4: 0, 8: -Math.PI / 2 };         // поворот сегмента-соединителя (построен вдоль +Z=S)
