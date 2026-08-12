@@ -164,13 +164,91 @@ export function railTile(mask) {
   const grav = mat(0x5c5650, { rough: 1 }), tie = mat(PAL.woodDk), steel = mat(0x9aa0aa, { metal: 0.85, rough: 0.35 });
   g.add(box(0.9, 0.04, 0.9, grav, 0, 0.02, 0));                               // гравийная подушка
   if (!mask) mask = 1 | 4;                                                    // одиночный тайл — прямая N-S
-  for (const [bit, dx, dz] of [[1, 0, -1], [2, 1, 0], [4, 0, 1], [8, -1, 0]]) {
-    if (!(mask & bit)) continue;
-    const horiz = dx !== 0;
-    for (const off of [-0.14, 0.14])                                          // два рельса от центра к краю
-      g.add(box(horiz ? 0.52 : 0.05, 0.045, horiz ? 0.05 : 0.52, steel, horiz ? dx * 0.25 : off, 0.075, horiz ? off : dz * 0.25));
-    for (const k of [0.14, 0.38])                                             // шпалы поперёк направления
-      g.add(box(horiz ? 0.07 : 0.44, 0.035, horiz ? 0.44 : 0.07, tie, dx * k, 0.048, dz * k));
+  const dirs = [[1, 0, -1], [2, 1, 0], [4, 0, 1], [8, -1, 0]]
+    .filter(([bit]) => mask & bit)
+    .map(([bit, dx, dz]) => ({ bit, dx, dz }));
+  const railGap = 0.14, edgeInner = 0.34;
+
+  const addSegment = (x1, z1, x2, z2, width = 0.05, y = 0.075) => {
+    const len = Math.hypot(x2 - x1, z2 - z1);
+    const rail = box(width, 0.045, len, steel, (x1 + x2) / 2, y, (z1 + z2) / 2);
+    rail.rotation.y = Math.atan2(x2 - x1, z2 - z1);
+    g.add(rail);
+  };
+  const addTie = (x, z, angle, width = 0.44) => {
+    const sleeper = box(width, 0.035, 0.07, tie, x, 0.048, z);
+    sleeper.rotation.y = angle;
+    g.add(sleeper);
+  };
+  const addEdgeRails = ({ dx, dz }) => {
+    const horiz = dx !== 0, length = 0.52 - edgeInner, center = edgeInner + length / 2;
+    for (const off of [-railGap, railGap])
+      g.add(box(horiz ? length : 0.05, 0.045, horiz ? 0.05 : length, steel,
+        horiz ? dx * center : off, 0.075, horiz ? off : dz * center));
+  };
+  const addStraight = (vertical) => {
+    for (const off of [-railGap, railGap])
+      g.add(box(vertical ? 0.05 : 1.04, 0.045, vertical ? 1.04 : 0.05, steel,
+        vertical ? off : 0, 0.075, vertical ? 0 : off));
+    for (const distance of [-0.38, -0.14, 0.14, 0.38])
+      addTie(vertical ? 0 : distance, vertical ? distance : 0, vertical ? 0 : Math.PI / 2);
+  };
+  const addCorner = (from, to, edgeAtEnd = true) => {
+    // The short straight edge stubs preserve the exact neighbouring-tile rail gauge.
+    addEdgeRails(from);
+    if (edgeAtEnd) addEdgeRails(to);
+    const radius = edgeInner, cx = radius * (from.dx + to.dx), cz = radius * (from.dz + to.dz);
+    const start = { x: -to.dx, z: -to.dz };
+    const turn = from.dx * to.dz - from.dz * to.dx > 0 ? -1 : 1;
+    for (const off of [-railGap, railGap]) {
+      let px = cx + (radius + off) * start.x, pz = cz + (radius + off) * start.z;
+      for (let step = 1; step <= 3; step++) {
+        const a = turn * Math.PI * step / 6, ca = Math.cos(a), sa = Math.sin(a);
+        const vx = start.x * ca - start.z * sa, vz = start.x * sa + start.z * ca;
+        const nx = cx + (radius + off) * vx, nz = cz + (radius + off) * vz;
+        addSegment(px, pz, nx, nz);
+        px = nx; pz = nz;
+      }
+    }
+    for (let step = 0; step < 3; step++) {
+      const a = turn * Math.PI * (step + 0.5) / 6, ca = Math.cos(a), sa = Math.sin(a);
+      const vx = start.x * ca - start.z * sa, vz = start.x * sa + start.z * ca;
+      const tangentX = turn * -vz, tangentZ = turn * vx;
+      addTie(cx + radius * vx, cz + radius * vz, Math.atan2(tangentX, tangentZ));
+    }
+  };
+
+  if (dirs.length === 1) {
+    const { dx, dz } = dirs[0], horiz = dx !== 0;
+    for (const off of [-railGap, railGap])
+      g.add(box(horiz ? 0.52 : 0.05, 0.045, horiz ? 0.05 : 0.52, steel,
+        horiz ? dx * 0.26 : off, 0.075, horiz ? off : dz * 0.26));
+    for (const distance of [0.14, 0.38]) addTie(horiz ? dx * distance : 0, horiz ? 0 : dz * distance, horiz ? Math.PI / 2 : 0);
+  } else if (dirs.length === 2) {
+    const [a, b] = dirs;
+    if (a.dx + b.dx === 0 && a.dz + b.dz === 0) addStraight(a.dx === 0);
+    else addCorner(a, b);
+  } else if (dirs.length === 3) {
+    const verticalMain = (mask & 1) && (mask & 4);
+    const main = verticalMain ? dirs.filter(d => d.dx === 0) : dirs.filter(d => d.dz === 0);
+    const branch = dirs.find(d => !main.includes(d));
+    addStraight(verticalMain);
+    addCorner(branch, main[1], false);                                        // branch curves into one leg of the main line
+    const bladeStart = { x: branch.dx * 0.24 + main[1].dx * 0.05, z: branch.dz * 0.24 + main[1].dz * 0.05 };
+    const bladeTip = { x: branch.dx * 0.04 + main[1].dx * 0.18, z: branch.dz * 0.04 + main[1].dz * 0.18 };
+    addSegment(bladeStart.x, bladeStart.z, bladeTip.x, bladeTip.z, 0.025, 0.103); // pointed switch tongue
+  } else {
+    addStraight(true);
+    addStraight(false);
+    const diamond = [[0, -0.11], [0.11, 0], [0, 0.11], [-0.11, 0]];
+    for (let i = 0; i < diamond.length; i++) {
+      const [x1, z1] = diamond[i], [x2, z2] = diamond[(i + 1) % diamond.length];
+      addSegment(x1, z1, x2, z2, 0.045, 0.103);                               // raised diamond frog
+    }
+    for (const distance of [-0.26, -0.08, 0.08, 0.26]) {
+      addTie(0, distance, 0);
+      addTie(distance, 0, Math.PI / 2);
+    }
   }
   return g;
 }

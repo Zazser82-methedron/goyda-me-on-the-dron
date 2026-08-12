@@ -6,7 +6,7 @@ import { RTSCamera } from './engine/RTSCamera.js?v=99';
 import { Picker } from './engine/Picker.js?v=94';
 import { Loop } from './engine/Loop.js?v=99';
 import { Profiler } from './engine/Profiler.js?v=95';
-import { AssetManager } from './engine/AssetManager.js?v=100';
+import { AssetManager } from './engine/AssetManager.js?v=101';
 import { TerrainMesh } from './world/TerrainMesh.js?v=102';
 import { WorldBase } from './world/WorldBase.js?v=102';
 import { Sky } from './world/Sky.js?v=94';
@@ -15,7 +15,7 @@ import { BuildingActivity } from './world/BuildingActivity.js?v=102';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
 import { nearestAdj } from './world/Pathfinding.js?v=94';
 import { UnitRenderer } from './world/UnitRenderer.js?v=96';
-import { GameState } from './sim/GameState.js?v=107';
+import { GameState } from './sim/GameState.js?v=108';
 import * as Economy from './sim/Economy.js?v=106';
 import * as BuildSys from './sim/Buildings.js?v=105';
 import * as Waves from './sim/Waves.js?v=97';
