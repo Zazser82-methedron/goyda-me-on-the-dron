@@ -841,6 +841,45 @@ function tower() {
   return g;
 }
 
+// ---- острожная застава (1×1, приграничный дозорный пост на сваях) ----
+function zastavaOstrog() {
+  const g = new THREE.Group();
+  const wd = mat(PAL.wood), dk = mat(PAL.woodDk), roof = mat(PAL.roof);
+  const fire = mat(0x200800, { emissive: 0xff6010, emi: 1.6 });
+  const posts = [[-0.34, -0.34], [0.34, -0.34], [-0.34, 0.34], [0.34, 0.34]];
+
+  // Low palisade marks this as a rough border outpost rather than a stone tower.
+  for (const [x, z] of posts) {
+    g.add(cyl(0.055, 0.065, 1.35, 6, dk, x, 0.675, z));
+    g.add(cone(0.075, 0.14, 6, wd, x, 1.415, z));
+  }
+  for (const x of [-0.22, 0, 0.22]) {
+    g.add(cyl(0.04, 0.05, 0.82, 6, wd, x, 0.41, -0.43));
+    g.add(cone(0.06, 0.1, 6, wd, x, 0.87, -0.43));
+  }
+  for (const z of [-0.22, 0, 0.22]) {
+    g.add(cyl(0.04, 0.05, 0.82, 6, wd, -0.43, 0.41, z));
+    g.add(cone(0.06, 0.1, 6, wd, -0.43, 0.87, z));
+    g.add(cyl(0.04, 0.05, 0.82, 6, wd, 0.43, 0.41, z));
+    g.add(cone(0.06, 0.1, 6, wd, 0.43, 0.87, z));
+  }
+
+  g.add(box(0.76, 0.1, 0.76, wd, 0, 1.13, 0));
+  g.add(box(0.84, 0.06, 0.06, dk, 0, 1.4, -0.36));
+  g.add(box(0.84, 0.06, 0.06, dk, 0, 1.4, 0.36));
+  g.add(box(0.06, 0.06, 0.84, dk, -0.36, 1.4, 0));
+  g.add(box(0.06, 0.06, 0.84, dk, 0.36, 1.4, 0));
+  g.add(cone(0.42, 0.26, 4, roof, 0, 1.62, 0));
+
+  g.add(box(0.05, 0.8, 0.05, dk, -0.16, 0.42, 0.47));
+  g.add(box(0.05, 0.8, 0.05, dk, 0.16, 0.42, 0.47));
+  for (const y of [0.18, 0.36, 0.54, 0.72]) g.add(box(0.3, 0.045, 0.05, wd, 0, y, 0.47));
+
+  g.add(cyl(0.12, 0.09, 0.06, 6, dk, 0.16, 1.22, -0.12));
+  g.add(sph(0.08, fire, 0.16, 1.3, -0.12));
+  return g;
+}
+
 // ---- дорога (1×1, мощёная плита) ----
 function road() {
   const g = new THREE.Group();
@@ -900,7 +939,7 @@ const BUILDERS = {
   idol_dron: idol, bld_townhall: townhall, bld_izba: izba, bld_izba_plotnika: izbaPlotnika, bld_banya: banya, bld_ambar: ambar, bld_sklad: sklad, bld_roshcha: roshcha,
   enemy_camp: enemyCamp,
   bld_kuznica: kuznica, bld_remdvor: remontDvor, bld_kazarma: kazarma, bld_church: church, bld_market: market, bld_traktir: traktir, bld_prikaz: prikazSbora,
-  bld_ferma: ferma, bld_rudnik: rudnik, bld_zhila: zhila, bld_veche: veche, bld_observatory: observatory, bld_agitpunkt: agitpunkt, bld_tower: tower,
+  bld_ferma: ferma, bld_rudnik: rudnik, bld_zhila: zhila, bld_veche: veche, bld_observatory: observatory, bld_agitpunkt: agitpunkt, bld_tower: tower, bld_zastava: zastavaOstrog,
   bld_road: road, bld_bridge: bridge,
   bld_chastokol: chastokol, bld_chastokol_gate: chastokolGate,
   res_tree: tree, res_stone: stoneNode, res_ore: oreNode,

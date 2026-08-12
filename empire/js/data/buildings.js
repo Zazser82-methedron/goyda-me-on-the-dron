@@ -195,7 +195,7 @@ export const BUILDINGS = {
     desc: 'Приказная изба уездной державы — собирает подати с населения.',
   },
   zastava_ostrog: {
-    kind: 'zastava_ostrog', name: 'ОСТРОЖНАЯ ЗАСТАВА', icon: '🏯', model: 'bld_tower',
+    kind: 'zastava_ostrog', name: 'ОСТРОЖНАЯ ЗАСТАВА', icon: '🏯', model: 'bld_zastava',
     w: 1, h: 1, hp: 300, cat: 'def', era: 1,
     cost: { wood: 55, stone: 45 }, build: 8,
     aura: { radius: 6, tick: 1.2, effect: 'aoe', power: 10 }, wearRate: 0.50,

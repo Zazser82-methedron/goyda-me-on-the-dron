@@ -2,12 +2,12 @@
 import * as THREE from 'three';
 import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=94';
 import { Grid } from '../world/Grid.js?v=94';
-import { NodeField } from '../world/NodeField.js?v=108';
-import { BUILDINGS } from '../data/buildings.js?v=103';
+import { NodeField } from '../world/NodeField.js?v=109';
+import { BUILDINGS } from '../data/buildings.js?v=104';
 import { UNITS } from '../data/units.js?v=94';
 import { RANKS } from '../data/ranks.js?v=94';
-import { buildScaffold } from '../engine/Placeholders.js?v=101';
-import * as Tiling from '../world/Tiling.js?v=101';
+import { buildScaffold } from '../engine/Placeholders.js?v=102';
+import * as Tiling from '../world/Tiling.js?v=102';
 
 export class GameState {
   constructor(scene, assets, unitRenderer) {
