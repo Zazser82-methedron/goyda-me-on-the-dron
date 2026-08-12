@@ -28,7 +28,7 @@ export const BUILDINGS = {
     },
   },
   izba_plotnika: {
-    kind: 'izba_plotnika', name: 'ИЗБА ПЛОТНИКА', icon: '🪚', model: 'bld_izba',
+    kind: 'izba_plotnika', name: 'ИЗБА ПЛОТНИКА', icon: '🪚', model: 'bld_izba_plotnika',
     w: 1, h: 1, hp: 90, cat: 'econ', rank: 0, workers: 1,
     roadPort: { dx: 0, dy: 1 },
     cost: { wood: 30, stone: 10 }, build: 5,
@@ -133,7 +133,7 @@ export const BUILDINGS = {
     desc: 'Хмель, пляски, байки — народ гуляет. +5 счастья в день.',
   },
   banya: {
-    kind: 'banya', name: 'БАНЯ', icon: '🛁', model: 'bld_izba',
+    kind: 'banya', name: 'БАНЯ', icon: '🛁', model: 'bld_banya',
     w: 1, h: 1, hp: 100, cat: 'econ', rank: 0,
     cost: { wood: 25, stone: 10 }, build: 3, produce: { happy: 3 },
     desc: 'Пар да веник — здоровье и довольство. +3 счастья в день.',

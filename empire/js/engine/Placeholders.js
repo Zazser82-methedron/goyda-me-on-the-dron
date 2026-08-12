@@ -372,6 +372,48 @@ function izba() {
   return g;
 }
 
+// ---- изба плотника (1×1, рабочий навес) ----
+function izbaPlotnika() {
+  const g = new THREE.Group();
+  const wd = mat(PAL.wood), dk = mat(PAL.woodDk), rf = mat(PAL.roof), st = mat(PAL.stone);
+  g.add(box(0.9, 0.035, 0.9, mat(PAL.dirt), 0, 0.018, 0));                         // утоптанный двор
+  for (const [x, z] of [[-0.36, -0.3], [0.36, -0.3]])
+    g.add(cyl(0.035, 0.045, 0.68, 5, dk, x, 0.34, z));                              // стойки навеса
+  const awning = box(0.86, 0.055, 0.48, rf, 0, 0.66, -0.1);
+  awning.rotation.x = -0.18; g.add(awning);                                         // низкий односкатный навес
+  for (const [y, z] of [[0.13, 0.24], [0.22, 0.24], [0.31, 0.24]]) {
+    const log = cyl(0.07, 0.08, 0.6, 7, wd, -0.12, y, z);
+    log.rotation.z = Math.PI / 2; g.add(log);                                        // штабель брёвен
+  }
+  for (const y of [0.15, 0.22, 0.29]) g.add(box(0.42, 0.035, 0.12, dk, 0.28, y, 0.25)); // доски
+  const trestleTop = box(0.5, 0.055, 0.12, wd, 0.02, 0.43, 0.1);
+  g.add(trestleTop);                                                                  // козлы
+  for (const x of [-0.16, 0.16]) {
+    const legA = box(0.045, 0.38, 0.045, dk, x, 0.22, 0.1);
+    const legB = box(0.045, 0.38, 0.045, dk, x, 0.22, 0.1);
+    legA.rotation.z = 0.42; legB.rotation.z = -0.42; g.add(legA, legB);
+  }
+  const saw = cyl(0.018, 0.018, 0.4, 5, st, 0.02, 0.59, 0.1);
+  saw.rotation.z = -0.62; g.add(saw);                                                // пила в козлах
+  return g;
+}
+
+// ---- баня (1×1, приземистый сруб с трубой и лоханью) ----
+function banya() {
+  const g = new THREE.Group();
+  const wd = mat(PAL.wood), dk = mat(PAL.woodDk), rf = mat(PAL.roof), st = mat(PAL.stone);
+  g.add(logWall(0.74, 0.42, 0.68, wd, dk, -0.08, 0.21, 0));                          // низкий банный сруб
+  const roofA = box(0.84, 0.055, 0.42, rf, -0.08, 0.53, -0.14);
+  const roofB = box(0.84, 0.055, 0.42, rf, -0.08, 0.53, 0.14);
+  roofA.rotation.x = 0.38; roofB.rotation.x = -0.38; g.add(roofA, roofB);             // двускатная кровля
+  g.add(box(0.2, 0.28, 0.045, dk, -0.08, 0.14, 0.35));                                // низкая дверь
+  g.add(windowMesh(0.12, 0.12, -0.3, 0.28, 0.35, false));                             // тёмное окошко
+  g.add(cyl(0.075, 0.09, 0.38, 7, st, 0.18, 0.78, -0.08));                            // короткая печная труба
+  g.add(cyl(0.12, 0.15, 0.2, 8, wd, 0.38, 0.1, 0.26));                                // лохань снаружи
+  g.add(cyl(0.135, 0.135, 0.025, 8, dk, 0.38, 0.21, 0.26));                            // обод лохани
+  return g;
+}
+
 // ---- амбар (2×2, еда) ----
 function ambar() {
   const g = new THREE.Group();
@@ -774,7 +816,7 @@ export function bridgeTile(mask, endMask) {
 function bridge() { return bridgeTile(1 | 4, 1 | 4); }
 
 const BUILDERS = {
-  idol_dron: idol, bld_townhall: townhall, bld_izba: izba, bld_ambar: ambar, bld_sklad: sklad, bld_roshcha: roshcha,
+  idol_dron: idol, bld_townhall: townhall, bld_izba: izba, bld_izba_plotnika: izbaPlotnika, bld_banya: banya, bld_ambar: ambar, bld_sklad: sklad, bld_roshcha: roshcha,
   enemy_camp: enemyCamp,
   bld_kuznica: kuznica, bld_remdvor: remontDvor, bld_kazarma: kazarma, bld_church: church, bld_market: market,
   bld_ferma: ferma, bld_rudnik: rudnik, bld_zhila: zhila, bld_observatory: observatory, bld_tower: tower,
