@@ -785,6 +785,47 @@ function observatory() {
   return g;
 }
 
+// ---- вече (2×2): открытый круглый помост, знамёна и колокол схода ----
+function veche() {
+  const g = new THREE.Group();
+  const wd = mat(PAL.wood), dk = mat(PAL.woodDk), cloth = mat(PAL.crimson), bell = mat(PAL.gold, { metal: 0.65, rough: 0.35 });
+  g.add(cyl(0.84, 0.84, 0.12, 10, dk, 0, 0.06, 0));
+  g.add(cyl(0.74, 0.74, 0.08, 10, wd, 0, 0.14, 0));
+  for (const a of [0, Math.PI / 2, Math.PI, Math.PI * 1.5]) g.add(box(1.25, 0.035, 0.08, dk, 0, 0.2, 0).rotateY(a));
+  g.add(box(0.9, 0.18, 0.42, wd, 0, 0.29, 0.32));
+  for (const [x, z] of [[-0.66, -0.48], [0.66, -0.48], [-0.66, 0.48], [0.66, 0.48]]) {
+    g.add(cyl(0.045, 0.055, 1.32, 5, dk, x, 0.8, z));
+    g.add(cone(0.075, 0.16, 5, dk, x, 1.54, z));
+  }
+  g.add(box(1.42, 0.09, 0.09, dk, 0, 1.28, -0.48));
+  g.add(cyl(0.12, 0.18, 0.22, 8, bell, 0, 1.08, -0.48));
+  g.add(sph(0.045, dk, 0, 0.92, -0.48));
+  for (const x of [-0.66, 0.66]) g.add(box(0.22, 0.38, 0.025, cloth, x, 1.08, -0.5));
+  return g;
+}
+
+// ---- агитпункт (2×2): индустриальная трибуна, плакат и рупор на мачте ----
+function agitpunkt() {
+  const g = new THREE.Group();
+  const st = mat(PAL.stone), metal = mat(PAL.rock, { metal: 0.8, rough: 0.38 });
+  const dk = mat(PAL.rockDk, { metal: 0.65, rough: 0.42 }), poster = mat(PAL.crimson);
+  const sign = mat(PAL.faithCyan, { emissive: PAL.faithCyan, emi: 1.5, metal: 0.35, rough: 0.3 });
+  g.add(box(1.62, 0.12, 1.42, st, 0, 0.06, 0));
+  g.add(box(1.08, 0.22, 0.58, dk, 0, 0.23, 0.28));
+  for (const x of [-0.48, 0.48]) {
+    g.add(cyl(0.04, 0.055, 1.35, 5, metal, x, 0.8, -0.5));
+    g.add(box(0.06, 0.06, 1.2, metal, x, 0.72, -0.02));
+  }
+  g.add(box(1.1, 0.72, 0.06, poster, 0, 1.02, -0.52));
+  g.add(cyl(0.17, 0.17, 0.075, 8, sign, 0, 1.04, -0.57).rotateX(Math.PI / 2));
+  g.add(box(0.72, 0.055, 0.055, sign, 0, 1.48, -0.52));
+  g.add(cyl(0.055, 0.07, 1.7, 6, metal, 0, 1.0, 0.2));
+  g.add(box(0.48, 0.065, 0.065, metal, 0, 1.58, 0.2));
+  const horn = cone(0.27, 0.46, 6, dk, 0, 1.58, 0.43); horn.rotation.x = Math.PI / 2; g.add(horn);
+  g.add(cyl(0.08, 0.1, 0.15, 6, metal, 0, 1.58, 0.14).rotateX(Math.PI / 2));
+  return g;
+}
+
 // ---- сторожевая башня (1×1): зубцы + жаровня ----
 function tower() {
   const g = new THREE.Group();
@@ -859,7 +900,7 @@ const BUILDERS = {
   idol_dron: idol, bld_townhall: townhall, bld_izba: izba, bld_izba_plotnika: izbaPlotnika, bld_banya: banya, bld_ambar: ambar, bld_sklad: sklad, bld_roshcha: roshcha,
   enemy_camp: enemyCamp,
   bld_kuznica: kuznica, bld_remdvor: remontDvor, bld_kazarma: kazarma, bld_church: church, bld_market: market, bld_traktir: traktir, bld_prikaz: prikazSbora,
-  bld_ferma: ferma, bld_rudnik: rudnik, bld_zhila: zhila, bld_observatory: observatory, bld_tower: tower,
+  bld_ferma: ferma, bld_rudnik: rudnik, bld_zhila: zhila, bld_veche: veche, bld_observatory: observatory, bld_agitpunkt: agitpunkt, bld_tower: tower,
   bld_road: road, bld_bridge: bridge,
   bld_chastokol: chastokol, bld_chastokol_gate: chastokolGate,
   res_tree: tree, res_stone: stoneNode, res_ore: oreNode,

@@ -139,7 +139,7 @@ export const BUILDINGS = {
     desc: 'Пар да веник — здоровье и довольство. +3 счастья в день.',
   },
   veche: {
-    kind: 'veche', name: 'ВЕЧЕ', icon: '🏛️', model: 'bld_observatory',
+    kind: 'veche', name: 'ВЕЧЕ', icon: '🏛️', model: 'bld_veche',
     w: 2, h: 2, hp: 230, cat: 'faith', rank: 2,
     cost: { wood: 40, stone: 35, gold: 20 }, build: 6, produce: { happy: 3, faith: 4 },
     desc: 'Народное собрание: голос державы. +счастье и +4 ВЕРЫ в день.',
@@ -219,7 +219,7 @@ export const BUILDINGS = {
     desc: 'Артельная мастерская — держит в исправности 10 построек в радиусе 10 клеток, сильнее Избы Плотника.',
   },
   agitpunkt: {
-    kind: 'agitpunkt', name: 'АГИТПУНКТ', icon: '📯', model: 'bld_observatory',
+    kind: 'agitpunkt', name: 'АГИТПУНКТ', icon: '📯', model: 'bld_agitpunkt',
     w: 2, h: 2, hp: 220, cat: 'faith', era: 2,
     cost: { wood: 45, stone: 50, gold: 25 }, build: 7, produce: { faith: 6, happy: 2 }, wearRate: 0.35,
     desc: 'Агитация Абсолюта Дрона на площадях — поднимает дух и веру. +6 ВЕРЫ и +2 счастья в день.',
