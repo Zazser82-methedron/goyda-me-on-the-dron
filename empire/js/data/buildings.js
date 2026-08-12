@@ -126,7 +126,7 @@ export const BUILDINGS = {
     desc: 'Торговые ряды. +5 золота в день и точка сдачи.',
   },
   traktir: {
-    kind: 'traktir', name: 'ТРАКТИР', icon: '🍺', model: 'bld_market',
+    kind: 'traktir', name: 'ТРАКТИР', icon: '🍺', model: 'bld_traktir',
     w: 2, h: 2, hp: 170, cat: 'econ', rank: 1,
     roadPort: { dx: 1, dy: 2 },
     cost: { wood: 35, gold: 15 }, build: 5, produce: { happy: 5 },
@@ -188,7 +188,7 @@ export const BUILDINGS = {
   },
   // ===== ЭПОХА II «Уездная держава» (era:1) — додумано по мотивам PHASE2_DESIGN_SPEC.md §1 =====
   prikaz_sbora: {
-    kind: 'prikaz_sbora', name: 'ПРИКАЗ СБОРА', icon: '📋', model: 'bld_market',
+    kind: 'prikaz_sbora', name: 'ПРИКАЗ СБОРА', icon: '📋', model: 'bld_prikaz',
     w: 2, h: 2, hp: 190, cat: 'econ', era: 1,
     roadPort: { dx: 1, dy: 2 },
     cost: { wood: 45, stone: 25, gold: 15 }, build: 6, produce: {}, wearRate: 0.40,

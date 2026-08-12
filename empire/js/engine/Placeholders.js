@@ -518,6 +518,46 @@ function market() {
   return g;
 }
 
+// ---- трактир (2×2, закрытый сруб с вывеской) ----
+function traktir() {
+  const g = new THREE.Group();
+  const wd = mat(PAL.wood), dk = mat(PAL.woodDk), rf = mat(PAL.roof), gold = mat(PAL.gold, { metal: 0.8, rough: 0.35 });
+  g.add(box(1.86, 0.06, 1.74, mat(PAL.dirt), 0, 0.03, 0));                           // утоптанный двор
+  g.add(logWall(1.5, 0.72, 1.22, wd, dk, -0.08, 0.39, -0.03));                        // закрытый сруб
+  const roofA = box(1.66, 0.07, 0.78, rf, -0.08, 0.86, -0.25);
+  const roofB = box(1.66, 0.07, 0.78, rf, -0.08, 0.86, 0.19);
+  roofA.rotation.x = 0.42; roofB.rotation.x = -0.42; g.add(roofA, roofB);             // двускатная кровля
+  g.add(box(0.28, 0.42, 0.055, dk, -0.08, 0.24, 0.6));                                // дверь
+  g.add(windowMesh(0.22, 0.2, -0.48, 0.48, 0.6, true));                               // тёплое окно
+  g.add(box(0.54, 0.055, 0.16, wd, 0.68, 0.28, 0.42));                                // лавка
+  g.add(box(0.54, 0.055, 0.16, wd, 0.68, 0.28, 0.68));                                // вторая лавка
+  for (const x of [0.5, 0.86]) g.add(cyl(0.11, 0.13, 0.24, 8, dk, x, 0.15, -0.45));    // бочки у стены
+  g.add(cyl(0.035, 0.045, 0.78, 5, dk, 0.58, 0.68, 0.64));                            // стойка вывески
+  g.add(box(0.34, 0.25, 0.045, dk, 0.58, 0.82, 0.64));                                // доска вывески
+  const keg = cyl(0.075, 0.075, 0.055, 8, gold, 0.58, 0.82, 0.675);
+  keg.rotation.x = Math.PI / 2; g.add(keg);                                            // золотой знак кружки/бочонка
+  return g;
+}
+
+// ---- приказ сбора (2×2, каменная приказная изба) ----
+function prikazSbora() {
+  const g = new THREE.Group();
+  const st = mat(PAL.stone), stLt = mat(PAL.stoneLt), dk = mat(PAL.woodDk), rf = mat(PAL.roof);
+  const banner = mat(PAL.crimson), gold = mat(PAL.gold, { metal: 0.85, rough: 0.3 });
+  g.add(box(1.78, 0.24, 1.56, st, 0, 0.12, 0));                                        // каменный цоколь
+  g.add(logWall(1.52, 0.72, 1.24, stLt, st, 0, 0.6, -0.03));                           // кладка приказной избы
+  g.add(cone(1.26, 0.58, 4, rf, 0, 1.25, -0.03));                                     // строгая шатровая крыша
+  g.add(box(0.48, 0.1, 0.3, stLt, 0, 0.29, 0.78));                                    // ступени
+  g.add(box(0.3, 0.44, 0.055, dk, 0, 0.46, 0.61));                                    // входная дверь
+  for (const x of [-0.28, 0.28]) g.add(cyl(0.055, 0.065, 0.48, 6, stLt, x, 0.48, 0.69)); // входные столбы
+  g.add(cyl(0.025, 0.03, 1.05, 5, dk, -0.58, 1.02, 0.34));                            // древко
+  g.add(box(0.34, 0.26, 0.035, banner, -0.42, 1.2, 0.34));                            // уездное знамя
+  g.add(sph(0.075, gold, -0.42, 1.2, 0.37));                                          // гербовая печать
+  g.add(box(0.24, 0.16, 0.2, dk, 0.58, 0.32, 0.54));                                  // ларь документов
+  g.add(box(0.28, 0.035, 0.24, stLt, 0.58, 0.42, 0.54));                              // крышка ларя
+  return g;
+}
+
 // ---- лесопосадка (2×2, сажает деревья) ----
 function roshcha() {
   const g = new THREE.Group();
@@ -818,7 +858,7 @@ function bridge() { return bridgeTile(1 | 4, 1 | 4); }
 const BUILDERS = {
   idol_dron: idol, bld_townhall: townhall, bld_izba: izba, bld_izba_plotnika: izbaPlotnika, bld_banya: banya, bld_ambar: ambar, bld_sklad: sklad, bld_roshcha: roshcha,
   enemy_camp: enemyCamp,
-  bld_kuznica: kuznica, bld_remdvor: remontDvor, bld_kazarma: kazarma, bld_church: church, bld_market: market,
+  bld_kuznica: kuznica, bld_remdvor: remontDvor, bld_kazarma: kazarma, bld_church: church, bld_market: market, bld_traktir: traktir, bld_prikaz: prikazSbora,
   bld_ferma: ferma, bld_rudnik: rudnik, bld_zhila: zhila, bld_observatory: observatory, bld_tower: tower,
   bld_road: road, bld_bridge: bridge,
   bld_chastokol: chastokol, bld_chastokol_gate: chastokolGate,
