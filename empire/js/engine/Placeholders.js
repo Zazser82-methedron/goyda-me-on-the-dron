@@ -66,14 +66,47 @@ export function wallConnSegment() {
 export function roadTile(mask) {
   const g = new THREE.Group();
   const d1 = mat(0x6a5a42, { rough: 1 }), d2 = mat(0x7c6c52, { rough: 1 });
-  g.add(box(0.96, 0.05, 0.96, d1, 0, 0.025, 0));                              // основа-плита
-  g.add(box(0.38, 0.045, 0.38, d2, 0, 0.052, 0));                             // центр
-  const strip = (dx, dz) => g.add(box(dx ? 0.52 : 0.36, 0.045, dz ? 0.52 : 0.36, d2, dx * 0.25, 0.052, dz * 0.25));
-  if (mask & 1) strip(0, -1);
-  if (mask & 2) strip(1, 0);
-  if (mask & 4) strip(0, 1);
-  if (mask & 8) strip(-1, 0);
-  for (const [x, z] of [[-0.38, -0.3], [0.34, 0.38], [0.4, -0.36]]) g.add(box(0.1, 0.05, 0.1, d1, x, 0.05, z));   // камешки по обочине
+  const activeCount = [1, 2, 4, 8].filter(bit => mask & bit).length;
+  const baseWidth = activeCount >= 3 ? 0.52 : 0.46;
+  const laneWidth = activeCount >= 3 ? 0.42 : 0.36;
+  const rayEnd = 0.52;
+  const baseHalf = baseWidth * 0.5, laneHalf = laneWidth * 0.5;
+  const baseRayLength = rayEnd - baseHalf, laneRayLength = rayEnd - laneHalf;
+
+  // Центральный узел раскрывается только до ширины дороги: у прямой нет квадратной плиты на весь тайл.
+  g.add(box(baseWidth, 0.05, baseWidth, d1, 0, 0.025, 0));
+  g.add(box(laneWidth, 0.045, laneWidth, d2, 0, 0.052, 0));
+
+  const addRay = (dx, dz) => {
+    const horizontal = dx !== 0;
+    const baseCenter = baseHalf + baseRayLength * 0.5;
+    const laneCenter = laneHalf + laneRayLength * 0.5;
+    const curbStart = laneHalf + 0.04;                                         // бордюр не заходит на центральный узел
+    const curbLength = rayEnd - curbStart;
+
+    g.add(box(horizontal ? baseRayLength : baseWidth, 0.05, horizontal ? baseWidth : baseRayLength, d1,
+      horizontal ? dx * baseCenter : 0, 0.025, horizontal ? 0 : dz * baseCenter));
+    g.add(box(horizontal ? laneRayLength : laneWidth, 0.045, horizontal ? laneWidth : laneRayLength, d2,
+      horizontal ? dx * laneCenter : 0, 0.052, horizontal ? 0 : dz * laneCenter));
+
+    // Два тёмных бордюра идут вдоль активного луча и обрываются до перекрёстка.
+    for (const offset of [-laneHalf - 0.02, laneHalf + 0.02]) {
+      g.add(box(horizontal ? curbLength : 0.04, 0.025, horizontal ? 0.04 : curbLength, d1,
+        horizontal ? dx * (curbStart + curbLength * 0.5) : offset, 0.082,
+        horizontal ? offset : dz * (curbStart + curbLength * 0.5)));
+    }
+
+    // Низкие поперечные швы следуют направлению луча, а не фиксированным координатам тайла.
+    for (const distance of [0.3, 0.43]) {
+      g.add(box(horizontal ? 0.025 : 0.28, 0.012, horizontal ? 0.28 : 0.025, d1,
+        horizontal ? dx * distance : 0, 0.08, horizontal ? 0 : dz * distance));
+    }
+  };
+
+  if (mask & 1) addRay(0, -1);
+  if (mask & 2) addRay(1, 0);
+  if (mask & 4) addRay(0, 1);
+  if (mask & 8) addRay(-1, 0);
   return g;
 }
 
