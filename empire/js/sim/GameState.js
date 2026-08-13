@@ -9,6 +9,18 @@ import { RANKS } from '../data/ranks.js?v=94';
 import { buildScaffold } from '../engine/Placeholders.js?v=102';
 import * as Tiling from '../world/Tiling.js?v=102';
 
+// Порт (roadPort/railPort) задан как {dx,dy} от gx,gy для НЕповёрнутого здания (rot=0).
+// При повороте (R при постройке, b.rot 0..3, view.rotation.y = rot*PI/2) визуальный фасад
+// уходит в другую сторону — считаем порт от центра footprint той же матрицей, что и модель:
+// x' = x*cosθ + z*sinθ, z' = -x*sinθ + z*cosθ (подтверждено эталоном DIR_ROT в world/Tiling.js:
+// сегмент стены «вдоль +Z=S» повёрнутый на PI/2 указывает на +X=восток=бит E — совпадает).
+function rotatePort(port, gx, gy, w, h, rot) {
+  const cx = gx + (w - 1) / 2, cy = gy + (h - 1) / 2;
+  let ox = port.dx - (w - 1) / 2, oy = port.dy - (h - 1) / 2;
+  for (let i = 0, n = ((rot % 4) + 4) % 4; i < n; i++) { const nx = oy, ny = -ox; ox = nx; oy = ny; }
+  return { x: Math.round(cx + ox), y: Math.round(cy + oy) };
+}
+
 export class GameState {
   constructor(scene, assets, unitRenderer) {
     this.scene = scene;
@@ -214,8 +226,8 @@ export class GameState {
       trainQueue: [], trainLeft: 0,
       cx: c.wx, cz: c.wz, cy,
     };
-    if (def.roadPort) b.roadPortTile = { x: gx + def.roadPort.dx, y: gy + def.roadPort.dy };
-    if (def.railPort) b.railPortTile = { x: gx + def.railPort.dx, y: gy + def.railPort.dy };
+    if (def.roadPort) b.roadPortTile = rotatePort(def.roadPort, gx, gy, def.w, def.h, rot);
+    if (def.railPort) b.railPortTile = rotatePort(def.railPort, gx, gy, def.w, def.h, rot);
     view.userData.entity = b;
     // «затоптанный» земляной патч под зданием — мягко вписывает постройку в траву (нет жёсткого стыка)
     if (!def.bridge && !def.onWater && !def.road) {
