@@ -6,7 +6,7 @@ import { NodeField } from '../world/NodeField.js?v=109';
 import { BUILDINGS } from '../data/buildings.js?v=104';
 import { UNITS } from '../data/units.js?v=94';
 import { RANKS } from '../data/ranks.js?v=94';
-import { buildScaffold } from '../engine/Placeholders.js?v=102';
+import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=103';
 import * as Tiling from '../world/Tiling.js?v=102';
 
 // Порт (roadPort/railPort) задан как {dx,dy} от gx,gy для НЕповёрнутого здания (rot=0).
@@ -228,6 +228,25 @@ export class GameState {
     };
     if (def.roadPort) b.roadPortTile = rotatePort(def.roadPort, gx, gy, def.w, def.h, rot);
     if (def.railPort) b.railPortTile = rotatePort(def.railPort, gx, gy, def.w, def.h, rot);
+    const addPortApron = (portTile, makeApron, field) => {
+      const portWorld = this.grid.gridToWorld(portTile.x, portTile.y);
+      const dx = c.wx - portWorld.wx, dz = c.wz - portWorld.wz;
+      const dist = Math.hypot(dx, dz) || 1;
+      // Порт-клетка всегда ровно на 0.5 тайла ЗА краем футпринта (по построению rotatePort) —
+      // независимо от размера здания. Раньше апрон ставился долей (*0.7) от ПОЛНОГО расстояния
+      // до центра, а это расстояние растёт с площадью здания — для 2×2 он проваливался на
+      // ~0.55 тайла ВНУТРЬ футпринта. Правильно — фиксированный отступ от порта к краю (середина
+      // зазора шириной 0.5 тайла), не зависящий от размера здания.
+      const OFFSET = 0.25 * TILE;
+      const ax = portWorld.wx + (dx / dist) * OFFSET;
+      const az = portWorld.wz + (dz / dist) * OFFSET;
+      const apron = makeApron();
+      apron.rotation.y = Math.atan2(dx, dz);
+      apron.position.set(ax, this.grid.heightAt ? this.grid.heightAt(ax, az) : 0, az);
+      this.scene.add(apron); b[field] = apron;
+    };
+    if (b.roadPortTile) addPortApron(b.roadPortTile, roadApron, '_roadApron');
+    if (b.railPortTile) addPortApron(b.railPortTile, railApron, '_railApron');
     view.userData.entity = b;
     // «затоптанный» земляной патч под зданием — мягко вписывает постройку в траву (нет жёсткого стыка)
     if (!def.bridge && !def.onWater && !def.road) {
@@ -305,6 +324,8 @@ export class GameState {
     this.scene.remove(b.view);
     if (b._ring) this.scene.remove(b._ring);
     if (b._dirt) this.scene.remove(b._dirt);
+    if (b._roadApron) this.scene.remove(b._roadApron);
+    if (b._railApron) this.scene.remove(b._railApron);
     if (b._scaffold) { this.scene.remove(b._scaffold); b._scaffold = null; }
     this.grid.occupy(b.gx, b.gy, b.w, b.h, null);
     this.buildings = this.buildings.filter(x => x !== b);

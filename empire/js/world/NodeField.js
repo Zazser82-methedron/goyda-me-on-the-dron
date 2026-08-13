@@ -2,7 +2,7 @@
 // Вместо ~800 отдельных Object3D — по одному InstancedMesh на тип (1 draw call).
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { buildPlaceholder } from '../engine/Placeholders.js?v=102';
+import { buildPlaceholder } from '../engine/Placeholders.js?v=103';
 
 // Слить меши плейсхолдера в одну геометрию с запечёнными vertex-color (1 материал).
 function bakedGeometry(modelName) {

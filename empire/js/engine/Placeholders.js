@@ -111,6 +111,17 @@ export function roadTile(mask) {
 }
 
 // ---- «усадьба»: тропинка + заборчики между двумя соседними ПОСТРОЕННЫМИ зданиями (Tiling.refreshHomesteads) ----
+// ---- короткий подъезд от дорожной клетки к фасаду: локально идёт вдоль +Z, поворот задаёт владелец здания ----
+export function roadApron() {
+  const g = new THREE.Group();
+  const d1 = mat(0x6a5a42, { rough: 1 }), d2 = mat(0x7c6c52, { rough: 1 });
+  g.add(box(0.52, 0.05, 0.58, d1, 0, 0.025, 0));
+  g.add(box(0.42, 0.04, 0.50, d2, 0, 0.062, 0));
+  for (const x of [-0.25, 0.25]) g.add(box(0.035, 0.025, 0.58, d1, x, 0.085, 0));
+  for (const z of [-0.12, 0.12]) g.add(box(0.30, 0.012, 0.022, d1, 0, 0.09, z));
+  return g;
+}
+
 export function homesteadConn(a, c, grid) {
   const g = new THREE.Group();
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -254,6 +265,16 @@ export function railTile(mask) {
 }
 
 // ---- станция (2×2): платформа + депо-домик + семафор и ящики ----
+// ---- короткий рельсовый подъезд: гравий, шпалы и пара рельсов вдоль локальной +Z ----
+export function railApron() {
+  const g = new THREE.Group();
+  const grav = mat(0x5c5650, { rough: 1 }), tie = mat(PAL.woodDk), steel = mat(0x9aa0aa, { metal: 0.85, rough: 0.35 });
+  g.add(box(0.48, 0.04, 0.58, grav, 0, 0.02, 0));
+  for (const z of [-0.18, 0, 0.18]) g.add(box(0.44, 0.035, 0.07, tie, 0, 0.048, z));
+  for (const x of [-0.14, 0.14]) g.add(box(0.045, 0.045, 0.60, steel, x, 0.075, 0));
+  return g;
+}
+
 function station() {
   const g = new THREE.Group();
   const st = mat(PAL.stone), wd = mat(PAL.wood), wdk = mat(PAL.woodDk), rf = mat(PAL.roof);
