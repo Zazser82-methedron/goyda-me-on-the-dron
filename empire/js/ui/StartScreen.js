@@ -19,7 +19,7 @@ export class StartScreen {
     if (document.querySelector('link[data-goyda-start-screen]')) return;
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = './css/start-screen.css?v=102';
+    link.href = './css/start-screen.css?v=105';
     link.dataset.goydaStartScreen = '1';
     document.head.appendChild(link);
   }
@@ -93,16 +93,8 @@ export class StartScreen {
     document.getElementById('bootlog')?.remove();
     this.el.classList.remove('leaving');
     this.el.style.display = 'flex';
+    this.game.lobby.start();   // 3D-сцена: Дрон над миниатюрным поселением, вместо старого CSS-фона
     this.el.innerHTML = `
-      <div class="start-world" aria-hidden="true">
-        <div class="start-sun"></div>
-        <div class="start-cloud cloud-a"></div>
-        <div class="start-cloud cloud-b"></div>
-        <div class="start-island island-far"><i></i><i></i><i></i></div>
-        <div class="start-island island-near"><i></i><i></i><i></i><i></i><i></i></div>
-        <div class="start-water-lines"></div>
-        <div class="start-birds">⌁　⌁　⌁</div>
-      </div>
       <div class="start-shade" aria-hidden="true"></div>
 
       <div class="start-box">
@@ -182,14 +174,14 @@ export class StartScreen {
       const r = this.el.getBoundingClientRect();
       const mx = (e.clientX - r.left) / r.width - 0.5;
       const my = (e.clientY - r.top) / r.height - 0.5;
-      this.el.style.setProperty('--start-pan-x', `${(-mx * 18).toFixed(1)}px`);
-      this.el.style.setProperty('--start-pan-y', `${(-my * 10).toFixed(1)}px`);
+      this.game.lobby.setParallax(mx, my);   // параллакс теперь двигает 3D-камеру лобби, не CSS-фон
     };
     this.el.querySelector('#startGo').onclick = () => {
       if (this._launching) return;
       this._launching = true;
       this._sfx('build');
       this.el.classList.add('leaving');
+      this.game.lobby.stop();   // сцену лобби убираем ДО того, как buildWorld() начнёт населять ту же scene
       setTimeout(() => {
         document.body.classList.remove('start-screen-open');
         this.el.style.display = 'none';

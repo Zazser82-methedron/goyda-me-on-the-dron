@@ -2,13 +2,11 @@
 body.start-screen-open #bootlog{display:none!important}
 #start{
   --faction-color:#ffcc00;
-  --start-pan-x:0px;
-  --start-pan-y:0px;
   padding:clamp(12px,2.1vw,32px);
   isolation:isolate;
   overflow:hidden;
   color:#fff3d8;
-  background:#89bad1;
+  background:transparent;   /* фон теперь — живая 3D-сцена лобби (Lobby.js) на канвасе #c под этой панелью */
   opacity:1;
 }
 #start.leaving{ pointer-events:none; animation:startScreenLeave .44s cubic-bezier(.7,0,.9,.35) both; }
@@ -17,92 +15,7 @@ body.start-screen-open #bootlog{display:none!important}
   100%{opacity:0;filter:saturate(1.25) brightness(1.45);transform:scale(1.018)}
 }
 
-/* Живой тропический горизонт без тяжёлых растровых ассетов. */
-#start .start-world{
-  position:absolute;
-  inset:-36px;
-  z-index:-3;
-  overflow:hidden;
-  pointer-events:none;
-  transform:translate(var(--start-pan-x),var(--start-pan-y)) scale(1.035);
-  transition:transform .7s cubic-bezier(.2,.8,.2,1);
-  background:
-    radial-gradient(ellipse at 17% 28%,rgba(255,255,255,.72) 0 1%,transparent 14%),
-    linear-gradient(180deg,#8fc9e1 0%,#b9d8de 38%,#69a8b3 39%,#2b7888 66%,#0f5365 100%);
-}
-#start .start-world::before{
-  content:'';
-  position:absolute;
-  left:-10%;right:-10%;top:41%;height:62%;
-  opacity:.42;
-  transform:perspective(360px) rotateX(63deg) translateY(-10%);
-  transform-origin:50% 0;
-  background:
-    repeating-radial-gradient(ellipse at 46% 0,transparent 0 18px,rgba(220,255,246,.2) 20px 21px,transparent 23px 43px),
-    repeating-linear-gradient(87deg,transparent 0 52px,rgba(205,246,241,.12) 55px 56px,transparent 58px 111px);
-  animation:startWaterDrift 14s linear infinite;
-}
-#start .start-world::after{
-  content:'';
-  position:absolute;
-  inset:0;
-  opacity:.22;
-  mix-blend-mode:soft-light;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
-}
-@keyframes startWaterDrift{ to{background-position:86px 30px,111px 0} }
-
-#start .start-sun{
-  position:absolute;
-  width:clamp(300px,39vw,620px);aspect-ratio:1;
-  right:-5%;top:-24%;border-radius:50%;
-  background:radial-gradient(circle,#fffbd5 0 12%,#ffda72 29%,rgba(255,178,57,.4) 47%,transparent 70%);
-  filter:blur(1px);
-  animation:startSunPulse 6s ease-in-out infinite alternate;
-}
-@keyframes startSunPulse{ to{transform:scale(1.045);filter:blur(2px) brightness(1.08)} }
-#start .start-cloud{
-  position:absolute;
-  height:54px;width:300px;border-radius:50%;
-  background:rgba(255,255,255,.36);
-  filter:blur(13px);
-  box-shadow:70px -20px 0 rgba(255,255,255,.22),140px 4px 0 rgba(255,255,255,.26),-60px 12px 0 rgba(255,255,255,.18);
-}
-#start .cloud-a{left:5%;top:14%;animation:startCloud 34s linear infinite alternate}
-#start .cloud-b{right:1%;top:29%;transform:scale(.7);opacity:.64;animation:startCloud 42s linear -16s infinite alternate-reverse}
-@keyframes startCloud{to{translate:13vw 8px}}
-
-#start .start-island{
-  position:absolute;
-  border-radius:50% 48% 43% 57%;
-  background:
-    radial-gradient(ellipse at 50% 15%,#8ebb4d 0 43%,transparent 44%),
-    linear-gradient(178deg,#f1c77d 0 52%,#98643c 54% 72%,transparent 73%);
-  filter:drop-shadow(0 18px 12px rgba(3,39,43,.3));
-}
-#start .start-island::after{
-  content:'';position:absolute;inset:70% 2% auto;height:28%;border-radius:50%;
-  background:rgba(220,255,243,.3);filter:blur(5px);
-}
-#start .island-near{width:45vw;height:19vw;min-height:180px;left:-7%;bottom:-2%;transform:rotate(5deg)}
-#start .island-far{width:23vw;height:9vw;min-height:90px;right:8%;top:44%;opacity:.76;transform:rotate(-4deg) scale(.85)}
-#start .start-island i{
-  position:absolute;width:12px;height:38px;bottom:57%;
-  background:linear-gradient(90deg,#3c5f28,#88bd43 56%,#365522 57%);
-  clip-path:polygon(50% 0,100% 100%,0 100%);
-  filter:drop-shadow(5px 6px 2px rgba(0,0,0,.2));
-  transform-origin:50% 100%;animation:startPalm 4.4s ease-in-out infinite alternate;
-}
-#start .start-island i:nth-child(1){left:24%;height:46px}
-#start .start-island i:nth-child(2){left:39%;height:31px;animation-delay:-1.2s}
-#start .start-island i:nth-child(3){left:61%;height:42px;animation-delay:-2.1s}
-#start .start-island i:nth-child(4){left:72%;height:29px;animation-delay:-.4s}
-#start .start-island i:nth-child(5){left:52%;height:35px;animation-delay:-3.1s}
-@keyframes startPalm{to{transform:skewX(3deg) rotate(1deg)}}
-#start .start-birds{position:absolute;top:18%;right:27%;color:#305b5b;font:700 22px serif;opacity:.6;letter-spacing:8px;animation:startBirds 12s ease-in-out infinite alternate}
-@keyframes startBirds{to{translate:70px -14px}}
-#start .start-water-lines{position:absolute;left:0;right:0;bottom:0;height:43%;background:linear-gradient(104deg,transparent 10%,rgba(255,255,255,.28) 19%,transparent 27%);filter:blur(9px);animation:startGlint 8s ease-in-out infinite alternate}
-@keyframes startGlint{to{translate:7vw 0;opacity:.45}}
+/* Фон — живая 3D-сцена Lobby.js (канвас #c) сквозь прозрачный #start; тут только читаемость-скрим. */
 #start .start-shade{
   position:absolute;inset:0;z-index:-2;pointer-events:none;
   background:
@@ -112,8 +25,8 @@ body.start-screen-open #bootlog{display:none!important}
 }
 
 #start .start-box{
-  width:min(1420px,100%);
-  height:min(820px,calc(100vh - clamp(24px,4.2vw,64px)));
+  width:min(1180px,100%);
+  height:min(760px,calc(100vh - clamp(24px,4.2vw,64px)));
   max-width:none;
   min-height:560px;
   padding:0;
@@ -124,9 +37,9 @@ body.start-screen-open #bootlog{display:none!important}
   overflow:hidden;
   border:1px solid rgba(255,238,188,.34);
   border-radius:clamp(14px,1.7vw,24px);
-  background:linear-gradient(108deg,rgba(4,22,25,.86),rgba(6,30,33,.66) 44%,rgba(9,25,27,.82));
+  background:linear-gradient(108deg,rgba(4,22,25,.58),rgba(6,30,33,.4) 44%,rgba(9,25,27,.54));
   box-shadow:0 35px 90px rgba(0,27,35,.42),0 3px 0 rgba(255,246,215,.17) inset,0 0 0 1px rgba(0,0,0,.22) inset;
-  backdrop-filter:blur(16px) saturate(1.16);
+  backdrop-filter:blur(18px) saturate(1.16);
   animation:startBoxEnter .72s cubic-bezier(.16,.82,.18,1) both;
 }
 #start .start-box::after{
@@ -165,7 +78,7 @@ body.start-screen-open #bootlog{display:none!important}
   min-width:0;min-height:0;padding:clamp(28px,4.2vh,52px) clamp(24px,3.5vw,54px);
   display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden;
   border-right:1px solid rgba(255,239,195,.13);
-  background:linear-gradient(118deg,rgba(2,17,20,.62),rgba(5,28,30,.22)),radial-gradient(circle at 14% 85%,rgba(255,187,53,.12),transparent 43%);
+  background:linear-gradient(118deg,rgba(2,17,20,.4),rgba(5,28,30,.14)),radial-gradient(circle at 14% 85%,rgba(255,187,53,.12),transparent 43%);
 }
 #start .start-hero::after{
   content:'';position:absolute;width:380px;height:380px;left:-185px;bottom:-235px;border-radius:50%;
@@ -385,5 +298,4 @@ body.start-screen-open #bootlog{display:none!important}
 
 @media (prefers-reduced-motion:reduce){
   #start *,#start *::before,#start *::after{animation:none!important;transition-duration:.01ms!important}
-  #start .start-world{transform:none}
 }

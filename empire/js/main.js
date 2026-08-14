@@ -46,7 +46,8 @@ import { bark } from './data/barks.js?v=94';
 import { STORAGE_KEY } from './data/config.js?v=102';
 import { getFaction } from './data/factions.js?v=94';
 import { getMap, MAPS } from './data/maps.js?v=94';
-import { StartScreen } from './ui/StartScreen.js?v=102';
+import { StartScreen } from './ui/StartScreen.js?v=103';
+import { Lobby } from './ui/Lobby.js?v=5';
 import * as Transport from './sim/Transport.js?v=104';
 import * as Railroad from './sim/Railroad.js?v=105';
 
@@ -96,6 +97,7 @@ class Game {
     this.minimap = new Minimap(this);
     this.researchUI = new ResearchPanel(this);
     this.leaderboard = new Leaderboard(this);
+    this.lobby = new Lobby(this);             // 3D-сцена стартового лобби (Фаза 3.1) — требует rdr/scene/assets выше
     this.startScreen = new StartScreen(this);
 
     this.buildKind = null;
@@ -126,6 +128,7 @@ class Game {
     this.profiler = new Profiler(this.rdr.renderer, this.state);   // метрики тика/рендера/FPS, оверлей по F3
     this.loop.profiler = this.profiler;
     window.__stress = (n) => this.profiler.stress(n);              // window.__stress(200) — стресс-тест из консоли
+    window.__game = this;                                          // ручная отладка из консоли: window.__game.camera и т.д.
   }
 
   _makeCtx() {
