@@ -10,6 +10,14 @@ function data(state) {
   return state._antiSpiral || (state._antiSpiral = { mobilizationCd: 0, granariesCd: 0, granaryDebt: 0, granaryPenalty: 0, mercyCd: 0, mercyTimer: 0 });
 }
 
+// снимок кулдаунов для UI (кнопки эдиктов выживания) — без мутации, тот же ленивый дефолт
+export function status(state) { return data(state); }
+// цена мобилизации — реальные ресурсы; у закромов апфронт-цены нет (долг гасится из будущих
+// налогов через applyTaxDebt), поэтому для UI отдаём только то, что нужно для подписи кнопки
+export const MOBILIZATION_COST = MOBILIZATION.cost;
+export const GRANARIES_GAIN = GRANARIES.food;
+export const GRANARIES_DEBT = GRANARIES.debt;
+
 function say(ctx, text, opts) { if (ctx.toast) ctx.toast(text, opts); }
 
 // Мобилизация двух холопов в ратников: false при нехватке цены, людей или кулдауне.

@@ -180,6 +180,10 @@
 .edbtn:hover{ border-color:var(--gold); }
 .edbtn.on{ background:linear-gradient(135deg,#3a2a08,#1a1004); border-color:var(--gold); color:var(--gold); box-shadow:inset 0 0 8px rgba(255,204,0,.3); }
 .edbtn .edn{ font-size:10px; }
+.edbtn:disabled{ opacity:.4; cursor:not-allowed; }
+.edbtn:disabled:hover{ border-color:var(--panel-br); }
+.edbtn-emergency{ border-color:#6a2a1a; }
+.edbtn-emergency:hover:not(:disabled){ border-color:#ff6633; }
 
 /* панель выбора */
 #selection{

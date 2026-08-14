@@ -30,10 +30,11 @@ import * as Meta from './sim/Meta.js?v=94';
 import * as Research from './sim/Research.js?v=99';
 import { updateUnits, damage, awardExpeditionValor } from './sim/Units.js?v=105';
 import { toggleEdict } from './sim/Edicts.js?v=94';
+import * as AntiSpiral from './sim/AntiSpiral.js?v=3';
 import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=94';
 import { AmbientAudio } from './audio/Music.js?v=94';
 import { HUD } from './ui/HUD.js?v=96';
-import { BuildMenu } from './ui/BuildMenu.js?v=101';
+import { BuildMenu } from './ui/BuildMenu.js?v=102';
 import { Selection } from './ui/Selection.js?v=104';
 import { Minimap } from './ui/Minimap.js?v=94';
 import { ResearchPanel } from './ui/Research.js?v=100';
@@ -905,6 +906,10 @@ class Game {
   }
   train(b, uk) { BuildSys.queueTrain(this.state, b, uk, this.ctx); }
   toggleEdictUI(key) { toggleEdict(this.state, key, this.ctx); }
+  // эдикты выживания (антиспираль смерти, 2.8) — раньше срабатывала только авто-милость,
+  // сами кнопки не были подключены ни к какому UI (обнаружено при верификации Фазы 2, 2026-08-14)
+  mobilizeEdict() { AntiSpiral.mobilize(this.state, this.ctx); this.menu.update(); }
+  openGranariesEdict() { AntiSpiral.openGranaries(this.state, this.ctx); this.menu.update(); }
   setStance(u, st) { u.stance = st; u.path = null; u.moveOrder = null; sfx('click'); }
   research(key) { Research.buy(this.state, key, this.ctx); this.researchUI.refresh(); this.menu.update(); this.hud.update(); }
 

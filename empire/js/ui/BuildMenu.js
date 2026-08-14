@@ -3,6 +3,7 @@ import { BUILDINGS, BUILD_ORDER, CATS } from '../data/buildings.js?v=104';
 import { RANKS } from '../data/ranks.js?v=94';
 import { RES_LABEL } from '../data/config.js?v=102';
 import { EDICTS } from '../sim/Edicts.js?v=94';
+import { MOBILIZATION_COST, GRANARIES_GAIN, GRANARIES_DEBT, status as antiSpiralStatus } from '../sim/AntiSpiral.js?v=3';
 import { TECHS } from '../data/tech.js?v=94';
 import { ERA_NAMES } from '../sim/Eras.js?v=2';
 import { Thumbs } from './Thumbs.js?v=100';
@@ -12,6 +13,15 @@ export function costStr(cost) {
   if (!keys.length) return '<span class="free">даром</span>';
   return keys.map(k => `<span style="color:${RES_LABEL[k] ? RES_LABEL[k].color : '#fff'}">${RES_LABEL[k] ? RES_LABEL[k].icon : ''}${cost[k]}</span>`).join(' ');
 }
+
+// эдикты выживания (антиспираль смерти, Phase 2 п.2.8) — одноразовые действия с кулдауном,
+// в отличие от тумблеров EDICTS выше. Кнопки в той же панели #edicts, снизу.
+const EMERGENCY_ACTIONS = [
+  { key: 'mob2', icon: '📯', name: 'МОБИЛИЗАЦИЯ', act: 'mobilizeEdict',
+    desc: () => 'Два холопа встают в ополчение на 90с (нужно 2 свободных холопа). [' + costStr(MOBILIZATION_COST) + ']' },
+  { key: 'gran', icon: '🥖', name: 'ЗАКРОМА', act: 'openGranariesEdict',
+    desc: () => '+' + GRANARIES_GAIN + '🍞 сейчас, но казна удержит ' + GRANARIES_DEBT + '🪙 из будущих налогов.' },
+];
 
 // порядок вкладок-категорий и их иконки (имена/цвета берём из CATS)
 const CAT_ORDER = ['econ', 'mil', 'def', 'faith', 'relic', 'wonder'];
@@ -98,6 +108,16 @@ export class BuildMenu {
       b.onclick = () => { this.game.toggleEdictUI(e.key); };
       this.edictsEl.appendChild(b);
       this._ed[e.key] = b;
+    }
+    this._emg = {};
+    for (const a of EMERGENCY_ACTIONS) {
+      const b = document.createElement('button');
+      b.className = 'edbtn edbtn-emergency';
+      b.innerHTML = `<span>${a.icon}</span><span class="edn">${a.name}</span>`;
+      b.title = a.desc();
+      b.onclick = () => { this.game[a.act](); };
+      this.edictsEl.appendChild(b);
+      this._emg[a.key] = b;
     }
   }
 
@@ -198,5 +218,14 @@ export class BuildMenu {
     }
     this._refreshCards();
     for (const e of EDICTS) this._ed[e.key].classList.toggle('on', !!(s.edicts && s.edicts[e.key]));
+    // эдикты выживания: кнопка блокируется на кулдауне/долге закромов, подпись показывает секунды
+    const as = antiSpiralStatus(s);
+    const mobCd = Math.ceil(as.mobilizationCd || 0);
+    this._emg.mob2.disabled = mobCd > 0;
+    this._emg.mob2.querySelector('.edn').textContent = mobCd > 0 ? 'МОБИЛИЗАЦИЯ ' + mobCd + 'с' : 'МОБИЛИЗАЦИЯ';
+    const granDebt = Math.ceil(as.granaryDebt || 0), granCd = Math.ceil(as.granariesCd || 0);
+    this._emg.gran.disabled = granDebt > 0 || granCd > 0;
+    this._emg.gran.querySelector('.edn').textContent =
+      granDebt > 0 ? 'ЗАКРОМА (долг ' + granDebt + '🪙)' : granCd > 0 ? 'ЗАКРОМА ' + granCd + 'с' : 'ЗАКРОМА';
   }
 }
