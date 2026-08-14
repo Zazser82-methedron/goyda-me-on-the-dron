@@ -34,7 +34,7 @@ import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=94';
 import { AmbientAudio } from './audio/Music.js?v=94';
 import { HUD } from './ui/HUD.js?v=96';
 import { BuildMenu } from './ui/BuildMenu.js?v=101';
-import { Selection } from './ui/Selection.js?v=103';
+import { Selection } from './ui/Selection.js?v=104';
 import { Minimap } from './ui/Minimap.js?v=94';
 import { ResearchPanel } from './ui/Research.js?v=100';
 import { Toasts } from './ui/Toasts.js?v=94';
@@ -46,8 +46,8 @@ import { STORAGE_KEY } from './data/config.js?v=102';
 import { getFaction } from './data/factions.js?v=94';
 import { getMap, MAPS } from './data/maps.js?v=94';
 import { StartScreen } from './ui/StartScreen.js?v=102';
-import * as Transport from './sim/Transport.js?v=103';
-import * as Railroad from './sim/Railroad.js?v=104';
+import * as Transport from './sim/Transport.js?v=104';
+import * as Railroad from './sim/Railroad.js?v=105';
 
 const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',

@@ -1,7 +1,12 @@
 // ===== Железная дорога: паровоз с вагонами курсирует между двумя связанными СТАНЦИЯМИ =====
 // Граф — BFS по тайлам t.rail. Поезд (локомотив + 2 вагона) ездит туда-обратно, стоит ~6с на
-// станциях, выгружая выручку соседнего путевого пакгауза или базовую выручку. Дым из трубы, гудок, чух-чух.
+// станциях. Полноценный грузовой цикл (§7 PHASE3-спеки): груз реально ЕДЕТ с одной станции на
+// другую — забирается у депо станции ОТПРАВЛЕНИЯ, продаётся по прибытии на ДРУГОЙ конец линии
+// (тот же принцип, что у телег в Transport.js), а не обналичивается на месте у любой станции,
+// которую поезд коснулся. Порожний рейс (нет депо/груза рядом) даёт токен-выручку 20 — обслуживание
+// линии не бесплатное, но и не наказывает игрока за декоративную ветку без пакгауза.
 // Пока 1 поезд на карту (первая связанная пара станций); путь перепроверяется на каждой конечной.
+import { checkAmbush } from './Convoy.js?v=1';
 
 const TRAIN_CAPACITY = 60;
 
@@ -70,6 +75,16 @@ function place(state, tr, view, t, forwardDir) {
   view.rotation.y = forwardDir > 0 ? p.dir : p.dir + Math.PI;   // носом по ходу движения
 }
 
+// забирает груз у путевого пакгауза (≤6 клеток от станции), не больше вместимости поезда
+function pickupCargo(state, station) {
+  const depot = state.buildings.find(b => b.built && !b.ruined && b.kind === 'sklad_putevoy'
+    && Math.hypot(b.cx - station.cx, b.cz - station.cz) <= 6);
+  if (!depot) return 0;
+  const cargo = Math.min(depot._pendingCargo || 0, TRAIN_CAPACITY);
+  depot._pendingCargo -= cargo;
+  return cargo;
+}
+
 function spawnTrain(state, a, b, path, ctx) {
   const loco = state.assets.get('unit_loco');
   const w1 = state.assets.get('unit_wagon');
@@ -78,7 +93,8 @@ function spawnTrain(state, a, b, path, ctx) {
   const wheels = [];
   for (const v of [loco, w1, w2]) v.traverse(o => { if (o.name === 'wheel') wheels.push(o); });
   let funnel = null; loco.traverse(o => { if (o.name === 'funnel') funnel = o; });
-  const tr = { a, b, path, loco, w1, w2, wheels, funnel, t: 0, dirSign: 1, speed: 3, dwell: 2, chuffT: 0, smokeT: 0 };
+  const tr = { a, b, path, loco, w1, w2, wheels, funnel, t: 0, dirSign: 1, speed: 3, dwell: 2, chuffT: 0, smokeT: 0, cargo: 0 };
+  tr.cargo = pickupCargo(state, a);   // грузимся на станции отправления перед самым первым рейсом
   state._train = tr;
   ctx.toast && ctx.toast('🚂 Паровоз вышел на линию: ' + path.length + ' тайлов пути!', { gold: true });
   ctx.sfx && ctx.sfx('whistle');
@@ -94,14 +110,13 @@ function despawnTrain(state, ctx, msg) {
 }
 
 function arrive(state, tr, stationB, atEnd, ctx) {
-  const depot = state.buildings.find(b => b.built && !b.ruined && b.kind === 'sklad_putevoy'
-    && Math.hypot(b.cx - stationB.cx, b.cz - stationB.cz) <= 6);
-  const cargo = depot ? Math.min(depot._pendingCargo || 0, TRAIN_CAPACITY) : 0;
-  if (cargo > 0) depot._pendingCargo -= cargo;
-  const reward = cargo > 0 ? cargo : 20;
+  // продаём груз, привезённый с ДРУГОГО конца линии — это и есть точка-в-точку перевозка,
+  // а не обналичивание местного депо при каждом касании станции
+  const reward = tr.cargo > 0 ? Math.round(tr.cargo) : 20;   // порожний рейс — токен за обслуживание линии
   state.gain({ gold: reward });
   ctx.float && ctx.float(stationB.cx, stationB.cz, '🚂 +' + reward + '🪙', '#ffd700');
   ctx.sfx && ctx.sfx('deposit');
+  tr.cargo = pickupCargo(state, stationB);   // берём груз здесь для следующего перегона
   tr.dwell = 6;
   // перепроверить путь (рельс могли снести/достроить) — на стоянке
   const p2 = railPath(state, tr.a, tr.b);
@@ -143,6 +158,8 @@ export function update(state, dt, ctx) {
   place(state, tr, tr.loco, tr.t, tr.dirSign);
   place(state, tr, tr.w1, tr.t - 1.05 * tr.dirSign, tr.dirSign);
   place(state, tr, tr.w2, tr.t - 2.1 * tr.dirSign, tr.dirSign);
+  // риск ограбления в пути (не на стоянке у станции) — только если реально везёт груз
+  checkAmbush(state, tr, tr.loco.position.x, tr.loco.position.z, dt, ctx, 'Поезд');
   // чух-чух + дым из трубы
   tr.chuffT -= dt;
   if (tr.chuffT <= 0) { tr.chuffT = 0.5; ctx.sfx && ctx.sfx('chuff'); }

@@ -1,10 +1,17 @@
 // ===== Транспорт по дорогам: телеги РЫНОК → ПАЛАТЫ (торговая выручка) =====
 // BFS по тайлам с t.road (дороги+мосты). Телега везёт накопленную рынком выручку к ратуше.
-// ≤2 телеги одновременно.
+// ≤2 телеги одновременно. Риск ограбления у вражьих станов — см. Convoy.js (§7 PHASE3-спеки).
+import { checkAmbush } from './Convoy.js?v=1';
 
 // Проходимые дорожные тайлы у порта здания; старые здания без порта используют весь периметр.
 const CART_CAPACITY = 40;
 const MIN_CART_CARGO = 4;
+// Купеческий обоз (§7 PHASE3-спеки, «новые типы транспорта») — с Эпохи II рынок/трактир копят
+// груз в более крупную телегу вместо частых мелких: та же 3D-модель unit_cart (без нового ассета —
+// визуальную дифференциацию делаем в раунде с доступным Playwright), но капасити и риск выше —
+// приоритетная цель налёта, честно предупреждает CARAVAN_RISK_MUL в Convoy.checkAmbush.
+const CARAVAN_CAPACITY = 70;
+const CARAVAN_RISK_MUL = 1.6;
 
 function adjRoadTiles(state, b) {
   if (b.roadPortTile) {
@@ -52,13 +59,18 @@ export function roadPath(state, from, to) {
 }
 
 function spawnCart(state, market, path) {
-  const cargo = Math.min(market._pendingCargo || 0, CART_CAPACITY);
+  const isCaravan = (state.era || 0) >= 1;   // Эпоха II+ — купеческий обоз вместо обычной подводы
+  const capacity = isCaravan ? CARAVAN_CAPACITY : CART_CAPACITY;
+  const cargo = Math.min(market._pendingCargo || 0, capacity);
   market._pendingCargo -= cargo;
   const view = state.assets.get('unit_cart');
   const w0 = state.grid.gridToWorld(path[0].x, path[0].y);
   view.position.set(w0.wx, state.grid.heightAt ? state.grid.heightAt(w0.wx, w0.wz) : 0, w0.wz);
   state.scene.add(view);
-  const c = { view, path, t: 0, speed: 1.7, x: w0.wx, z: w0.wz, groundY: view.position.y, fromId: market.id, cargo, wheels: [] };
+  const c = {
+    view, path, t: 0, speed: 1.7, x: w0.wx, z: w0.wz, groundY: view.position.y, fromId: market.id,
+    cargo, wheels: [], isCaravan, riskMul: isCaravan ? CARAVAN_RISK_MUL : 1,
+  };
   view.traverse(o => { if (o.name === 'wheel') c.wheels.push(o); });   // рендер-цикл крутит их по ходу
   state._carts.push(c);
   return c;
@@ -89,7 +101,8 @@ export function update(state, dt, ctx) {
     if (i >= c.path.length - 1) {                                  // доехала до ратуши — выручка
       const reward = Math.round(c.cargo);
       state.gain({ gold: reward });
-      ctx.float && ctx.float(state.townhall.cx, state.townhall.cz, '🐴 +' + reward + '🪙', '#ffd700');
+      const icon = c.isCaravan ? '🛒' : '🐴';
+      ctx.float && ctx.float(state.townhall.cx, state.townhall.cz, icon + ' +' + reward + '🪙', '#ffd700');
       ctx.sfx && ctx.sfx('deposit');
       state.scene.remove(c.view);
       state._carts.splice(state._carts.indexOf(c), 1);
@@ -103,5 +116,6 @@ export function update(state, dt, ctx) {
     c.groundY = state.grid.heightAt ? state.grid.heightAt(c.x, c.z) : 0;
     c.view.position.set(c.x, c.groundY, c.z);
     c.view.rotation.y = c.dir;
+    checkAmbush(state, c, c.x, c.z, dt, ctx, c.isCaravan ? 'Купеческий обоз' : 'Обоз', c.riskMul);
   }
 }
