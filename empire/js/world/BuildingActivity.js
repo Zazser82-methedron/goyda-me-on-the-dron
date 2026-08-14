@@ -7,11 +7,15 @@ const TAU = Math.PI * 2;
 const SUPPORTED = new Set([
   'kuznica', 'market', 'traktir', 'ferma', 'rudnik', 'zhila',
   'observatory', 'veche', 'church', 'station',
+  'banya', 'roshcha', 'zastava_ostrog',
 ]);
 
 const STALK_POS = [
   [-0.72, 0.38], [-0.43, 0.68], [-0.16, 0.48], [0.12, 0.72],
   [0.38, 0.43], [0.62, 0.67], [0.76, 0.28],
+];
+const SAPLING_POS = [
+  [-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5], [0, 0],
 ];
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
@@ -58,6 +62,7 @@ export class BuildingActivity {
       gem: std(0x4de8ff, 0.28, 0.22, 0x087dff, 1.7),
       red: std(0xd62d27, 0.42, 0.16, 0x7a0804, 0.75),
       green: std(0x4cce68, 0.42, 0.16, 0x087522, 0.75),
+      steam: new THREE.MeshStandardMaterial({ color: 0xe8eef2, roughness: 0.9, metalness: 0, transparent: true, opacity: 0.35, flatShading: true }),
     };
   }
 
@@ -122,6 +127,9 @@ export class BuildingActivity {
       case 'veche': this._orrery(a, b.kind === 'veche'); break;
       case 'church': this._halo(a); break;
       case 'station': this._semaphore(a); break;
+      case 'banya': this._steam(a); break;
+      case 'roshcha': this._saplings(a); break;
+      case 'zastava_ostrog': this._flag(a); break;
     }
 
     root.visible = !!b.built;
@@ -146,6 +154,14 @@ export class BuildingActivity {
     a.parts.ember = ember;
   }
 
+  _steam(a) {
+    const r = a.root;
+    const count = this.low ? 2 : 3;
+    const steam = [];
+    for (let i = 0; i < count; i++) steam.push(this._mesh(r, this.geo.sphere, this.mat.steam, 0.18, 0.97, -0.08, 0.06, 0.05, 0.06));
+    a.parts.steam = steam;
+  }
+
   _sign(a, tavern) {
     const r = a.root;
     const x = 0.72, z = 0.58;
@@ -166,6 +182,17 @@ export class BuildingActivity {
     a.parts.sign = sign;
     a.parts.lantern = lantern;
     a.parts.light = light;
+  }
+
+  _flag(a) {
+    const r = a.root;
+    const x = 0.28, z = -0.12;
+    this._mesh(r, this.geo.cylinder, this.mat.darkWood, x, 1.60, z, 0.035, 0.92, 0.035);
+    const flag = new THREE.Group();
+    flag.position.set(x, 2.02, z);
+    this._mesh(flag, this.geo.box, this.mat.cloth, 0.18, -0.12, 0, 0.36, 0.24, 0.035);
+    r.add(flag);
+    a.parts.flag = flag;
   }
 
   _farm(a) {
@@ -212,6 +239,24 @@ export class BuildingActivity {
     a.parts.stems = stems;
     a.parts.heads = heads;
     a.parts.stalkCount = count;
+  }
+
+  _saplings(a) {
+    const r = a.root;
+    const count = this.low ? 4 : SAPLING_POS.length;
+    const saplings = this._instances(r, this.geo.sphere, this.mat.leaf, count, true);
+    const d = this._dummy;
+    for (let i = 0; i < count; i++) {
+      const p = SAPLING_POS[i];
+      d.position.set(p[0], 0.5, p[1]);
+      d.rotation.set(0, 0, 0);
+      d.scale.set(0.32, 0.34, 0.32);
+      d.updateMatrix();
+      saplings.setMatrixAt(i, d.matrix);
+    }
+    saplings.instanceMatrix.needsUpdate = true;
+    a.parts.saplings = saplings;
+    a.parts.saplingCount = count;
   }
 
   _mineCart(a) {
@@ -407,6 +452,37 @@ export class BuildingActivity {
           p.arm.rotation.z = -0.62 + signal * 1.05;
           const pulse = 1 + Math.sin(q * 3.5) * 0.10;
           p.green.scale.set(0.12 * pulse, 0.12 * pulse, 0.09 * pulse);
+          break;
+        }
+        case 'banya': {
+          for (let j = 0; j < p.steam.length; j++) {
+            const cycle = (q * 0.24 + j / p.steam.length) % 1;
+            const rise = smooth01(cycle);
+            const puff = 0.06 + rise * 0.16;
+            p.steam[j].position.set(0.18 + Math.sin(q * 0.7 + j * 1.9) * rise * 0.07, 0.97 + rise * 0.66, -0.08 + Math.cos(q * 0.55 + j * 1.3) * rise * 0.05);
+            p.steam[j].scale.set(puff, puff * (0.78 + rise * 0.42), puff);
+          }
+          break;
+        }
+        case 'roshcha': {
+          const d = this._dummy;
+          for (let j = 0; j < p.saplingCount; j++) {
+            const pos = SAPLING_POS[j];
+            const rz = Math.sin(q * 1.35 + j * 0.71) * (0.035 + Math.abs(w) * 0.13);
+            const rx = Math.cos(q * 1.11 + j * 0.43) * (0.018 + Math.abs(w) * 0.06);
+            d.position.set(pos[0] - Math.sin(rz) * 0.22, 0.5 + (Math.cos(rz) - 1) * 0.22, pos[1] + Math.sin(rx) * 0.22);
+            d.rotation.set(rx, 0, rz);
+            d.scale.set(0.32, 0.34, 0.32);
+            d.updateMatrix();
+            p.saplings.setMatrixAt(j, d.matrix);
+          }
+          p.saplings.instanceMatrix.needsUpdate = true;
+          break;
+        }
+        case 'zastava_ostrog': {
+          const gust = 0.055 + Math.abs(w) * 0.16;
+          p.flag.rotation.z = Math.sin(q * (1.25 + Math.abs(w))) * gust;
+          p.flag.rotation.x = Math.sin(q * 0.73) * gust * 0.35;
           break;
         }
       }

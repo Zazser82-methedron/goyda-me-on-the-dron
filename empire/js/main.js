@@ -11,7 +11,7 @@ import { TerrainMesh } from './world/TerrainMesh.js?v=102';
 import { WorldBase } from './world/WorldBase.js?v=102';
 import { Sky } from './world/Sky.js?v=94';
 import { Atmosphere } from './world/Atmosphere.js?v=95';
-import { BuildingActivity } from './world/BuildingActivity.js?v=102';
+import { BuildingActivity } from './world/BuildingActivity.js?v=103';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
 import { nearestAdj } from './world/Pathfinding.js?v=94';
 import { UnitRenderer } from './world/UnitRenderer.js?v=96';
