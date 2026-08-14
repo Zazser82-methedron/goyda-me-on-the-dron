@@ -4,7 +4,7 @@
 // эпоху (state.upgradeResets, обнуляется в Eras.js при смене эпохи), возвращает бонусы старой ветки.
 // Модель отката: applyEffects(...,-1) отменяет РОВНО те дельты, что применил apply(...,+1) — без пересчёта
 // с нуля. Считаем это «повторным выбором ветки», а не отдельной механикой — см. отчёт задачи.
-import { apply as applyWear } from './Wear.js?v=1';
+import { apply as applyWear } from './Wear.js?v=2';
 
 const RESET_COST = { gold: 20 };   // спека не даёт числа для отката — придумано в стиле цен эдиктов
 const RESETS_PER_ERA = 1;

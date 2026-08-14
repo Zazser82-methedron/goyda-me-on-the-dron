@@ -1,10 +1,10 @@
 // ===== Нижняя панель: вкладки-категории построек + модальная сетка карточек + указы =====
 import { BUILDINGS, BUILD_ORDER, CATS } from '../data/buildings.js?v=104';
 import { RANKS } from '../data/ranks.js?v=94';
-import { RES_LABEL } from '../data/config.js?v=94';
+import { RES_LABEL } from '../data/config.js?v=102';
 import { EDICTS } from '../sim/Edicts.js?v=94';
 import { TECHS } from '../data/tech.js?v=94';
-import { ERA_NAMES } from '../sim/Eras.js?v=1';
+import { ERA_NAMES } from '../sim/Eras.js?v=2';
 import { Thumbs } from './Thumbs.js?v=100';
 
 export function costStr(cost) {

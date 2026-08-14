@@ -5,9 +5,9 @@ import { RANKS } from '../data/ranks.js?v=94';
 import { nearestAdj } from '../world/Pathfinding.js?v=94';
 import { bark } from '../data/barks.js?v=94';
 import { edictMods } from './Edicts.js?v=94';
-import { apply as applyWear, repairQuote, ruinQuote } from './Wear.js?v=1';
-import * as Eras from './Eras.js?v=1';
-import * as Upgrades from './Upgrades.js?v=2';
+import { apply as applyWear, repairQuote, ruinQuote } from './Wear.js?v=2';
+import * as Eras from './Eras.js?v=2';
+import * as Upgrades from './Upgrades.js?v=3';
 
 function trainTime(state, kind, b) {
   const base = UNITS[kind].trainTime;

@@ -55,8 +55,12 @@ export class Picker {
     this.ray.setFromCamera(this.ndc, camera);
     const targets = pickables ? pickables.slice() : [];
     if (fields) for (const f of fields) targets.push(f.inst);
-    if (!targets.length) return null;
-    const hits = this.ray.intersectObjects(targets, true);
+    // защита от транзиентного undefined/null (здание/поле в процессе создания-удаления в тот же кадр) —
+    // Raycaster.intersectObjects падает на .layers первого же «дырявого» элемента (баг всплыл при
+    // наведении курсора во время __stress-спавна большой пачки юнитов)
+    const clean = targets.filter(Boolean);
+    if (!clean.length) return null;
+    const hits = this.ray.intersectObjects(clean, true);
     for (const h of hits) {
       if (h.object.isInstancedMesh && h.instanceId != null) {
         const f = fields && fields.find(ff => ff.inst === h.object);

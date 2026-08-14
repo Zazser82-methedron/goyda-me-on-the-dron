@@ -1,5 +1,5 @@
 // ===== Верхняя панель: ресурсы, ранг, Базометр-ВЕРА, население, счастье, день =====
-import { RES, RES_LABEL } from '../data/config.js?v=94';
+import { RES, RES_LABEL } from '../data/config.js?v=102';
 import { RANKS } from '../data/ranks.js?v=94';
 import { RAID_FORMATS } from '../sim/RaidFormats.js?v=96';
 

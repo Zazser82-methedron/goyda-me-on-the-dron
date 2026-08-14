@@ -1,13 +1,13 @@
 // ===== Единый источник правды: ресурсы, сущности, ранги, сейв =====
 import * as THREE from 'three';
-import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=94';
-import { Grid } from '../world/Grid.js?v=94';
-import { NodeField } from '../world/NodeField.js?v=109';
+import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=102';
+import { Grid } from '../world/Grid.js?v=95';
+import { NodeField } from '../world/NodeField.js?v=110';
 import { BUILDINGS } from '../data/buildings.js?v=104';
 import { UNITS } from '../data/units.js?v=94';
 import { RANKS } from '../data/ranks.js?v=94';
-import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=103';
-import * as Tiling from '../world/Tiling.js?v=102';
+import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=104';
+import * as Tiling from '../world/Tiling.js?v=103';
 
 // Порт (roadPort/railPort) задан как {dx,dy} от gx,gy для НЕповёрнутого здания (rot=0).
 // При повороте (R при постройке, b.rot 0..3, view.rotation.y = rot*PI/2) визуальный фасад

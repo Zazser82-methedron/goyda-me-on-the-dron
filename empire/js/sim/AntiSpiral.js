@@ -1,5 +1,5 @@
 // ===== Чрезвычайные меры: эдикты выживания и милость Идола Дрона =====
-import { SIM_DT, DAY_TICKS } from '../data/config.js?v=94';
+import { SIM_DT, DAY_TICKS } from '../data/config.js?v=102';
 
 const DAY_SECONDS = DAY_TICKS * SIM_DT;
 const MOBILIZATION = { count: 2, cost: { food: 30, gold: 20 }, happy: 8, cooldown: 4 * DAY_SECONDS, life: 90 };

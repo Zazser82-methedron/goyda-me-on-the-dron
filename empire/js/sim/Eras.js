@@ -1,7 +1,7 @@
 // ===== Три эпохи: state.era (0/1/2, числовой индекс — как rankIndex) =====
 // Переход НЕ по очкам, а по условиям «3 из 5» (см. PHASE2_DESIGN_SPEC.md §1).
 // Открывает новые постройки через поле era на BUILDINGS[kind] (гейт — в Buildings.placeBuilding).
-import { apply as applyWear } from './Wear.js?v=1';
+import { apply as applyWear } from './Wear.js?v=2';
 
 export const ERA_NAMES = ['Вольная слобода', 'Уездная держава', 'Гойда-индустрия'];
 const NEED = 3;   // «3 из 5» условий на переход — как в спеке

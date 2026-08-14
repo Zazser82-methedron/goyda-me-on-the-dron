@@ -1,7 +1,7 @@
 // ===== Движение, бой и ИИ юнитов (свои воины + враги). Воркеры — в Jobs.js =====
-import { TILE, GRID_N } from '../data/config.js?v=94';
+import { TILE, GRID_N } from '../data/config.js?v=102';
 import { findPath, nearestAdj } from '../world/Pathfinding.js?v=94';
-import { updateWorker } from './Jobs.js?v=95';
+import { updateWorker } from './Jobs.js?v=96';
 import { bark } from '../data/barks.js?v=94';
 import { SpatialHash } from './SpatialHash.js?v=94';
 

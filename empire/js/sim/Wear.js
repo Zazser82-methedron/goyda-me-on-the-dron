@@ -1,5 +1,5 @@
 // ===== Износ, руины и ежедневная работа Избы Плотника =====
-import { SIM_DT, DAY_TICKS } from '../data/config.js?v=94';
+import { SIM_DT, DAY_TICKS } from '../data/config.js?v=102';
 
 const DAY_SECONDS = DAY_TICKS * SIM_DT;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
