@@ -59,6 +59,70 @@ export class Lobby {
     this._teardown();
   }
 
+  // ===== 3.2: переход лобби -> игра, 2.2с (PLAN_2026.md) =====
+  // 0.0-0.4 импульс Дрона (вспышка глаза + пульс масштаба) · 0.4-1.2 рывок камеры вниз, будто
+  // пикируем к поселению · 1.2-1.8 пролёт сквозь облака — непрозрачный оверлей ЦЕЛИКОМ прячет
+  // экран, и ИМЕННО тут (не раньше, не позже) вызывается тяжёлый синхронный startWith() —
+  // тот же приём, что _portalArrivalFx() в main.js для портала. · 1.8-2.2 выход из облаков, HUD
+  // проявляется. С момента вызова startWith() камерой/рендером управляет уже настоящий Loop —
+  // свой rAF мы к этому моменту полностью останавливаем, конфликтов нет.
+  playTransition(fk, mk) {
+    if (this._transitioning) return;
+    this._transitioning = true;
+    if (this._raf) cancelAnimationFrame(this._raf);
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9998;pointer-events:none;'
+      + 'background:radial-gradient(circle at 50% 42%,#fbfdff 0%,#dce9f2 55%,#aebfcf 100%);'
+      + 'opacity:0;transition:opacity .4s ease-out';
+    document.body.appendChild(overlay);
+
+    const t0 = performance.now();
+    const diveFrom = this._camBase.clone();
+    const diveTo = new THREE.Vector3(0.15, 0.5, 1.3);       // низко над площадкой — «падаем» внутрь мира
+    const lookFrom = this._camLook.clone();
+    const lookTo = new THREE.Vector3(0, 0.5, -0.4);
+    const droneBaseScale = 0.17;
+
+    const stepDive = () => {
+      const t = (performance.now() - t0) / 1000;
+      if (t < 0.4) {
+        // импульс Дрона: глаз вспыхивает к максимуму, силуэт слегка раздувается
+        const k = t / 0.4;
+        if (this.droneEye) this.droneEye.emissiveIntensity = this.droneEyeBase + (3.5 - this.droneEyeBase) * Math.sin(k * Math.PI);
+        if (this.drone) this.drone.scale.setScalar(droneBaseScale * (1 + 0.3 * Math.sin(k * Math.PI)));
+        this.game.rdr.render(this.game.camera);
+        this._raf = requestAnimationFrame(stepDive);
+        return;
+      }
+      if (t < 1.2) {
+        const k = Math.min(1, (t - 0.4) / 0.8);
+        const ek = 1 - Math.pow(1 - k, 3);   // ease-out cubic — рывок резкий вначале, плавно гасится
+        this.game.camera.position.lerpVectors(diveFrom, diveTo, ek);
+        const look = new THREE.Vector3().lerpVectors(lookFrom, lookTo, ek);
+        this.game.camera.lookAt(look);
+        this.game.rdr.render(this.game.camera);
+        this._raf = requestAnimationFrame(stepDive);
+        return;
+      }
+      // t>=1.2 — облачная завеса: сначала гарантированно закрасить оверлей ДО тяжёлой синхронной
+      // работы (иначе браузер не успеет отрисовать непрозрачный кадр перед фризом на buildWorld()).
+      overlay.style.transition = 'none';
+      overlay.style.opacity = '1';
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        this._raf = null;
+        this.stop();                       // демонтируем сцену лобби, ПОКА экран закрыт облаками
+        this.game.startWith(fk, mk);        // тяжёлая синхронная стройка мира — спрятана за оверлеем
+        // выход из облаков: 1.8-2.2с
+        overlay.style.transition = 'opacity .4s ease-out';
+        overlay.style.opacity = '0';
+        document.getElementById('hud')?.classList.remove('hud-entering');
+        setTimeout(() => { overlay.remove(); this._transitioning = false; }, 420);
+      }));
+    };
+    this._raf = requestAnimationFrame(stepDive);
+  }
+
   _build() {
     const { scene, assets } = this.game;
     const g = new THREE.Group();

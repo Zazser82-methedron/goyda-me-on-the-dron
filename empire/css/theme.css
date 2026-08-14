@@ -12,8 +12,9 @@ body{
 }
 #app{ position:fixed; inset:0; }
 #c{ position:absolute; inset:0; width:100%; height:100%; display:block; cursor:crosshair; }
-#hud{ position:absolute; inset:0; pointer-events:none; }
+#hud{ position:absolute; inset:0; pointer-events:none; transition:opacity .4s ease-out; }
 #hud > *{ pointer-events:auto; }
+#hud.hud-entering{ opacity:0; }   /* лобби/переход 3.2 — HUD скрыт, проявляется в конце playTransition */
 
 /* сумеречное небо под сценой (видно сквозь прозрачный канвас) */
 #app::before{

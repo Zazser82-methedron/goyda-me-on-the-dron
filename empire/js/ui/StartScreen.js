@@ -93,6 +93,7 @@ export class StartScreen {
     document.getElementById('bootlog')?.remove();
     this.el.classList.remove('leaving');
     this.el.style.display = 'flex';
+    document.getElementById('hud')?.classList.add('hud-entering');   // проявится в конце playTransition (3.2)
     this.game.lobby.start();   // 3D-сцена: Дрон над миниатюрным поселением, вместо старого CSS-фона
     this.el.innerHTML = `
       <div class="start-shade" aria-hidden="true"></div>
@@ -180,14 +181,13 @@ export class StartScreen {
       if (this._launching) return;
       this._launching = true;
       this._sfx('build');
-      this.el.classList.add('leaving');
-      this.game.lobby.stop();   // сцену лобби убираем ДО того, как buildWorld() начнёт населять ту же scene
+      this.el.classList.add('leaving');   // панель кампании уходит сама (0.44с) — дальше сцену ведёт Lobby
       setTimeout(() => {
         document.body.classList.remove('start-screen-open');
         this.el.style.display = 'none';
         this.el.classList.remove('leaving');
-        this.game.startWith(this.fk, this.mk);
       }, 420);
+      this.game.lobby.playTransition(this.fk, this.mk);   // 2.2с: импульс Дрона -> рывок камеры -> облака -> HUD
     };
   }
 }

@@ -46,8 +46,8 @@ import { bark } from './data/barks.js?v=94';
 import { STORAGE_KEY } from './data/config.js?v=102';
 import { getFaction } from './data/factions.js?v=94';
 import { getMap, MAPS } from './data/maps.js?v=94';
-import { StartScreen } from './ui/StartScreen.js?v=103';
-import { Lobby } from './ui/Lobby.js?v=5';
+import { StartScreen } from './ui/StartScreen.js?v=104';
+import { Lobby } from './ui/Lobby.js?v=6';
 import * as Transport from './sim/Transport.js?v=104';
 import * as Railroad from './sim/Railroad.js?v=105';
 
