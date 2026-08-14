@@ -102,12 +102,19 @@ function resetRaidWarning(state) {
   state._warnStage = 0; state._warnStart = undefined; state.raidWarning = null;
 }
 
-// Эпох в GameState ещё нет: +5 за переход оставлен для будущего хука, но не начисляется.
+// +5 за каждый переход эпохи (state.era, sim/Eras.js) — раньше эпох не было, крючок был готов,
+// но никогда не срабатывал (закрыто 2026-08-14, см. PLAN_2026.md 2.7). Хард-потолок одновременных
+// врагов по эпохам (18/28/40 из исходной спеки) — отдельная, более рискованная без живой обкатки
+// задача (меняет пересчёт budget→состав набега в composeRaid), сознательно не трогал в этом раунде.
 function syncThreatBudget(state) {
-  if (state._raidBudget === undefined) { state._raidBudget = 10; state._raidBudgetDay = state.day || 0; return; }
+  if (state._raidBudget === undefined) {
+    state._raidBudget = 10; state._raidBudgetDay = state.day || 0; state._raidBudgetEra = state.era || 0;
+    return;
+  }
   const days = Math.max(0, (state.day || 0) - (state._raidBudgetDay || 0));
   if (days) { state._raidBudget += days * 3; state._raidBudgetDay = state.day; }
-  // TODO: при появлении state.eraIndex добавить +5 за каждый переход эпохи.
+  const era = state.era || 0, prevEra = state._raidBudgetEra || 0;
+  if (era > prevEra) { state._raidBudget += 5 * (era - prevEra); state._raidBudgetEra = era; }
 }
 
 // первая клетка от края внутрь, которая ПРОХОДИМА и СВЯЗАНА с базой (не остров за водой)
