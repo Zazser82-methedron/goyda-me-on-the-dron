@@ -1,7 +1,7 @@
 // ===== Единый источник правды: ресурсы, сущности, ранги, сейв =====
 import * as THREE from 'three';
 import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=102';
-import { Grid } from '../world/Grid.js?v=95';
+import { Grid } from '../world/Grid.js?v=96';
 import { NodeField } from '../world/NodeField.js?v=116';
 import { BUILDINGS } from '../data/buildings.js?v=106';
 import { UNITS } from '../data/units.js?v=94';

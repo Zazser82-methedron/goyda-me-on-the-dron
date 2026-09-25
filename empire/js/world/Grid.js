@@ -112,6 +112,57 @@ export class Grid {
         t.walkable = t.baseWalkable; t.buildable = t.baseBuildable; t.occupiedBy = null;
       }
     }
+    // Типы тайлов уже зафиксированы: последующая правка касается только поля
+    // высот и не меняет воду, проходимость или строительство.
+    this._softenWaterline(2, 4);
+  }
+
+  // Пологий берег: находим углы между водными и сухими тайлами, расширяем полосу
+  // на два кольца и размываем только её. Вне полосы исходный рельеф не трогаем.
+  _softenWaterline(rings = 2, passes = 4) {
+    const n = this.n, side = n + 1, count = side * side;
+    const band = new Int8Array(count);
+    const at = (x, y) => y * side + x;
+    for (let cy = 0; cy <= n; cy++) {
+      for (let cx = 0; cx <= n; cx++) {
+        let water = false, land = false;
+        for (let dy = -1; dy <= 0; dy++) for (let dx = -1; dx <= 0; dx++) {
+          const tile = this.get(cx + dx, cy + dy);
+          if (!tile) continue;
+          if (tile.biome === 'water') water = true;
+          else land = true;
+        }
+        if (water && land) band[at(cx, cy)] = 1;
+      }
+    }
+    // Восемь соседей дают ровную полосу и на диагональных изгибах русла.
+    for (let ring = 0; ring < rings; ring++) {
+      const next = band.slice();
+      for (let cy = 0; cy <= n; cy++) for (let cx = 0; cx <= n; cx++) {
+        if (!band[at(cx, cy)]) continue;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const x = cx + dx, y = cy + dy;
+          if (x >= 0 && y >= 0 && x <= n && y <= n) next[at(x, y)] = 1;
+        }
+      }
+      band.set(next);
+    }
+    for (let pass = 0; pass < passes; pass++) {
+      const next = this.heights.slice();
+      for (let cy = 0; cy <= n; cy++) for (let cx = 0; cx <= n; cx++) {
+        const i = at(cx, cy);
+        if (!band[i]) continue;
+        let sum = this.heights[i], samples = 1;
+        for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+          const x = cx + dx, y = cy + dy;
+          if (x < 0 || y < 0 || x > n || y > n) continue;
+          sum += this.heights[at(x, y)]; samples++;
+        }
+        // Небольшая инерция сохраняет характер холмов, но убирает обрыв у воды.
+        next[i] = this.heights[i] * 0.35 + (sum / samples) * 0.65;
+      }
+      this.heights = next;
+    }
   }
 
   flattenCenter(rad, level) {
@@ -132,17 +183,24 @@ export class Grid {
     return Math.max(a, b, c, d) - Math.min(a, b, c, d);
   }
 
-  // высота земли в мировой точке (билинейно по углам) — единый источник Y
+  // Высота земли в мировой точке. Catmull-Rom проходит через все углы сетки,
+  // поэтому вершины TerrainMesh, здания и юниты читают одну и ту же поверхность.
   heightAt(wx, wz) {
     if (!this.heights) return 0;
     const n = this.n;
-    const fx = wx / TILE + n / 2, fy = wz / TILE + n / 2;
-    let x0 = Math.floor(fx), y0 = Math.floor(fy);
-    const tx = Math.max(0, Math.min(1, fx - x0)), ty = Math.max(0, Math.min(1, fy - y0));
-    x0 = Math.max(0, Math.min(n, x0)); y0 = Math.max(0, Math.min(n, y0));
-    const x1 = Math.min(n, x0 + 1), y1 = Math.min(n, y0 + 1);
-    const H = (cx, cy) => this.heights[cy * (n + 1) + cx];
-    const a = H(x0, y0), b = H(x1, y0), cc = H(x0, y1), d = H(x1, y1);
-    return (a * (1 - tx) + b * tx) * (1 - ty) + (cc * (1 - tx) + d * tx) * ty;
+    const fx = Math.max(0, Math.min(n, wx / TILE + n / 2));
+    const fy = Math.max(0, Math.min(n, wz / TILE + n / 2));
+    const x0 = Math.floor(fx), y0 = Math.floor(fy);
+    const tx = fx - x0, ty = fy - y0;
+    const H = (cx, cy) => this.heights[Math.max(0, Math.min(n, cy)) * (n + 1) + Math.max(0, Math.min(n, cx))];
+    const cubic = (a, b, c, d, t) => {
+      const t2 = t * t, t3 = t2 * t;
+      return 0.5 * ((2 * b) + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (-a + 3 * b - 3 * c + d) * t3);
+    };
+    const r0 = cubic(H(x0 - 1, y0 - 1), H(x0, y0 - 1), H(x0 + 1, y0 - 1), H(x0 + 2, y0 - 1), tx);
+    const r1 = cubic(H(x0 - 1, y0), H(x0, y0), H(x0 + 1, y0), H(x0 + 2, y0), tx);
+    const r2 = cubic(H(x0 - 1, y0 + 1), H(x0, y0 + 1), H(x0 + 1, y0 + 1), H(x0 + 2, y0 + 1), tx);
+    const r3 = cubic(H(x0 - 1, y0 + 2), H(x0, y0 + 2), H(x0 + 1, y0 + 2), H(x0 + 2, y0 + 2), tx);
+    return cubic(r0, r1, r2, r3, ty);
   }
 }

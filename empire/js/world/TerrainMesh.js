@@ -27,29 +27,32 @@ export class TerrainMesh {
     };
     this._tc = new THREE.Color();   // переиспользуемый temp для блендов цвета
 
-    // ---- меш рельефа из углов-высот ----
-    const verts = new Float32Array((n + 1) * (n + 1) * 3);
-    const cols = new Float32Array((n + 1) * (n + 1) * 3);
-    const uvs = new Float32Array((n + 1) * (n + 1) * 2);
+    // ---- меш рельефа: high/medium — по 2×2 квада на тайл, low — исходная сетка ----
+    const subdiv = this.tier === 'low' ? 1 : 2;
+    const meshN = n * subdiv, meshSide = meshN + 1;
+    const verts = new Float32Array(meshSide * meshSide * 3);
+    const cols = new Float32Array(meshSide * meshSide * 3);
+    const uvs = new Float32Array(meshSide * meshSide * 2);
     const UVK = 0.25;   // мирово-тайловые UV: одна «плитка» детал-текстуры на ~4 тайла
     const col = new THREE.Color();
     let vi = 0;
-    for (let cy = 0; cy <= n; cy++) {
-      for (let cx = 0; cx <= n; cx++) {
-        const wx = (cx - n / 2) * TILE, wz = (cy - n / 2) * TILE;
-        const h = grid.heights ? grid.heights[cy * (n + 1) + cx] : 0;
+    for (let cy = 0; cy <= meshN; cy++) {
+      for (let cx = 0; cx <= meshN; cx++) {
+        const gx = cx / subdiv, gy = cy / subdiv;
+        const wx = (gx - n / 2) * TILE, wz = (gy - n / 2) * TILE;
+        const h = grid.heightAt(wx, wz);
         verts[vi * 3] = wx; verts[vi * 3 + 1] = h; verts[vi * 3 + 2] = wz;
-        this._cornerColor(col, h, T, cx, cy);
+        this._cornerColor(col, h, T, gx, gy);
         cols[vi * 3] = col.r; cols[vi * 3 + 1] = col.g; cols[vi * 3 + 2] = col.b;
-        uvs[vi * 2] = cx * UVK; uvs[vi * 2 + 1] = cy * UVK;
+        uvs[vi * 2] = gx * UVK; uvs[vi * 2 + 1] = gy * UVK;
         vi++;
       }
     }
-    const idx = new Uint32Array(n * n * 6);
+    const idx = new Uint32Array(meshN * meshN * 6);
     let ii = 0;
-    for (let y = 0; y < n; y++) {
-      for (let x = 0; x < n; x++) {
-        const a = y * (n + 1) + x, b = a + 1, c = a + (n + 1), d = c + 1;
+    for (let y = 0; y < meshN; y++) {
+      for (let x = 0; x < meshN; x++) {
+        const a = y * meshSide + x, b = a + 1, c = a + meshSide, d = c + 1;
         idx[ii++] = a; idx[ii++] = c; idx[ii++] = b;
         idx[ii++] = b; idx[ii++] = c; idx[ii++] = d;
       }
@@ -71,14 +74,10 @@ export class TerrainMesh {
 
     // ---- вода ----
     const ww = n * TILE;
-    this.water = new THREE.Mesh(
-      new THREE.PlaneGeometry(ww, ww, 1, 1),
-      // отражает IBL-окружение → читается как настоящая вода
-      new THREE.MeshStandardMaterial({ color: PAL.water, transparent: true, opacity: 0.82, roughness: 0.1, metalness: 0.6, depthWrite: false, envMapIntensity: 1.5 })
-    );
+    this.water = new THREE.Mesh(new THREE.PlaneGeometry(ww, ww, 1, 1), this._makeWaterMaterial(grid, ww));
     this.water.rotation.x = -Math.PI / 2;
     this.water.position.y = (grid.water ?? -0.5) - 0.02;
-    // рябь: тайловая normal-мапа, скроллится в update → блики дробятся, вода «живая»
+    // Рябь остаётся normal-картой стандартного PBR-материала: она даёт живые блики.
     const wn = makeRippleNormal(128); wn.repeat.set(8, 8);
     this.water.material.normalMap = wn; this.water.material.normalScale = new THREE.Vector2(0.35, 0.35); this.water.material.needsUpdate = true;
     this._waterN = wn;
@@ -104,6 +103,81 @@ export class TerrainMesh {
     );
     this.ghostPlane.rotation.x = -Math.PI / 2;
     this.ghost.add(this.ghostPlane);
+  }
+
+  // Карта дна строится той же heightAt, что и меш земли. Четыре отсчёта на тайл
+  // достаточно точны для пены, но занимают всего около 0.6 МБ на карте 96×96.
+  _makeWaterDepthTexture(grid) {
+    const samples = grid.n * 4 + 1, data = new Float32Array(samples * samples);
+    const worldSize = grid.n * TILE;
+    for (let y = 0; y < samples; y++) for (let x = 0; x < samples; x++) {
+      const wx = (x / (samples - 1) - 0.5) * worldSize;
+      const wz = (y / (samples - 1) - 0.5) * worldSize;
+      data[y * samples + x] = grid.heightAt(wx, wz);
+    }
+    const tex = new THREE.DataTexture(data, samples, samples, THREE.RedFormat, THREE.FloatType);
+    tex.minFilter = tex.magFilter = THREE.LinearFilter;
+    tex.generateMipmaps = false;
+    tex.needsUpdate = true;
+    return tex;
+  }
+
+  _makeWaterMaterial(grid, worldSize) {
+    const highWater = this.tier !== 'low';
+    const mat = new THREE.MeshStandardMaterial({
+      color: highWater ? 0xffffff : PAL.water,
+      transparent: true,
+      opacity: highWater ? 1 : 0.82,
+      roughness: 0.12,
+      metalness: 0.58,
+      depthWrite: false,
+      envMapIntensity: 1.5,
+    });
+    if (!highWater) return mat;
+
+    const depthMap = this._makeWaterDepthTexture(grid);
+    this._waterDepthMap = depthMap;
+    const uniforms = {
+      uWaterDepthMap: { value: depthMap },
+      uWaterSize: { value: worldSize },
+      uWaterLevel: { value: grid.water ?? -0.5 },
+      uWaterTime: { value: 0 },
+      uWaterShallow: { value: new THREE.Color(0x2fc8bb) },
+      uWaterDeep: { value: new THREE.Color(0x0758a8) },
+    };
+    mat.onBeforeCompile = (shader) => {
+      Object.assign(shader.uniforms, uniforms);
+      this._waterShader = shader;
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', '#include <common>\nvarying vec3 vGoydaWaterWorld;')
+        // Не полагаемся на worldPosition из chunk: он может быть вырезан, если нет envMap.
+        .replace('#include <project_vertex>', 'vGoydaWaterWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;\n#include <project_vertex>');
+      shader.fragmentShader = shader.fragmentShader
+        .replace('#include <common>', `#include <common>
+uniform sampler2D uWaterDepthMap;
+uniform float uWaterSize;
+uniform float uWaterLevel;
+uniform float uWaterTime;
+uniform vec3 uWaterShallow;
+uniform vec3 uWaterDeep;
+varying vec3 vGoydaWaterWorld;
+float goydaWaterDepth;
+float goydaWaterFoam;`)
+        .replace('#include <color_fragment>', `#include <color_fragment>
+vec2 goydaWaterUv = clamp(vGoydaWaterWorld.xz / uWaterSize + 0.5, 0.0, 1.0);
+float goydaBed = texture2D(uWaterDepthMap, goydaWaterUv).r;
+goydaWaterDepth = max(0.0, uWaterLevel - goydaBed);
+float goydaDeep = smoothstep(0.08, 1.25, goydaWaterDepth);
+float goydaShoreAlpha = mix(0.34, 0.88, goydaDeep);
+float goydaWave = 0.5 + 0.5 * sin(uWaterTime * 2.4 + vGoydaWaterWorld.x * 4.1 + vGoydaWaterWorld.z * 3.3);
+goydaWaterFoam = (1.0 - smoothstep(0.018, 0.19, goydaWaterDepth)) * (0.48 + goydaWave * 0.34);
+diffuseColor.rgb = mix(uWaterShallow, uWaterDeep, goydaDeep);
+diffuseColor.a *= goydaShoreAlpha;`)
+        .replace('#include <opaque_fragment>', `outgoingLight = mix(outgoingLight, vec3(0.97, 0.99, 0.92), goydaWaterFoam);
+#include <opaque_fragment>`);
+    };
+    mat.customProgramCacheKey = () => 'goyda-shore-water-v1';
+    return mat;
   }
 
   // ---- процедурная PBR-земля: тайловые detail(albedo)/normal/roughness без внешних текстур ----
@@ -176,6 +250,7 @@ export class TerrainMesh {
   // анимация ряби воды (зовётся из render-loop)
   update(fdt) {
     if (this._waterN) { this._waterN.offset.x += fdt * 0.015; this._waterN.offset.y += fdt * 0.02; }
+    if (this._waterShader) this._waterShader.uniforms.uWaterTime.value += fdt;
   }
 
   // мокрая земля (0..1, из Sky.wetness): темнее+глаже (мокрый блеск) — дешёво, 2 лерпа на кадр, без новых текстур

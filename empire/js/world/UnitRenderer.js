@@ -16,6 +16,10 @@ const MAX_PER_MODEL = 500;   // ёмкость instanceMatrix на одну мо
 const MAX_TOTAL = 650;       // ёмкость общего пула теней (все юниты разом, любых моделей)
 const MAX_VETS = 80;         // ёмкость на один уровень шеврона (★/★★/★★★)
 const BOB_RATE = 16.0;       // рад/сек — темп бобра ходьбы (соответствует старому CPU: now[мс]*0.016)
+// Суставы фигур из tools/blender/goyda_kit.py (humanoid): высота бёдер и плеч в локальных координатах модели.
+// Номер части тела — во втором UV-канале (uv1.x = part/10): 0 туловище, 1/2 левая/правая рука, 3/4 левая/правая нога.
+const HIP_Y = 0.30, SHOULDER_Y = 0.52;
+const ANIM_WORK = new Set(['build', 'gather', 'working']);
 
 export class UnitRenderer {
   constructor(scene, assets) {
@@ -50,6 +54,7 @@ export class UnitRenderer {
     const subs = [];
     const phaseAttr = new THREE.InstancedBufferAttribute(new Float32Array(MAX_PER_MODEL), 1).setUsage(THREE.DynamicDrawUsage);
     const walkAttr = new THREE.InstancedBufferAttribute(new Float32Array(MAX_PER_MODEL), 1).setUsage(THREE.DynamicDrawUsage);
+    const animAttr = new THREE.InstancedBufferAttribute(new Float32Array(MAX_PER_MODEL * 2), 2).setUsage(THREE.DynamicDrawUsage);
     proto.traverse((o) => {
       if (!o.isMesh) return;
       const geo = o.geometry.clone();
@@ -60,7 +65,13 @@ export class UnitRenderer {
       geo.computeBoundingBox();
       geo.setAttribute('aInstancePhase', phaseAttr);
       geo.setAttribute('aWalkAmp', walkAttr);
-      const mat = o.material;
+      geo.setAttribute('aAnim', animAttr);        // (режим: 0 обычный / 1 работа / 2 удар, фаза удара 0..1)
+      // часть тела на вершину: из uv1 новых моделей; у старых (без разметки) всё — «туловище», просто бобр
+      const nv = geo.attributes.position.count, part = new Float32Array(nv);
+      const uv1 = geo.attributes.uv1;
+      if (uv1) for (let k = 0; k < nv; k++) part[k] = Math.floor(uv1.getX(k) * 10 + 0.001);
+      geo.setAttribute('aPart', new THREE.BufferAttribute(part, 1));
+      const mat = o.material.clone();              // своя копия: материалы M_* общие с постройками (MaterialLib), шейдер юнита их не должен задеть
       this._injectWalkBob(mat);
       const inst = new THREE.InstancedMesh(geo, mat, MAX_PER_MODEL);
       inst.castShadow = false;                     // как и раньше — юниты дают только блоб-тень, не в shadow-map
@@ -71,7 +82,7 @@ export class UnitRenderer {
       this.scene.add(inst);
       subs.push({ inst });
     });
-    g = { subs, phaseAttr, walkAttr, count: 0, slots: [], provisional: !haveGlb };
+    g = { subs, phaseAttr, walkAttr, animAttr, count: 0, slots: [], provisional: !haveGlb };
     this.groups[modelName] = g;
     this._fieldsCache = null;
     return g;
@@ -84,21 +95,43 @@ export class UnitRenderer {
     delete this.groups[modelName];
   }
 
-  // вертексный сдвиг Y-походки: uTime — общий uniform (та же ссылка у всех материалов),
-  // aInstancePhase — уникальная случайная фаза на инстанс, aWalkAmp — амплитуда (0 когда юнит не идёт).
+  // Анимация частей тела в вершинном шейдере (GDD §2.6): руки поворачиваются вокруг плеч, ноги — вокруг бёдер,
+  // по оси X (вперёд-назад). Ходьба — шаг и отмашка, работа — замах и удар правой рукой, бой — быстрый удар,
+  // покой — дыхание. uTime общий, aInstancePhase — фаза инстанса, aWalkAmp > 0 — юнит идёт.
   _injectWalkBob(mat) {
     const timeUniform = this.timeUniform;
     mat.onBeforeCompile = (shader) => {
       shader.uniforms.uTime = timeUniform;
       shader.vertexShader =
-        'attribute float aInstancePhase;\nattribute float aWalkAmp;\nuniform float uTime;\n' +
+        'attribute float aInstancePhase;\nattribute float aWalkAmp;\nattribute vec2 aAnim;\nattribute float aPart;\nuniform float uTime;\n' +
         shader.vertexShader.replace(
           '#include <begin_vertex>',
           `#include <begin_vertex>
+           float moving = step(0.0005, aWalkAmp);
+           float stride = sin(uTime * ${(BOB_RATE / 2).toFixed(1)} + aInstancePhase);
+           float ang = 0.0, pivot = 0.0;
+           if (aPart > 2.5) {                                   // ноги
+             pivot = ${HIP_Y.toFixed(3)};
+             ang = (aPart < 3.5 ? 1.0 : -1.0) * stride * 0.6 * moving;
+           } else if (aPart > 0.5) {                            // руки
+             pivot = ${SHOULDER_Y.toFixed(3)};
+             ang = (aPart < 1.5 ? -1.0 : 1.0) * stride * 0.5 * moving + sin(uTime * 2.0 + aInstancePhase) * 0.04;
+             if (aPart > 1.5 && aAnim.x > 1.5) {                // удар: из замаха вниз
+               ang = mix(-2.3, -0.2, aAnim.y);
+             } else if (aPart > 1.5 && aAnim.x > 0.5) {         // работа: медленный замах, резкий удар
+               float w = fract(uTime * 0.9 + aInstancePhase * 0.16);
+               ang = w < 0.65 ? mix(-0.3, -2.3, w / 0.65) : mix(-2.3, -0.2, (w - 0.65) / 0.35);
+             }
+           }
+           if (ang != 0.0) {
+             float c = cos(ang), s = sin(ang);
+             vec3 q = transformed - vec3(0.0, pivot, 0.0);
+             transformed = vec3(q.x, q.y * c - q.z * s, q.y * s + q.z * c) + vec3(0.0, pivot, 0.0);
+           }
            transformed.y += abs(sin(uTime * ${BOB_RATE.toFixed(1)} + aInstancePhase)) * aWalkAmp;`
         );
     };
-    mat.customProgramCacheKey = () => 'goyda-unit-walkbob-v1';
+    mat.customProgramCacheKey = () => 'goyda-unit-anim-v2';
   }
 
   // ---------- тень-пятно (общая на всех юнитов) ----------
@@ -167,6 +200,10 @@ export class UnitRenderer {
     this._c.set(tint != null ? tint : 0xffffff);
     g.phaseAttr.array[i] = (u.id * 1.7) % 6.28318;
     g.walkAttr.array[i] = walkAmp || 0;
+    // режим анимации из состояния юнита (у «трупов»-fx состояния нет → 0)
+    const atk = u.atkAnim > 0 ? 1 - u.atkAnim / 0.2 : -1;
+    g.animAttr.array[i * 2] = atk >= 0 ? 2 : (ANIM_WORK.has(u.state) && !walkAmp ? 1 : 0);
+    g.animAttr.array[i * 2 + 1] = atk >= 0 ? atk : 0;
     for (const sub of g.subs) { sub.inst.setMatrixAt(i, this._m); sub.inst.setColorAt(i, this._c); }
   }
 
@@ -208,6 +245,7 @@ export class UnitRenderer {
       }
       g.phaseAttr.needsUpdate = true;
       g.walkAttr.needsUpdate = true;
+      g.animAttr.needsUpdate = true;
     }
     this.shadowInst.count = this._shadowCount;
     this.shadowInst.instanceMatrix.needsUpdate = true;

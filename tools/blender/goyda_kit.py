@@ -38,6 +38,9 @@ MATS = {
     'M_glow':        ((0.05, 0.6, 0.7), 0.3),      # бирюзовый свет Дрона (алтари, глаза идолов)
     'M_gem':         ((0.45, 0.08, 0.7), 0.15),    # самоцветы (лиловое свечение)
     # перекрашиваемые игрой (GameState.paintBuilding): цвет задаётся на каждое здание — лубочная пестрота
+    'M_skin':        ((0.75, 0.45, 0.32), 0.7),    # лица и руки юнитов
+    'M_fur':         ((0.2, 0.12, 0.06), 1.0),     # меховые шапки, шкуры
+    'M_leather':     ((0.18, 0.09, 0.04), 0.7),    # сапоги, ремни
     'M_cobble':      ((0.35, 0.34, 0.32), 0.95),   # булыжник (фактуру даёт игра)
     'M_roof':        ((0.6, 0.15, 0.08), 0.8),     # тёсовая кровля (II эпоха) — крашеная
     'M_roof_iron':   ((0.03, 0.2, 0.08), 0.45),    # железная кровля (III эпоха)
@@ -240,7 +243,12 @@ def bake_ao(ob, samples=48, distance=0.2, strength=0.6):
         d.color = (v * t[0], v * t[1], v * t[2], 1.0)
     if tint:
         ob.data.color_attributes.remove(tint)
-    ob.data.color_attributes.active_color = ob.data.color_attributes.get('AO')
+    # после удаления TINT индексы слоёв сдвигаются: без явной установки active + render экспортёр
+    # glTF (export_vertex_color=ACTIVE) молча не пишет COLOR_0 — и всё запечённое AO теряется
+    cas = ob.data.color_attributes
+    idx = next(i for i, c in enumerate(cas) if c.name == 'AO')
+    cas.active_color_index = idx
+    cas.render_color_index = idx
 
 
 def add_marker(name, loc):
@@ -550,3 +558,83 @@ def druza(p, loc, size=1.0, material='M_gem'):
         crystal(f'{p}s{i}', (loc[0] + math.cos(a) * r, loc[1] + math.sin(a) * r, loc[2]),
                 random.uniform(0.2, 0.38) * size, random.uniform(0.03, 0.05) * size, material,
                 tilt=(math.sin(a) * -0.55, math.cos(a) * 0.55))
+
+
+# ================= Юниты: фигура с частями тела для шейдерной анимации =================
+# Номер части пишется во второй UV-канал (TEXCOORD_1, u = part/10). UnitRenderer поворачивает части
+# вокруг суставов в вершинном шейдере — скелет и анимационные клипы не нужны, всё остаётся InstancedMesh.
+PART_BODY, PART_ARM_L, PART_ARM_R, PART_LEG_L, PART_LEG_R = 0, 1, 2, 3, 4
+# Суставы (Blender-координаты, Z вверх, лицо в -Y). ОДИНАКОВЫ для всех юнитов — те же числа в UnitRenderer.js.
+HIP_Z, HIP_X = 0.30, 0.045
+SHOULDER_Z, SHOULDER_X = 0.52, 0.105
+
+
+def as_part(n, fn, *a, **kw):
+    objs = capture(fn, *a, **kw)
+    for o in objs:
+        o['part'] = n
+    return objs
+
+
+def tag_parts():
+    """Второй UV-канал PART для всех мешей (вызывать ПОСЛЕ world_uv — первый канал остаётся для фактур)."""
+    for ob in bpy.context.scene.objects:
+        if ob.type != 'MESH':
+            continue
+        n = ob.get('part', PART_BODY)
+        me = ob.data
+        uvl = me.uv_layers.get('PART') or me.uv_layers.new(name='PART')
+        for d in uvl.data:
+            d.uv = (n / 10 + 0.05, 0.0)
+
+
+def humanoid(p, cloth='M_paint_red', trousers='M_paint_blue', boots='M_leather', belt='M_leather',
+             skin='M_skin', hem=0.105, bulk=1.0, sleeve=None):
+    """Фигура ~0.72 в высоту: ноги, кафтан-колокол, пояс, руки с кистями, голова. Возвращает Z макушки."""
+    sleeve = sleeve or cloth
+    for side, part in ((-1, PART_LEG_L), (1, PART_LEG_R)):
+        def leg(side=side):
+            log(f'{p}noga{side}', HIP_Z - 0.03, 0.028 * bulk, (side * HIP_X, 0, (HIP_Z + 0.03) / 2), 'z', material=trousers, segs=7, jitter=0)
+            box(f'{p}sapog{side}', (0.06 * bulk, 0.09, 0.07), (side * HIP_X, -0.012, 0.035), boots, bevel=0.015)
+        as_part(part, leg)
+    lathe(f'{p}kaftan', [(hem * bulk, 0.16), (0.09 * bulk, 0.3), (0.085 * bulk, 0.4), (0.1 * bulk, 0.5), (0.07, 0.56), (0.035, 0.58)],
+          (0, 0, 0), cloth, segs=12)
+    log(f'{p}poyas', 0.03, 0.092 * bulk, (0, 0, 0.32), 'z', material=belt, segs=12, jitter=0)
+    for side, part in ((-1, PART_ARM_L), (1, PART_ARM_R)):
+        def arm(side=side):
+            x = side * SHOULDER_X * bulk
+            log(f'{p}plecho{side}', 0.05, 0.035 * bulk, (x, 0, SHOULDER_Z), 'x', material=sleeve, segs=8, jitter=0)
+            log(f'{p}ruka{side}', 0.2, 0.024 * bulk, (x, 0, SHOULDER_Z - 0.1), 'z', material=sleeve, segs=7, jitter=0)
+            lathe(f'{p}kist{side}', [(0.0, 0), (0.022, 0.012), (0.022, 0.03), (0.0, 0.04)], (x, 0, SHOULDER_Z - 0.245), skin, segs=7)
+        as_part(part, arm)
+    lathe(f'{p}sheya', [(0.025, 0), (0.025, 0.03)], (0, 0, 0.57), skin, segs=7)
+    lathe(f'{p}golova', [(0.0, 0), (0.045, 0.01), (0.06, 0.045), (0.058, 0.085), (0.04, 0.115), (0.0, 0.125)],
+          (0, 0, 0.59), skin, segs=10)
+    for s in (-1, 1):   # глаза — тёмные точки, чтобы лицо читалось
+        box(f'{p}glaz{s}', (0.012, 0.006, 0.012), (s * 0.022, -0.056, 0.655), 'M_dark', bevel=0)
+    return 0.715
+
+
+def in_right_hand(p, fn):
+    """Предмет в правой руке: создаётся у начала координат (рукоять вдоль Z), ставится в кисть, часть = правая рука."""
+    objs = as_part(PART_ARM_R, fn)
+    place(objs, (SHOULDER_X, -0.02, SHOULDER_Z - 0.23), 0.0)
+    return objs
+
+
+def in_left_hand(p, fn):
+    objs = as_part(PART_ARM_L, fn)
+    place(objs, (-SHOULDER_X - 0.02, -0.03, SHOULDER_Z - 0.2), 0.0)
+    return objs
+
+
+def finish_unit(name, out):
+    world_uv()
+    tint_variation(0.92, 1.0)
+    tag_parts()
+    apply_all()
+    ob = join_all(name)
+    tris = tri_count()
+    bake_ao(ob, distance=0.08, strength=0.45)
+    export_glb(out)
+    return tris, tuple(round(v, 2) for v in ob.dimensions)
