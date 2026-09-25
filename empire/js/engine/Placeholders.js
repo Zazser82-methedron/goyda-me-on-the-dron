@@ -3,6 +3,9 @@
 // Origin КАЖДОЙ модели — в центре основания (низ на y=0), модель растёт вверх.
 import * as THREE from 'three';
 import { PAL } from '../data/config.js?v=102';
+import { shared } from './MaterialLib.js?v=6';
+// копия общего материала: фактура общая, а прозрачность стройки (_applyBuildVisual) не заденет соседей
+const texMat = (name) => shared(name).clone();
 
 const _mats = {};
 function mat(color, o = {}) {
@@ -53,7 +56,7 @@ function windowMesh(w, h, x, y, z, glow = true) {
 // которую _applyBuildVisual не трогает (не портим shared-материалы прозрачностью).
 export function wallConnSegment() {
   const g = new THREE.Group();
-  const wd = mat(PAL.wood), dk = mat(PAL.woodDk);
+  const wd = texMat('M_log'), dk = texMat('M_log');   // фактура брёвен вместо плоских цветов (стали лососевыми под AgX)
   for (const y of [0.36, 0.6]) g.add(box(0.07, 0.07, 0.64, wd, 0, y, 0.3));   // 2 горизонтальных бревна
   for (const z of [0.2, 0.42]) {                                              // заострённые колья между столбами
     g.add(cyl(0.055, 0.065, 0.76, 5, dk, 0, 0.38, z));
@@ -65,7 +68,7 @@ export function wallConnSegment() {
 // ---- тайл дороги под маску соединений (N=1,E=2,S=4,W=8): вытоптанные полосы от центра к соседям ----
 export function roadTile(mask) {
   const g = new THREE.Group();
-  const d1 = mat(0x6a5a42, { rough: 1 }), d2 = mat(0x7c6c52, { rough: 1 });
+  const d1 = mat(0x4a3a28, { rough: 1 }), d2 = texMat('M_cobble');   // земляная обочина + булыжная мостовая
   const activeCount = [1, 2, 4, 8].filter(bit => mask & bit).length;
   const baseWidth = activeCount >= 3 ? 0.52 : 0.46;
   const laneWidth = activeCount >= 3 ? 0.42 : 0.36;
@@ -114,7 +117,7 @@ export function roadTile(mask) {
 // ---- короткий подъезд от дорожной клетки к фасаду: локально идёт вдоль +Z, поворот задаёт владелец здания ----
 export function roadApron() {
   const g = new THREE.Group();
-  const d1 = mat(0x6a5a42, { rough: 1 }), d2 = mat(0x7c6c52, { rough: 1 });
+  const d1 = mat(0x4a3a28, { rough: 1 }), d2 = texMat('M_cobble');
   g.add(box(0.52, 0.05, 0.58, d1, 0, 0.025, 0));
   g.add(box(0.42, 0.04, 0.50, d2, 0, 0.062, 0));
   for (const x of [-0.25, 0.25]) g.add(box(0.035, 0.025, 0.58, d1, x, 0.085, 0));
@@ -130,7 +133,7 @@ export function homesteadConn(a, c, grid) {
   const bx = clamp(a.cx, c.cx - c.w * 0.5, c.cx + c.w * 0.5), bz = clamp(a.cz, c.cz - c.h * 0.5, c.cz + c.h * 0.5);
   const mx = (ax + bx) / 2, mz = (az + bz) / 2;
   const len = Math.max(0.5, Math.hypot(bx - ax, bz - az) + 0.3);
-  const pathM = mat(0x74644c, { rough: 1 }), wd = mat(PAL.wood), dk = mat(PAL.woodDk);
+  const pathM = mat(0x5a4630, { rough: 1 }), wd = texMat('M_plank'), dk = texMat('M_log');   // земляная тропинка, заборчик с фактурой
   g.add(box(0.34, 0.04, len, pathM, 0, 0.03, 0));                             // тропинка
   for (const sx of [-0.42, 0.42]) {                                           // низкий заборчик по бокам тропинки
     for (const sz of [-len / 2 + 0.08, len / 2 - 0.08]) g.add(cyl(0.035, 0.045, 0.32, 5, dk, sx, 0.16, sz));
@@ -605,14 +608,26 @@ function chastokol() {
   return g;
 }
 function chastokolGate() {
-  const g = chastokol();
-  // убрать средние посты — «ворота»
-  g.children = g.children.filter((c, i) => i < 2 || i > 5);
-  const m = mat(PAL.crimson);
+  // Ворота острога: два толстых столба, перекладина, двускатная надвратная кровля, тесовая створка с железными полосами.
+  const g = new THREE.Group();
+  const log = texMat('M_log'), plank = texMat('M_plank'), iron = mat(0x2e2c2a, { rough: 0.5, metal: 0.8 });
+  for (const x of [-0.34, 0.34]) {
+    g.add(cyl(0.085, 0.1, 1.15, 8, log, x, 0.575, 0));
+    g.add(cone(0.095, 0.16, 8, log, x, 1.23, 0));
+  }
+  const lintel = cyl(0.05, 0.05, 0.82, 8, log, 0, 0.98, 0);   // перекладина
+  lintel.rotation.z = Math.PI / 2;
+  g.add(lintel);
+  for (const s of [-1, 1]) {                       // надвратная кровля
+    const r = box(0.9, 0.025, 0.24, plank, 0, 1.1, s * 0.08);
+    r.rotation.x = s * 0.55;
+    g.add(r);
+  }
   // створка на петле: панель смещена в группе → ось вращения у левого края (анимация открытия в render)
   const door = new THREE.Group();
-  door.add(box(0.5, 0.7, 0.06, m, 0.25, 0.45, 0));
-  door.position.set(-0.25, 0, 0);
+  door.add(box(0.56, 0.78, 0.05, plank, 0.28, 0.44, 0));
+  for (const y of [0.22, 0.66]) door.add(box(0.56, 0.05, 0.06, iron, 0.28, y, 0));
+  door.position.set(-0.28, 0, 0);
   door.name = 'gate_door';
   g.add(door);
   return g;

@@ -2,12 +2,12 @@
 import * as THREE from 'three';
 import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=102';
 import { Grid } from '../world/Grid.js?v=95';
-import { NodeField } from '../world/NodeField.js?v=110';
+import { NodeField } from '../world/NodeField.js?v=112';
 import { BUILDINGS } from '../data/buildings.js?v=104';
 import { UNITS } from '../data/units.js?v=94';
 import { RANKS } from '../data/ranks.js?v=94';
-import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=104';
-import * as Tiling from '../world/Tiling.js?v=103';
+import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=106';
+import * as Tiling from '../world/Tiling.js?v=105';
 
 // Модели, у которых есть облики эпох <model>_e1 / <model>_e2 (tools/blender/build_*.py).
 // Грузятся лениво — только когда держава дошла до эпохи, чтобы старт не тянул все облики разом.

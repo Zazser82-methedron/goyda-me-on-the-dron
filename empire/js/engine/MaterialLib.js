@@ -14,6 +14,7 @@ const TEXTURED = {
   M_thatch:  { tex: 'thatch',  tint: 0xf0c878, rough: 0.95 },
   M_stone:   { tex: 'stone',   tint: 0xd8d0c0, rough: 0.9 },
   M_plaster: { tex: 'plaster', tint: 0xffffff, gain: 1.3, rough: 0.9 },   // фото штукатурки сероватое — gain осветляет до побелки
+  M_cobble:  { tex: 'cobble',  tint: 0xd8ccb8, rough: 0.95 },   // мощёная дорога
   M_siding:  { tex: 'plaster', tint: 0xf0b848, rough: 0.8 },   // обшивка, крашенная охрой (светлая фактура держит яркий цвет)
 };
 
@@ -63,4 +64,11 @@ export function applyLibrary(root) {
     const swap = (mm) => libMaterial(mm, withAO) || mm;
     o.material = Array.isArray(o.material) ? o.material.map(swap) : swap(o.material);
   });
+}
+
+// Общий материал с фактурой для процедурной геометрии (Placeholders: стены, дороги, заборы).
+// Без запечённого AO — у процедурных мешей нет цвета вершин. UV у BoxGeometry 0..1 на грань,
+// поэтому масштаб фактуры держится размером детали (~0.5 единицы = один повтор).
+export function shared(name) {
+  return libMaterial({ name }, false);
 }
