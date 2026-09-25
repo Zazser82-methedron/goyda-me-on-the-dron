@@ -6,7 +6,7 @@ import { RTSCamera } from './engine/RTSCamera.js?v=100';
 import { Picker } from './engine/Picker.js?v=95';
 import { Loop } from './engine/Loop.js?v=100';
 import { Profiler } from './engine/Profiler.js?v=97';
-import { AssetManager } from './engine/AssetManager.js?v=126';
+import { AssetManager } from './engine/AssetManager.js?v=128';
 import { TerrainMesh } from './world/TerrainMesh.js?v=103';
 import { WorldBase } from './world/WorldBase.js?v=102';
 import { Sky } from './world/Sky.js?v=94';
@@ -15,9 +15,9 @@ import { BuildingActivity } from './world/BuildingActivity.js?v=107';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
 import { nearestAdj } from './world/Pathfinding.js?v=94';
 import { UnitRenderer } from './world/UnitRenderer.js?v=96';
-import { GameState } from './sim/GameState.js?v=128';
+import { GameState } from './sim/GameState.js?v=130';
 import * as Economy from './sim/Economy.js?v=107';
-import * as BuildSys from './sim/Buildings.js?v=113';
+import * as BuildSys from './sim/Buildings.js?v=115';
 import * as Waves from './sim/Waves.js?v=99';
 import * as Tech from './sim/Tech.js?v=94';
 import * as Nature from './sim/Nature.js?v=94';
@@ -27,20 +27,20 @@ import * as Wildlife from './sim/Wildlife.js?v=94';
 import * as Events from './sim/Events.js?v=94';
 import * as Achievements from './sim/Achievements.js?v=94';
 import * as Meta from './sim/Meta.js?v=94';
-import * as Research from './sim/Research.js?v=99';
+import * as Research from './sim/Research.js?v=101';
 import { updateUnits, damage, awardExpeditionValor } from './sim/Units.js?v=105';
 import { toggleEdict } from './sim/Edicts.js?v=94';
 import * as AntiSpiral from './sim/AntiSpiral.js?v=3';
 import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=94';
 import { AmbientAudio } from './audio/Music.js?v=94';
 import { HUD } from './ui/HUD.js?v=96';
-import { BuildMenu } from './ui/BuildMenu.js?v=104';
-import { Selection } from './ui/Selection.js?v=106';
+import { BuildMenu } from './ui/BuildMenu.js?v=106';
+import { Selection } from './ui/Selection.js?v=108';
 import { Minimap } from './ui/Minimap.js?v=94';
-import { ResearchPanel } from './ui/Research.js?v=102';
+import { ResearchPanel } from './ui/Research.js?v=104';
 import { Toasts } from './ui/Toasts.js?v=94';
 import { Leaderboard } from './ui/Leaderboard.js?v=94';
-import { BUILDINGS } from './data/buildings.js?v=104';
+import { BUILDINGS } from './data/buildings.js?v=106';
 import { RANKS } from './data/ranks.js?v=94';
 import { bark } from './data/barks.js?v=94';
 import { STORAGE_KEY } from './data/config.js?v=102';
@@ -63,6 +63,7 @@ const MODELS = [
   'env_watchfire',
   // 2026-09: новые постройки из tools/blender (раньше рисовались процедурными плейсхолдерами)
   'bld_banya', 'bld_traktir', 'bld_izba_plotnika', 'bld_veche',
+  'bld_prikaz', 'bld_zastava', 'bld_tamozhnya', 'bld_remdvor', 'bld_agitpunkt', 'bld_sklad', 'bld_station',
 ];
 const ri = (a, b) => Math.floor(a + Math.random() * (b - a + 1));
 

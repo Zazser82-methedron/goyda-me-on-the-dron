@@ -202,7 +202,7 @@ export const BUILDINGS = {
     desc: 'Порубежный острог с дозором — бьёт налётчиков в радиусе, дешевле башни (без железа).',
   },
   tamozhnya: {
-    kind: 'tamozhnya', name: 'ТАМОЖЕННЫЕ ВОРОТА', icon: '🛃', model: 'bld_chastokol_gate',
+    kind: 'tamozhnya', name: 'ТАМОЖЕННЫЕ ВОРОТА', icon: '🛃', model: 'bld_tamozhnya',
     w: 1, h: 1, hp: 200, cat: 'def', era: 1, wall: true, walkable: true,
     roadPort: { dx: 0, dy: 1 },
     cost: { wood: 25, stone: 15 }, build: 4, produce: { gold: 3 }, wearRate: 0.50,

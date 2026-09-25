@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=102';
 import { Grid } from '../world/Grid.js?v=95';
 import { NodeField } from '../world/NodeField.js?v=114';
-import { BUILDINGS } from '../data/buildings.js?v=104';
+import { BUILDINGS } from '../data/buildings.js?v=106';
 import { UNITS } from '../data/units.js?v=94';
 import { RANKS } from '../data/ranks.js?v=94';
 import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=108';
@@ -19,10 +19,10 @@ const ERA_COMMON = ['bld_izba', 'bld_townhall', 'bld_ambar', 'bld_ferma', 'bld_k
 // после загрузки сейва цвет тот же). Тёсовая кровля умножается на фактуру, поэтому цвета светлее.
 const PAINT = {
   M_roof: [0xe8583e, 0x3cb074, 0x4f82e0, 0xf0b440, 0xc03a58],
-  M_roof_iron: [0x2e9a5a, 0xc8402e, 0x2f5fb8, 0xd89a2a],
+  M_roof_iron: [0x17703a, 0xa8281a, 0x1f4494, 0xb8781a],   // темнее тёса: гладкое железо под AgX выбеливается
   M_shutter: [0xd23a2a, 0x2f9a5a, 0x2f5fc8, 0xe8b030],
 };
-export const ERA_SKINS = { 1: ERA_COMMON, 2: [...ERA_COMMON, 'bld_rudnik'] };
+export const ERA_SKINS = { 1: ERA_COMMON, 2: [...ERA_COMMON, 'bld_rudnik', 'bld_prikaz', 'bld_zastava', 'bld_tamozhnya', 'bld_station'] };
 
 // Порт (roadPort/railPort) задан как {dx,dy} от gx,gy для НЕповёрнутого здания (rot=0).
 // При повороте (R при постройке, b.rot 0..3, view.rotation.y = rot*PI/2) визуальный фасад
