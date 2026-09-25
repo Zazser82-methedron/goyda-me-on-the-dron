@@ -6,7 +6,7 @@ import { RTSCamera } from './engine/RTSCamera.js?v=100';
 import { Picker } from './engine/Picker.js?v=95';
 import { Loop } from './engine/Loop.js?v=100';
 import { Profiler } from './engine/Profiler.js?v=97';
-import { AssetManager } from './engine/AssetManager.js?v=114';
+import { AssetManager } from './engine/AssetManager.js?v=116';
 import { TerrainMesh } from './world/TerrainMesh.js?v=103';
 import { WorldBase } from './world/WorldBase.js?v=102';
 import { Sky } from './world/Sky.js?v=94';
@@ -62,7 +62,7 @@ const MODELS = [
   'unit_bogatyr', 'bld_tower', 'bld_ferma', 'bld_rudnik', 'bld_zhila', 'bld_observatory',
   'env_watchfire',
   // облики по эпохам (GDD §3.9): базовая модель = I эпоха
-  'bld_izba_e1', 'bld_izba_e2',
+  'bld_izba_e1', 'bld_izba_e2', 'bld_townhall_e1', 'bld_townhall_e2',
 ];
 const ri = (a, b) => Math.floor(a + Math.random() * (b - a + 1));
 

@@ -13,7 +13,7 @@ const TEXTURED = {
   M_plank:   { tex: 'plank',   tint: 0xd0a070, rough: 0.85 },
   M_thatch:  { tex: 'thatch',  tint: 0xf0c878, rough: 0.95 },
   M_stone:   { tex: 'stone',   tint: 0xd8d0c0, rough: 0.9 },
-  M_plaster: { tex: 'plaster', tint: 0xffffff, rough: 0.9 },
+  M_plaster: { tex: 'plaster', tint: 0xffffff, gain: 1.3, rough: 0.9 },   // фото штукатурки сероватое — gain осветляет до побелки
   M_siding:  { tex: 'plaster', tint: 0xf0b848, rough: 0.8 },   // обшивка, крашенная охрой (светлая фактура держит яркий цвет)
 };
 
@@ -46,6 +46,7 @@ function libMaterial(src, withAO) {
       map: tex(t.tex + '_diff.jpg', true),
       normalMap: low ? null : tex(t.tex + '_nor.jpg', false),
     });
+    if (t.gain) m.color.multiplyScalar(t.gain);   // >1 допустимо: шейдер не зажимает цвет материала
   } else {
     m = src.clone();   // краска/железо/окна — свой цвет из GLB, без фактуры
     m.flatShading = false;

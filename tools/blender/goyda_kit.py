@@ -24,9 +24,9 @@ MATS = {
     'M_paint_white': ((0.74, 0.72, 0.66), 0.7),
     'M_paint_blue':  ((0.02, 0.08, 0.32), 0.6),
     'M_paint_red':   ((0.38, 0.03, 0.02), 0.6),
-    'M_paint_green': ((0.03, 0.15, 0.06), 0.45),
+    'M_paint_green': ((0.012, 0.075, 0.03), 0.45),
     'M_siding':      ((0.80, 0.62, 0.30), 0.8),   # обшивка тёсом, крашенная охрой (III эпоха)
-    'M_brick':       ((0.30, 0.07, 0.04), 0.9),
+    'M_brick':       ((0.19, 0.035, 0.018), 0.9),
     'M_dark':        ((0.16, 0.11, 0.07), 0.8),
     'M_iron':        ((0.20, 0.20, 0.22), 0.5),
     'M_window':      ((0.05, 0.07, 0.10), 0.15),
@@ -47,6 +47,8 @@ def mat(name):
     bsdf = m.node_tree.nodes.get('Principled BSDF')
     bsdf.inputs['Base Color'].default_value = (*col, 1.0)
     bsdf.inputs['Roughness'].default_value = rough
+    if name in ('M_gold', 'M_iron'):
+        bsdf.inputs['Metallic'].default_value = 1.0
     if name == 'M_window':   # тёплое свечение окон — игра приглушает днём
         bsdf.inputs['Emission Color'].default_value = (1.0, 0.62, 0.25, 1.0)
         bsdf.inputs['Emission Strength'].default_value = 0.08   # днём тёмное стекло; ночное свечение — задача игры
@@ -242,3 +244,127 @@ def tri_count():
         if ob.type == 'MESH':
             n += sum(len(p.vertices) - 2 for p in ob.data.polygons)
     return n
+
+
+# ================= Сборочные узлы для построек (сруб, окно, крыша, шатёр) =================
+# Узел строится «у себя» в начале координат, потом ставится place()-ом: сдвиг + поворот вокруг Z.
+# Так одно окно или крыша годятся для любой стены и любого направления конька.
+MATS.setdefault('M_gold', ((1.0, 0.62, 0.18), 0.3))
+FACING = {'-y': 0.0, '+x': math.pi / 2, '+y': math.pi, '-x': -math.pi / 2}
+
+
+def capture(fn, *a, **kw):
+    """Выполнить fn и вернуть список объектов, которые она создала."""
+    before = set(bpy.context.scene.objects)
+    fn(*a, **kw)
+    return [o for o in bpy.context.scene.objects if o not in before]
+
+
+def place(objs, loc=(0, 0, 0), angle=0.0):
+    bpy.context.view_layer.update()
+    M = Matrix.Translation(Vector(loc)) @ Matrix.Rotation(angle, 4, 'Z')
+    for o in objs:
+        o.matrix_world = M @ o.matrix_world
+
+
+def srub(prefix, cx, cy, W, D, z0, courses, R=0.042, ovh=0.075):
+    """Сруб «в чашу» по осям стен W×D; возвращает высоту верха."""
+    z = z0 + R
+    for i in range(courses):
+        for sy in (-1, 1):
+            log(f'{prefix}x{i}{sy}', W + 2 * ovh, R, (cx, cy + sy * D / 2, z), 'x')
+        for sx in (-1, 1):
+            log(f'{prefix}y{i}{sx}', D + 2 * ovh, R, (cx + sx * W / 2, cy, z + R), 'y')
+        z += 2 * R
+    return z + R * 0.2
+
+
+def _window_local(p, era, ww, wh, shutters):
+    """Окно в плоскости стены y=0, наружу -Y."""
+    sh = 'M_paint_blue' if era < 2 else 'M_paint_green'
+    trim = 'M_paint_white' if era < 2 else 'M_brick'
+    box(p + 'gl', (ww, 0.01, wh), (0, 0, 0), 'M_window', bevel=0)
+    box(p + 'pv', (0.012, 0.008, wh), (0, -0.006, 0), 'M_paint_white', bevel=0)
+    box(p + 'ph', (ww, 0.008, 0.012), (0, -0.006, 0.02), 'M_paint_white', bevel=0)
+    box(p + 'top', (ww + 0.07, 0.025, 0.035), (0, -0.01, wh / 2 + 0.02), trim)
+    box(p + 'kok', (ww * 0.62, 0.02, ww * 0.62), (0, -0.012, wh / 2 + 0.065), trim, rot=(0, math.pi / 4, 0))
+    box(p + 'bot', (ww + 0.06, 0.03, 0.025), (0, -0.012, -wh / 2 - 0.015), trim)
+    for s in (-1, 1):
+        box(p + f'j{s}', (0.025, 0.022, wh + 0.02), (s * (ww / 2 + 0.013), -0.008, 0), trim)
+        if shutters:
+            box(p + f's{s}', (ww / 2, 0.012, wh), (s * (ww * 0.78 + 0.03), -0.01, 0), sh)
+
+
+def window(p, loc, facing, era, ww=0.15, wh=0.19, shutters=True):
+    place(capture(_window_local, p, era, ww, wh, shutters), loc, FACING[facing])
+
+
+def _roof_local(p, W, D, eave, era, rov, R, gable_mat):
+    """Двускатная крыша, конёк вдоль Y, центр в (0,0). Возвращает высоту конька."""
+    half = W / 2 + rov
+    ridge = eave + W / 2 + 0.02
+    L = half * math.sqrt(2) + 0.03
+    s2 = math.sqrt(0.5)
+    span = D + 2 * rov
+
+    def frame(side, lift):
+        return (side * half / 2 + side * s2 * lift, ridge - half / 2 + s2 * lift), (0, side * math.pi / 4, 0)
+
+    for side in (-1, 1):
+        if era == 0:
+            (x, z), rot = frame(side, 0.045)
+            box(p + f'r{side}', (L, span, 0.09), (x, 0, z), 'M_thatch', rot=rot, bevel=0.03)
+            log(p + f'st{side}', span + 0.02, 0.05, (side * (half - 0.02), 0, ridge - half + 0.02), 'y', material='M_thatch', segs=8, jitter=0.3)
+        elif era == 1:
+            n = max(6, int(span / 0.085))
+            for layer in (0, 1):
+                for j in range(n - layer):
+                    y = -span / 2 + (j + 0.5 + layer * 0.5) * span / n
+                    (x, z), rot = frame(side, 0.012 + layer * 0.018)
+                    b = box(p + f't{side}{layer}{j}', (L + random.uniform(-0.02, 0.02), span / n * 0.96, 0.016), (x, y, z), 'M_plank', rot=rot, bevel=0)
+                    b['vary'] = 1
+        else:
+            (x, z), rot = frame(side, 0.0125)
+            box(p + f'r{side}', (L, span, 0.025), (x, 0, z), 'M_paint_green', rot=rot, bevel=0.004)
+            nf = max(5, int(span / 0.13))
+            for j in range(nf):
+                y = -span / 2 + (j + 0.5) * span / nf
+                (x2, z2), _ = frame(side, 0.033)
+                box(p + f'f{side}{j}', (L, 0.012, 0.016), (x2, y, z2), 'M_paint_green', rot=rot, bevel=0.002)
+    if era < 2:
+        log(p + 'ohl', span + 0.06, 0.05 + 0.01 * (era == 0), (0, 0, ridge + (0.075 if era == 0 else 0.04)), 'y', segs=8, jitter=0.05)
+    else:
+        box(p + 'kon', (0.07, span, 0.04), (0, 0, ridge + 0.02), 'M_paint_green', rot=(0, math.pi / 4, 0), bevel=0.004)
+    gw = W / 2 + R
+    tri = [(-gw, eave - 0.01), (gw, eave - 0.01), (0, eave + gw - 0.02)]
+    for sy in (-1, 1):
+        prism(p + f'g{sy}', tri, 0.03, 'y', (0, sy * (D / 2 - 0.005), 0), gable_mat)
+        for side in (-1, 1):
+            box(p + f'pr{sy}{side}', (L * 0.98, 0.02, 0.06),
+                (side * half / 2 + side * 0.012, sy * (D / 2 + rov - 0.01), ridge - half / 2 - 0.035), 'M_paint_white',
+                rot=(0, side * math.pi / 4, 0), bevel=0.004)
+    return ridge
+
+
+def gable_roof(p, loc, W, D, eave, era, ridge_axis='y', rov=0.14, R=0.042, gable_mat=None):
+    """Крыша над срубом W×D (по осям стен) с коньком вдоль ridge_axis. Возвращает высоту конька."""
+    gm = gable_mat or ('M_siding' if era == 2 else 'M_plank')
+    out = {}
+    if ridge_axis == 'y':
+        objs = capture(lambda: out.setdefault('r', _roof_local(p, W, D, eave, era, rov, R, gm)))
+        place(objs, loc, 0.0)
+    else:   # строим с коньком по Y для размеров D×W и поворачиваем на 90°
+        objs = capture(lambda: out.setdefault('r', _roof_local(p, D, W, eave, era, rov, R, gm)))
+        place(objs, loc, math.pi / 2)
+    return out['r']
+
+
+def tent(p, loc, base, h, era, top_mat=None):
+    """Шатёр (четырёхгранная пирамида) со свесом; возвращает высоту вершины."""
+    mat_ = top_mat or {0: 'M_plank', 1: 'M_plank', 2: 'M_paint_green'}[era]
+    bm = bmesh.new()
+    bmesh.ops.create_cone(bm, cap_ends=True, segments=4, radius1=base * math.sqrt(0.5) * 1.02, radius2=0.0, depth=h)
+    bmesh.ops.rotate(bm, verts=bm.verts, cent=(0, 0, 0), matrix=Matrix.Rotation(math.pi / 4, 3, 'Z'))
+    ob = _new_obj(p + 'tent', bm, mat_)
+    ob.location = (loc[0], loc[1], loc[2] + h / 2)
+    return loc[2] + h
