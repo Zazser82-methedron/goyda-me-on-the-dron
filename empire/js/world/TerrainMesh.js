@@ -222,29 +222,41 @@ export class TerrainMesh {
     return out;
   }
 
+  // Декор земли по GDD §1.3: только кусты, камни у скал/берегов и редкие пни.
+  // Конусы-«огоньки», конусы-«цветы» и колья-«сухие деревья» удалены — смысла в них не было.
   _scatterDecor(scene, grid, n) {
-    const bushGeo = new THREE.ConeGeometry(0.18, 0.34, 5);
-    const rockGeo = new THREE.IcosahedronGeometry(0.16, 0);
+    // куст — икосфера с шумом вершин, сплюснута: читается как крона, а не как конус
+    const bushGeo = new THREE.IcosahedronGeometry(0.2, 1);
+    {
+      const pa = bushGeo.attributes.position;
+      for (let i = 0; i < pa.count; i++) {
+        const k = 0.82 + Math.random() * 0.3;
+        pa.setXYZ(i, pa.getX(i) * k, Math.max(-0.05, pa.getY(i) * k * 0.72), pa.getZ(i) * k);
+      }
+      bushGeo.computeVertexNormals();
+    }
+    const rockGeo = new THREE.DodecahedronGeometry(0.16, 0);
+    const stumpGeo = new THREE.CylinderGeometry(0.15, 0.19, 0.22, 7);
     const dmat = () => new THREE.MeshStandardMaterial({ color: 0xffffff, flatShading: true, roughness: 1 });
-    const bn = Math.floor(n * n * 0.03), rn = Math.floor(n * n * 0.012);
+    const bn = Math.floor(n * n * 0.015), rn = Math.floor(n * n * 0.004), sn = Math.floor(n * n * 0.002);
     const bushes = new THREE.InstancedMesh(bushGeo, dmat(), bn);
     const rocks = new THREE.InstancedMesh(rockGeo, dmat(), rn);
-    bushes.castShadow = bushes.receiveShadow = false;
-    rocks.castShadow = rocks.receiveShadow = false;
-    bushes.frustumCulled = false; rocks.frustumCulled = false;
+    const stumps = new THREE.InstancedMesh(stumpGeo, dmat(), sn);
+    for (const inst of [bushes, rocks, stumps]) { inst.castShadow = false; inst.receiveShadow = true; inst.frustumCulled = false; }
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
-    const fill = (inst, count, cA, cB, yb, sMin, sMax) => {
+    const fill = (inst, count, cA, cB, yb, sMin, sMax, biomes) => {
       let placed = 0;
-      for (let attempt = 0; attempt < count * 3 && placed < count; attempt++) {
+      for (let attempt = 0; attempt < count * 6 && placed < count; attempt++) {
         const gx = 1 + Math.floor(Math.random() * (n - 2)), gy = 1 + Math.floor(Math.random() * (n - 2));
         const t = grid.get(gx, gy);
         if (!t || t.biome === 'water') continue;
+        if (biomes && !biomes.includes(t.biome)) continue;
         const w = grid.gridToWorld(gx, gy);
         const sc = sMin + Math.random() * (sMax - sMin);
         const gy0 = grid.heightAt(w.wx, w.wz);
         p.set(w.wx + (Math.random() - 0.5) * 0.7, gy0 + yb * sc, w.wz + (Math.random() - 0.5) * 0.7);
         q.setFromAxisAngle(up, Math.random() * 6.28);
-        s.set(sc, sc * (0.8 + Math.random() * 0.5), sc);
+        s.set(sc, sc * (0.8 + Math.random() * 0.4), sc);
         m.compose(p, q, s); inst.setMatrixAt(placed, m);
         inst.setColorAt(placed, new THREE.Color(Math.random() < 0.5 ? cA : cB).multiplyScalar(0.85 + Math.random() * 0.3));
         placed++;
@@ -253,42 +265,10 @@ export class TerrainMesh {
       inst.instanceMatrix.needsUpdate = true;
       if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
     };
-    fill(bushes, bn, this.pal.b, this.pal.c, 0.17, 0.6, 1.6);
-    fill(rocks, rn, PAL.rock, PAL.rockDk, 0.12, 0.5, 1.4);
-    scene.add(bushes); scene.add(rocks);
-
-    // ---- эмиссивные «огни» (факелы/жаровни) — засветятся с пост-обработкой (bloom) ----
-    const flameGeo = new THREE.ConeGeometry(0.12, 0.42, 5);
-    const flameMat = new THREE.MeshStandardMaterial({ color: 0xff9030, emissive: 0xff5810, emissiveIntensity: 1.7, flatShading: true, roughness: 1 });
-    const fn = Math.floor(n * n * 0.0035);
-    const flames = new THREE.InstancedMesh(flameGeo, flameMat, fn);
-    flames.castShadow = flames.receiveShadow = false; flames.frustumCulled = false;
-    fill(flames, fn, 0xff9030, 0xffb840, 0.22, 0.7, 1.3);
-    scene.add(flames);
-
-    // ---- цветы (яркие пятна на траве) ----
-    const flowerGeo = new THREE.ConeGeometry(0.07, 0.18, 4);
-    const fln = Math.floor(n * n * 0.02);
-    const flowers = new THREE.InstancedMesh(flowerGeo, dmat(), fln);
-    flowers.castShadow = flowers.receiveShadow = false; flowers.frustumCulled = false;
-    fill(flowers, fln, 0xff6ec7, 0xffe24a, 0.1, 0.6, 1.2);
-    scene.add(flowers);
-
-    // ---- сухие/мёртвые деревья (силуэт-разнообразие; декор, не рубятся) ----
-    const deadGeo = new THREE.ConeGeometry(0.11, 0.95, 5);
-    const dn = Math.floor(n * n * 0.006);
-    const dead = new THREE.InstancedMesh(deadGeo, dmat(), dn);
-    dead.castShadow = dead.receiveShadow = false; dead.frustumCulled = false;
-    fill(dead, dn, 0x6b5538, 0x564327, 0.47, 0.7, 1.5);
-    scene.add(dead);
-
-    // ---- пни (намёк на вырубку — отличаются от ёлок) ----
-    const stumpGeo = new THREE.CylinderGeometry(0.15, 0.19, 0.22, 7);
-    const sn = Math.floor(n * n * 0.004);
-    const stumps = new THREE.InstancedMesh(stumpGeo, dmat(), sn);
-    stumps.castShadow = stumps.receiveShadow = false; stumps.frustumCulled = false;
-    fill(stumps, sn, 0x6b5740, 0x55462f, 0.11, 0.7, 1.3);
-    scene.add(stumps);
+    fill(bushes, bn, this.pal.b, this.pal.c, 0.1, 0.8, 1.5, ['grass', 'forest']);
+    fill(rocks, rn, PAL.rock, PAL.rockDk, 0.08, 0.6, 1.4, ['rock', 'sand']);
+    fill(stumps, sn, 0x6b5740, 0x55462f, 0.11, 0.7, 1.2, ['grass', 'forest']);
+    scene.add(bushes); scene.add(rocks); scene.add(stumps);
   }
 
   setHover(tile, color) {

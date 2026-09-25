@@ -6,3 +6,4 @@ STATE.md
 
 # служебный бандл для Gemini — не деплоить
 _gemini/
+__pycache__/

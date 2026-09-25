@@ -7,7 +7,7 @@ import * as Quality from './Quality.js?v=94';
 const GRADE_SHADER = {
   uniforms: {
     tDiffuse: { value: null },
-    contrast: { value: 1.12 }, saturation: { value: 1.18 }, warmth: { value: 0.016 }, vignette: { value: 0.36 },
+    contrast: { value: 1.1 }, saturation: { value: 1.32 }, warmth: { value: 0.016 }, vignette: { value: 0.2 },
   },
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
   fragmentShader:
@@ -23,35 +23,6 @@ const GRADE_SHADER = {
     '}',
 };
 
-// Tilt-shift / псевдо-DoF: резкая горизонтальная полоса, размытие к верху/низу → эффект «миниатюры/диорамы».
-const TILTSHIFT_SHADER = {
-  uniforms: {
-    tDiffuse: { value: null },
-    resolution: { value: new THREE.Vector2(1, 1) },
-    focus: { value: 0.58 },     // центр резкости по вертикали (0 верх .. 1 низ)
-    band: { value: 0.16 },      // полуширина резкой полосы
-    strength: { value: 7.0 },   // макс. радиус размытия по краям (пиксели)
-  },
-  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
-  fragmentShader:
-    'uniform sampler2D tDiffuse; uniform vec2 resolution; uniform float focus, band, strength; varying vec2 vUv;' +
-    'void main(){' +
-    '  float dy = abs(vUv.y - focus);' +
-    '  float b = clamp((dy - band) * 2.4, 0.0, 1.0); b *= b;' +            // 0 в полосе → 1 к краям (мягкий старт)
-    '  vec2 px = (b * strength) / resolution;' +
-    '  vec4 s = texture2D(tDiffuse, vUv) * 0.227;' +                       // 9 отсчётов, гаусс-подобные веса
-    '  s += texture2D(tDiffuse, vUv + vec2(px.x, 0.0)) * 0.123;' +
-    '  s += texture2D(tDiffuse, vUv - vec2(px.x, 0.0)) * 0.123;' +
-    '  s += texture2D(tDiffuse, vUv + vec2(0.0, px.y)) * 0.123;' +
-    '  s += texture2D(tDiffuse, vUv - vec2(0.0, px.y)) * 0.123;' +
-    '  s += texture2D(tDiffuse, vUv + px * 1.5) * 0.07;' +
-    '  s += texture2D(tDiffuse, vUv - px * 1.5) * 0.07;' +
-    '  s += texture2D(tDiffuse, vUv + vec2(px.x, -px.y) * 1.5) * 0.07;' +
-    '  s += texture2D(tDiffuse, vUv + vec2(-px.x, px.y) * 1.5) * 0.07;' +
-    '  gl_FragColor = s;' +
-    '}',
-};
-
 export class Renderer {
   constructor(canvas) {
     // alpha:false — канвас НЕПРОЗРАЧНЫЙ (небо рисует scene.background). Прозрачный канвас под
@@ -63,13 +34,14 @@ export class Renderer {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1.4 : 2));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.02;        // было 1.25 — сцена пересвечивалась/«белила»
+    // AgX мягче ACES на насыщенных цветах: крыши и трава не «выжигаются» в кислоту (GDD §2.2)
+    this.renderer.toneMapping = THREE.AgXToneMapping;
+    this.renderer.toneMappingExposure = 1.3;
     this.renderer.shadowMap.enabled = !low;          // low: тени-карты ВЫКЛ (у юнитов остаются пятна-тени) — крупный выигрыш на мобиле
     this.renderer.shadowMap.type = low ? THREE.BasicShadowMap : THREE.PCFSoftShadowMap;
     // 1536² почти не отличается визуально на RTS-камере, но существенно легче
     // прежней 2048² карты теней. Тени обновляются по требованию ниже.
-    this._shadowSize = low ? 1024 : 1536;
+    this._shadowSize = low ? 1024 : 2048;
 
     this.scene = new THREE.Scene();
     // непрозрачный градиент-небо в сцене (нужно для пост-обработки) — заменяет CSS-фон
@@ -80,15 +52,15 @@ export class Renderer {
     this.fxEnabled = false; this.composer = null;
 
     // Полусферический свет неба/земли — ровная читаемая засветка всей сцены
-    this.hemi = new THREE.HemisphereLight(0xcfe0f4, 0x6a5836, 1.45);
+    this.hemi = new THREE.HemisphereLight(0xcfe0f4, 0x5a6a3a, 0.9);
     this.scene.add(this.hemi);
 
     // Мягкий общий подсвет
-    this.amb = new THREE.AmbientLight(0xb8a888, 0.55);
+    this.amb = new THREE.AmbientLight(0xb8a888, 0.25);
     this.scene.add(this.amb);
 
     // Яркое тёплое «солнце» с тенями
-    this.key = new THREE.DirectionalLight(0xfff2dc, 2.3);
+    this.key = new THREE.DirectionalLight(0xffe8c8, 3.2);
     this.key.position.set(40, 64, 28);
     this.key.castShadow = !low;
     this.key.shadow.mapSize.set(this._shadowSize, this._shadowSize);
@@ -146,16 +118,12 @@ export class Renderer {
       composer.setSize(w, h);
       composer.addPass(new RenderPass(this.scene, camera));
       // порог высокий → светятся только эмиссивные (идолы/огни/солнце), а НЕ яркий песок/снег
-      this.bloom = new UnrealBloomPass(new THREE.Vector2(w, h), 0.45, 0.4, 1.35);   // сила/радиус/порог (порог↑ — меньше «белит»)
+      this.bloom = new UnrealBloomPass(new THREE.Vector2(w, h), 0.35, 0.35, 1.5);   // сила/радиус/порог (порог↑ — меньше «белит»)
       composer.addPass(this.bloom);
       composer.addPass(new OutputPass());   // тонмаппинг+sRGB → дальше грейд работает по финальной картинке
       // цветокоррекция: контраст + насыщенность + тёплый тон + виньетка — «дорогая» подача, убирает вымытость
       this.grade = new ShaderPass(GRADE_SHADER);
       composer.addPass(this.grade);
-      // tilt-shift диорама: резкая полоса в центре, мягкое размытие к краям («миниатюра»)
-      this.tilt = new ShaderPass(TILTSHIFT_SHADER);
-      this.tilt.uniforms.resolution.value.set(w, h);
-      composer.addPass(this.tilt);
       composer.addPass(new SMAAPass(w, h));
       this.composer = composer; this._camera = camera; this.fxEnabled = true;
       window.__gboot && window.__gboot('postfx ✓');
@@ -169,7 +137,7 @@ export class Renderer {
       const pmrem = new THREE.PMREMGenerator(this.renderer);
       this.scene.environment = pmrem.fromScene(new RoomEnvironment(this.renderer), 0.04).texture;
       // компенсируем добавленный IBL-свет, чтобы общая яркость не подскочила
-      this.hemi.intensity = 1.05; this.amb.intensity = 0.32;
+      this.hemi.intensity = 0.7; this.amb.intensity = 0.15;
       this.envReady = true;
       window.__gboot && window.__gboot('env ✓');
     } catch (e) { console.warn('env disabled', e); }
@@ -178,7 +146,6 @@ export class Renderer {
   resize() {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     if (this.composer) this.composer.setSize(window.innerWidth, window.innerHeight);
-    if (this.tilt) this.tilt.uniforms.resolution.value.set(window.innerWidth, window.innerHeight);
     if (this.onResize) this.onResize(window.innerWidth, window.innerHeight);
   }
 

@@ -209,9 +209,11 @@ export class GameState {
   // ---- здания ----
   addBuilding(kind, gx, gy, opts = {}) {
     const def = BUILDINGS[kind];
-    const view = this.assets.get(def.model);
+    const skin = this.modelFor(def);
+    const view = this.assets.get(skin);
     // персональные материалы на каждое здание (иначе общий кэш сделает прозрачными все)
     view.traverse(o => { if (o.isMesh) o.material = o.material.clone(); });
+    for (const ch of view.children) ch.userData.skin = true;   // части модели — их меняет reskin() при смене эпохи
     const c = this.grid.footprintCenter(gx, gy, def.w, def.h);
     // мост садится на уровень воды, остальное — на рельеф
     const cy = def.bridge ? (this.grid.water ?? -0.5) : (this.grid.heightAt ? this.grid.heightAt(c.wx, c.wz) : 0);
@@ -224,7 +226,7 @@ export class GameState {
       hp: def.hp, maxHp: def.hp, view, rot,
       built: opts.built ?? false, buildLeft: opts.built ? 0 : (def.build || 0),
       trainQueue: [], trainLeft: 0,
-      cx: c.wx, cz: c.wz, cy,
+      cx: c.wx, cz: c.wz, cy, skin,
     };
     if (def.roadPort) b.roadPortTile = rotatePort(def.roadPort, gx, gy, def.w, def.h, rot);
     if (def.railPort) b.railPortTile = rotatePort(def.railPort, gx, gy, def.w, def.h, rot);
@@ -286,6 +288,30 @@ export class GameState {
     if (b.built) Tiling.refreshHomesteads(this);    // «усадьбы» (built сразу — напр. рестор сейва)
     return b;
   }
+
+  // Облик постройки по эпохе (GDD §3.9): <model>_e1 / _e2, если такая модель загружена; иначе базовая.
+  modelFor(def) {
+    for (let e = this.era || 0; e > 0; e--) {
+      const name = def.model + '_e' + e;
+      if (this.assets.isGlb[name]) return name;
+    }
+    return def.model;
+  }
+
+  // Перестроить облик уже стоящего здания (переход эпохи). Меняются только части модели —
+  // леса, связки стен и прочие навешанные группы (без userData.skin) остаются.
+  reskin(b) {
+    const name = this.modelFor(b.def);
+    if (!b.view || b.skin === name) return;
+    const fresh = this.assets.get(name);
+    fresh.traverse(o => { if (o.isMesh) o.material = o.material.clone(); });
+    for (const ch of [...b.view.children]) if (ch.userData.skin) b.view.remove(ch);
+    for (const ch of [...fresh.children]) { ch.userData.skin = true; b.view.add(ch); }
+    b.skin = name;
+    this._applyBuildVisual(b);
+  }
+
+  reskinAll() { for (const b of this.buildings) this.reskin(b); }
 
   _applyBuildVisual(b) {
     // стройка: модель ПОДНИМАЕТСЯ из земли (не скейл) — часть под рельефом прячет depth-тест
@@ -433,6 +459,7 @@ export class GameState {
     }
     return {
       v: 2, res: this.resources, happiness: this.happiness, rankIndex: this.rankIndex, day: this.day,
+      era: this.era || 0,   // эпоха раньше не сохранялась: после перезагрузки держава откатывалась в I эпоху
       faction: this.faction ? this.faction.key : 'goyda', mapKey: this.mapKey || 'les',
       buildings: this.buildings.map(b => ({ kind: b.kind, gx: b.gx, gy: b.gy, built: b.built, hp: b.hp, rot: b.rot || 0, pendingCargo: (b._pendingCargo || 0) + (inTransitCargo.get(b.id) || 0) })),
       nodes: this.nodes.map(n => ({ kind: n.kind, gx: n.gx, gy: n.gy, amount: n.amount })),

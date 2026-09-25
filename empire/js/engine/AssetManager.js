@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { buildPlaceholder } from './Placeholders.js?v=104';
+import { applyLibrary } from './MaterialLib.js?v=4';
 
 export class AssetManager {
   constructor() {
@@ -10,7 +11,7 @@ export class AssetManager {
     this.proto = {};      // name -> Object3D прототип (GLB-сцена или плейсхолдер)
     this.isGlb = {};      // name -> true если загружен реальный GLB
     this.base = './assets/models/';
-    this.ver = '?v=99';   // кэш-бастер для GLB — бампится вместе со всеми ?v, чтобы новые модели доезжали до игрока
+    this.ver = '?v=105';   // кэш-бастер для GLB — бампится вместе со всеми ?v, чтобы новые модели доезжали до игрока
   }
 
   // Попытаться загрузить GLB; молча падаем на плейсхолдер.
@@ -21,6 +22,7 @@ export class AssetManager {
         (gltf) => {
           const root = gltf.scene;
           root.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+          applyLibrary(root);   // M_* → общие материалы с фактурами (модели нового стандарта)
           this.proto[name] = root;
           this.isGlb[name] = true;
           resolve(true);

@@ -1,13 +1,13 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=99';
+import { Renderer } from './engine/Renderer.js?v=101';
 import * as Quality from './engine/Quality.js?v=94';
 import { RTSCamera } from './engine/RTSCamera.js?v=100';
 import { Picker } from './engine/Picker.js?v=95';
 import { Loop } from './engine/Loop.js?v=100';
 import { Profiler } from './engine/Profiler.js?v=97';
-import { AssetManager } from './engine/AssetManager.js?v=108';
-import { TerrainMesh } from './world/TerrainMesh.js?v=102';
+import { AssetManager } from './engine/AssetManager.js?v=114';
+import { TerrainMesh } from './world/TerrainMesh.js?v=103';
 import { WorldBase } from './world/WorldBase.js?v=102';
 import { Sky } from './world/Sky.js?v=94';
 import { Atmosphere } from './world/Atmosphere.js?v=95';
@@ -15,9 +15,9 @@ import { BuildingActivity } from './world/BuildingActivity.js?v=103';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
 import { nearestAdj } from './world/Pathfinding.js?v=94';
 import { UnitRenderer } from './world/UnitRenderer.js?v=96';
-import { GameState } from './sim/GameState.js?v=118';
+import { GameState } from './sim/GameState.js?v=120';
 import * as Economy from './sim/Economy.js?v=107';
-import * as BuildSys from './sim/Buildings.js?v=111';
+import * as BuildSys from './sim/Buildings.js?v=112';
 import * as Waves from './sim/Waves.js?v=99';
 import * as Tech from './sim/Tech.js?v=94';
 import * as Nature from './sim/Nature.js?v=94';
@@ -34,10 +34,10 @@ import * as AntiSpiral from './sim/AntiSpiral.js?v=3';
 import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=94';
 import { AmbientAudio } from './audio/Music.js?v=94';
 import { HUD } from './ui/HUD.js?v=96';
-import { BuildMenu } from './ui/BuildMenu.js?v=102';
-import { Selection } from './ui/Selection.js?v=104';
+import { BuildMenu } from './ui/BuildMenu.js?v=103';
+import { Selection } from './ui/Selection.js?v=105';
 import { Minimap } from './ui/Minimap.js?v=94';
-import { ResearchPanel } from './ui/Research.js?v=100';
+import { ResearchPanel } from './ui/Research.js?v=101';
 import { Toasts } from './ui/Toasts.js?v=94';
 import { Leaderboard } from './ui/Leaderboard.js?v=94';
 import { BUILDINGS } from './data/buildings.js?v=104';
@@ -60,7 +60,9 @@ const MODELS = [
   'idol_krio', 'idol_giper', 'idol_shipo', 'idol_obereg', 'idol_food', 'idol_gold', 'idol_fonk', 'idol_vera', 'idol_samotsvet',
   // v87: доделаны в Blender — раньше были только процедурные плейсхолдеры
   'unit_bogatyr', 'bld_tower', 'bld_ferma', 'bld_rudnik', 'bld_zhila', 'bld_observatory',
-  'env_waystone', 'env_banner', 'env_watchfire',
+  'env_watchfire',
+  // облики по эпохам (GDD §3.9): базовая модель = I эпоха
+  'bld_izba_e1', 'bld_izba_e2',
 ];
 const ri = (a, b) => Math.floor(a + Math.random() * (b - a + 1));
 
@@ -161,14 +163,18 @@ class Game {
   async boot() {
     const G = window.__gboot || function () {};
     try {
-      // модели грузятся в фоне — не блокируют запуск (есть плейсхолдеры)
-      this.assets.preload(MODELS).then(c => { this._glb = c; this._installHomeDetails(); G('models ' + c); }).catch(() => {});
+      // модели грузятся в фоне — стартовый экран не ждёт (есть плейсхолдеры)
+      const modelsReady = this.assets.preload(MODELS).then(c => { this._glb = c; this._installHomeDetails(); G('models ' + c); }).catch(() => {});
+      // но сейв/портал строят здания СРАЗУ: без ожидания они навсегда оставались плейсхолдер-коробками.
+      // Ждём модели не дольше 4с — на медленной сети игра всё равно запустится.
+      const waitModels = () => Promise.race([modelsReady, new Promise(r => setTimeout(r, 4000))]);
       // ПОРТАЛ ДРОНА: прибытие на новую Землю (перенос ресурсов+ранга+дружины) — до обычного сейва
       const portal = (() => { try { return JSON.parse(localStorage.getItem('GOYDA_EMPIRE_PORTAL')); } catch (e) { return null; } })();
       if (portal && portal.mapKey) {
         try { localStorage.removeItem('GOYDA_EMPIRE_PORTAL'); } catch (_) {}
         try {
           this._portalArrivalFx();                      // оверлей-воронка сразу — маскирует reload, пока строится мир
+          await waitModels();
           this.state.faction = getFaction(portal.faction);
           this.state.mapKey = portal.mapKey;
           this.state.portalDepth = portal.depth || 2;   // до initMap: глубокие Земли богаче залежами
@@ -202,6 +208,7 @@ class Game {
       G('save=' + (save && save.buildings ? save.buildings.length : 'none'));
       if (save && save.v === 2 && save.buildings && save.buildings.length) {   // старые сейвы (до рельефа) — старт заново
         try {
+          await waitModels();
           this.state.faction = getFaction(save.faction);
           this.state.mapKey = save.mapKey || 'les';
           this.buildWorld(getMap(this.state.mapKey));
@@ -529,8 +536,7 @@ class Game {
         group.add(detail);
       });
     };
-    place('env_waystone', [[-3.1, -3.1], [3.1, -3.1], [-3.1, 3.1], [3.1, 3.1]], 0.78, 0.18);
-    place('env_banner', [[-5.0, -0.8], [5.0, 0.8]], 0.92, Math.PI * 0.5);
+    // летающие камни-вейстоуны и флаги убраны (GDD §1.3) — остались только костры у Палат
     place('env_watchfire', [[-2.3, 4.4], [2.3, -4.4]], 0.88, 0.3);
     if (!group.children.length) return;
     group.name = 'dron_home_details'; this.scene.add(group); this._homeDetails = group;
@@ -541,17 +547,7 @@ class Game {
     for (const detail of this._homeDetails.children) {
       const d = detail.userData.homeDetail;
       if (!d) continue;
-      const wave = Math.sin(now * 0.0018 + d.phase);
-      if (d.name === 'env_waystone') {
-        detail.position.y = d.y + wave * 0.035;
-        detail.rotation.y = d.turn + now * 0.00022 + wave * 0.025;
-        const p = 1 + Math.sin(now * 0.004 + d.phase) * 0.025;
-        detail.scale.copy(d.scale).multiplyScalar(p);
-      } else if (d.name === 'env_banner') {
-        detail.rotation.y = d.turn + wave * 0.055;
-        detail.position.y = d.y + Math.abs(wave) * 0.012;
-      } else if (d.name === 'env_watchfire') {
-        detail.position.y = d.y + wave * 0.012;
+      if (d.name === 'env_watchfire') {
         detail.traverse(o => {
           if (!o.isMesh || !o.userData.baseScale) return;
           if (/flame|coal/i.test(o.name)) {
@@ -622,6 +618,7 @@ class Game {
     this.state.happiness = s.happiness ?? 60;
     this.state.rankIndex = s.rankIndex || 0;
     this.state.day = s.day || 0;
+    this.state.era = s.era || 0;                     // до зданий: они сразу берут облик своей эпохи
     this.state.edicts = {};
     for (const n of (s.nodes || [])) this.state.addNode(n.kind, n.gx, n.gy, n.amount);
     for (const b of (s.buildings || [])) {
@@ -1104,7 +1101,7 @@ class Game {
     }[this._season] || { w: 0, s: 0, name: '' };
     const g = this.rdr.grade.uniforms;
     g.warmth.value = 0.016 + S.w;
-    g.saturation.value = 1.18 + S.s;
+    g.saturation.value = 1.32 + S.s;
     if (S.name) this.toasts.show(S.name + ' в державе', { gold: true });
   }
 
