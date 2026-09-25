@@ -15,9 +15,9 @@ import { BuildingActivity } from './world/BuildingActivity.js?v=103';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
 import { nearestAdj } from './world/Pathfinding.js?v=94';
 import { UnitRenderer } from './world/UnitRenderer.js?v=96';
-import { GameState } from './sim/GameState.js?v=120';
+import { GameState } from './sim/GameState.js?v=121';
 import * as Economy from './sim/Economy.js?v=107';
-import * as BuildSys from './sim/Buildings.js?v=112';
+import * as BuildSys from './sim/Buildings.js?v=113';
 import * as Waves from './sim/Waves.js?v=99';
 import * as Tech from './sim/Tech.js?v=94';
 import * as Nature from './sim/Nature.js?v=94';
@@ -34,10 +34,10 @@ import * as AntiSpiral from './sim/AntiSpiral.js?v=3';
 import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=94';
 import { AmbientAudio } from './audio/Music.js?v=94';
 import { HUD } from './ui/HUD.js?v=96';
-import { BuildMenu } from './ui/BuildMenu.js?v=103';
-import { Selection } from './ui/Selection.js?v=105';
+import { BuildMenu } from './ui/BuildMenu.js?v=104';
+import { Selection } from './ui/Selection.js?v=106';
 import { Minimap } from './ui/Minimap.js?v=94';
-import { ResearchPanel } from './ui/Research.js?v=101';
+import { ResearchPanel } from './ui/Research.js?v=102';
 import { Toasts } from './ui/Toasts.js?v=94';
 import { Leaderboard } from './ui/Leaderboard.js?v=94';
 import { BUILDINGS } from './data/buildings.js?v=104';
@@ -61,8 +61,6 @@ const MODELS = [
   // v87: доделаны в Blender — раньше были только процедурные плейсхолдеры
   'unit_bogatyr', 'bld_tower', 'bld_ferma', 'bld_rudnik', 'bld_zhila', 'bld_observatory',
   'env_watchfire',
-  // облики по эпохам (GDD §3.9): базовая модель = I эпоха
-  'bld_izba_e1', 'bld_izba_e2', 'bld_townhall_e1', 'bld_townhall_e2',
 ];
 const ri = (a, b) => Math.floor(a + Math.random() * (b - a + 1));
 
@@ -208,7 +206,8 @@ class Game {
       G('save=' + (save && save.buildings ? save.buildings.length : 'none'));
       if (save && save.v === 2 && save.buildings && save.buildings.length) {   // старые сейвы (до рельефа) — старт заново
         try {
-          await waitModels();
+          this.state.era = save.era || 0;               // облики эпохи нужны до постройки зданий из сейва
+          await Promise.race([Promise.all([modelsReady, this.state.loadEraSkins(this.state.era)]), new Promise(r => setTimeout(r, 4000))]);
           this.state.faction = getFaction(save.faction);
           this.state.mapKey = save.mapKey || 'les';
           this.buildWorld(getMap(this.state.mapKey));

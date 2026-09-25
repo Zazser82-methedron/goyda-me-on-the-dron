@@ -5,7 +5,7 @@ import { RES_LABEL } from '../data/config.js?v=102';
 import { EDICTS } from '../sim/Edicts.js?v=94';
 import { MOBILIZATION_COST, GRANARIES_GAIN, GRANARIES_DEBT, status as antiSpiralStatus } from '../sim/AntiSpiral.js?v=3';
 import { TECHS } from '../data/tech.js?v=94';
-import { ERA_NAMES } from '../sim/Eras.js?v=3';
+import { ERA_NAMES } from '../sim/Eras.js?v=4';
 import { Thumbs } from './Thumbs.js?v=100';
 
 export function costStr(cost) {

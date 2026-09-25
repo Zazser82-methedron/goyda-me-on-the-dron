@@ -9,6 +9,10 @@ import { RANKS } from '../data/ranks.js?v=94';
 import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=104';
 import * as Tiling from '../world/Tiling.js?v=103';
 
+// Модели, у которых есть облики эпох <model>_e1 / <model>_e2 (tools/blender/build_*.py).
+// Грузятся лениво — только когда держава дошла до эпохи, чтобы старт не тянул все облики разом.
+export const ERA_SKINS = ['bld_izba', 'bld_townhall'];
+
 // Порт (roadPort/railPort) задан как {dx,dy} от gx,gy для НЕповёрнутого здания (rot=0).
 // При повороте (R при постройке, b.rot 0..3, view.rotation.y = rot*PI/2) визуальный фасад
 // уходит в другую сторону — считаем порт от центра footprint той же матрицей, что и модель:
@@ -312,6 +316,15 @@ export class GameState {
   }
 
   reskinAll() { for (const b of this.buildings) this.reskin(b); }
+
+  loadEraSkins(era) {
+    if (!era) return Promise.resolve(0);
+    const names = ERA_SKINS.map(m => m + '_e' + era).filter(n => !this.assets.isGlb[n]);
+    return this.assets.preload(names);
+  }
+
+  // Переход эпохи: догрузить облики и перестроить здания (до загрузки остаётся прежний облик).
+  reskinForEra() { return this.loadEraSkins(this.era || 0).then(() => this.reskinAll()).catch(() => {}); }
 
   _applyBuildVisual(b) {
     // стройка: модель ПОДНИМАЕТСЯ из земли (не скейл) — часть под рельефом прячет depth-тест

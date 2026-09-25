@@ -51,7 +51,7 @@ function advance(state, ctx, era) {
     b.wear = Math.min(100, (b.wear ?? 100) + 10);
     applyWear(state, b);
   }
-  state.reskinAll && state.reskinAll();   // жильё и прочие постройки меняют облик под новую эпоху
+  state.reskinForEra && state.reskinForEra();   // жильё и Палаты меняют облик под новую эпоху (облики грузятся лениво)
   ctx.hitStop && ctx.hitStop(3);   // «пауза 3с на баннер эпохи» — короткая заморозка сима (рендер живёт как при hit-pause)
   ctx.toast && ctx.toast('🏛️ НОВАЯ ЭПОХА: ' + ERA_NAMES[era] + '! Открыты новые постройки, +20☩, износ всех построек −10.', { gold: true, big: true });
   ctx.sfx && ctx.sfx('rankup');
