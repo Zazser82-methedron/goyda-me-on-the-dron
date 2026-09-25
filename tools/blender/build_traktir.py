@@ -34,7 +34,7 @@ K.box('perila', (1.2, 0.02, 0.02), (-0.1, FY - 0.23, BZ + 0.16), 'M_paint_white'
 for k in range(13):
     K.box(f'bal{k}', (0.018, 0.018, 0.14), (-0.68 + k * 0.097, FY - 0.23, BZ + 0.08), 'M_paint_white' if ERA else 'M_plank', bevel=0.002)
 # навес над дверью
-K.box('kozyrek', (0.44, 0.2, 0.02), (-0.1, FY - 0.1, BASE + 0.44), 'M_paint_green' if ERA == 2 else 'M_plank', rot=(-0.3, 0, 0), bevel=0.003)
+K.box('kozyrek', (0.44, 0.2, 0.02), (-0.1, FY - 0.1, BASE + 0.44), 'M_roof_iron' if ERA == 2 else 'M_roof', rot=(-0.3, 0, 0), bevel=0.003)
 
 # бочки штабелем у левой стены (3 + 2)
 for i in range(3):

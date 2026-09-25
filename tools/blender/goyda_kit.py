@@ -37,6 +37,10 @@ MATS = {
     'M_fire':        ((0.9, 0.3, 0.05), 0.5),      # угли горна (светятся)
     'M_glow':        ((0.05, 0.6, 0.7), 0.3),      # бирюзовый свет Дрона (алтари, глаза идолов)
     'M_gem':         ((0.45, 0.08, 0.7), 0.15),    # самоцветы (лиловое свечение)
+    # перекрашиваемые игрой (GameState.paintBuilding): цвет задаётся на каждое здание — лубочная пестрота
+    'M_roof':        ((0.6, 0.15, 0.08), 0.8),     # тёсовая кровля (II эпоха) — крашеная
+    'M_roof_iron':   ((0.03, 0.2, 0.08), 0.45),    # железная кровля (III эпоха)
+    'M_shutter':     ((0.02, 0.08, 0.32), 0.6),    # ставни
 }
 
 
@@ -297,7 +301,7 @@ def srub(prefix, cx, cy, W, D, z0, courses, R=0.042, ovh=0.075):
 
 def _window_local(p, era, ww, wh, shutters):
     """Окно в плоскости стены y=0, наружу -Y."""
-    sh = 'M_paint_blue' if era < 2 else 'M_paint_green'
+    sh = 'M_shutter'
     trim = 'M_paint_white' if era < 2 else 'M_brick'
     box(p + 'gl', (ww, 0.01, wh), (0, 0, 0), 'M_window', bevel=0)
     box(p + 'pv', (0.012, 0.008, wh), (0, -0.006, 0), 'M_paint_white', bevel=0)
@@ -337,20 +341,20 @@ def _roof_local(p, W, D, eave, era, rov, R, gable_mat):
                 for j in range(n - layer):
                     y = -span / 2 + (j + 0.5 + layer * 0.5) * span / n
                     (x, z), rot = frame(side, 0.012 + layer * 0.018)
-                    b = box(p + f't{side}{layer}{j}', (L + random.uniform(-0.02, 0.02), span / n * 0.96, 0.016), (x, y, z), 'M_plank', rot=rot, bevel=0)
+                    b = box(p + f't{side}{layer}{j}', (L + random.uniform(-0.02, 0.02), span / n * 0.96, 0.016), (x, y, z), 'M_roof', rot=rot, bevel=0)
                     b['vary'] = 1
         else:
             (x, z), rot = frame(side, 0.0125)
-            box(p + f'r{side}', (L, span, 0.025), (x, 0, z), 'M_paint_green', rot=rot, bevel=0.004)
+            box(p + f'r{side}', (L, span, 0.025), (x, 0, z), 'M_roof_iron', rot=rot, bevel=0.004)
             nf = max(5, int(span / 0.13))
             for j in range(nf):
                 y = -span / 2 + (j + 0.5) * span / nf
                 (x2, z2), _ = frame(side, 0.033)
-                box(p + f'f{side}{j}', (L, 0.012, 0.016), (x2, y, z2), 'M_paint_green', rot=rot, bevel=0.002)
+                box(p + f'f{side}{j}', (L, 0.012, 0.016), (x2, y, z2), 'M_roof_iron', rot=rot, bevel=0.002)
     if era < 2:
         log(p + 'ohl', span + 0.06, 0.05 + 0.01 * (era == 0), (0, 0, ridge + (0.075 if era == 0 else 0.04)), 'y', segs=8, jitter=0.05)
     else:
-        box(p + 'kon', (0.07, span, 0.04), (0, 0, ridge + 0.02), 'M_paint_green', rot=(0, math.pi / 4, 0), bevel=0.004)
+        box(p + 'kon', (0.07, span, 0.04), (0, 0, ridge + 0.02), 'M_roof_iron', rot=(0, math.pi / 4, 0), bevel=0.004)
     gw = W / 2 + R
     tri = [(-gw, eave - 0.01), (gw, eave - 0.01), (0, eave + gw - 0.02)]
     for sy in (-1, 1):
@@ -377,7 +381,7 @@ def gable_roof(p, loc, W, D, eave, era, ridge_axis='y', rov=0.14, R=0.042, gable
 
 def tent(p, loc, base, h, era, top_mat=None):
     """Шатёр (четырёхгранная пирамида) со свесом; возвращает высоту вершины."""
-    mat_ = top_mat or {0: 'M_plank', 1: 'M_plank', 2: 'M_paint_green'}[era]
+    mat_ = top_mat or {0: 'M_plank', 1: 'M_roof', 2: 'M_roof_iron'}[era]
     bm = bmesh.new()
     bmesh.ops.create_cone(bm, cap_ends=True, segments=4, radius1=base * math.sqrt(0.5) * 1.02, radius2=0.0, depth=h)
     bmesh.ops.rotate(bm, verts=bm.verts, cent=(0, 0, 0), matrix=Matrix.Rotation(math.pi / 4, 3, 'Z'))

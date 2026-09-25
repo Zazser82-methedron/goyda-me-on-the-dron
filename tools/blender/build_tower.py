@@ -34,7 +34,7 @@ for sx in (-1, 1):
 for s in (-1, 1):
     K.box(f'perx{s}', (OB - 0.1, 0.02, 0.02), (0, s * (OB / 2 - 0.06), PZ + 0.1), 'M_paint_white' if ERA else 'M_plank', bevel=0.002)
     K.box(f'pery{s}', (0.02, OB - 0.1, 0.02), (s * (OB / 2 - 0.06), 0, PZ + 0.1), 'M_paint_white' if ERA else 'M_plank', bevel=0.002)
-roof = 'M_thatch' if ERA == 0 else ('M_plank' if ERA == 1 else 'M_paint_green')
+roof = 'M_thatch' if ERA == 0 else ('M_roof' if ERA == 1 else 'M_roof_iron')
 SH = K.tent('sh', (0, 0, PZ + 0.34), OB + 0.12, 0.62, ERA, top_mat=roof)
 # сигнальный колокол под шатром
 K.lathe('kolokol', [(0.0, 0.1), (0.03, 0.1), (0.045, 0.06), (0.06, 0.0), (0.065, -0.005)], (0, 0, PZ + 0.16), 'M_gold', segs=10)

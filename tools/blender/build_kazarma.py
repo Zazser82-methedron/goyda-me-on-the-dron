@@ -21,7 +21,7 @@ FY = CY - D / 2 - R
 # дверь по центру, окна по бокам
 K.box('dver', (0.2, 0.025, 0.34), (0, FY - 0.005, BASE + 0.19), 'M_dark', bevel=0.004)
 K.box('dver_n', (0.26, 0.03, 0.4), (0, FY, BASE + 0.21), 'M_paint_white' if ERA else 'M_plank', bevel=0.004)
-K.box('kozyrek', (0.36, 0.2, 0.02), (0, FY - 0.09, BASE + 0.46), 'M_paint_green' if ERA == 2 else 'M_plank', rot=(-0.35, 0, 0), bevel=0.003)
+K.box('kozyrek', (0.36, 0.2, 0.02), (0, FY - 0.09, BASE + 0.46), 'M_roof_iron' if ERA == 2 else 'M_roof', rot=(-0.35, 0, 0), bevel=0.003)
 for x in (-0.6, -0.32, 0.32, 0.6):
     K.window(f'w{x}', (x, FY - 0.004, BASE + 0.34), '-y', ERA, ww=0.14, wh=0.18, shutters=ERA < 2)
 # над дверью — щит с гербом (красный с золотом)

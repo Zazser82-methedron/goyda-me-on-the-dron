@@ -22,7 +22,7 @@ K.box('truba_c', (0.13, 0.13, 0.02), (0.18, 0.08, 0.96), 'M_stone', bevel=0.004)
 
 # предбанник: навес на двух столбах перед дверью, лавка
 FY = CY - D / 2 - R
-K.box('naves', (0.6, 0.32, 0.02), (0, FY - 0.14, EAVE - 0.02), 'M_paint_green' if ERA == 2 else 'M_plank', rot=(-0.3, 0, 0), bevel=0.003)
+K.box('naves', (0.6, 0.32, 0.02), (0, FY - 0.14, EAVE - 0.02), 'M_roof_iron' if ERA == 2 else 'M_roof', rot=(-0.3, 0, 0), bevel=0.003)
 for s in (-1, 1):
     K.log(f'nst{s}', EAVE - 0.03, 0.016, (s * 0.27, FY - 0.28, (EAVE - 0.03) / 2), 'z', segs=6, jitter=0.03)
 K.box('pol', (0.58, 0.3, 0.02), (0, FY - 0.14, 0.03), 'M_plank', bevel=0.003)

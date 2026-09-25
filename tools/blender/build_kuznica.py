@@ -34,7 +34,7 @@ K.add_marker('chimney_top', (CX, CY + 0.05, RIDGE + 0.25))
 
 # навес над двором на двух столбах
 NZ = EAVE - 0.03
-K.box('naves', (0.86, 0.36, 0.025), (0.02, FY - 0.17, NZ), 'M_paint_green' if ERA == 2 else 'M_plank', rot=(-0.3, 0, 0), bevel=0.004)
+K.box('naves', (0.86, 0.36, 0.025), (0.02, FY - 0.17, NZ), 'M_roof_iron' if ERA == 2 else 'M_roof', rot=(-0.3, 0, 0), bevel=0.004)
 for s in (-1, 1):
     K.log(f'nst{s}', NZ, 0.02, (0.02 + s * 0.38, FY - 0.32, NZ / 2), 'z', segs=6, jitter=0.03)
 

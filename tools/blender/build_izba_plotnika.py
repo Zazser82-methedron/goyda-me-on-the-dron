@@ -21,7 +21,7 @@ K.box('truba', (0.07, 0.07, 0.24), (CX + 0.12, CY + 0.08, EAVE + 0.2), 'M_brick'
 NX = 0.3
 for sy in (-1, 1):
     K.log(f'nst{sy}', EAVE - 0.05, 0.016, (NX + 0.12, CY + sy * 0.2, (EAVE - 0.05) / 2), 'z', segs=6, jitter=0.03)
-K.box('naves', (0.36, 0.5, 0.02), (NX, CY, EAVE - 0.03), 'M_paint_green' if ERA == 2 else 'M_plank', rot=(0, 0.3, 0), bevel=0.003)
+K.box('naves', (0.36, 0.5, 0.02), (NX, CY, EAVE - 0.03), 'M_roof_iron' if ERA == 2 else 'M_roof', rot=(0, 0.3, 0), bevel=0.003)
 # козлы с бревном и пилой
 for s in (-1, 1):
     for t in (-1, 1):

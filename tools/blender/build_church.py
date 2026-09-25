@@ -28,7 +28,7 @@ else:
     TOP4 = K.srub('c', 0, CY, S, S, BASE, 10, R=R, ovh=0.06)
 
 # четырёхскатная кровля-«крещатая» упрощённо: низкий шатёр-подкладка под восьмерик
-roof_mat = 'M_paint_green' if STONE else ('M_thatch' if ERA == 0 else 'M_plank')
+roof_mat = 'M_roof_iron' if STONE else ('M_thatch' if ERA == 0 else 'M_roof')
 K.tent('podsh', (0, CY, TOP4 - 0.02), S + 0.34, 0.32, ERA, top_mat=roof_mat)
 
 # восьмерик и шейка

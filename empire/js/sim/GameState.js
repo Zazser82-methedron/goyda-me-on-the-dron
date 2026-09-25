@@ -2,12 +2,12 @@
 import * as THREE from 'three';
 import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=102';
 import { Grid } from '../world/Grid.js?v=95';
-import { NodeField } from '../world/NodeField.js?v=113';
+import { NodeField } from '../world/NodeField.js?v=114';
 import { BUILDINGS } from '../data/buildings.js?v=104';
 import { UNITS } from '../data/units.js?v=94';
 import { RANKS } from '../data/ranks.js?v=94';
-import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=107';
-import * as Tiling from '../world/Tiling.js?v=106';
+import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=108';
+import * as Tiling from '../world/Tiling.js?v=107';
 
 // Модели, у которых есть облики эпох <model>_e1 / <model>_e2 (tools/blender/build_*.py), по эпохам:
 // если облик эпохи не отличается от предыдущего, файла нет и modelFor() берёт ближайший ранний.
@@ -15,6 +15,13 @@ import * as Tiling from '../world/Tiling.js?v=106';
 const ERA_COMMON = ['bld_izba', 'bld_townhall', 'bld_ambar', 'bld_ferma', 'bld_kuznica', 'bld_kazarma',
   'bld_church', 'bld_market', 'bld_banya', 'bld_traktir', 'bld_tower', 'bld_observatory', 'bld_roshcha',
   'bld_izba_plotnika', 'bld_veche'];
+// Лубочная палитра: крыши и ставни каждого здания крашены по-своему (детерминированно от клетки —
+// после загрузки сейва цвет тот же). Тёсовая кровля умножается на фактуру, поэтому цвета светлее.
+const PAINT = {
+  M_roof: [0xe8583e, 0x3cb074, 0x4f82e0, 0xf0b440, 0xc03a58],
+  M_roof_iron: [0x2e9a5a, 0xc8402e, 0x2f5fb8, 0xd89a2a],
+  M_shutter: [0xd23a2a, 0x2f9a5a, 0x2f5fc8, 0xe8b030],
+};
 export const ERA_SKINS = { 1: ERA_COMMON, 2: [...ERA_COMMON, 'bld_rudnik'] };
 
 // Порт (roadPort/railPort) задан как {dx,dy} от gx,gy для НЕповёрнутого здания (rot=0).
@@ -22,6 +29,12 @@ export const ERA_SKINS = { 1: ERA_COMMON, 2: [...ERA_COMMON, 'bld_rudnik'] };
 // уходит в другую сторону — считаем порт от центра footprint той же матрицей, что и модель:
 // x' = x*cosθ + z*sinθ, z' = -x*sinθ + z*cosθ (подтверждено эталоном DIR_ROT в world/Tiling.js:
 // сегмент стены «вдоль +Z=S» повёрнутый на PI/2 указывает на +X=восток=бит E — совпадает).
+// часть модели здания (а не лес/связка стены): поднимаемся до ребёнка view с userData.skin
+function isSkinChild(o) {
+  for (let p = o; p; p = p.parent) { if (p.userData && p.userData.skin) return true; if (p.userData && p.userData.entity) return false; }
+  return false;
+}
+
 function rotatePort(port, gx, gy, w, h, rot) {
   const cx = gx + (w - 1) / 2, cy = gy + (h - 1) / 2;
   let ox = port.dx - (w - 1) / 2, oy = port.dy - (h - 1) / 2;
@@ -237,6 +250,7 @@ export class GameState {
       trainQueue: [], trainLeft: 0,
       cx: c.wx, cz: c.wz, cy, skin,
     };
+    this.paintBuilding(b);
     if (def.roadPort) b.roadPortTile = rotatePort(def.roadPort, gx, gy, def.w, def.h, rot);
     if (def.railPort) b.railPortTile = rotatePort(def.railPort, gx, gy, def.w, def.h, rot);
     const addPortApron = (portTile, makeApron, field) => {
@@ -317,10 +331,20 @@ export class GameState {
     for (const ch of [...b.view.children]) if (ch.userData.skin) b.view.remove(ch);
     for (const ch of [...fresh.children]) { ch.userData.skin = true; b.view.add(ch); }
     b.skin = name;
+    this.paintBuilding(b);
     this._applyBuildVisual(b);
   }
 
   reskinAll() { for (const b of this.buildings) this.reskin(b); }
+
+  paintBuilding(b) {
+    const h = (b.gx * 73856093) ^ (b.gy * 19349663);
+    b.view.traverse(o => {
+      if (!o.isMesh || !o.userData.skin && !isSkinChild(o)) return;
+      const pal = PAINT[o.material && o.material.name];
+      if (pal) o.material.color.setHex(pal[((h >>> 0) + pal.length * 7) % pal.length]);
+    });
+  }
 
   loadEraSkins(era) {
     if (!era) return Promise.resolve(0);

@@ -7,7 +7,7 @@ import * as Quality from './Quality.js?v=94';
 const GRADE_SHADER = {
   uniforms: {
     tDiffuse: { value: null },
-    contrast: { value: 1.08 }, saturation: { value: 1.2 }, warmth: { value: 0.006 }, vignette: { value: 0.2 },
+    contrast: { value: 1.1 }, saturation: { value: 1.34 }, warmth: { value: 0.01 }, vignette: { value: 0.2 },
   },
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
   fragmentShader:

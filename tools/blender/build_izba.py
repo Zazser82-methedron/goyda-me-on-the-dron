@@ -80,7 +80,7 @@ elif ERA == 1:
                 y = -span / 2 + (j + 0.5 + layer * 0.5) * span / n
                 (x, zz), rot = slope_frame(side, 0.012 + layer * 0.018)
                 b = K.box(f'tes{side}{layer}{j}', (L + random.uniform(-0.02, 0.02), span / n * 0.96, 0.016), (x, y, zz),
-                          'M_plank', rot=rot, bevel=0)   # фаска на тонкой доске не видна с камеры, а стоит 30 tris
+                          'M_roof', rot=rot, bevel=0)   # фаска на тонкой доске не видна с камеры, а стоит 30 tris
                 b['vary'] = 1
     K.log('ohlupen', D + 2 * ROV + 0.06, 0.05, (0, 0, RIDGE + 0.04), 'y', segs=8, jitter=0.05)
     TOP = RIDGE + 0.05
@@ -88,13 +88,13 @@ else:
     T = 0.025
     for side in (-1, 1):
         (x, zz), rot = slope_frame(side, T / 2)
-        K.box(f'roof{side}', (L, D + 2 * ROV, T), (x, 0, zz), 'M_paint_green', rot=rot, bevel=0.004)
+        K.box(f'roof{side}', (L, D + 2 * ROV, T), (x, 0, zz), 'M_roof_iron', rot=rot, bevel=0.004)
         # фальцы — стоячие швы железных листов
         for j in range(9):
             y = -(D / 2 + ROV) + (j + 0.5) * (D + 2 * ROV) / 9
             (x2, z2), _ = slope_frame(side, T + 0.008)
-            K.box(f'falc{side}{j}', (L, 0.012, 0.016), (x2, y, z2), 'M_paint_green', rot=rot, bevel=0.002)
-    K.box('konek_iron', (0.07, D + 2 * ROV, 0.04), (0, 0, RIDGE + 0.02), 'M_paint_green', rot=(0, math.pi / 4, 0), bevel=0.004)
+            K.box(f'falc{side}{j}', (L, 0.012, 0.016), (x2, y, z2), 'M_roof_iron', rot=rot, bevel=0.002)
+    K.box('konek_iron', (0.07, D + 2 * ROV, 0.04), (0, 0, RIDGE + 0.02), 'M_roof_iron', rot=(0, math.pi / 4, 0), bevel=0.004)
     TOP = RIDGE + 0.03
 
 # ---- фронтоны
@@ -134,7 +134,7 @@ if ERA >= 1:
 
 # ---- окна с наличниками и открытыми ставнями
 WALL_OUT = R + (0.03 if ERA == 2 else 0.004)
-SHUTTER = 'M_paint_blue' if ERA < 2 else 'M_paint_green'
+SHUTTER = 'M_shutter'
 
 
 def window(name, cx, cy, cz, face):          # face: 'front' (-Y) | 'side' (+X)
@@ -177,7 +177,7 @@ for s in (-1, 1):
     K.box(f'perila{s}', (0.2, 0.015, 0.015), (px, DY + s * 0.13, BASE + 0.27), 'M_plank', bevel=0.002)
     for k in range(3):
         K.box(f'balyasina{s}{k}', (0.014, 0.014, 0.12), (px - 0.06 + k * 0.06, DY + s * 0.13, BASE + 0.2), 'M_paint_white', bevel=0.002)
-PROOF = 'M_paint_green' if ERA == 2 else 'M_plank'
+PROOF = 'M_roof_iron' if ERA == 2 else 'M_roof'
 for side in (-1, 1):
     K.box(f'porchroof{side}', (0.26, 0.2, 0.02), (px + 0.02, DY + side * 0.075, BASE + 0.58), PROOF,
           rot=(side * 0.55, 0, 0), bevel=0.004)

@@ -23,7 +23,7 @@ RIDGE = K.gable_roof('r', (0, CY, 0), W, D, EAVE, ERA, ridge_axis='x', rov=0.16,
 
 # навес над воротами на двух столбах
 FY = CY - D / 2 - R
-K.box('naves', (1.0, 0.55, 0.03), (0, FY - 0.24, EAVE + 0.04), 'M_paint_green' if ERA == 2 else 'M_plank',
+K.box('naves', (1.0, 0.55, 0.03), (0, FY - 0.24, EAVE + 0.04), 'M_roof_iron' if ERA == 2 else 'M_roof',
       rot=(-0.28, 0, 0), bevel=0.004)
 for s in (-1, 1):
     K.log(f'stolb{s}', EAVE + 0.02, 0.028, (s * 0.44, FY - 0.46, (EAVE + 0.02) / 2), 'z', segs=8, jitter=0.03)

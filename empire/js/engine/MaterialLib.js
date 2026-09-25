@@ -7,11 +7,13 @@ import * as Quality from './Quality.js?v=94';
 
 const BASE = './assets/textures/lib/';
 // имя материала → фактура (<tex>_diff.jpg / <tex>_nor.jpg), тон и шероховатость.
-// Тон (tint) умножается на фактуру. Дерево — состаренное серебристо-серое, как у настоящих изб:
-// тёплый коричневый на всём подряд делал город однотонно-бурым. Солома — золотая, камень — холодный серый.
+// Тон (tint) умножается на фактуру. Стиль — сказочно-лубочный (выбор игрока 2026-09-25): медово-золотое
+// дерево как хохломская основа, золотая солома, серый камень; крыши и ставни крашеные и у каждого здания
+// свой цвет (M_roof / M_roof_iron / M_shutter перекрашивает GameState.paintBuilding).
 const TEXTURED = {
-  M_log:     { tex: 'log',     tint: 0xa89684, rough: 0.85 },
-  M_plank:   { tex: 'plank',   tint: 0xbfb4a2, rough: 0.85 },
+  M_log:     { tex: 'log',     tint: 0xe0b278, rough: 0.85 },
+  M_plank:   { tex: 'plank',   tint: 0xecca94, rough: 0.85 },
+  M_roof:    { tex: 'plank',   tint: 0xffffff, rough: 0.8 },    // тёсовая кровля; цвет задаёт здание
   M_thatch:  { tex: 'thatch',  tint: 0xf0c878, rough: 0.95 },
   M_stone:   { tex: 'rock',    tint: 0xc9ccd0, rough: 0.9 },   // серая скала (прежняя кладка была бурой)
   M_plaster: { tex: 'plaster', tint: 0xffffff, gain: 1.3, rough: 0.9 },   // фото штукатурки сероватое — gain осветляет до побелки

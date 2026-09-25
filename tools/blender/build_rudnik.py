@@ -10,7 +10,7 @@ import goyda_kit as K
 out, ERA = K.cli()
 random.seed(122)
 K.reset_scene()
-ROOF = 'M_paint_green' if ERA == 2 else 'M_plank'
+ROOF = 'M_roof_iron' if ERA == 2 else 'M_roof'
 
 # ---- утёс у задней границы
 TOP = K.cliff('utyos', (-0.25, 0.5, 0), 1.35, 0.7, 0.9, layers=4)
