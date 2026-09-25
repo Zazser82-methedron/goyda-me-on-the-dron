@@ -2,12 +2,12 @@
 import * as THREE from 'three';
 import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=102';
 import { Grid } from '../world/Grid.js?v=95';
-import { NodeField } from '../world/NodeField.js?v=114';
+import { NodeField } from '../world/NodeField.js?v=116';
 import { BUILDINGS } from '../data/buildings.js?v=106';
 import { UNITS } from '../data/units.js?v=94';
 import { RANKS } from '../data/ranks.js?v=94';
-import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=108';
-import * as Tiling from '../world/Tiling.js?v=107';
+import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=110';
+import * as Tiling from '../world/Tiling.js?v=109';
 
 // Модели, у которых есть облики эпох <model>_e1 / <model>_e2 (tools/blender/build_*.py), по эпохам:
 // если облик эпохи не отличается от предыдущего, файла нет и modelFor() берёт ближайший ранний.
@@ -130,7 +130,7 @@ export class GameState {
     let opt;
     if (kind === 'res_tree') {
       // оттенок хвои: от тёмно- до светло/желтовато-зелёного (умножается на запечённый цвет; ствол ~коричневый остаётся)
-      const tint = this._tmpCol.setHSL(0.22 + r3 * 0.12, 0.28 + r2 * 0.38, 0.6 + r1 * 0.3).getHex();
+      const tint = this._tmpCol.setHSL(0.26 + r3 * 0.08, 0.12 + r2 * 0.2, 0.72 + r1 * 0.26).getHex();   // мягкий разброс, без ухода в желтизну
       opt = { baseSc: 0.8 + r1 * 0.6, aspect: 0.82 + r2 * 0.5, tint };       // размер 0.8..1.4, высота 0.82..1.32
     } else {
       opt = { baseSc: 0.82 + r1 * 0.42, aspect: 0.85 + r2 * 0.4, tint: this._tmpCol.setHSL(0, 0, 0.78 + r2 * 0.22).getHex() };

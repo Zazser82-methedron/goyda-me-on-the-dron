@@ -2,7 +2,7 @@
 // Геймплей играбелен ДО появления GLB — get() всегда возвращает что-то.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { buildPlaceholder } from './Placeholders.js?v=108';
+import { buildPlaceholder } from './Placeholders.js?v=110';
 import { applyLibrary } from './MaterialLib.js?v=8';
 
 export class AssetManager {

@@ -634,14 +634,36 @@ function chastokolGate() {
 }
 
 // ---- ресурсные ноды ----
+// Ярус еловых лап: конус, у основания звезда из лап (чётные вершины — концы лап, нечётные — впадины),
+// концы лап опущены вниз — силуэт ели читается сверху, а не как гладкий конус.
+function spruceTier(r, h, droop, m, y, twist) {
+  const geo = new THREE.ConeGeometry(r, h, 10, 1, false);
+  const p = geo.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const vy = p.getY(i);
+    if (vy > -h / 2 + 1e-4) continue;                 // только нижнее кольцо
+    const vx = p.getX(i), vz = p.getZ(i);
+    const d = Math.hypot(vx, vz);
+    if (d < 1e-4) continue;                            // центр донышка
+    const ang = Math.atan2(vz, vx) + twist;
+    const k = (Math.round((Math.atan2(vz, vx) + Math.PI) / (Math.PI / 5)) % 2 === 0) ? 1.0 : 0.74;
+    p.setXYZ(i, Math.cos(ang) * d * k, vy - (k > 0.9 ? droop : 0), Math.sin(ang) * d * k);
+  }
+  geo.computeVertexNormals();
+  const me = new THREE.Mesh(geo, m);
+  me.position.y = y; me.castShadow = true; me.receiveShadow = true;
+  return me;
+}
+
 function tree() {
-  // 3-ярусная ель с конусным стволом и градиентом хвои (база для инстанс-вариаций цвета/размера)
+  // Лубочная ель: ствол, шесть неровных ярусов с опущенными лапами, тёмная хвоя внизу → светлые кончики вверху.
+  // Сливается в одну геометрию NodeField (1 draw call на все деревья), вариативность — инстанс-цвет/размер.
   const g = new THREE.Group();
-  const tr = mat(PAL.woodDk), f0 = mat(PAL.grass2), f1 = mat(PAL.grass3), f2 = mat(0x82b052);
-  g.add(cyl(0.07, 0.12, 0.5, 5, tr, 0, 0.25, 0));
-  g.add(cone(0.46, 0.62, 7, f0, 0, 0.62, 0));
-  g.add(cone(0.36, 0.55, 7, f1, 0, 0.96, 0));
-  g.add(cone(0.24, 0.46, 6, f2, 0, 1.3, 0));
+  const tr = mat(0x5a3a22);
+  const shades = [0x0c3a1a, 0x10451e, 0x155224, 0x1b5f2a, 0x236d31, 0x2f7d38];   // темнее, чем кажется: небесный свет сверху их высветляет
+  g.add(cyl(0.05, 0.09, 0.42, 7, tr, 0, 0.21, 0));
+  const tiers = [[0.56, 0.42, 0.34], [0.48, 0.4, 0.58], [0.4, 0.38, 0.8], [0.32, 0.34, 1.0], [0.23, 0.3, 1.18], [0.13, 0.26, 1.34]];
+  tiers.forEach(([r, h, y], i) => g.add(spruceTier(r, h, 0.06 - i * 0.008, mat(shades[i]), y, i * 0.31)));
   return g;
 }
 function stoneNode() {
