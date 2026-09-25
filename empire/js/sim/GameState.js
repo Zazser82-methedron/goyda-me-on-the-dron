@@ -2,12 +2,12 @@
 import * as THREE from 'three';
 import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=102';
 import { Grid } from '../world/Grid.js?v=95';
-import { NodeField } from '../world/NodeField.js?v=112';
+import { NodeField } from '../world/NodeField.js?v=113';
 import { BUILDINGS } from '../data/buildings.js?v=104';
 import { UNITS } from '../data/units.js?v=94';
 import { RANKS } from '../data/ranks.js?v=94';
-import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=106';
-import * as Tiling from '../world/Tiling.js?v=105';
+import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=107';
+import * as Tiling from '../world/Tiling.js?v=106';
 
 // Модели, у которых есть облики эпох <model>_e1 / <model>_e2 (tools/blender/build_*.py), по эпохам:
 // если облик эпохи не отличается от предыдущего, файла нет и modelFor() берёт ближайший ранний.
@@ -186,9 +186,10 @@ export class GameState {
     const S = 128, c = document.createElement('canvas'); c.width = c.height = S;
     const x = c.getContext('2d');
     const g = x.createRadialGradient(S / 2, S / 2, S * 0.1, S / 2, S / 2, S * 0.5);
-    g.addColorStop(0, 'rgba(74,54,32,0.95)');
-    g.addColorStop(0.6, 'rgba(86,64,38,0.72)');
-    g.addColorStop(1, 'rgba(86,64,38,0)');
+    // вытоптанная трава, а не бурое пятно: светлее, прозрачнее (весь город был «коричневым»)
+    g.addColorStop(0, 'rgba(120,108,78,0.6)');
+    g.addColorStop(0.6, 'rgba(118,112,74,0.35)');
+    g.addColorStop(1, 'rgba(118,112,74,0)');
     x.fillStyle = g; x.fillRect(0, 0, S, S);
     // рваные края — выгрызаем кляксы по периметру
     x.globalCompositeOperation = 'destination-out';
@@ -262,7 +263,7 @@ export class GameState {
     if (!def.bridge && !def.onWater && !def.road) {
       const dp = new THREE.Mesh(this._dirtGeo(), this._dirtMat());
       dp.rotation.x = -Math.PI / 2;
-      const sz = (Math.max(def.w, def.h) + 1.1) * TILE;
+      const sz = (Math.max(def.w, def.h) + 0.5) * TILE;
       dp.scale.set(sz, sz, 1);
       dp.position.set(c.wx, cy + 0.03, c.wz);
       dp.renderOrder = 1; dp.receiveShadow = false;

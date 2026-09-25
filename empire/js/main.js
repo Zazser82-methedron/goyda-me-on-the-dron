@@ -1,12 +1,12 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=101';
+import { Renderer } from './engine/Renderer.js?v=102';
 import * as Quality from './engine/Quality.js?v=94';
 import { RTSCamera } from './engine/RTSCamera.js?v=100';
 import { Picker } from './engine/Picker.js?v=95';
 import { Loop } from './engine/Loop.js?v=100';
 import { Profiler } from './engine/Profiler.js?v=97';
-import { AssetManager } from './engine/AssetManager.js?v=123';
+import { AssetManager } from './engine/AssetManager.js?v=125';
 import { TerrainMesh } from './world/TerrainMesh.js?v=103';
 import { WorldBase } from './world/WorldBase.js?v=102';
 import { Sky } from './world/Sky.js?v=94';
@@ -15,7 +15,7 @@ import { BuildingActivity } from './world/BuildingActivity.js?v=107';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
 import { nearestAdj } from './world/Pathfinding.js?v=94';
 import { UnitRenderer } from './world/UnitRenderer.js?v=96';
-import { GameState } from './sim/GameState.js?v=126';
+import { GameState } from './sim/GameState.js?v=127';
 import * as Economy from './sim/Economy.js?v=107';
 import * as BuildSys from './sim/Buildings.js?v=113';
 import * as Waves from './sim/Waves.js?v=99';
@@ -1101,8 +1101,8 @@ class Game {
       spring: { w: 0.002, s: 0.05, name: '🌸 Весна' },
     }[this._season] || { w: 0, s: 0, name: '' };
     const g = this.rdr.grade.uniforms;
-    g.warmth.value = 0.016 + S.w;
-    g.saturation.value = 1.32 + S.s;
+    g.warmth.value = 0.006 + S.w;
+    g.saturation.value = 1.2 + S.s;
     if (S.name) this.toasts.show(S.name + ' в державе', { gold: true });
   }
 

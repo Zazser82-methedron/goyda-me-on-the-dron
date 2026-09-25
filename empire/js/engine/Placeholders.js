@@ -3,7 +3,7 @@
 // Origin КАЖДОЙ модели — в центре основания (низ на y=0), модель растёт вверх.
 import * as THREE from 'three';
 import { PAL } from '../data/config.js?v=102';
-import { shared } from './MaterialLib.js?v=6';
+import { shared } from './MaterialLib.js?v=7';
 // копия общего материала: фактура общая, а прозрачность стройки (_applyBuildVisual) не заденет соседей
 const texMat = (name) => shared(name).clone();
 

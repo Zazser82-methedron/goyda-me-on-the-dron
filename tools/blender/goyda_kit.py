@@ -516,3 +516,32 @@ def rock(p, loc, size, material='M_stone'):
     ob.location = loc
     ob.rotation_euler = (0, 0, random.uniform(0, math.tau))
     return ob
+
+
+def cliff(p, center, w, d, h, layers=4, material='M_stone', grass=True):
+    """Слоистый утёс: плиты с фаской, каждая выше — уже и сдвинута. Читается как скала, а не как комок.
+    Возвращает высоту верха."""
+    cx, cy, z = center
+    lh = h / layers
+    for i in range(layers):
+        k = 1 - i * 0.16
+        for j in range(2):   # две плиты на слой, чуть развёрнуты — рваный край
+            box(f'{p}{i}{j}', (w * k * random.uniform(0.75, 1.0), d * k * random.uniform(0.75, 1.0), lh * random.uniform(0.95, 1.15)),
+                (cx + random.uniform(-0.06, 0.06) * w, cy + random.uniform(-0.06, 0.06) * d + i * 0.03, z + lh * (i + 0.5)),
+                material, rot=(random.uniform(-0.04, 0.04), random.uniform(-0.04, 0.04), random.uniform(-0.25, 0.25)), bevel=min(0.03, lh * 0.3))
+    top = z + h
+    if grass:   # дёрн на макушке
+        for i in range(4):
+            tent(f'{p}trava{i}', (cx + random.uniform(-0.25, 0.25) * w, cy + random.uniform(-0.25, 0.25) * d, top - 0.01), 0.1, 0.06, 0, top_mat='M_crop')
+    return top
+
+
+def druza(p, loc, size=1.0, material='M_gem'):
+    """Друза: центральный крупный кристалл и 4–6 меньших веером."""
+    crystal(p + 'c', loc, 0.55 * size, 0.07 * size, material, tilt=(0.0, 0.0))
+    for i in range(random.randint(4, 6)):
+        a = i / 5 * math.tau + random.uniform(-0.3, 0.3)
+        r = 0.06 * size
+        crystal(f'{p}s{i}', (loc[0] + math.cos(a) * r, loc[1] + math.sin(a) * r, loc[2]),
+                random.uniform(0.2, 0.38) * size, random.uniform(0.03, 0.05) * size, material,
+                tilt=(math.sin(a) * -0.55, math.cos(a) * 0.55))

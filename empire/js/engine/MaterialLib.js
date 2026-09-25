@@ -7,14 +7,15 @@ import * as Quality from './Quality.js?v=94';
 
 const BASE = './assets/textures/lib/';
 // имя материала → фактура (<tex>_diff.jpg / <tex>_nor.jpg), тон и шероховатость.
-// Фото Poly Haven выцветшие — тон (tint) умножается на фактуру и даёт тёплое дерево и золотую солому.
+// Тон (tint) умножается на фактуру. Дерево — состаренное серебристо-серое, как у настоящих изб:
+// тёплый коричневый на всём подряд делал город однотонно-бурым. Солома — золотая, камень — холодный серый.
 const TEXTURED = {
-  M_log:     { tex: 'log',     tint: 0xc08a55, rough: 0.85 },
-  M_plank:   { tex: 'plank',   tint: 0xd0a070, rough: 0.85 },
+  M_log:     { tex: 'log',     tint: 0xa89684, rough: 0.85 },
+  M_plank:   { tex: 'plank',   tint: 0xbfb4a2, rough: 0.85 },
   M_thatch:  { tex: 'thatch',  tint: 0xf0c878, rough: 0.95 },
-  M_stone:   { tex: 'stone',   tint: 0xd8d0c0, rough: 0.9 },
+  M_stone:   { tex: 'rock',    tint: 0xc9ccd0, rough: 0.9 },   // серая скала (прежняя кладка была бурой)
   M_plaster: { tex: 'plaster', tint: 0xffffff, gain: 1.3, rough: 0.9 },   // фото штукатурки сероватое — gain осветляет до побелки
-  M_cobble:  { tex: 'cobble',  tint: 0xd8ccb8, rough: 0.95 },   // мощёная дорога
+  M_cobble:  { tex: 'cobble',  tint: 0xc4c2bc, rough: 0.95 },   // мощёная дорога
   M_siding:  { tex: 'plaster', tint: 0xf0b848, rough: 0.8 },   // обшивка, крашенная охрой (светлая фактура держит яркий цвет)
 };
 
