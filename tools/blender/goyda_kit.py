@@ -30,6 +30,11 @@ MATS = {
     'M_dark':        ((0.16, 0.11, 0.07), 0.8),
     'M_iron':        ((0.20, 0.20, 0.22), 0.5),
     'M_window':      ((0.05, 0.07, 0.10), 0.15),
+    'M_crop':        ((0.10, 0.22, 0.03), 0.8),    # всходы на грядах
+    'M_wheat':       ((0.55, 0.38, 0.08), 0.8),    # спелая рожь
+    'M_soil':        ((0.07, 0.04, 0.02), 1.0),    # пашня
+    'M_cloth':       ((0.45, 0.36, 0.22), 0.95),   # мешковина
+    'M_fire':        ((0.9, 0.3, 0.05), 0.5),      # угли горна (светятся)
 }
 
 
@@ -49,6 +54,9 @@ def mat(name):
     bsdf.inputs['Roughness'].default_value = rough
     if name in ('M_gold', 'M_iron'):
         bsdf.inputs['Metallic'].default_value = 1.0
+    if name == 'M_fire':
+        bsdf.inputs['Emission Color'].default_value = (1.0, 0.35, 0.05, 1.0)
+        bsdf.inputs['Emission Strength'].default_value = 3.0
     if name == 'M_window':   # тёплое свечение окон — игра приглушает днём
         bsdf.inputs['Emission Color'].default_value = (1.0, 0.62, 0.25, 1.0)
         bsdf.inputs['Emission Strength'].default_value = 0.08   # днём тёмное стекло; ночное свечение — задача игры
@@ -368,3 +376,72 @@ def tent(p, loc, base, h, era, top_mat=None):
     ob = _new_obj(p + 'tent', bm, mat_)
     ob.location = (loc[0], loc[1], loc[2] + h / 2)
     return loc[2] + h
+
+
+def wheel(p, loc, r=0.1, axis='x', spokes=6):
+    """Тележное колесо: обод, ступица, спицы (в плоскости, перпендикулярной axis)."""
+    def local():
+        log(p + 'rim', 0.025, r, (0, 0, 0), 'z', material='M_plank', segs=12, jitter=0)
+        log(p + 'hub', 0.05, r * 0.22, (0, 0, 0), 'z', material='M_iron', segs=8, jitter=0)
+        for i in range(spokes):
+            a = i * math.pi / spokes
+            box(p + f'sp{i}', (r * 1.8, 0.015, 0.015), (0, 0, 0), 'M_plank', rot=(0, 0, a), bevel=0)
+    objs = capture(local)
+    bpy.context.view_layer.update()
+    rot = Matrix.Rotation(math.pi / 2, 4, 'Y') if axis == 'x' else Matrix.Rotation(math.pi / 2, 4, 'X')
+    for o in objs:
+        o.matrix_world = Matrix.Translation(Vector(loc)) @ rot @ o.matrix_world
+    return objs
+
+
+def telega(p, loc, angle=0.0, load='sacks'):
+    """Телега с грузом: мешки или сено."""
+    def local():
+        box(p + 'kuzov', (0.5, 0.28, 0.04), (0, 0, 0.2), 'M_plank', bevel=0.004)
+        for s in (-1, 1):
+            box(p + f'bort{s}', (0.5, 0.02, 0.08), (0, s * 0.13, 0.25), 'M_plank', bevel=0.003)
+        box(p + 'oglobli', (0.45, 0.02, 0.02), (0.45, 0.1, 0.19), 'M_plank', bevel=0)
+        box(p + 'oglobli2', (0.45, 0.02, 0.02), (0.45, -0.1, 0.19), 'M_plank', bevel=0)
+        for sx in (-1, 1):
+            wheel(p + f'w{sx}a', (sx * 0.17, 0.16, 0.11), r=0.11, axis='y')
+            wheel(p + f'w{sx}b', (sx * 0.17, -0.16, 0.11), r=0.11, axis='y')
+        if load == 'sacks':
+            for i, (x, y) in enumerate(((-0.12, -0.05), (0.02, 0.06), (0.14, -0.04), (-0.03, -0.06))):
+                s_ = box(p + f'mesh{i}', (0.13, 0.1, 0.09), (x, y, 0.27 + (0.05 if i == 3 else 0)), 'M_cloth', bevel=0.03)
+                s_['vary'] = 1
+        else:
+            box(p + 'seno', (0.46, 0.26, 0.14), (0, 0, 0.3), 'M_thatch', bevel=0.05)
+    place(capture(local), loc, angle)
+
+
+def sacks(p, loc, n=3):
+    for i in range(n):
+        a = i * 2.1
+        s_ = box(p + f'{i}', (0.12, 0.1, 0.1), (loc[0] + math.cos(a) * 0.06, loc[1] + math.sin(a) * 0.06, loc[2] + 0.05 + (0.08 if i == n - 1 and n > 2 else 0)),
+                 'M_cloth', rot=(0, 0, a), bevel=0.03)
+        s_['vary'] = 1
+
+
+def barrel(p, loc, r=0.055, h=0.14):
+    log(p + 'b', h, r, (loc[0], loc[1], loc[2] + h / 2), 'z', material='M_plank', segs=10, jitter=0.02)
+    for hz in (0.2, 0.8):
+        log(p + f'o{hz}', 0.012, r * 1.05, (loc[0], loc[1], loc[2] + h * hz), 'z', material='M_iron', segs=10, jitter=0)
+
+
+def finish(name, out, ao_distance=0.25):
+    """Общий финал сборки: UV → тона → трансформы → один меш → AO → GLB. Возвращает (tris, dims)."""
+    world_uv()
+    tint_variation()
+    apply_all()
+    ob = join_all(name)
+    tris = tri_count()
+    bake_ao(ob, distance=ao_distance)
+    export_glb(out)
+    return tris, tuple(round(v, 2) for v in ob.dimensions)
+
+
+def cli():
+    """Разбор аргументов после '--': <out.glb> [эпоха]."""
+    import sys, os
+    a = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
+    return (a[0] if a else os.path.abspath('out.glb')), (int(a[1]) if len(a) > 1 else 0)

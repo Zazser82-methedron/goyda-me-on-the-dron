@@ -54,6 +54,7 @@ export class BuildingActivity {
       iron: std(0x48505a, 0.4, 0.78),
       ironDark: std(0x252a30, 0.46, 0.72),
       cloth: std(0xa83325, 0.88),
+      sail: std(0xd9c9a0, 0.9),      // парусина ветрячка фермы
       crop: std(0xa9b83e, 0.9),
       leaf: std(0x587f32, 0.92),
       stone: std(0x766d61, 0.9),
@@ -138,17 +139,14 @@ export class BuildingActivity {
 
   _forge(a) {
     const r = a.root;
-    // Anvil + a small readable forge glow in front of the building.
-    this._mesh(r, this.geo.box, this.mat.ironDark, -0.22, 0.16, 0.48, 0.34, 0.12, 0.22);
-    this._mesh(r, this.geo.box, this.mat.iron, -0.22, 0.27, 0.48, 0.24, 0.10, 0.17);
-    this._mesh(r, this.geo.box, this.mat.stone, 0.25, 0.12, 0.46, 0.34, 0.22, 0.28);
-    const ember = this._mesh(r, this.geo.sphere, this.mat.ember, 0.25, 0.27, 0.46, 0.21, 0.08, 0.18);
+    // Наковальня на чурбаке — часть модели (tools/blender/build_kuznica.py, x=-0.2, z=+0.48, верх 0.2).
+    // Здесь только живое: раскалённая заготовка на наковальне и молот в человеческий размер.
+    const ember = this._mesh(r, this.geo.box, this.mat.ember, -0.2, 0.212, 0.48, 0.07, 0.016, 0.03);
 
     const hammer = new THREE.Group();
-    hammer.position.set(-0.04, 0.22, 0.48);
-    this._mesh(hammer, this.geo.cylinder, this.mat.woodLight, 0, 0.28, 0, 0.055, 0.52, 0.055);
-    const head = this._mesh(hammer, this.geo.box, this.mat.iron, 0, 0.55, 0, 0.28, 0.12, 0.14);
-    head.rotation.z = 0.05;
+    hammer.position.set(-0.02, 0.212, 0.48);     // шарнир справа от наковальни; при повороте на PI/2 боёк ложится на неё
+    this._mesh(hammer, this.geo.cylinder, this.mat.woodLight, 0, 0.1, 0, 0.018, 0.2, 0.018);
+    this._mesh(hammer, this.geo.box, this.mat.iron, 0, 0.19, 0, 0.07, 0.035, 0.04);
     r.add(hammer);
     a.parts.hammer = hammer;
     a.parts.ember = ember;
@@ -198,26 +196,27 @@ export class BuildingActivity {
   _farm(a) {
     const r = a.root;
     const mill = new THREE.Group();
+    // Небольшой ветрячок-флюгер у изгороди: гряды, рожь и стога теперь в самой модели (build_ferma.py).
     mill.position.set(0.58, 0, 0.54);
-    this._mesh(mill, this.geo.cylinder, this.mat.wood, 0, 0.58, 0, 0.075, 1.16, 0.075);
+    this._mesh(mill, this.geo.cylinder, this.mat.wood, 0, 0.3, 0, 0.03, 0.6, 0.03);
     const rotor = new THREE.Group();
-    rotor.position.set(0, 1.11, 0.045);
-    const blades = this._instances(rotor, this.geo.box, this.mat.cloth, 4);
+    rotor.position.set(0, 0.58, 0.025);
+    const blades = this._instances(rotor, this.geo.box, this.mat.sail, 4);
     const d = this._dummy;
     for (let i = 0; i < 4; i++) {
       const angle = i * Math.PI * 0.5;
-      d.position.set(-Math.sin(angle) * 0.29, Math.cos(angle) * 0.29, 0);
+      d.position.set(-Math.sin(angle) * 0.13, Math.cos(angle) * 0.13, 0);
       d.rotation.set(0, 0, angle - 0.12);
-      d.scale.set(0.10, 0.51, 0.035);
+      d.scale.set(0.05, 0.24, 0.012);
       d.updateMatrix();
       blades.setMatrixAt(i, d.matrix);
     }
     blades.instanceMatrix.needsUpdate = true;
-    this._mesh(rotor, this.geo.sphere, this.mat.iron, 0, 0, 0.02, 0.14, 0.14, 0.10);
+    this._mesh(rotor, this.geo.sphere, this.mat.iron, 0, 0, 0.01, 0.05, 0.05, 0.04);
     mill.add(rotor);
     r.add(mill);
 
-    const count = this.low ? 3 : STALK_POS.length;
+    const count = 0;   // «подсолнухи» убраны — посевы нарисованы в модели фермы
     const stems = this._instances(r, this.geo.cylinder, this.mat.crop, count, true);
     const heads = this._instances(r, this.geo.sphere, this.mat.gold, count, true);
     for (let i = 0; i < count; i++) {
@@ -378,10 +377,10 @@ export class BuildingActivity {
           if (cycle < 0.58) swing = smooth01(cycle / 0.58);
           else if (cycle < 0.72) swing = 1 - smooth01((cycle - 0.58) / 0.14);
           else swing = 0;
-          p.hammer.rotation.z = -0.88 + swing * 1.28;
+          p.hammer.rotation.z = -0.35 + swing * 1.92;   // замах назад → удар в наковальню (PI/2)
           const hit = Math.max(0, 1 - Math.abs(cycle - 0.72) * 26);
           const pulse = 1 + Math.sin(q * 8.4) * 0.08 + hit * 0.32;
-          p.ember.scale.set(0.21 * pulse, 0.08 * pulse, 0.18 * pulse);
+          p.ember.scale.set(0.07 * pulse, 0.016 * pulse, 0.03 * pulse);
           break;
         }
         case 'market':
