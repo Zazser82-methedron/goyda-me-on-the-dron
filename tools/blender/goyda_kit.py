@@ -35,6 +35,7 @@ MATS = {
     'M_soil':        ((0.07, 0.04, 0.02), 1.0),    # пашня
     'M_cloth':       ((0.45, 0.36, 0.22), 0.95),   # мешковина
     'M_fire':        ((0.9, 0.3, 0.05), 0.5),      # угли горна (светятся)
+    'M_glow':        ((0.05, 0.6, 0.7), 0.3),      # бирюзовый свет Дрона (алтари, глаза идолов)
 }
 
 
@@ -57,6 +58,9 @@ def mat(name):
     if name == 'M_fire':
         bsdf.inputs['Emission Color'].default_value = (1.0, 0.35, 0.05, 1.0)
         bsdf.inputs['Emission Strength'].default_value = 3.0
+    if name == 'M_glow':
+        bsdf.inputs['Emission Color'].default_value = (0.1, 0.9, 1.0, 1.0)
+        bsdf.inputs['Emission Strength'].default_value = 2.5
     if name == 'M_window':   # тёплое свечение окон — игра приглушает днём
         bsdf.inputs['Emission Color'].default_value = (1.0, 0.62, 0.25, 1.0)
         bsdf.inputs['Emission Strength'].default_value = 0.08   # днём тёмное стекло; ночное свечение — задача игры
@@ -445,3 +449,44 @@ def cli():
     import sys, os
     a = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
     return (a[0] if a else os.path.abspath('out.glb')), (int(a[1]) if len(a) > 1 else 0)
+
+
+def lathe(p, profile, loc, material, segs=16):
+    """Тело вращения вокруг Z по профилю [(радиус, высота), ...] снизу вверх (купола, главки, чаши)."""
+    bm = bmesh.new()
+    rings = []
+    for r, z in profile:
+        ring = []
+        for i in range(segs):
+            a = i / segs * math.tau
+            ring.append(bm.verts.new((math.cos(a) * r, math.sin(a) * r, z)))
+        rings.append(ring)
+    for a_, b_ in zip(rings, rings[1:]):
+        for i in range(segs):
+            j = (i + 1) % segs
+            bm.faces.new((a_[i], a_[j], b_[j], b_[i]))
+    if profile[0][0] > 1e-4:
+        bm.faces.new(list(reversed(rings[0])))
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-5)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    ob = _new_obj(p, bm, material)
+    ob.location = loc
+    return ob
+
+
+def onion(p, loc, r, material, segs=16):
+    """Луковичная главка с барабаном-шейкой; возвращает высоту маковки."""
+    prof = [(r * 0.55, 0), (r * 0.55, r * 0.35), (r * 0.9, r * 0.5), (r * 1.08, r * 0.8), (r * 1.0, r * 1.1),
+            (r * 0.75, r * 1.4), (r * 0.4, r * 1.7), (r * 0.12, r * 1.95), (0.0, r * 2.1)]
+    lathe(p, prof, loc, material, segs)
+    return loc[2] + r * 2.1
+
+
+def octagon(p, loc, r, h, material, bevel=0.0):
+    """Восьмерик (восьмигранный сруб/барабан)."""
+    bm = bmesh.new()
+    bmesh.ops.create_cone(bm, cap_ends=True, segments=8, radius1=r, radius2=r, depth=h)
+    bmesh.ops.rotate(bm, verts=bm.verts, cent=(0, 0, 0), matrix=Matrix.Rotation(math.pi / 8, 3, 'Z'))
+    ob = _new_obj(p, bm, material)
+    ob.location = (loc[0], loc[1], loc[2] + h / 2)
+    return loc[2] + h

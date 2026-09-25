@@ -11,7 +11,8 @@ import * as Tiling from '../world/Tiling.js?v=103';
 
 // Модели, у которых есть облики эпох <model>_e1 / <model>_e2 (tools/blender/build_*.py).
 // Грузятся лениво — только когда держава дошла до эпохи, чтобы старт не тянул все облики разом.
-export const ERA_SKINS = ['bld_izba', 'bld_townhall', 'bld_ambar', 'bld_ferma', 'bld_kuznica', 'bld_kazarma'];
+export const ERA_SKINS = ['bld_izba', 'bld_townhall', 'bld_ambar', 'bld_ferma', 'bld_kuznica', 'bld_kazarma',
+  'bld_church', 'bld_market', 'bld_banya', 'bld_traktir'];
 
 // Порт (roadPort/railPort) задан как {dx,dy} от gx,gy для НЕповёрнутого здания (rot=0).
 // При повороте (R при постройке, b.rot 0..3, view.rotation.y = rot*PI/2) визуальный фасад

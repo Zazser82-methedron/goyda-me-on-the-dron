@@ -6,16 +6,16 @@ import { RTSCamera } from './engine/RTSCamera.js?v=100';
 import { Picker } from './engine/Picker.js?v=95';
 import { Loop } from './engine/Loop.js?v=100';
 import { Profiler } from './engine/Profiler.js?v=97';
-import { AssetManager } from './engine/AssetManager.js?v=118';
+import { AssetManager } from './engine/AssetManager.js?v=119';
 import { TerrainMesh } from './world/TerrainMesh.js?v=103';
 import { WorldBase } from './world/WorldBase.js?v=102';
 import { Sky } from './world/Sky.js?v=94';
 import { Atmosphere } from './world/Atmosphere.js?v=95';
-import { BuildingActivity } from './world/BuildingActivity.js?v=105';
+import { BuildingActivity } from './world/BuildingActivity.js?v=106';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
 import { nearestAdj } from './world/Pathfinding.js?v=94';
 import { UnitRenderer } from './world/UnitRenderer.js?v=96';
-import { GameState } from './sim/GameState.js?v=122';
+import { GameState } from './sim/GameState.js?v=123';
 import * as Economy from './sim/Economy.js?v=107';
 import * as BuildSys from './sim/Buildings.js?v=113';
 import * as Waves from './sim/Waves.js?v=99';
@@ -61,6 +61,8 @@ const MODELS = [
   // v87: доделаны в Blender — раньше были только процедурные плейсхолдеры
   'unit_bogatyr', 'bld_tower', 'bld_ferma', 'bld_rudnik', 'bld_zhila', 'bld_observatory',
   'env_watchfire',
+  // 2026-09: новые постройки из tools/blender (раньше рисовались процедурными плейсхолдерами)
+  'bld_banya', 'bld_traktir',
 ];
 const ri = (a, b) => Math.floor(a + Math.random() * (b - a + 1));
 

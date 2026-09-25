@@ -318,15 +318,16 @@ export class BuildingActivity {
   _halo(a) {
     const r = a.root;
     const halo = new THREE.Group();
-    halo.position.set(0, 1.62, 0);
-    const ring = this._mesh(halo, this.geo.torus, this.mat.gold, 0, 0, 0, 0.92, 0.92, 0.92);
+    // над кольцом-навершием новой кумирни (build_church.py: маковка ~2.9, центр смещён на 0.18 к фасаду)
+    halo.position.set(0, 2.95, -0.18);
+    const ring = this._mesh(halo, this.geo.torus, this.mat.gold, 0, 0, 0, 0.42, 0.42, 0.42);
     ring.rotation.x = Math.PI * 0.5;
-    const core = this._mesh(halo, this.geo.sphere, this.mat.ember, 0, 0, 0, 0.13, 0.13, 0.13);
+    const core = this._mesh(halo, this.geo.sphere, this.mat.ember, 0, 0, 0, 0.06, 0.06, 0.06);
     if (!this.low) {
       for (let i = 0; i < 4; i++) {
-        const ray = this._mesh(halo, this.geo.box, this.mat.gold, 0, 0, 0, 0.045, 0.045, 0.34);
+        const ray = this._mesh(halo, this.geo.box, this.mat.gold, 0, 0, 0, 0.022, 0.022, 0.16);
         ray.rotation.y = i * Math.PI * 0.5;
-        ray.position.set(Math.sin(ray.rotation.y) * 0.58, 0, Math.cos(ray.rotation.y) * 0.58);
+        ray.position.set(Math.sin(ray.rotation.y) * 0.27, 0, Math.cos(ray.rotation.y) * 0.27);
       }
     }
     r.add(halo);
@@ -441,9 +442,9 @@ export class BuildingActivity {
         }
         case 'church': {
           p.halo.rotation.y = q * 0.22;
-          p.halo.position.y = 1.62 + Math.sin(q * 1.3) * 0.045;
+          p.halo.position.y = 2.95 + Math.sin(q * 1.3) * 0.03;
           const pulse = 1 + Math.sin(q * 2.7) * 0.11;
-          p.core.scale.setScalar(0.13 * pulse);
+          p.core.scale.setScalar(0.06 * pulse);
           break;
         }
         case 'station': {
