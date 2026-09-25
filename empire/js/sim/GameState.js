@@ -9,10 +9,13 @@ import { RANKS } from '../data/ranks.js?v=94';
 import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=106';
 import * as Tiling from '../world/Tiling.js?v=105';
 
-// Модели, у которых есть облики эпох <model>_e1 / <model>_e2 (tools/blender/build_*.py).
+// Модели, у которых есть облики эпох <model>_e1 / <model>_e2 (tools/blender/build_*.py), по эпохам:
+// если облик эпохи не отличается от предыдущего, файла нет и modelFor() берёт ближайший ранний.
 // Грузятся лениво — только когда держава дошла до эпохи, чтобы старт не тянул все облики разом.
-export const ERA_SKINS = ['bld_izba', 'bld_townhall', 'bld_ambar', 'bld_ferma', 'bld_kuznica', 'bld_kazarma',
-  'bld_church', 'bld_market', 'bld_banya', 'bld_traktir'];
+const ERA_COMMON = ['bld_izba', 'bld_townhall', 'bld_ambar', 'bld_ferma', 'bld_kuznica', 'bld_kazarma',
+  'bld_church', 'bld_market', 'bld_banya', 'bld_traktir', 'bld_tower', 'bld_observatory', 'bld_roshcha',
+  'bld_izba_plotnika', 'bld_veche'];
+export const ERA_SKINS = { 1: ERA_COMMON, 2: [...ERA_COMMON, 'bld_rudnik'] };
 
 // Порт (roadPort/railPort) задан как {dx,dy} от gx,gy для НЕповёрнутого здания (rot=0).
 // При повороте (R при постройке, b.rot 0..3, view.rotation.y = rot*PI/2) визуальный фасад
@@ -320,7 +323,7 @@ export class GameState {
 
   loadEraSkins(era) {
     if (!era) return Promise.resolve(0);
-    const names = ERA_SKINS.map(m => m + '_e' + era).filter(n => !this.assets.isGlb[n]);
+    const names = (ERA_SKINS[era] || []).map(m => m + '_e' + era).filter(n => !this.assets.isGlb[n]);
     return this.assets.preload(names);
   }
 

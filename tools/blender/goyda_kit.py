@@ -36,6 +36,7 @@ MATS = {
     'M_cloth':       ((0.45, 0.36, 0.22), 0.95),   # мешковина
     'M_fire':        ((0.9, 0.3, 0.05), 0.5),      # угли горна (светятся)
     'M_glow':        ((0.05, 0.6, 0.7), 0.3),      # бирюзовый свет Дрона (алтари, глаза идолов)
+    'M_gem':         ((0.45, 0.08, 0.7), 0.15),    # самоцветы (лиловое свечение)
 }
 
 
@@ -61,6 +62,9 @@ def mat(name):
     if name == 'M_glow':
         bsdf.inputs['Emission Color'].default_value = (0.1, 0.9, 1.0, 1.0)
         bsdf.inputs['Emission Strength'].default_value = 2.5
+    if name == 'M_gem':
+        bsdf.inputs['Emission Color'].default_value = (0.7, 0.2, 1.0, 1.0)
+        bsdf.inputs['Emission Strength'].default_value = 1.6
     if name == 'M_window':   # тёплое свечение окон — игра приглушает днём
         bsdf.inputs['Emission Color'].default_value = (1.0, 0.62, 0.25, 1.0)
         bsdf.inputs['Emission Strength'].default_value = 0.08   # днём тёмное стекло; ночное свечение — задача игры
@@ -490,3 +494,25 @@ def octagon(p, loc, r, h, material, bevel=0.0):
     ob = _new_obj(p, bm, material)
     ob.location = (loc[0], loc[1], loc[2] + h / 2)
     return loc[2] + h
+
+
+def crystal(p, loc, h, r, material='M_gem', tilt=(0.0, 0.0)):
+    """Шестигранный кристалл с заострённой верхушкой."""
+    lathe(p, [(r, 0), (r, h * 0.7), (0.0, h)], (0, 0, 0), material, segs=6)
+    ob = bpy.data.objects[p]
+    ob.location = loc
+    ob.rotation_euler = (tilt[0], tilt[1], random.uniform(0, math.tau))
+    return ob
+
+
+def rock(p, loc, size, material='M_stone'):
+    """Валун: икосфера с шумом вершин."""
+    bm = bmesh.new()
+    bmesh.ops.create_icosphere(bm, subdivisions=1, radius=1.0)
+    for v in bm.verts:
+        k = random.uniform(0.8, 1.15)
+        v.co.x *= size[0] * k; v.co.y *= size[1] * k; v.co.z *= size[2] * k
+    ob = _new_obj(p, bm, material)
+    ob.location = loc
+    ob.rotation_euler = (0, 0, random.uniform(0, math.tau))
+    return ob

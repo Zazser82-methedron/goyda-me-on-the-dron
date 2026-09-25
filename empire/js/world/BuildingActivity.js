@@ -299,15 +299,16 @@ export class BuildingActivity {
   _orrery(a, veche) {
     const r = a.root;
     const rig = new THREE.Group();
-    rig.position.set(0, veche ? 1.22 : 1.48, 0);
-    const ringA = this._mesh(rig, this.geo.torus, veche ? this.mat.gold : this.mat.iron, 0, 0, 0, 1.08, 1.08, 1.08);
+    // над звонницей Вече / площадкой обсерватории (build_veche.py / build_observatory.py: orrery_anchor)
+    if (veche) rig.position.set(0, 1.63, -0.57); else rig.position.set(0, 1.84, 0);
+    const ringA = this._mesh(rig, this.geo.torus, veche ? this.mat.gold : this.mat.iron, 0, 0, 0, 0.5, 0.5, 0.5);
     ringA.rotation.x = Math.PI * 0.16;
     let ringB = null;
     if (!this.low) {
-      ringB = this._mesh(rig, this.geo.torus, veche ? this.mat.woodLight : this.mat.gold, 0, 0, 0, 0.78, 0.78, 0.78);
+      ringB = this._mesh(rig, this.geo.torus, veche ? this.mat.woodLight : this.mat.gold, 0, 0, 0, 0.36, 0.36, 0.36);
       ringB.rotation.y = Math.PI * 0.5;
     }
-    const core = this._mesh(rig, this.geo.sphere, veche ? this.mat.ember : this.mat.gem, 0, 0, 0, 0.22, 0.22, 0.22);
+    const core = this._mesh(rig, this.geo.sphere, veche ? this.mat.ember : this.mat.gem, 0, 0, 0, 0.1, 0.1, 0.1);
     r.add(rig);
     a.parts.rig = rig;
     a.parts.ringA = ringA;
@@ -437,7 +438,7 @@ export class BuildingActivity {
           p.ringA.rotation.z = q * 0.31;
           if (p.ringB) p.ringB.rotation.x = q * -0.27;
           const pulse = 1 + Math.sin(q * 2.2) * 0.09;
-          p.core.scale.setScalar(0.22 * pulse);
+          p.core.scale.setScalar(0.1 * pulse);
           break;
         }
         case 'church': {
