@@ -1,5 +1,5 @@
 // ===== Нижняя панель: вкладки-категории построек + модальная сетка карточек + указы =====
-import { BUILDINGS, BUILD_ORDER, CATS } from '../data/buildings.js?v=106';
+import { BUILDINGS, BUILD_ORDER, CATS } from '../data/buildings.js?v=108';
 import { RANKS } from '../data/ranks.js?v=94';
 import { RES_LABEL } from '../data/config.js?v=102';
 import { EDICTS } from '../sim/Edicts.js?v=94';
@@ -8,10 +8,17 @@ import { TECHS } from '../data/tech.js?v=94';
 import { ERA_NAMES } from '../sim/Eras.js?v=4';
 import { Thumbs } from './Thumbs.js?v=100';
 
+const SECONDARY_LABEL = {
+  tes: { ru: 'ТЁС', icon: '🪚', color: '#c98a48' },
+  bread: { ru: 'ХЛЕБ', icon: '🥖', color: '#e8c060' },   // 🍞 уже занят едой
+  mead: { ru: 'МЕДОВУХА', icon: '🍯', color: '#f2b84b' },
+};
+const label = key => RES_LABEL[key] || SECONDARY_LABEL[key];
+
 export function costStr(cost) {
   const keys = Object.keys(cost || {});
   if (!keys.length) return '<span class="free">даром</span>';
-  return keys.map(k => `<span style="color:${RES_LABEL[k] ? RES_LABEL[k].color : '#fff'}">${RES_LABEL[k] ? RES_LABEL[k].icon : ''}${cost[k]}</span>`).join(' ');
+  return keys.map(k => `<span style="color:${label(k) ? label(k).color : '#fff'}">${label(k) ? label(k).icon : ''}${cost[k]}</span>`).join(' ');
 }
 
 // эдикты выживания (антиспираль смерти, Phase 2 п.2.8) — одноразовые действия с кулдауном,
@@ -36,6 +43,11 @@ function prodStr(d) {
   }
   if (d.pop) out.push(`<span class="bcard-pop">+${d.pop}👥</span>`);
   if (d.aura) out.push(`<span class="bcard-aura">аура</span>`);
+  if (d.convert) {
+    const inputs = Object.entries(d.convert.in || {}).map(([k, n]) => `${label(k).icon}${n}`).join(' ');
+    const outputs = Object.entries(d.convert.out || {}).map(([k, n]) => `${label(k).icon}${n}`).join(' ');
+    out.push(`<span class="bcard-prod">${inputs} → ${outputs}/день</span>`);
+  }
   if (d.wall && d.walkable) out.push(`<span class="bcard-pop">проход</span>`);
   return out.length ? `<span class="bcard-prod">${out.join(' ')}</span>` : '';
 }

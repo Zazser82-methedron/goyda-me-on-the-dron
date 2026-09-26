@@ -1052,10 +1052,51 @@ export function bridgeTile(mask, endMask) {
 
 function bridge() { return bridgeTile(1 | 4, 1 | 4); }
 
+// ---- новые производства (временные силуэты до GLB) ----
+function lesopilka() {
+  const g = new THREE.Group();
+  const wd = mat(PAL.wood), dk = mat(PAL.woodDk), rf = mat(PAL.roof), steel = mat(0xadb2bb, { metal: 0.8, rough: 0.35 });
+  g.add(box(0.92, 0.05, 0.86, mat(PAL.dirt), 0, 0.025, 0));
+  for (const [x, z] of [[-0.36, -0.3], [0.36, -0.3], [-0.36, 0.3], [0.36, 0.3]]) g.add(cyl(0.035, 0.045, 0.62, 5, dk, x, 0.31, z));
+  g.add(box(0.96, 0.07, 0.72, rf, 0, 0.67, 0));
+  g.add(cyl(0.12, 0.12, 0.82, 8, wd, -0.1, 0.16, 0.18));
+  const saw = cyl(0.22, 0.22, 0.035, 12, steel, 0.28, 0.34, 0.08); saw.rotation.z = Math.PI / 2; g.add(saw);
+  g.add(box(0.52, 0.045, 0.1, dk, 0.08, 0.38, 0.08));
+  return g;
+}
+
+function melnica() {
+  const g = new THREE.Group();
+  const wd = mat(PAL.wood), dk = mat(PAL.woodDk), rf = mat(PAL.roof), canvas = mat(PAL.thatch);
+  g.add(logWall(1.45, 0.78, 1.3, wd, dk, 0, 0.4, 0));
+  g.add(cone(1.05, 0.58, 4, rf, 0, 1.05, 0));
+  g.add(cyl(0.04, 0.04, 0.18, 6, dk, 0, 0.92, 0.72));
+  for (let i = 0; i < 4; i++) {
+    const blade = box(0.12, 0.62, 0.035, canvas, 0, 1.18, 0.73);
+    blade.rotation.z = i * Math.PI / 2; g.add(blade);
+  }
+  g.add(cyl(0.08, 0.08, 0.08, 8, dk, 0, 1.18, 0.76));
+  return g;
+}
+
+function paseka() {
+  const g = new THREE.Group();
+  const wd = mat(PAL.wood), dk = mat(PAL.woodDk), straw = mat(PAL.thatch), flower = mat(0xffd040, { emissive: 0xffb000, emi: 0.35 });
+  g.add(box(0.94, 0.04, 0.94, mat(PAL.grass2), 0, 0.02, 0));
+  for (const [x, z] of [[-0.28, -0.2], [0.28, -0.18], [0, 0.3]]) {
+    g.add(cyl(0.13, 0.16, 0.32, 8, wd, x, 0.16, z));
+    g.add(cone(0.2, 0.16, 8, straw, x, 0.4, z));
+  }
+  for (const [x, z] of [[-0.42, 0.36], [0.4, 0.36], [-0.45, -0.4], [0.45, -0.4]]) g.add(sph(0.055, flower, x, 0.09, z, 6));
+  g.add(box(0.7, 0.34, 0.035, dk, 0, 0.24, -0.46));
+  return g;
+}
+
 const BUILDERS = {
   idol_dron: idol, bld_townhall: townhall, bld_izba: izba, bld_izba_plotnika: izbaPlotnika, bld_banya: banya, bld_ambar: ambar, bld_sklad: sklad, bld_roshcha: roshcha,
   enemy_camp: enemyCamp,
   bld_kuznica: kuznica, bld_remdvor: remontDvor, bld_kazarma: kazarma, bld_church: church, bld_market: market, bld_traktir: traktir, bld_prikaz: prikazSbora,
+  bld_lesopilka: lesopilka, bld_melnica: melnica, bld_paseka: paseka,
   bld_ferma: ferma, bld_rudnik: rudnik, bld_zhila: zhila, bld_veche: veche, bld_observatory: observatory, bld_agitpunkt: agitpunkt, bld_tower: tower, bld_zastava: zastavaOstrog,
   bld_road: road, bld_bridge: bridge,
   bld_chastokol: chastokol, bld_chastokol_gate: chastokolGate,

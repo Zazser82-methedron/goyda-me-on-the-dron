@@ -141,11 +141,10 @@ def log(name, length, radius, loc, axis, material='M_log', segs=10, jitter=0.12)
 
 
 def apply_all():
+    # отдельные подвижные части (separate_group) сохраняют свой pivot — их трансформ не запекаем
     for ob in bpy.context.scene.objects:
-        if ob.type != 'MESH':
-            continue
-        ob.select_set(True)
-    bpy.context.view_layer.objects.active = next(o for o in bpy.context.scene.objects if o.type == 'MESH')
+        ob.select_set(ob.type == 'MESH' and not ob.get('separate'))
+    bpy.context.view_layer.objects.active = next(o for o in bpy.context.scene.objects if o.type == 'MESH' and not o.get('separate'))
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
 
 
@@ -194,7 +193,7 @@ def world_uv():
 
 
 def join_all(name):
-    obs = [o for o in bpy.context.scene.objects if o.type == 'MESH']
+    obs = [o for o in bpy.context.scene.objects if o.type == 'MESH' and not o.get('separate')]
     for o in bpy.context.scene.objects:
         o.select_set(o in obs)
     bpy.context.view_layer.objects.active = obs[0]
@@ -638,3 +637,23 @@ def finish_unit(name, out):
     bake_ao(ob, distance=0.08, strength=0.45)
     export_glb(out)
     return tris, tuple(round(v, 2) for v in ob.dimensions)
+
+
+def separate_group(name, objs, loc):
+    """Слить детали, построенные вокруг начала координат, в ОДИН отдельный объект с pivot в loc.
+    Он не сливается с моделью и экспортируется своим узлом name — игра крутит его по имени
+    (крылья мельницы и т.п.)."""
+    bpy.ops.object.select_all(action='DESELECT')
+    for o in objs:
+        o.select_set(True)
+    bpy.context.view_layer.objects.active = objs[0]
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    if len(objs) > 1:
+        bpy.ops.object.join()
+    ob = bpy.context.view_layer.objects.active
+    ob.name = name; ob.data.name = name
+    for k in list(ob.keys()):
+        del ob[k]
+    ob['separate'] = 1
+    ob.location = loc
+    return ob

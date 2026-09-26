@@ -3,6 +3,7 @@ import { SIM_DT, DAY_TICKS } from '../data/config.js?v=102';
 import { edictMods } from './Edicts.js?v=94';
 import * as Wear from './Wear.js?v=2';
 import * as AntiSpiral from './AntiSpiral.js?v=3';
+import { needsCoverage, runConversions } from './Chains.js?v=3';
 
 const DAY_SECONDS = DAY_TICKS * SIM_DT;   // 8 сек
 const FOOD_PER_POP = 1;
@@ -68,16 +69,32 @@ function onDay(state, ctx) {
   const fm = state.faction && state.faction.mods;   // бонусы фракции
   if (fm) { prod.faith *= fm.faithMul || 1; happyMod += fm.happy || 0; }
 
-  const food = prod.food;   // для баланса счастья/голода ниже
+  let food = prod.food;   // для баланса счастья/голода ниже
   if (prod.gold) prod.gold *= (0.78 + state.happiness / 100 * 0.44) * am.goldMul * (estateMods.goldMul || 1);   // довольный народ платит больше податей (0.78..1.22)
   prod.gold = AntiSpiral.applyTaxDebt(state, prod.gold);
   state.gain(prod);
+
+  // Вторичные товары перерабатываются уже после добычи этого дня.
+  const converted = runConversions(state, built);
+  food -= converted.food || 0;
 
   // расход еды
   const cons = state.population * FOOD_PER_POP * em.foodConsMul * am.foodConsMul;
   state.resources.food -= cons;
   let starve = false;
   if (state.resources.food < 0) { starve = true; state.resources.food = 0; }
+
+  // Хлеб и медовуха — добровольное улучшение быта: нет товара — нет штрафа.
+  const homes = built.filter(b => b.kind === 'izba').length;
+  const luxuryNeed = Math.ceil(homes / 4);
+  let goodsHappy = 0;
+  if (luxuryNeed) {
+    for (const key of ['bread', 'mead']) {
+      const used = Math.min(luxuryNeed, Math.floor(state.resources[key] || 0));
+      state.resources[key] -= used;
+      goodsHappy += 6 * used / luxuryNeed;
+    }
+  }
 
   // РЫНОК: торговля излишками — что копится сверх 85% склада, продаём за золото (экономический смысл рынка)
   const markets = built.filter(b => b.kind === 'market' || b.kind === 'traktir' || b.kind === 'sklad_putevoy');
@@ -99,6 +116,19 @@ function onDay(state, ctx) {
     }
   }
 
+  // Только Торг вывозит вторичные товары: выше половины склада, до 10 шт. каждого в день.
+  const tradeMarket = built.find(b => b.kind === 'market');
+  if (tradeMarket) {
+    const prices = { tes: 1, bread: 2, mead: 3 };
+    let earned = 0;
+    for (const [key, price] of Object.entries(prices)) {
+      const surplus = (state.resources[key] || 0) - (state.cap[key] || 0) * 0.5;
+      const sold = Math.min(10, Math.max(0, surplus));
+      if (sold) { state.resources[key] -= sold; earned += sold * price; }
+    }
+    if (earned) tradeMarket._pendingCargo = (tradeMarket._pendingCargo || 0) + earned;
+  }
+
   // целевое счастье
   const foodBal = food - cons;
   let target = 50;
@@ -108,6 +138,10 @@ function onDay(state, ctx) {
   // удобства: церковь/рынок радуют народ (Тропико-слой нужд)
   const amen = state.buildings.reduce((n, b) => n + (b.built && !b.ruined && (b.kind === 'church' || b.kind === 'market') ? 1 : 0), 0);
   target += Math.min(12, amen * 3);
+  const needStats = needsCoverage(built);
+  state._needs = needStats;                         // панель избы читает тот же дневной срез
+  target += (needStats.average - 0.5) * 20;         // покрытие нужд: −10..+10 к цели
+  target += goodsHappy;                             // хлеб/медовуха: до +6 каждый
   target += happyMod;
   if (state.threatTimer > 0) target -= 10;
   if (starve) target -= 28;

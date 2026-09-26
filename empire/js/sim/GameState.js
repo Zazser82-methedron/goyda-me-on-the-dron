@@ -2,19 +2,19 @@
 import * as THREE from 'three';
 import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=102';
 import { Grid } from '../world/Grid.js?v=96';
-import { NodeField } from '../world/NodeField.js?v=120';
-import { BUILDINGS } from '../data/buildings.js?v=106';
+import { NodeField } from '../world/NodeField.js?v=122';
+import { BUILDINGS } from '../data/buildings.js?v=108';
 import { UNITS } from '../data/units.js?v=94';
 import { RANKS } from '../data/ranks.js?v=94';
-import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=114';
-import * as Tiling from '../world/Tiling.js?v=113';
+import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=116';
+import * as Tiling from '../world/Tiling.js?v=115';
 
 // Модели, у которых есть облики эпох <model>_e1 / <model>_e2 (tools/blender/build_*.py), по эпохам:
 // если облик эпохи не отличается от предыдущего, файла нет и modelFor() берёт ближайший ранний.
 // Грузятся лениво — только когда держава дошла до эпохи, чтобы старт не тянул все облики разом.
 const ERA_COMMON = ['bld_izba', 'bld_townhall', 'bld_ambar', 'bld_ferma', 'bld_kuznica', 'bld_kazarma',
   'bld_church', 'bld_market', 'bld_banya', 'bld_traktir', 'bld_tower', 'bld_observatory', 'bld_roshcha',
-  'bld_izba_plotnika', 'bld_veche'];
+  'bld_izba_plotnika', 'bld_veche', 'bld_lesopilka', 'bld_melnica', 'bld_paseka'];
 // Лубочная палитра: крыши и ставни каждого здания крашены по-своему (детерминированно от клетки —
 // после загрузки сейва цвет тот же). Тёсовая кровля умножается на фактуру, поэтому цвета светлее.
 const PAINT = {
@@ -56,8 +56,8 @@ export class GameState {
       gold: new NodeField(scene, 'res_ore', 250),
     };
 
-    this.resources = { food: 70, wood: 80, stone: 70, iron: 0, gold: 45, gems: 0, faith: 15 };
-    this.cap = { food: 400, wood: 400, stone: 400, iron: 300, gold: 400, gems: 150, faith: 999 };
+    this.resources = { food: 70, wood: 80, stone: 70, iron: 0, tes: 0, bread: 0, mead: 0, gold: 45, gems: 0, faith: 15 };
+    this.cap = { food: 400, wood: 400, stone: 400, iron: 300, tes: 200, bread: 200, mead: 200, gold: 400, gems: 150, faith: 999 };
     this.stats = { slain: 0, camps: 0, vets: 0 };   // счётчики похода → Сводка в конце
 
     // исследования (древо технологий) — множители/бонусы

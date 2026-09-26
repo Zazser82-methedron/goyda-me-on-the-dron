@@ -51,6 +51,24 @@ export const BUILDINGS = {
     cost: { wood: 25, stone: 10 }, build: 5, wearRate: 0.20,
     desc: 'Сажает деревья вокруг — лес восстанавливается, ДЕРЕВО не кончится.',
   },
+  lesopilka: {
+    kind: 'lesopilka', name: 'ЛЕСОПИЛКА', icon: '🪚', model: 'bld_lesopilka',
+    w: 1, h: 1, hp: 130, cat: 'econ', rank: 0,
+    cost: { wood: 30, stone: 10 }, build: 4, convert: { in: { wood: 6 }, out: { tes: 3 } }, wearRate: 0.45,
+    desc: 'Пилит брёвна в ТЁС: 6 дерева → 3 тёса в день. Без дерева простаивает.',
+  },
+  melnica: {
+    kind: 'melnica', name: 'МЕЛЬНИЦА', icon: '🌾', model: 'bld_melnica',
+    w: 2, h: 2, hp: 170, cat: 'econ', rank: 0,
+    cost: { wood: 35, stone: 15 }, build: 6, convert: { in: { food: 8 }, out: { bread: 4 } }, wearRate: 0.45,
+    desc: 'Мелет зерно с ферм в ХЛЕБ: 8 еды → 4 хлеба в день.',
+  },
+  paseka: {
+    kind: 'paseka', name: 'ПАСЕКА', icon: '🐝', model: 'bld_paseka',
+    w: 1, h: 1, hp: 90, cat: 'econ', rank: 0,
+    cost: { wood: 20 }, build: 3, produce: { food: 2 }, wearRate: 0.25,
+    desc: 'Ульи и мёд. +2 еды в день; даёт трактиру в радиусе 8 клеток варить медовуху.',
+  },
   kuznica: {
     kind: 'kuznica', name: 'КУЗНИЦА', icon: '⚒️', model: 'bld_kuznica',
     w: 1, h: 1, hp: 140, cat: 'mil', rank: 1,
@@ -130,7 +148,8 @@ export const BUILDINGS = {
     w: 2, h: 2, hp: 170, cat: 'econ', rank: 1,
     roadPort: { dx: 1, dy: 2 },
     cost: { wood: 35, gold: 15 }, build: 5, produce: { happy: 5 },
-    desc: 'Хмель, пляски, байки — народ гуляет. +5 счастья в день.',
+    convert: { in: { food: 4 }, out: { mead: 2 } }, convertNearby: { kind: 'paseka', radius: 8 },
+    desc: 'Хмель, пляски, байки — народ гуляет. +5 счастья; рядом с пасекой: 4 еды → 2 медовухи в день.',
   },
   banya: {
     kind: 'banya', name: 'БАНЯ', icon: '🛁', model: 'bld_banya',
@@ -191,13 +210,13 @@ export const BUILDINGS = {
     kind: 'prikaz_sbora', name: 'ПРИКАЗ СБОРА', icon: '📋', model: 'bld_prikaz',
     w: 2, h: 2, hp: 190, cat: 'econ', era: 1,
     roadPort: { dx: 1, dy: 2 },
-    cost: { wood: 45, stone: 25, gold: 15 }, build: 6, produce: {}, wearRate: 0.40,
+    cost: { wood: 23, tes: 22, stone: 25, gold: 15 }, build: 6, produce: {}, wearRate: 0.40,
     desc: 'Приказная изба уездной державы — собирает подати с населения.',
   },
   zastava_ostrog: {
     kind: 'zastava_ostrog', name: 'ОСТРОЖНАЯ ЗАСТАВА', icon: '🏯', model: 'bld_zastava',
     w: 1, h: 1, hp: 300, cat: 'def', era: 1,
-    cost: { wood: 55, stone: 45 }, build: 8,
+    cost: { wood: 28, tes: 27, stone: 45 }, build: 8,
     aura: { radius: 6, tick: 1.2, effect: 'aoe', power: 10 }, wearRate: 0.50,
     desc: 'Порубежный острог с дозором — бьёт налётчиков в радиусе, дешевле башни (без железа).',
   },
@@ -205,7 +224,7 @@ export const BUILDINGS = {
     kind: 'tamozhnya', name: 'ТАМОЖЕННЫЕ ВОРОТА', icon: '🛃', model: 'bld_tamozhnya',
     w: 1, h: 1, hp: 200, cat: 'def', era: 1, wall: true, walkable: true,
     roadPort: { dx: 0, dy: 1 },
-    cost: { wood: 25, stone: 15 }, build: 4, produce: { gold: 3 }, wearRate: 0.50,
+    cost: { wood: 13, tes: 12, stone: 15 }, build: 4, produce: { gold: 3 }, wearRate: 0.50,
     desc: 'Мытный двор на въезде — пошлина с обозов. +3 золота в день, проходимо для своих.',
   },
 
@@ -214,26 +233,26 @@ export const BUILDINGS = {
     kind: 'remontny_dvor', name: 'РЕМОНТНЫЙ ДВОР', icon: '🔧', model: 'bld_remdvor',
     w: 1, h: 1, hp: 160, cat: 'econ', era: 2, workers: 1,
     roadPort: { dx: 0, dy: 1 },
-    cost: { wood: 50, stone: 35, iron: 15 }, build: 7,
+    cost: { wood: 25, tes: 25, stone: 35, iron: 15 }, build: 7,
     carpenter: { radius: 10, targets: 10, upkeep: { wood: 4, stone: 2, iron: 1 }, repair: 7 },
     desc: 'Артельная мастерская — держит в исправности 10 построек в радиусе 10 клеток, сильнее Избы Плотника.',
   },
   agitpunkt: {
     kind: 'agitpunkt', name: 'АГИТПУНКТ', icon: '📯', model: 'bld_agitpunkt',
     w: 2, h: 2, hp: 220, cat: 'faith', era: 2,
-    cost: { wood: 45, stone: 50, gold: 25 }, build: 7, produce: { faith: 6, happy: 2 }, wearRate: 0.35,
+    cost: { wood: 23, tes: 22, stone: 50, gold: 25 }, build: 7, produce: { faith: 6, happy: 2 }, wearRate: 0.35,
     desc: 'Агитация Абсолюта Дрона на площадях — поднимает дух и веру. +6 ВЕРЫ и +2 счастья в день.',
   },
   sklad_putevoy: {
     kind: 'sklad_putevoy', name: 'ПУТЕВОЙ ПАКГАУЗ', icon: '📦', model: 'bld_sklad',
     w: 2, h: 2, hp: 200, cat: 'econ', era: 2,
     roadPort: { dx: 1, dy: 2 },
-    cost: { wood: 55, stone: 35, iron: 15 }, build: 7, produce: {}, wearRate: 0.35,
+    cost: { wood: 28, tes: 27, stone: 35, iron: 15 }, build: 7, produce: {}, wearRate: 0.35,
     desc: 'Складской двор у путей — копит выручку от излишков для паровозов.',
   },
 
   idol: {
-    kind: 'idol', name: 'ИДОЛ ДРОН (ЧУДО)', icon: '🗿', model: 'idol_dron',
+    kind: 'idol', name: 'ИДОЛ ДРОН (ЧУДО)', icon: '🗿', model: 'bld_chudo',   // капище Идола Дрона (tools/blender/build_chudo.py); idol_dron.glb остаётся персонажем лобби
     w: 3, h: 3, hp: 1500, cat: 'wonder', rank: 4, unique: true, wonder: true,
     cost: { wood: 260, stone: 400, gold: 320, gems: 30, faith: 200 }, build: 55,
     produce: { faith: 8 },
@@ -298,7 +317,7 @@ export const BUILDINGS = {
 };
 
 // порядок в меню постройки
-export const BUILD_ORDER = ['izba', 'izba_plotnika', 'banya', 'ambar', 'ferma', 'roshcha', 'rudnik', 'zhila', 'kuznica', 'kazarma', 'chastokol', 'gate', 'road', 'bridge', 'rail', 'station', 'tower', 'church', 'observatory', 'veche', 'market', 'traktir',
+export const BUILD_ORDER = ['izba', 'izba_plotnika', 'banya', 'ambar', 'ferma', 'roshcha', 'lesopilka', 'melnica', 'paseka', 'rudnik', 'zhila', 'kuznica', 'kazarma', 'chastokol', 'gate', 'road', 'bridge', 'rail', 'station', 'tower', 'church', 'observatory', 'veche', 'market', 'traktir',
   'prikaz_sbora', 'zastava_ostrog', 'tamozhnya', 'remontny_dvor', 'agitpunkt', 'sklad_putevoy',
   'rel_shipo', 'rel_krio', 'rel_obereg', 'rel_giper', 'rel_goydushka', 'rel_zlato', 'rel_fonk', 'rel_vera', 'rel_samotsvet', 'idol'];
 

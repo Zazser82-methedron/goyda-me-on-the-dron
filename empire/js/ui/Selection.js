@@ -1,9 +1,10 @@
 // ===== Панель выбранной сущности: HP, тренировка, инфо =====
 import { UNITS } from '../data/units.js?v=94';
 import { RES_LABEL } from '../data/config.js?v=102';
-import { costStr } from './BuildMenu.js?v=106';
+import { costStr } from './BuildMenu.js?v=108';
 import { roadPath } from '../sim/Transport.js?v=104';
 import { railPath } from '../sim/Railroad.js?v=105';
+import { homesteadNeeds, NEED_LABELS } from '../sim/Chains.js?v=3';
 
 function hpBar(hp, max) {
   const p = Math.max(0, Math.min(1, hp / max));
@@ -48,6 +49,7 @@ export class Selection {
       }
       if (sel.def.drop) html += `<div class="sel-tag">📦 точка сдачи</div>`;
       if (sel.def.produce) html += `<div class="sel-tag">${produceStr(sel.def.produce)}</div>`;
+      if (sel.kind === 'izba') html += `<div class="sel-tag" id="sel-needs"></div>`;
       if (sel.kind === 'market' || sel.kind === 'traktir') html += `<div class="sel-tag" id="sel-road"></div>`;   // связь дорогой с ратушей (телеги) + накопленный груз
       if (sel.kind === 'station') html += `<div class="sel-tag" id="sel-rail"></div>`;  // связь рельсами с другой станцией
     } else if (sel.type === 'unit') {
@@ -99,6 +101,14 @@ export class Selection {
     const hp = document.getElementById('sel-hp');
     const sub = document.getElementById('sel-sub');
     const road = document.getElementById('sel-road');
+    const needs = document.getElementById('sel-needs');
+    if (needs && sel.kind === 'izba') {
+      const covered = this.game.state._needs && this.game.state._needs.byHome.get(sel.id)
+        || homesteadNeeds(sel, this.game.state.buildings.filter(b => b.built && !b.ruined));
+      needs.innerHTML = Object.entries(NEED_LABELS)
+        .map(([key, name]) => `<span style="color:${covered[key] ? '#9fef9f' : '#ffb35c'}">${covered[key] ? '✓' : '✗'} ${name}</span>`)
+        .join(' · ');
+    }
     if (road && (sel.kind === 'market' || sel.kind === 'traktir')) {   // BFS только по дорожным тайлам — дёшево на 10Гц UI
       const ok = roadPath(this.game.state, sel, this.game.state.townhall);
       const stock = Math.round(sel._pendingCargo || 0);
@@ -121,6 +131,7 @@ export class Selection {
     if (hp) { const p = Math.max(0, sel.hp / sel.maxHp); hp.style.width = p * 100 + '%'; hp.style.background = p > 0.5 ? '#5eff8b' : p > 0.25 ? '#ffcc00' : '#ff5050'; }
     if (sub) {
       if (sel.type === 'building' && !sel.built) sub.textContent = `строится… ${Math.max(1, Math.ceil(sel.buildLeft))}с · 👷 ${sel._activeBuilders || 0}/3` + ((sel._activeBuilders || 0) === 0 ? ' — нужны холопы!' : '');
+      else if (sel.type === 'building' && sel.idle) sub.textContent = '🛑 простой: не хватает сырья';
       else if (sel.type === 'building' && sel.def.workSlots) sub.textContent = `👷 ${sel._activeWorkers || 0}/${sel.def.workSlots} работников`;
       else if (sel.type === 'building' && sel.trainQueue && sel.trainQueue.length) sub.textContent = `очередь: ${sel.trainQueue.length} (${Math.ceil(sel.trainLeft)}с)`;
       else if (sel.type === 'unit' && sel.faction === 'ours' && sel.def.worker) sub.textContent = sel.carry > 0 ? `несёт ${sel.carry} ${RES_LABEL[sel.carryType] ? RES_LABEL[sel.carryType].icon : ''}` : (sel.state || '');

@@ -75,15 +75,21 @@ const DEMANDS = {
 
 function addRequirements(state, data, ctx) {
   if ((state.day || 0) < data.nextDemandDay) return;
-  for (const key of KEYS) {
+  // Одно новое требование за раз, по кругу между сословиями: раньше все четыре выдавались в один день
+  // и проваливались тоже разом — четыре тоста залпом. Теперь каждые DEMAND_EVERY/3 дня — следующее сословие.
+  const turn = data.demandTurn || 0;
+  for (let i = 0; i < KEYS.length; i++) {
+    const key = KEYS[(turn + i) % KEYS.length];
     if (data.requirements[key]) continue;
     const list = DEMANDS[key];
     const available = list.filter(item => item.days || !item.test(state));
     const pick = (available.length ? available : list)[Math.floor(Math.random() * (available.length || list.length))];
     data.requirements[key] = { text: pick.text, dueDay: state.day + DEMAND_DAYS, progress: 0, need: pick.days || 1, index: list.indexOf(pick) };
     ctx.toast && ctx.toast(ESTATES[key].icon + ' Требование ' + ESTATES[key].name + ': ' + pick.text, { big: true });
+    data.demandTurn = (turn + i + 1) % KEYS.length;
+    break;
   }
-  data.nextDemandDay = state.day + DEMAND_EVERY;
+  data.nextDemandDay = state.day + Math.max(1, Math.round(DEMAND_EVERY / 3));
 }
 
 function checkRequirements(state, data, ctx) {

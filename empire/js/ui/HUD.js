@@ -3,6 +3,15 @@ import { RES, RES_LABEL } from '../data/config.js?v=102';
 import { RANKS } from '../data/ranks.js?v=94';
 import { RAID_FORMATS } from '../sim/RaidFormats.js?v=96';
 
+const SECONDARY = ['tes', 'bread', 'mead'];
+const HUD_RES = [...RES.slice(0, 4), ...SECONDARY, ...RES.slice(4)];
+const SECONDARY_LABEL = {
+  tes: { ru: 'ТЁС', icon: '🪚', color: '#c98a48' },
+  bread: { ru: 'ХЛЕБ', icon: '🥖', color: '#e8c060' },   // 🍞 уже занят едой
+  mead: { ru: 'МЕДОВУХА', icon: '🍯', color: '#f2b84b' },
+};
+const label = key => RES_LABEL[key] || SECONDARY_LABEL[key];
+
 // краткая подсказка «что теряешь» по формату грядущего набега — статична, цель (для диверсии)
 // приходит из state.raidWarning.targetName (там она зависит от реального состояния построек).
 const RAID_HINTS = {
@@ -21,15 +30,18 @@ export class HUD {
     this.superBtn = document.getElementById('superBtn');
     this.waveEl = document.getElementById('wavebox');
     this._chips = {};
-    this.resEl.innerHTML = RES.map(k =>
-      `<span class="chip" title="${RES_LABEL[k].ru}"><b style="color:${RES_LABEL[k].color}">${RES_LABEL[k].icon}</b><i id="r-${k}">0</i></span>`
+    this.resEl.innerHTML = HUD_RES.map(k =>
+      `<span class="chip" title="${label(k).ru}"><b style="color:${label(k).color}">${label(k).icon}</b><i id="r-${k}">0</i></span>`
     ).join('');
-    for (const k of RES) this._chips[k] = document.getElementById('r-' + k);
+    for (const k of HUD_RES) this._chips[k] = document.getElementById('r-' + k);
   }
 
   update() {
     const s = this.game.state;
-    for (const k of RES) this._chips[k].textContent = Math.floor(s.resources[k]);
+    for (const k of HUD_RES) {
+      this._chips[k].textContent = Math.floor(s.resources[k] || 0);
+      if (SECONDARY.includes(k)) this._chips[k].parentElement.style.display = (s.resources[k] > 0 || s.era >= 1) ? '' : 'none';
+    }
 
     const r = RANKS[s.rankIndex], next = RANKS[s.rankIndex + 1];
     let meter = '';

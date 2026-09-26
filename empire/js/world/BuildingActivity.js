@@ -7,7 +7,7 @@ const TAU = Math.PI * 2;
 const SUPPORTED = new Set([
   'kuznica', 'market', 'traktir', 'ferma', 'rudnik', 'zhila',
   'observatory', 'veche', 'church', 'station',
-  'banya', 'roshcha', 'zastava_ostrog',
+  'banya', 'roshcha', 'zastava_ostrog', 'melnica',
 ]);
 
 const STALK_POS = [
@@ -373,6 +373,13 @@ export class BuildingActivity {
       const p = a.parts;
       const q = t + a.phase;
       switch (a.kind) {
+        case 'melnica': {
+          // крылья мельницы — отдельный узел модели (tools/blender/build_chain.py); ищем каждый кадр,
+          // т.к. смена облика эпохи (reskin) подменяет части модели
+          const kr = b.view.getObjectByName('melnica_kryla');
+          if (kr) kr.rotation.z -= fdt * (0.7 + Math.abs(w) * 1.6);
+          break;
+        }
         case 'kuznica': {
           const cycle = (q * 0.72) % 1;
           let swing;
