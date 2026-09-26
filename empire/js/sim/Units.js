@@ -1,7 +1,7 @@
 // ===== Движение, бой и ИИ юнитов (свои воины + враги). Воркеры — в Jobs.js =====
 import { TILE, GRID_N } from '../data/config.js?v=102';
 import { findPath, nearestAdj } from '../world/Pathfinding.js?v=94';
-import { updateWorker } from './Jobs.js?v=100';
+import { updateWorker } from './Jobs.js?v=105';
 import { bark } from '../data/barks.js?v=94';
 import { SpatialHash } from './SpatialHash.js?v=94';
 
@@ -21,6 +21,34 @@ const buildingsHash = new SpatialHash(HASH_CELL, -WORLD_HALF, WORLD_HALF);
 let buildingsMaxBR = 0.3;   // max bRadius() среди текущих зданий — верхняя граница поиска для nearestOursBuildingInRange
 const getUX = u => u.x, getUZ = u => u.z;
 const getBX = b => b.cx, getBZ = b => b.cz;
+const auraUnits = [];
+
+// AoE2-слой: копья контрят конницу, конница — стрелков, стрелки — копья.
+// Осада почти бесполезна против людей, зато быстро разбирает здания и лагеря.
+export function classDamageMultiplier(attackerCls, targetCls, targetType = 'unit') {
+  if (attackerCls === 'siege') return targetType === 'unit' ? 0.5 : 3;
+  if (attackerCls === 'spear' && targetCls === 'cavalry') return 1.8;
+  if (attackerCls === 'cavalry' && targetCls === 'ranged') return 1.7;
+  if (attackerCls === 'ranged' && (targetCls === 'spear' || targetCls === 'infantry')) return targetCls === 'spear' ? 1.5 : 1.2;
+  return 1;
+}
+
+function commandAuraMultiplier(u) {
+  let best = 1;
+  unitsHash.queryRadius(u.x, u.z, 5, auraUnits, (ally, d2) => ally.faction === u.faction && ally.hp > 0 && ally.def.aura && d2 <= ally.def.aura.radius ** 2)
+    .forEach(ally => { if (ally.def.aura.dmgMul > best) best = ally.def.aura.dmgMul; });
+  return best;
+}
+
+function attackDamage(state, u, target) {
+  let bonus = (state.superTimer > 0 && u.faction === 'ours') ? 1.5 : 1;
+  if (u.faction === 'ours' && state.research) bonus *= state.research.dmgMul;
+  if (u.faction === 'ours' && state.estateMods) bonus *= state.estateMods.dmgMul || 1;
+  if (u.vet) bonus *= 1 + 0.13 * u.vet;
+  bonus *= commandAuraMultiplier(u); // ауры воеводы и богатыря не складываются: берётся максимум
+  const targetType = target.type || 'camp';
+  return u.dmg * bonus * classDamageMultiplier(u.def.cls, target.def && target.def.cls, targetType);
+}
 
 // ---- time-slicing ИИ-решений: не в бою — цель/поведение пересчитываются не каждый тик ----
 // Период 3 тика × SIM_DT(0.1с) = до 0.3с задержки реакции для юнита БЕЗ цели в упор — незаметно
@@ -62,7 +90,7 @@ export function moveStep(state, u, dt) {
   const d = Math.hypot(dx, dz);
   const cur = state.grid.get(u.gx ?? node.x, u.gy ?? node.y);   // текущий тайл
   const roadMul = (cur && cur.road) ? 1.4 : 1;                  // дорога/мост — быстрее
-  const step = u.speed * dt * roadMul * (state.krioTimer > 0 && u.faction === 'ours' ? 0.6 : 1) * (state.superTimer > 0 && u.faction === 'ours' ? 1.4 : 1) * (u.slowT > 0 ? 0.5 : 1);
+  const step = u.speed * dt * roadMul * (state.krioTimer > 0 && u.faction === 'ours' ? 0.6 : 1) * (state.superTimer > 0 && u.faction === 'ours' ? 1.4 : 1) * (u.slowT > 0 ? (u.slowMul || 0.5) : 1);
   if (d <= step) {
     u.x = c.x; u.z = c.z; u.pi++;
   } else {
@@ -104,6 +132,10 @@ export function awardExpeditionValor(state, steps, ctx) {
 // урон сущности (юнит/здание). true если уничтожена. attacker — кто бьёт (для ветеранства).
 export function damage(state, target, amt, ctx, attacker) {
   if (!target || target.hp <= 0) return true;
+  if (attacker && attacker.def && attacker.def.slow && target.type === 'unit') {
+    target.slowT = Math.max(target.slowT || 0, attacker.def.slow.duration);
+    target.slowMul = attacker.def.slow.mul;
+  }
   target.hp -= amt;
   if (ctx.dmgNum) ctx.dmgNum(target, amt);                       // всплывающее число урона
   if (target.type === 'building' && ctx.flash) ctx.flash(target);
@@ -131,11 +163,7 @@ function tryAttack(state, u, target, ctx) {
   if (u.atkT > 0) return;
   u.atkT = u.def.atkCd;
   u.atkAnim = 0.2;                 // выпад-анимация (render)
-  let bonus = (state.superTimer > 0 && u.faction === 'ours') ? 1.5 : 1;
-  if (u.faction === 'ours' && state.research) bonus *= state.research.dmgMul;   // исследование «СЕЧА»
-  if (u.faction === 'ours' && state.estateMods) bonus *= state.estateMods.dmgMul || 1;
-  if (u.vet) bonus *= 1 + 0.13 * u.vet;                                         // бонус ветерана (+13%/ранг)
-  const dmg = u.dmg * bonus;
+  const dmg = attackDamage(state, u, target);
   if (u.def.ranged && ctx.tracer) {              // дальний бой: летит стрела, урон по прилёту
     ctx.tracer(u, target, { dmg, arrow: true, speed: 24, owner: u, color: u.faction === 'ours' ? 0xffe08a : 0xff5cf0 });
     if (ctx.sfx) ctx.sfx(u.faction === 'ours' ? 'bow' : 'hitEnemy');
@@ -177,7 +205,7 @@ function nearestCamp(state, u, maxR) {
 function attackCamp(state, u, camp, ctx) {
   if (u.atkT > 0) return;
   u.atkT = u.def.atkCd; u.atkAnim = 0.2;
-  camp.hp -= u.dmg * (state.superTimer > 0 ? 1.5 : 1);
+  camp.hp -= attackDamage(state, u, camp);
   if (ctx.sfx) ctx.sfx('hit');
   if (camp.hp <= 0) { state.removeCamp(camp); if (state.stats) state.stats.camps++; state.gain({ gold: 45, faith: 22 }); ctx.toast && ctx.toast('🏴 Стан снесён! +45🪙 +22☩', { gold: true }); }
 }
@@ -247,6 +275,20 @@ function nearestOurUnit(state, u, maxR, workerOnly) {
   return unitsHash.queryNearest(u.x, u.z, maxR, (e) => e.faction === 'ours' && e.hp > 0 && (!workerOnly || e.def.worker));
 }
 
+function updateHealer(state, u, dt, ctx) {
+  const heal = u.def.heal;
+  if (!heal) return;
+  u.healT = (u.healT || 0) + dt;
+  if (u.healT < heal.cd) return;
+  const target = unitsHash.queryNearest(u.x, u.z, heal.radius,
+    ally => ally !== u && ally.faction === u.faction && ally.hp > 0 && ally.hp < ally.maxHp);
+  if (!target) return;
+  const amount = Math.min(heal.amount, target.maxHp - target.hp);
+  target.hp += amount;
+  u.healT = 0;
+  if (ctx.float) ctx.float(target.x, target.z, '+' + Math.round(amount), '#75f0ff');
+}
+
 // ---- враги (архетипы: обычный / ловкач-flank / верзила-siege / шаман-ranged-kite) ----
 // canThink: разрешён ли в этот тик пересчёт цели/поведения (троттлится, пока враг не в бою вплотную,
 // см. AI_THINK_PERIOD); движение по уже выбранному пути идёт в любом случае, каждый тик
@@ -263,7 +305,7 @@ function updateEnemy(state, u, dt, ctx, canThink) {
     if (t) {
       u._aiActive = true;
       faceTarget(u, t.x ?? t.cx, t.z ?? t.cz);
-      if (u.atkT <= 0) { u.atkT = u.def.atkCd; u.atkAnim = 0.2; if (ctx.tracer) ctx.tracer(u, t); }
+      if (u.atkT <= 0) tryAttack(state, u, t, ctx);
       const close = nearestEnemyUnit(state, u, 3);
       if (close) { u.dir = Math.atan2(u.x - close.x, u.z - close.z); u.x += Math.sin(u.dir) * u.speed * dt * 0.6; u.z += Math.cos(u.dir) * u.speed * dt * 0.6; const g = state.grid.worldToGrid(u.x, u.z); u.gx = g.x; u.gy = g.y; }
       u.path = null; return;
@@ -307,6 +349,7 @@ export function updateUnits(state, dt, ctx) {
     }
     if (u.slowT > 0) u.slowT -= dt;                                // ❄ замедление от КРИО-идола
     if (u.stunT > 0) { u.stunT -= dt; u.path = null; continue; }   // оглушение — стоит
+    if (u.faction === 'ours') updateHealer(state, u, dt, ctx);
     // юнит уже в бою (u._aiActive с прошлого тика) — full rate; иначе троттлим по фазе от u.id
     // (u.id стабилен и уникален на весь жизненный цикл юнита — фазы размазаны без пиковой нагрузки)
     const canThink = u._aiActive || (u.id + aiTick) % AI_THINK_PERIOD === 0;

@@ -1,10 +1,30 @@
 // ===== Панель выбранной сущности: HP, тренировка, инфо =====
-import { UNITS } from '../data/units.js?v=95';
+import { UNITS } from '../data/units.js?v=100';
 import { RES_LABEL } from '../data/config.js?v=102';
-import { costStr } from './BuildMenu.js?v=113';
+import { costStr } from './BuildMenu.js?v=118';
 import { roadPath } from '../sim/Transport.js?v=104';
 import { railPath } from '../sim/Railroad.js?v=105';
 import { homesteadNeeds, NEED_LABELS } from '../sim/Chains.js?v=3';
+import { ERA_NAMES } from '../sim/Eras.js?v=4';
+
+const UNIT_CLASS = {
+  infantry: { icon: '🗡️', hint: 'Универсальный боец' },
+  spear: { icon: '🗡️', hint: 'Силён против конницы' },
+  ranged: { icon: '🏹', hint: 'Силён против копейщиков и пехоты' },
+  cavalry: { icon: '🐎', hint: 'Сильна против стрелков' },
+  siege: { icon: '💣', hint: 'Сильна против построек и станов' },
+  hero: { icon: '⭐', hint: 'Герой и аура поддержки' },
+  worker: { icon: '🧑‍🌾', hint: 'рабочий' },
+};
+
+function trainLock(state, def) {
+  if ((def.era || 0) > (state.era || 0)) return 'эпоха: ' + ERA_NAMES[def.era];
+  if (def.factionKey && (!state.faction || state.faction.key !== def.factionKey)) return 'только фракция: ' + def.factionKey;
+  if (def.rank && state.rankIndex < def.rank) return 'нужен ранг ' + def.rank;
+  if (def.needs && !state.hasBuilt(def.needs)) return 'нужна постройка: ' + def.needs;
+  if (def.unique && (state.units.some(u => u.kind === def.kind) || state.buildings.some(b => b.trainQueue.includes(def.kind)))) return 'герой уже в строю или очереди';
+  return '';
+}
 
 function hpBar(hp, max) {
   const p = Math.max(0, Math.min(1, hp / max));
@@ -43,7 +63,9 @@ export class Selection {
         html += '<div class="sel-train">';
         for (const uk of sel.def.trains) {
           const ud = UNITS[uk];
-          html += `<button class="ubtn" data-u="${uk}">${ud.icon} ${ud.name}<span class="bc">${costStr(ud.cost)}</span></button>`;
+          const cls = UNIT_CLASS[ud.cls] || UNIT_CLASS.infantry;
+          const lock = trainLock(this.game.state, ud);
+          html += `<button class="ubtn" data-u="${uk}" title="${lock || cls.hint}"${lock ? ' disabled' : ''}>${ud.icon} ${ud.name} <span title="${cls.hint}">${cls.icon}</span><span class="bc">${lock ? '🔒 ' + lock : costStr(ud.cost)}</span></button>`;
         }
         html += '</div>';
       }

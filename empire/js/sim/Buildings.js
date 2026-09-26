@@ -1,6 +1,6 @@
 // ===== Постройка, стройка-прогресс и тренировка юнитов =====
-import { BUILDINGS } from '../data/buildings.js?v=108';
-import { UNITS } from '../data/units.js?v=95';
+import { BUILDINGS } from '../data/buildings.js?v=113';
+import { UNITS } from '../data/units.js?v=100';
 import { RANKS } from '../data/ranks.js?v=94';
 import { nearestAdj } from '../world/Pathfinding.js?v=94';
 import { bark } from '../data/barks.js?v=94';
@@ -136,6 +136,7 @@ export function placeBuilding(state, kind, gx, gy, ctx, opts = {}) {
   if (kind === 'idol' && state.era !== 2) return { ok: false, reason: 'Чудо ДРОН доступно только в III эпохе' };
   if ((def.rank || 0) > state.rankIndex) return { ok: false, reason: 'нужен ранг ' + RANKS[def.rank].name };
   if ((def.era || 0) > (state.era || 0)) return { ok: false, reason: 'откроется в эпохе «' + Eras.ERA_NAMES[def.era] + '»' };
+  if (def.faction && (!state.faction || state.faction.key !== def.faction)) return { ok: false, reason: 'доступно только фракции «' + def.faction + '»' };
   if (def.requiresTech && !(state.research && state.research.done[def.requiresTech])) return { ok: false, reason: 'изучите технологию (через обсерваторию)' };
   if (def.unique && state.buildings.some(b => b.kind === kind)) return { ok: false, reason: 'уже построено' };
   if (!state.grid.canPlace(gx, gy, def.w, def.h, !!def.onWater)) return { ok: false, reason: 'место занято' };
@@ -156,8 +157,12 @@ export function placeBuilding(state, kind, gx, gy, ctx, opts = {}) {
 export function queueTrain(state, b, kind, ctx) {
   const def = UNITS[kind];
   if (!def) return false;
+  if (!b || b.kind !== def.trainAt) { ctx.toast && ctx.toast('Этот юнит нанимается в: ' + (BUILDINGS[def.trainAt] && BUILDINGS[def.trainAt].name), { bad: true }); return false; }
+  if ((def.era || 0) > (state.era || 0)) { ctx.toast && ctx.toast('Рано: нужна эпоха «' + Eras.ERA_NAMES[def.era] + '»', { bad: true }); return false; }
+  if (def.factionKey && (!state.faction || state.faction.key !== def.factionKey)) { ctx.toast && ctx.toast('Это войско только фракции «' + def.factionKey + '»', { bad: true }); return false; }
   if (def.rank && state.rankIndex < def.rank) { ctx.toast && ctx.toast('Рано: нужен ранг ' + RANKS[def.rank].name, { bad: true }); return false; }
   if (def.needs && !state.hasBuilt(def.needs)) { ctx.toast && ctx.toast('Нужна постройка: ' + BUILDINGS[def.needs].name, { bad: true }); return false; }
+  if (def.unique && (state.units.some(u => u.kind === kind) || state.buildings.some(x => x.trainQueue.includes(kind)))) { ctx.toast && ctx.toast('Герой уже в строю или очереди', { bad: true }); return false; }
   const pending = state.buildings.reduce((s, x) => s + x.trainQueue.length, 0);
   if (state.population + pending >= state.popCap) { ctx.toast && ctx.toast('Нет места — строй ИЗБЫ', { bad: true }); return false; }
   const cmul = (state.faction && state.faction.mods.trainCostMul) || 1;

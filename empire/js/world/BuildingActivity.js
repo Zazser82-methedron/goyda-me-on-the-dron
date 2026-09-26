@@ -2,6 +2,7 @@
 // `time` in update() is expected in seconds. Every prop reuses this instance's
 // geometry/material library; update() does not allocate transient objects.
 import * as THREE from 'three';
+import { LIGHT } from './Sky.js?v=99';
 
 const TAU = Math.PI * 2;
 const SUPPORTED = new Set([
@@ -359,6 +360,21 @@ export class BuildingActivity {
     this._time = Number.isFinite(time) ? time : this._time + fdt;
     const t = this._time;
     const w = clamp(Number.isFinite(wind) ? wind : 0, -1, 1);
+
+    // окна зажигаются в сумерках и ночью: раз в 0.5с проставляем свечение материалам M_window всех построек
+    this._winT = (this._winT || 0) - fdt;
+    if (this._winT <= 0) {
+      this._winT = 0.5;
+      const glow = 0.08 + clamp(1 - LIGHT.day * 3, 0, 1) * 1.7;   // день — тёмное стекло, ночь — тёплый свет
+      for (const b of buildings) {
+        if (!b?.view || !b.built) continue;
+        if (b._winSkin !== b.skin) {                              // облик сменился (эпоха) — пересобрать список окон
+          b._winSkin = b.skin; b._winMats = [];
+          b.view.traverse(o => { if (o.isMesh && o.material && o.material.name === 'M_window') b._winMats.push(o.material); });
+        }
+        for (const m of b._winMats) m.emissiveIntensity = glow;
+      }
+    }
 
     for (let i = 0; i < buildings.length; i++) {
       const b = buildings[i];

@@ -4,6 +4,7 @@ import { edictMods } from './Edicts.js?v=94';
 import * as Wear from './Wear.js?v=2';
 import * as AntiSpiral from './AntiSpiral.js?v=3';
 import { needsCoverage, runConversions } from './Chains.js?v=3';
+import { adjust } from './Estates.js?v=11';
 
 const DAY_SECONDS = DAY_TICKS * SIM_DT;   // 8 сек
 const FOOD_PER_POP = 1;
@@ -12,6 +13,7 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export function update(state, dt, ctx) {
   AntiSpiral.update(state, dt, ctx);
   Wear.update(state, dt, ctx);
+  syncFactionStorage(state);
   // покадровые таймеры
   state.superTimer = Math.max(0, state.superTimer - dt);
   state.krioTimer = Math.max(0, state.krioTimer - dt);
@@ -21,8 +23,22 @@ export function update(state, dt, ctx) {
   if (state._dayT >= DAY_SECONDS) { state._dayT -= DAY_SECONDS; onDay(state, ctx); }
 }
 
+// Лимиты от фракционных зданий живут отдельно от апгрейдов: при разрушении
+// снимается только их собственная прибавка, а не весь накопленный лимит.
+function syncFactionStorage(state) {
+  const next = {};
+  for (const b of state.buildings) {
+    if (!b.built || b.ruined || !b.def.storage) continue;
+    for (const k in b.def.storage) next[k] = (next[k] || 0) + b.def.storage[k];
+  }
+  const prev = state._factionStorage || {};
+  for (const k of new Set([...Object.keys(prev), ...Object.keys(next)])) state.cap[k] = Math.max(0, (state.cap[k] || 0) + (next[k] || 0) - (prev[k] || 0));
+  state._factionStorage = next;
+}
+
 function onDay(state, ctx) {
   const built = state.buildings.filter(b => b.built && !b.ruined);
+  for (const b of built) if (b.def.estate) for (const key in b.def.estate) adjust(state, key, b.def.estate[key]);
   // суммируем производство по всем ресурсным ключам (включая железо/самоцветы)
   const prod = { food: 0, wood: 0, stone: 0, iron: 0, gold: 0, gems: 0, faith: 0 };
   let happyMod = 0;

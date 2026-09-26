@@ -2,7 +2,7 @@
 import { RES, RES_LABEL } from '../data/config.js?v=102';
 import { RANKS } from '../data/ranks.js?v=94';
 import { RAID_FORMATS } from '../sim/RaidFormats.js?v=101';
-import { progressText } from '../sim/Victory.js?v=6';
+import { progressText } from '../sim/Victory.js?v=10';
 
 const SECONDARY = ['tes', 'bread', 'mead'];
 const HUD_RES = [...RES.slice(0, 4), ...SECONDARY, ...RES.slice(4)];

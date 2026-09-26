@@ -1,5 +1,5 @@
 // ===== Нижняя панель: вкладки-категории построек + модальная сетка карточек + указы =====
-import { BUILDINGS, BUILD_ORDER, CATS } from '../data/buildings.js?v=108';
+import { BUILDINGS, BUILD_ORDER, CATS } from '../data/buildings.js?v=113';
 import { RANKS } from '../data/ranks.js?v=94';
 import { RES_LABEL } from '../data/config.js?v=102';
 import { EDICTS } from '../sim/Edicts.js?v=94';
@@ -42,6 +42,7 @@ function prodStr(d) {
     out.push(`<span style="color:${RES_LABEL[k] ? RES_LABEL[k].color : '#9fef9f'}">+${d.produce[k]}${icon}</span>`);
   }
   if (d.pop) out.push(`<span class="bcard-pop">+${d.pop}👥</span>`);
+  if (d.storage) for (const k in d.storage) out.push(`<span class="bcard-pop">+${d.storage[k]}${label(k).icon}</span>`);
   if (d.aura) out.push(`<span class="bcard-aura">аура</span>`);
   if (d.convert) {
     const inputs = Object.entries(d.convert.in || {}).map(([k, n]) => `${label(k).icon}${n}`).join(' ');
@@ -157,6 +158,7 @@ export class BuildMenu {
     this._card = {};
     for (const kind of this.catKinds[cat]) {
       const d = BUILDINGS[kind];
+      if (d.faction && (!this.game.state.faction || this.game.state.faction.key !== d.faction)) continue;
       const card = document.createElement('button');
       card.className = 'bcard cat-' + d.cat;
       card.style.setProperty('--cc', meta.color);
@@ -178,7 +180,9 @@ export class BuildMenu {
 
   _pick(kind, d) {
     const s = this.game.state;
+    if (d.faction && (!s.faction || s.faction.key !== d.faction)) { this.game.toasts.show('Доступно только фракции «' + d.faction + '»', { bad: true }); return; }
     if ((d.rank || 0) > s.rankIndex) { this.game.toasts.show('Откроется в ранге ' + RANKS[d.rank].name, { bad: true }); return; }
+    if ((d.era || 0) > (s.era || 0)) { this.game.toasts.show('Откроется в эпохе «' + ERA_NAMES[d.era] + '»', { bad: true }); return; }
     if (kind === 'idol' && s.era !== 2) { this.game.toasts.show('Чудо ДРОН доступно только в III эпохе', { bad: true }); return; }
     if (d.requiresTech && !(s.research && s.research.done[d.requiresTech])) { this.game.toasts.show('Изучите технологию: ' + TECHS[d.requiresTech].name, { bad: true }); return; }
     this.game.enterBuild(kind);
@@ -194,7 +198,8 @@ export class BuildMenu {
       const techLock = d.requiresTech && !(s.research && s.research.done[d.requiresTech]);
       const rankLock = (d.rank || 0) > s.rankIndex;
       const eraLock = (d.era || 0) > (s.era || 0) || (kind === 'idol' && s.era !== 2);   // Чудо — строго III эпоха
-      const locked = rankLock || techLock || eraLock;
+      const factionLock = d.faction && (!s.faction || s.faction.key !== d.faction);
+      const locked = rankLock || techLock || eraLock || factionLock;
       // антидребезг доступности: ресурсы скачут у границы цены → меняем подсветку только если держится ≈0.4с
       const afford = s.canAfford(d.cost);
       if (card._affShow === undefined) { card._affShow = afford; card._affCnt = 0; }
@@ -205,7 +210,8 @@ export class BuildMenu {
       card.classList.toggle('active', this.game.buildKind === kind);
       const lockEl = card.querySelector('.bcard-lock');
       if (locked) {
-        lockEl.textContent = rankLock ? '🔒 ранг: ' + RANKS[d.rank].name
+        lockEl.textContent = factionLock ? '🔒 фракция: ' + d.faction
+          : rankLock ? '🔒 ранг: ' + RANKS[d.rank].name
           : eraLock ? '🔒 эпоха: ' + (kind === 'idol' ? ERA_NAMES[2] : (ERA_NAMES[d.era] || d.era))
           : '🔒 изучить: ' + ((TECHS[d.requiresTech] && TECHS[d.requiresTech].name) || '');
         lockEl.style.display = 'flex';
@@ -223,7 +229,8 @@ export class BuildMenu {
       for (const kind of (this.catKinds[cat] || [])) {
         const d = BUILDINGS[kind];
         const techLock = d.requiresTech && !(s.research && s.research.done[d.requiresTech]);
-        if (!((d.rank || 0) > s.rankIndex || techLock || (d.era || 0) > (s.era || 0) || (kind === 'idol' && s.era !== 2))) unlocked++;
+        const factionLock = d.faction && (!s.faction || s.faction.key !== d.faction);
+        if (!((d.rank || 0) > s.rankIndex || techLock || factionLock || (d.era || 0) > (s.era || 0) || (kind === 'idol' && s.era !== 2))) unlocked++;
       }
       t.classList.toggle('alllocked', unlocked === 0);
       const bk = this.game.buildKind;

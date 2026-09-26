@@ -14,7 +14,7 @@ export const BUILDINGS = {
     w: 3, h: 3, hp: 800, cat: 'core', rank: 0, unique: true, drop: true,
     roadPort: { dx: 1, dy: 3 },
     cost: {}, build: 0, pop: 5, produce: { faith: 2 }, wearRate: 0.15,
-    trains: ['kholop'],
+    trains: ['kholop', 'bogatyr'],
     desc: 'Сердце державы. Сюда несут добычу, здесь куют ХОЛОПов. Падёт — конец.',
   },
   izba: {
@@ -72,14 +72,14 @@ export const BUILDINGS = {
   kuznica: {
     kind: 'kuznica', name: 'КУЗНИЦА', icon: '⚒️', model: 'bld_kuznica',
     w: 1, h: 1, hp: 140, cat: 'mil', rank: 1,
-    cost: { wood: 25, stone: 25 }, build: 5, produce: { gold: 2 }, wearRate: 0.60,
+    cost: { wood: 25, stone: 25 }, build: 5, produce: { gold: 2 }, trains: ['pushka'], wearRate: 0.60,
     desc: 'Куёт оружие. Нужна для ОПРИЧНИКОВ. +2 золота в день.',
   },
   kazarma: {
     kind: 'kazarma', name: 'КАЗАРМА', icon: '⚔️', model: 'bld_kazarma',
     w: 2, h: 2, hp: 260, cat: 'mil', rank: 1,
-    cost: { wood: 40, stone: 30 }, build: 7, trains: ['ratnik', 'luchnik', 'oprichnik', 'bogatyr', 'voevoda'], wearRate: 0.45,
-    desc: 'Куёт воинов: РАТНИКИ, ОПРИЧНИКИ (с кузницей) и БОГАТЫРИ (на железе).',
+    cost: { wood: 40, stone: 30 }, build: 7, trains: ['ratnik', 'luchnik', 'strelec', 'oprichnik', 'voevoda', 'zhrec', 'kromeshnik', 'konny_luchnik', 'kriomag'], wearRate: 0.45,
+    desc: 'Кует дружину: копейщиков, стрелков, конницу, воевод и бойцов своей фракции.',
     upgrades: {
       a: { key: 'a', name: 'Дриль', icon: '🥁', desc: '−25% времени обучения воинов', cost: { wood: 30, stone: 20, gold: 20 }, workers: 2, time: 8, effects: { trainTimeMul: 0.75 } },
       b: { key: 'b', name: 'Кладовая', icon: '💰', desc: '−15% цены воинов', cost: { wood: 35, stone: 15, gold: 20 }, workers: 2, time: 8, effects: { trainCostMul: 0.85 } },
@@ -251,6 +251,32 @@ export const BUILDINGS = {
     desc: 'Складской двор у путей — копит выручку от излишков для паровозов.',
   },
 
+  // ===== ФРАКЦИОННЫЕ ПОСТРОЙКИ: доступны только своей державе =====
+  kapishe_drona: {
+    kind: 'kapishe_drona', name: 'КАПИЩЕ ДРОНА', icon: '☩', model: 'bld_kapishe',
+    w: 2, h: 2, hp: 230, cat: 'faith', era: 0, faction: 'goyda', unique: true,
+    cost: { wood: 35, stone: 25, faith: 12 }, build: 6, produce: { faith: 3, happy: 2 }, wearRate: 0.25,
+    desc: 'Святилище ГОЙДЫ. +3 ВЕРЫ и +2 счастья в день.',
+  },
+  oprichny_dvor: {
+    kind: 'oprichny_dvor', name: 'ОПРИЧНЫЙ ДВОР', icon: '⚔️', model: 'bld_oprichny_dvor',
+    w: 2, h: 2, hp: 280, cat: 'mil', era: 1, faction: 'oprichnina', unique: true,
+    cost: { wood: 45, stone: 35, gold: 25 }, build: 7, estate: { oprichnina: 1 }, wearRate: 0.45,
+    desc: 'Опора чёрного войска. Опричнина +1 в день; на подавление переворота нужно на 2 воина меньше.',
+  },
+  yurta_stavka: {
+    kind: 'yurta_stavka', name: 'ЮРТА-СТАВКА', icon: '🐎', model: 'bld_yurta_stavka',
+    w: 1, h: 1, hp: 150, cat: 'econ', era: 1, faction: 'kochevniki', unique: true, drop: true,
+    cost: { wood: 30, food: 20 }, build: 4, storage: { wood: 100, food: 100 }, wearRate: 0.30,
+    desc: 'Передвижной склад кочевников: точка сдачи и +100 к лимиту дерева и еды.',
+  },
+  ledyanoy_chertog: {
+    kind: 'ledyanoy_chertog', name: 'ЛЕДЯНОЙ ЧЕРТОГ', icon: '❄️', model: 'bld_ledyanoy_chertog',
+    w: 2, h: 2, hp: 260, cat: 'faith', era: 1, faction: 'hlad', unique: true,
+    cost: { wood: 35, stone: 45, faith: 20 }, build: 7, storage: { food: 200 }, produce: { food: 2 }, wearRate: 0.25,
+    desc: 'Холодные закрома: +200 к лимиту еды и +2 еды в день.',
+  },
+
   idol: {
     kind: 'idol', name: 'ИДОЛ ДРОН (ЧУДО)', icon: '🗿', model: 'bld_chudo',   // капище Идола Дрона (tools/blender/build_chudo.py); idol_dron.glb остаётся персонажем лобби
     w: 3, h: 3, hp: 1500, cat: 'wonder', rank: 4, unique: true, wonder: true,
@@ -319,6 +345,7 @@ export const BUILDINGS = {
 // порядок в меню постройки
 export const BUILD_ORDER = ['izba', 'izba_plotnika', 'banya', 'ambar', 'ferma', 'roshcha', 'lesopilka', 'melnica', 'paseka', 'rudnik', 'zhila', 'kuznica', 'kazarma', 'chastokol', 'gate', 'road', 'bridge', 'rail', 'station', 'tower', 'church', 'observatory', 'veche', 'market', 'traktir',
   'prikaz_sbora', 'zastava_ostrog', 'tamozhnya', 'remontny_dvor', 'agitpunkt', 'sklad_putevoy',
+  'kapishe_drona', 'oprichny_dvor', 'yurta_stavka', 'ledyanoy_chertog',
   'rel_shipo', 'rel_krio', 'rel_obereg', 'rel_giper', 'rel_goydushka', 'rel_zlato', 'rel_fonk', 'rel_vera', 'rel_samotsvet', 'idol'];
 
 export const CATS = {

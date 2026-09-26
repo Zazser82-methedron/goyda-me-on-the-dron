@@ -130,7 +130,12 @@ export class Atmosphere {
     }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     this._ffGeo = g;
-    const mat = new THREE.PointsMaterial({ color: this.neon ? 0xff66dd : 0xffe066, size: 0.22, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
+    // круглое мягкое пятнышко: без карты WebGL рисует точки квадратами — светлячки были жёлтыми квадратиками
+    const cv = document.createElement('canvas'); cv.width = cv.height = 32;
+    const cx = cv.getContext('2d'), gr = cx.createRadialGradient(16, 16, 0, 16, 16, 16);
+    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.35, 'rgba(255,255,255,0.6)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    cx.fillStyle = gr; cx.fillRect(0, 0, 32, 32);
+    const mat = new THREE.PointsMaterial({ map: new THREE.CanvasTexture(cv), color: this.neon ? 0xff66dd : 0xffe066, size: 0.22, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
     this.fireflies = new THREE.Points(g, mat); this.fireflies.frustumCulled = false; this.fireflies.renderOrder = 14;
     this.scene.add(this.fireflies);
   }

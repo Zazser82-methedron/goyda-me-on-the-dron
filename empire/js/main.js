@@ -5,45 +5,45 @@ import * as Quality from './engine/Quality.js?v=94';
 import { RTSCamera } from './engine/RTSCamera.js?v=100';
 import { Picker } from './engine/Picker.js?v=95';
 import { Loop } from './engine/Loop.js?v=100';
-import { Profiler } from './engine/Profiler.js?v=107';
-import { AssetManager } from './engine/AssetManager.js?v=142';
+import { Profiler } from './engine/Profiler.js?v=112';
+import { AssetManager } from './engine/AssetManager.js?v=145';
 import { TerrainMesh } from './world/TerrainMesh.js?v=106';
 import { WorldBase } from './world/WorldBase.js?v=102';
-import { Sky } from './world/Sky.js?v=94';
-import { Atmosphere } from './world/Atmosphere.js?v=95';
-import { BuildingActivity } from './world/BuildingActivity.js?v=109';
+import { Sky } from './world/Sky.js?v=99';
+import { Atmosphere } from './world/Atmosphere.js?v=98';
+import { BuildingActivity } from './world/BuildingActivity.js?v=114';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
 import { nearestAdj } from './world/Pathfinding.js?v=94';
 import { UnitRenderer } from './world/UnitRenderer.js?v=98';
-import { GameState } from './sim/GameState.js?v=145';
-import * as Economy from './sim/Economy.js?v=113';
+import { GameState } from './sim/GameState.js?v=150';
+import * as Economy from './sim/Economy.js?v=117';
 import * as Estates from './sim/Estates.js?v=11';
-import * as BuildSys from './sim/Buildings.js?v=123';
-import * as Waves from './sim/Waves.js?v=109';
+import * as BuildSys from './sim/Buildings.js?v=128';
+import * as Waves from './sim/Waves.js?v=114';
 import * as Tech from './sim/Tech.js?v=94';
 import * as Nature from './sim/Nature.js?v=94';
-import * as Relics from './sim/Relics.js?v=99';
-import * as Camps from './sim/Camps.js?v=100';
-import * as Victory from './sim/Victory.js?v=6';
+import * as Relics from './sim/Relics.js?v=104';
+import * as Camps from './sim/Camps.js?v=105';
+import * as Victory from './sim/Victory.js?v=10';
 import * as Wildlife from './sim/Wildlife.js?v=94';
 import * as Events from './sim/Events.js?v=94';
 import * as Achievements from './sim/Achievements.js?v=94';
 import * as Meta from './sim/Meta.js?v=94';
-import * as Research from './sim/Research.js?v=103';
-import { updateUnits, damage, awardExpeditionValor } from './sim/Units.js?v=109';
+import * as Research from './sim/Research.js?v=108';
+import { updateUnits, damage, awardExpeditionValor } from './sim/Units.js?v=114';
 import { toggleEdict } from './sim/Edicts.js?v=94';
 import * as AntiSpiral from './sim/AntiSpiral.js?v=3';
 import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=94';
 import { AmbientAudio } from './audio/Music.js?v=94';
-import { HUD } from './ui/HUD.js?v=103';
-import { BuildMenu } from './ui/BuildMenu.js?v=113';
-import { Selection } from './ui/Selection.js?v=116';
+import { HUD } from './ui/HUD.js?v=107';
+import { BuildMenu } from './ui/BuildMenu.js?v=118';
+import { Selection } from './ui/Selection.js?v=121';
 import { Minimap } from './ui/Minimap.js?v=94';
-import { ResearchPanel } from './ui/Research.js?v=111';
+import { ResearchPanel } from './ui/Research.js?v=116';
 import { EstatesPanel } from './ui/EstatesPanel.js?v=11';
 import { Toasts } from './ui/Toasts.js?v=94';
 import { Leaderboard } from './ui/Leaderboard.js?v=94';
-import { BUILDINGS } from './data/buildings.js?v=108';
+import { BUILDINGS } from './data/buildings.js?v=113';
 import { RANKS } from './data/ranks.js?v=94';
 import { bark } from './data/barks.js?v=94';
 import { STORAGE_KEY } from './data/config.js?v=102';
@@ -68,6 +68,8 @@ const MODELS = [
   'bld_banya', 'bld_traktir', 'bld_izba_plotnika', 'bld_veche',
   'bld_prikaz', 'bld_zastava', 'bld_tamozhnya', 'bld_remdvor', 'bld_agitpunkt', 'bld_sklad', 'bld_station',
   'bld_lesopilka', 'bld_melnica', 'bld_paseka', 'bld_chudo', 'enemy_lair',
+  'unit_strelec', 'unit_voevoda', 'unit_zhrec', 'unit_kriomag', 'unit_oprichnik_kon', 'unit_kromeshnik', 'unit_konny_luchnik', 'unit_pushka',
+  'bld_kapishe', 'bld_oprichny_dvor', 'bld_yurta_stavka', 'bld_ledyanoy_chertog',
 ];
 const ri = (a, b) => Math.floor(a + Math.random() * (b - a + 1));
 

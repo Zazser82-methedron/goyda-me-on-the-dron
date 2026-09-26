@@ -2,7 +2,7 @@
 // Геймплей играбелен ДО появления GLB — get() всегда возвращает что-то.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { buildPlaceholder } from './Placeholders.js?v=121';
+import { buildPlaceholder } from './Placeholders.js?v=124';
 import { applyLibrary } from './MaterialLib.js?v=9';
 
 export class AssetManager {
@@ -11,7 +11,7 @@ export class AssetManager {
     this.proto = {};      // name -> Object3D прототип (GLB-сцена или плейсхолдер)
     this.isGlb = {};      // name -> true если загружен реальный GLB
     this.base = './assets/models/';
-    this.ver = '?v=121';   // кэш-бастер для GLB — бампится вместе со всеми ?v, чтобы новые модели доезжали до игрока
+    this.ver = '?v=123';   // кэш-бастер для GLB — бампится вместе со всеми ?v, чтобы новые модели доезжали до игрока
   }
 
   // Попытаться загрузить GLB; молча падаем на плейсхолдер.

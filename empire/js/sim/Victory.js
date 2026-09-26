@@ -59,7 +59,8 @@ function offerCoup(state, ctx, key) {
   };
   const suppress = () => {
     const warriors = state.soldiers ? state.soldiers().length : 0;
-    if (warriors < 6) { coupLoss(state, ctx); return; }
+    const required = state.buildings.some(b => b.kind === 'oprichny_dvor' && b.built && !b.ruined) ? 4 : 6;
+    if (warriors < required) { coupLoss(state, ctx); return; }
     adjust(state, key, -10);
     coup.pending = false;
     ctx.toast && ctx.toast('⚔️ Переворот подавлен дружиной. ' + estate.name + ' −10.', { bad: true });
@@ -69,7 +70,7 @@ function offerCoup(state, ctx, key) {
     m: estate.name + ' поднимает смуту. Откупиться, подавить дружиной или потерять державу?',
     choices: [
       { lbl: 'Откупиться: 60🪙 25☩', msg: 'смуту откупили', f: buyout },
-      { lbl: 'Подавить: 6 воинов', msg: 'дружина выступает', f: suppress },
+      { lbl: 'Подавить: ' + (state.buildings.some(b => b.kind === 'oprichny_dvor' && b.built && !b.ruined) ? 4 : 6) + ' воинов', msg: 'дружина выступает', f: suppress },
       { lbl: 'Игнорировать', msg: 'переворот', f: () => coupLoss(state, ctx) },
     ],
   };

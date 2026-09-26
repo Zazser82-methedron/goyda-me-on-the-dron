@@ -22,6 +22,9 @@ const WEATHER_BY_MAP = {
   _default:['clear', 'clear', 'rain', 'fog', 'snow', 'storm'],
 };
 
+// Освещённость дня 0..1 для модулей, у которых нет ссылки на Sky (окна зданий в BuildingActivity).
+export const LIGHT = { day: 1 };
+
 export class Sky {
   constructor(scene, rdr) {
     this.scene = scene; this.rdr = rdr;
@@ -121,6 +124,7 @@ export class Sky {
     const elev = Math.sin(this.t * Math.PI * 2 - Math.PI / 2);   // -1 ночь .. +1 полдень
     const day = Math.max(0, elev);
     this.day = day;                                              // наружу — для атмосферы (светлячки/птицы)
+    LIGHT.day = day;
     const horizon = Math.max(0, 1 - Math.abs(elev) * 1.5);        // рассвет/закат у горизонта
 
     // ---- купол-небо: цвета по времени суток + солнце по азимуту key-света, купол едет за камерой ----

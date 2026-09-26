@@ -1103,16 +1103,49 @@ function enemyLair() {
   return g;
 }
 
+// ---- войско и фракционные здания: временные силуэты до прихода GLB ----
+function mountedWarrior(cloth, acc, ranged = false) {
+  const g = new THREE.Group();
+  const horse = mat(0x55351f), mane = mat(0x24150f);
+  g.add(box(0.68, 0.28, 0.32, horse, 0, 0.42, 0));
+  g.add(box(0.22, 0.22, 0.22, horse, 0, 0.58, 0.28));
+  g.add(box(0.08, 0.22, 0.08, mane, 0, 0.72, 0.4));
+  for (const [x, z] of [[-0.25, -0.12], [0.25, -0.12], [-0.25, 0.12], [0.25, 0.12]]) g.add(cyl(0.035, 0.04, 0.42, 5, horse, x, 0.21, z));
+  const rider = humanoid({ cloth, acc, spear: !ranged, helmet: true, cape: true, scale: 0.82 });
+  rider.position.set(0, 0.57, -0.04); g.add(rider);
+  if (ranged) g.add(box(0.04, 0.04, 0.76, mat(acc), 0.24, 1.03, 0));
+  return g;
+}
+function strelec() { return humanoid({ cloth: 0x5c7040, acc: 0x2f2219, helmet: true, tool: true }); }
+function voevodaUnit() { return humanoid({ cloth: PAL.crimson, acc: PAL.gold, spear: true, helmet: true, cape: true, scale: 1.16 }); }
+function pushka() {
+  const g = new THREE.Group(), iron = mat(0x68717e, { metal: 0.8, rough: 0.35 }), wd = mat(PAL.woodDk);
+  g.add(box(0.76, 0.12, 0.42, wd, 0, 0.2, 0)); g.add(cyl(0.13, 0.13, 0.82, 8, iron, 0, 0.43, 0));
+  for (const x of [-0.3, 0.3]) { const wheel = cyl(0.2, 0.2, 0.08, 10, wd, x, 0.2, -0.18); wheel.rotation.x = Math.PI / 2; g.add(wheel); }
+  return g;
+}
+function zhrec() { return humanoid({ cloth: 0x7652a0, acc: PAL.faithCyan, cape: true, scale: 0.96 }); }
+function kromeshnik() { return mountedWarrior(0x201018, PAL.crimson); }
+function konnyLuchnik() { return mountedWarrior(0x94713d, PAL.gold, true); }
+function kriomag() { return humanoid({ cloth: 0x207b98, acc: PAL.faithCyan, cape: true, tool: true }); }
+function kapisheDrona() { const g = church(); g.add(cone(0.22, 0.7, 5, mat(PAL.faithCyan, { emissive: PAL.faithCyan, emi: 1.2 }), 0, 1.45, 0)); return g; }
+function oprichnyDvor() { const g = kazarma(); g.add(box(1.5, 0.48, 0.04, mat(PAL.crimson), 0, 1.42, -0.66)); return g; }
+function yurtaStavka() { const g = new THREE.Group(), canvas = mat(PAL.thatch), wd = mat(PAL.woodDk); g.add(cone(0.62, 0.88, 10, canvas, 0, 0.44, 0)); g.add(cyl(0.035, 0.05, 1.32, 5, wd, 0, 0.66, 0)); return g; }
+function ledyanoyChertog() { const g = church(); const ice = mat(0x103448, { emissive: 0x00c8ee, emi: 0.65, rough: 0.25 }); g.add(cone(0.5, 0.9, 5, ice, 0, 1.5, 0)); return g; }
+
 const BUILDERS = {
   idol_dron: idol, bld_townhall: townhall, bld_izba: izba, bld_izba_plotnika: izbaPlotnika, bld_banya: banya, bld_ambar: ambar, bld_sklad: sklad, bld_roshcha: roshcha,
   enemy_camp: enemyCamp,
   bld_kuznica: kuznica, bld_remdvor: remontDvor, bld_kazarma: kazarma, bld_church: church, bld_market: market, bld_traktir: traktir, bld_prikaz: prikazSbora,
   bld_lesopilka: lesopilka, bld_melnica: melnica, bld_paseka: paseka,
+  bld_kapishe: kapisheDrona, bld_oprichny_dvor: oprichnyDvor, bld_yurta_stavka: yurtaStavka, bld_ledyanoy_chertog: ledyanoyChertog,
   bld_ferma: ferma, bld_rudnik: rudnik, bld_zhila: zhila, bld_veche: veche, bld_observatory: observatory, bld_agitpunkt: agitpunkt, bld_tower: tower, bld_zastava: zastavaOstrog,
   bld_road: road, bld_bridge: bridge,
   bld_chastokol: chastokol, bld_chastokol_gate: chastokolGate,
   res_tree: tree, res_stone: stoneNode, res_ore: oreNode,
   unit_kholop: kholop, unit_ratnik: ratnik, unit_oprichnik: oprichnik, unit_bogatyr: bogatyr,
+  unit_strelec: strelec, unit_oprichnik_kon: () => mountedWarrior(0x201018, PAL.crimson), unit_voevoda: voevodaUnit, unit_pushka: pushka,
+  unit_zhrec: zhrec, unit_kromeshnik: kromeshnik, unit_konny_luchnik: konnyLuchnik, unit_kriomag: kriomag,
   unit_cart: cartUnit, unit_loco: loco, unit_wagon: wagon,
   bld_rail: () => railTile(2 | 8), bld_station: station,
   animal_deer: deer, animal_boar: boar,
