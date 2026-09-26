@@ -3,7 +3,7 @@
 // Origin КАЖДОЙ модели — в центре основания (низ на y=0), модель растёт вверх.
 import * as THREE from 'three';
 import { PAL } from '../data/config.js?v=102';
-import { shared } from './MaterialLib.js?v=8';
+import { shared } from './MaterialLib.js?v=9';
 // копия общего материала: фактура общая, а прозрачность стройки (_applyBuildVisual) не заденет соседей
 const texMat = (name) => shared(name).clone();
 
@@ -1092,6 +1092,17 @@ function paseka() {
   return g;
 }
 
+// ---- логово Гойда-Бати (3×3): увеличенный стан с царским шатром до появления GLB ----
+function enemyLair() {
+  const g = enemyCamp();
+  const dk = mat(PAL.enemy), gold = mat(PAL.gold, { metal: 0.7, rough: 0.32 });
+  g.scale.set(1.7, 1.35, 1.7);
+  g.add(cone(0.5, 1.7, 6, dk, 0, 0.85, 0));
+  g.add(cyl(0.05, 0.06, 2.35, 5, gold, 0, 1.15, 0));
+  g.add(box(0.52, 0.28, 0.04, gold, 0.3, 1.82, 0));
+  return g;
+}
+
 const BUILDERS = {
   idol_dron: idol, bld_townhall: townhall, bld_izba: izba, bld_izba_plotnika: izbaPlotnika, bld_banya: banya, bld_ambar: ambar, bld_sklad: sklad, bld_roshcha: roshcha,
   enemy_camp: enemyCamp,
@@ -1109,6 +1120,7 @@ const BUILDERS = {
   idol_krio: relicIdol(0x00eeff), idol_giper: relicIdol(0xff3020), idol_shipo: relicIdol(0x66ff44),
   idol_obereg: relicIdol(0xffcc00), idol_food: relicIdol(0x88ff66), idol_gold: relicIdol(0xffd040),
   idol_fonk: relicIdol(0xff00bb), idol_vera: relicIdol(0x00eeff), idol_samotsvet: idolSamotsvet,
+  enemy_lair: enemyLair,
 };
 
 export function buildPlaceholder(name) {

@@ -5,8 +5,8 @@ import * as Quality from './engine/Quality.js?v=94';
 import { RTSCamera } from './engine/RTSCamera.js?v=100';
 import { Picker } from './engine/Picker.js?v=95';
 import { Loop } from './engine/Loop.js?v=100';
-import { Profiler } from './engine/Profiler.js?v=101';
-import { AssetManager } from './engine/AssetManager.js?v=137';
+import { Profiler } from './engine/Profiler.js?v=106';
+import { AssetManager } from './engine/AssetManager.js?v=142';
 import { TerrainMesh } from './world/TerrainMesh.js?v=106';
 import { WorldBase } from './world/WorldBase.js?v=102';
 import { Sky } from './world/Sky.js?v=94';
@@ -15,15 +15,16 @@ import { BuildingActivity } from './world/BuildingActivity.js?v=109';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
 import { nearestAdj } from './world/Pathfinding.js?v=94';
 import { UnitRenderer } from './world/UnitRenderer.js?v=97';
-import { GameState } from './sim/GameState.js?v=139';
+import { GameState } from './sim/GameState.js?v=144';
 import * as Economy from './sim/Economy.js?v=113';
-import * as Estates from './sim/Estates.js?v=6';
-import * as BuildSys from './sim/Buildings.js?v=117';
-import * as Waves from './sim/Waves.js?v=103';
+import * as Estates from './sim/Estates.js?v=11';
+import * as BuildSys from './sim/Buildings.js?v=122';
+import * as Waves from './sim/Waves.js?v=108';
 import * as Tech from './sim/Tech.js?v=94';
 import * as Nature from './sim/Nature.js?v=94';
 import * as Relics from './sim/Relics.js?v=99';
-import * as Camps from './sim/Camps.js?v=94';
+import * as Camps from './sim/Camps.js?v=99';
+import * as Victory from './sim/Victory.js?v=6';
 import * as Wildlife from './sim/Wildlife.js?v=94';
 import * as Events from './sim/Events.js?v=94';
 import * as Achievements from './sim/Achievements.js?v=94';
@@ -34,12 +35,12 @@ import { toggleEdict } from './sim/Edicts.js?v=94';
 import * as AntiSpiral from './sim/AntiSpiral.js?v=3';
 import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=94';
 import { AmbientAudio } from './audio/Music.js?v=94';
-import { HUD } from './ui/HUD.js?v=98';
-import { BuildMenu } from './ui/BuildMenu.js?v=108';
-import { Selection } from './ui/Selection.js?v=110';
+import { HUD } from './ui/HUD.js?v=103';
+import { BuildMenu } from './ui/BuildMenu.js?v=113';
+import { Selection } from './ui/Selection.js?v=115';
 import { Minimap } from './ui/Minimap.js?v=94';
-import { ResearchPanel } from './ui/Research.js?v=106';
-import { EstatesPanel } from './ui/EstatesPanel.js?v=6';
+import { ResearchPanel } from './ui/Research.js?v=111';
+import { EstatesPanel } from './ui/EstatesPanel.js?v=11';
 import { Toasts } from './ui/Toasts.js?v=94';
 import { Leaderboard } from './ui/Leaderboard.js?v=94';
 import { BUILDINGS } from './data/buildings.js?v=108';
@@ -57,7 +58,7 @@ const MODELS = [
   'idol_dron', 'bld_townhall', 'bld_izba', 'bld_ambar', 'bld_roshcha', 'bld_kuznica', 'bld_kazarma',
   'bld_chastokol', 'bld_church', 'bld_market',   // ВОРОТА — процедурный плейсхолдер (со створкой-анимацией)
   'res_tree', 'res_stone', 'res_ore', 'unit_kholop', 'unit_ratnik', 'unit_oprichnik',
-  'enemy_raider', 'enemy_boss', 'enemy_camp',
+  'enemy_raider', 'enemy_boss', 'enemy_camp', 'enemy_lair',
   // детальные идолы-реликвии (каждый со своим силуэтом, Blender GLB)
   'idol_krio', 'idol_giper', 'idol_shipo', 'idol_obereg', 'idol_food', 'idol_gold', 'idol_fonk', 'idol_vera', 'idol_samotsvet',
   // v87: доделаны в Blender — раньше были только процедурные плейсхолдеры
@@ -66,7 +67,7 @@ const MODELS = [
   // 2026-09: новые постройки из tools/blender (раньше рисовались процедурными плейсхолдерами)
   'bld_banya', 'bld_traktir', 'bld_izba_plotnika', 'bld_veche',
   'bld_prikaz', 'bld_zastava', 'bld_tamozhnya', 'bld_remdvor', 'bld_agitpunkt', 'bld_sklad', 'bld_station',
-  'bld_lesopilka', 'bld_melnica', 'bld_paseka', 'bld_chudo',
+  'bld_lesopilka', 'bld_melnica', 'bld_paseka', 'bld_chudo', 'enemy_lair',
 ];
 const ri = (a, b) => Math.floor(a + Math.random() * (b - a + 1));
 
@@ -125,6 +126,7 @@ class Game {
     this.music = new AmbientAudio();   // процедурная фоновая музыка + звук окружения
 
     this.ctx = this._makeCtx();
+    this.state.onCampDestroyed = (camp) => Camps.onDestroyed(this.state, camp, this.ctx);
     this.rdr.onResize = (w, h) => this.cameraRig.resize(w, h);
     if (this.rdr.tier !== 'low') {          // low-тир (мобила): без тяжёлой пост-обработки и IBL — ради плавности
       this.rdr.setupComposer(this.camera);  // пост-обработка (bloom/SMAA/тонмаппинг), ленивая + фолбэк
@@ -153,8 +155,8 @@ class Game {
       dmgNum: (target, amt, kind) => this.dmgNumber(target, amt, kind),  // всплывающее число урона/лечения
       hitStop: (t) => { this._hitStop = Math.max(this._hitStop, t); },   // короткая пауза симуляции на сильных ударах
       choiceEvent: (ev) => this.choiceEvent(ev),                          // событие-выбор (модалка)
-      onLose: () => this.end('lose'),
-      onWin: () => this.end('win'),
+      onLose: (reason) => this.end('lose', reason),
+      onWin: (path) => this.end('win', path),
       onRankUp: (ri) => this._boonDraft(ri),
       spawnBoss: (key) => Waves.spawnBoss(this.state, key, this.ctx),
       onBossDown: (boss) => {
@@ -626,6 +628,8 @@ class Game {
     this.state.day = s.day || 0;
     this.state.era = s.era || 0;                     // до зданий: они сразу берут облик своей эпохи
     this.state.estates = s.estates && typeof s.estates === 'object' ? s.estates : this.state.estates;
+    this.state.victory = s.victory && typeof s.victory === 'object' ? s.victory : this.state.victory;
+    this.state.coup = s.coup && typeof s.coup === 'object' ? s.coup : this.state.coup;
     this.state.edicts = {};
     for (const n of (s.nodes || [])) this.state.addNode(n.kind, n.gx, n.gy, n.amount);
     for (const b of (s.buildings || [])) {
@@ -1084,8 +1088,10 @@ class Game {
     if (!has('kazarma')) return '⚔️ Построй КАЗАРМУ — куй дружину';
     if (soldiers < 5) return '🛡️ Собери дружину: ' + soldiers + '/5';
     if (s.rankIndex < 2) return '📈 Дорасти до ранга ' + ((RANKS[2] && RANKS[2].name) || '2');
-    if (s._hadCamps && s.camps.length > 0) return '🏴 Снеси вражьи станы — осталось ' + s.camps.length;
-    if (!s.idol) return '🗿 Заложи ЧУДО (идол ДРОН) или снеси все станы — ПОБЕДА';
+    if (s.era < 2) return '🏛️ Дойди до III эпохи — там откроются пути победы';
+    const camps = s.camps.filter(c => !c.lair).length;
+    if (camps || !s._lairDestroyed) return '🏴 Покори Орду: лагерей ' + camps + ', логово ' + (s._lairDestroyed ? 'снесено' : 'цело');
+    if (!s.idol) return '🗿 Заложи ЧУДО или держи всенародную любовь 12 дней';
     return '🗿 Дострой ЧУДО — пробуди ДРОНА!';
   }
   _updateObjective() {
@@ -1303,7 +1309,7 @@ class Game {
     }
   }
 
-  end(kind) {
+  end(kind, outcome = null) {
     if (this.state.gameOver) return;
     this.state.gameOver = kind;
     const ov = document.getElementById('overlay');
@@ -1319,9 +1325,11 @@ class Game {
     if (kind === 'win') {
       this.state.rankIndex = RANKS.length - 1;
       try { localStorage.removeItem('GOYDA_EMPIRE_SAVE_v1'); } catch (e) {}
-      ov.innerHTML = `<div class="end win"><h1>🌟 АБСОЛЮТ ГОЙДЫ 🌟</h1><p>Идол ДРОН пробуждён. ${bark('win')}</p>${summary}${metaLine}<button onclick="location.reload()">ВНОВЬ ГОЙДАТЬ</button></div>`;
+      const path = outcome || (S.victory && S.victory.winPath) || 'Чудо ДРОНА';
+      ov.innerHTML = `<div class="end win"><h1>🌟 АБСОЛЮТ ГОЙДЫ 🌟</h1><p>Путь победы: <b>${path}</b>. ${bark('win')}</p>${summary}${metaLine}<button onclick="location.reload()">ВНОВЬ ГОЙДАТЬ</button></div>`;
     } else {
-      ov.innerHTML = `<div class="end lose"><h1>💀 ПАЛАТЫ ПАЛИ 💀</h1><p>${bark('lose')} Держава пала на ${this.state.day}-й день.</p>${summary}${metaLine}<button onclick="(function(){try{localStorage.removeItem('GOYDA_EMPIRE_SAVE_v1')}catch(e){}location.reload()})()">НОВЫЙ ПОХОД</button></div>`;
+      const reason = outcome === 'coup' ? 'Переворот сверг державу.' : 'Палаты пали.';
+      ov.innerHTML = `<div class="end lose"><h1>💀 ПАЛАТЫ ПАЛИ 💀</h1><p>${reason} ${bark('lose')} Держава пала на ${this.state.day}-й день.</p>${summary}${metaLine}<button onclick="(function(){try{localStorage.removeItem('GOYDA_EMPIRE_SAVE_v1')}catch(e){}location.reload()})()">НОВЫЙ ПОХОД</button></div>`;
     }
     ov.style.display = 'flex';
     try { this.leaderboard.onGameEnd(kind); } catch (e) { console.warn('leaderboard', e); }   // итог → онлайн-таблица
@@ -1342,18 +1350,11 @@ class Game {
     Nature.update(this.state, dt, this.ctx);
     Relics.update(this.state, dt, this.ctx);
     Camps.update(this.state, dt, this.ctx);
+    Victory.update(this.state, dt, this.ctx);
     Wildlife.update(this.state, dt, this.ctx);
     Events.update(this.state, dt, this.ctx);   // случайные события мира
     Achievements.update(this.state, dt, this.ctx);   // вехи-достижения
     this._updateLifeMoments(dt);
-    // 2-е условие победы: КОНКВЕСТ — снести ВСЕ вражьи станы (альтернатива чуду-идолу)
-    if (!this.state.gameOver) {
-      if (this.state.camps.length) this.state._hadCamps = true;
-      else if (this.state._hadCamps && Math.floor(this.state.day) >= 8) {
-        this.toasts.show('🏴 Все вражьи станы снесены — ПОБЕДА ЗАВОЕВАНИЕМ!', { gold: true, big: true });
-        this.end('win');
-      }
-    }
   }
 
   // мягкая тень-пятно под объектом (пул, ленивое создание ресурсов)

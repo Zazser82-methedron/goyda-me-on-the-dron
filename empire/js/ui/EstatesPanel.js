@@ -1,5 +1,5 @@
 // ===== Панель сословий: отношение и поручения Вече =====
-import { ESTATES } from '../sim/Estates.js?v=6';
+import { ESTATES } from '../sim/Estates.js?v=11';
 
 const KEYS = Object.keys(ESTATES);
 

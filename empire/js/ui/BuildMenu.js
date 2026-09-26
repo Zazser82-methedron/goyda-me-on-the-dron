@@ -179,6 +179,7 @@ export class BuildMenu {
   _pick(kind, d) {
     const s = this.game.state;
     if ((d.rank || 0) > s.rankIndex) { this.game.toasts.show('Откроется в ранге ' + RANKS[d.rank].name, { bad: true }); return; }
+    if (kind === 'idol' && s.era !== 2) { this.game.toasts.show('Чудо ДРОН доступно только в III эпохе', { bad: true }); return; }
     if (d.requiresTech && !(s.research && s.research.done[d.requiresTech])) { this.game.toasts.show('Изучите технологию: ' + TECHS[d.requiresTech].name, { bad: true }); return; }
     this.game.enterBuild(kind);
     this.close();
@@ -192,7 +193,7 @@ export class BuildMenu {
       if (!card) continue;
       const techLock = d.requiresTech && !(s.research && s.research.done[d.requiresTech]);
       const rankLock = (d.rank || 0) > s.rankIndex;
-      const eraLock = (d.era || 0) > (s.era || 0);   // постройки эпох II/III (sim/Eras.js) — не кликабельны раньше срока
+      const eraLock = (d.era || 0) > (s.era || 0) || (kind === 'idol' && s.era !== 2);   // Чудо — строго III эпоха
       const locked = rankLock || techLock || eraLock;
       // антидребезг доступности: ресурсы скачут у границы цены → меняем подсветку только если держится ≈0.4с
       const afford = s.canAfford(d.cost);
@@ -205,7 +206,7 @@ export class BuildMenu {
       const lockEl = card.querySelector('.bcard-lock');
       if (locked) {
         lockEl.textContent = rankLock ? '🔒 ранг: ' + RANKS[d.rank].name
-          : eraLock ? '🔒 эпоха: ' + (ERA_NAMES[d.era] || d.era)
+          : eraLock ? '🔒 эпоха: ' + (kind === 'idol' ? ERA_NAMES[2] : (ERA_NAMES[d.era] || d.era))
           : '🔒 изучить: ' + ((TECHS[d.requiresTech] && TECHS[d.requiresTech].name) || '');
         lockEl.style.display = 'flex';
       } else lockEl.style.display = 'none';
@@ -222,7 +223,7 @@ export class BuildMenu {
       for (const kind of (this.catKinds[cat] || [])) {
         const d = BUILDINGS[kind];
         const techLock = d.requiresTech && !(s.research && s.research.done[d.requiresTech]);
-        if (!((d.rank || 0) > s.rankIndex || techLock || (d.era || 0) > (s.era || 0))) unlocked++;
+        if (!((d.rank || 0) > s.rankIndex || techLock || (d.era || 0) > (s.era || 0) || (kind === 'idol' && s.era !== 2))) unlocked++;
       }
       t.classList.toggle('alllocked', unlocked === 0);
       const bk = this.game.buildKind;

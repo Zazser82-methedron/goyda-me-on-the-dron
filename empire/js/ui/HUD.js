@@ -1,7 +1,8 @@
 // ===== Верхняя панель: ресурсы, ранг, Базометр-ВЕРА, население, счастье, день =====
 import { RES, RES_LABEL } from '../data/config.js?v=102';
 import { RANKS } from '../data/ranks.js?v=94';
-import { RAID_FORMATS } from '../sim/RaidFormats.js?v=96';
+import { RAID_FORMATS } from '../sim/RaidFormats.js?v=101';
+import { progressText } from '../sim/Victory.js?v=6';
 
 const SECONDARY = ['tes', 'bread', 'mead'];
 const HUD_RES = [...RES.slice(0, 4), ...SECONDARY, ...RES.slice(4)];
@@ -55,7 +56,7 @@ export class HUD {
     this.rankEl.innerHTML = `<span class="rank" style="color:${r.color}">${r.icon} ${r.name}</span>${meter}`;
 
     const hc = s.happiness > 60 ? '#5eff8b' : s.happiness > 35 ? '#ffcc00' : '#ff5050';
-    this.statusEl.innerHTML = `👥 <b>${s.population}/${s.popCap}</b> · <span style="color:${hc}">😊 ${Math.round(s.happiness)}%</span> · 📅 <b>${s.day}</b>`;
+    this.statusEl.innerHTML = `👥 <b>${s.population}/${s.popCap}</b> · <span style="color:${hc}">😊 ${Math.round(s.happiness)}%</span> · 📅 <b>${s.day}</b><small style="display:block;opacity:.82" title="Три пути к победе">${progressText(s)}</small>`;
 
     if (this.waveEl) {
       const tw = Math.max(0, Math.ceil(s.nextWaveIn || 0));

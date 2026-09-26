@@ -2,12 +2,12 @@
 import * as THREE from 'three';
 import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=102';
 import { Grid } from '../world/Grid.js?v=96';
-import { NodeField } from '../world/NodeField.js?v=122';
+import { NodeField } from '../world/NodeField.js?v=127';
 import { BUILDINGS } from '../data/buildings.js?v=108';
 import { UNITS } from '../data/units.js?v=94';
 import { RANKS } from '../data/ranks.js?v=94';
-import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=116';
-import * as Tiling from '../world/Tiling.js?v=115';
+import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=121';
+import * as Tiling from '../world/Tiling.js?v=120';
 
 // Модели, у которых есть облики эпох <model>_e1 / <model>_e2 (tools/blender/build_*.py), по эпохам:
 // если облик эпохи не отличается от предыдущего, файла нет и modelFor() берёт ближайший ранний.
@@ -70,6 +70,9 @@ export class GameState {
     this.day = 0;
     this.starveAccum = 0;
     this.estates = { values: { oprichnina: 50, veche: 50, church: 50, kupcy: 50 }, requirements: {}, nextDemandDay: 2, lastDay: 0, lastVecheDay: 0, lastVecheEra: null, agitTarget: null, warnings: {} };
+    // Счётчики финальных условий хранятся в сейве; сами лагеря, как и раньше, не хранятся.
+    this.victory = { loveDays: 0, lastLoveDay: 0, winPath: null };
+    this.coup = { lowHappyDays: 0, lastDay: 0, lastEventDay: -Infinity, pending: false };
 
     this.buildings = [];
     this.units = [];
@@ -94,6 +97,7 @@ export class GameState {
 
     this.onToast = () => {};      // (text, opts) — назначает main
     this.onRankUp = () => {};
+    this.onCampDestroyed = () => {};
     this._tmpCol = new THREE.Color();   // переиспользуемый для вычисления оттенков нод
   }
 
@@ -151,23 +155,28 @@ export class GameState {
   }
 
   // ---- вражьи станы ----
-  addCamp(gx, gy) {
-    const view = this.assets.get('enemy_camp');
-    const c = this.grid.footprintCenter(gx, gy, 2, 2);
+  addCamp(gx, gy, opts = {}) {
+    const w = opts.w || 2, h = opts.h || 2;
+    const baseHp = opts.hp || 320;
+    const view = this.assets.get(opts.model || 'enemy_camp');
+    const c = this.grid.footprintCenter(gx, gy, w, h);
     const cy = this.grid.heightAt ? this.grid.heightAt(c.wx, c.wz) : 0;
     view.position.set(c.wx, cy, c.wz);
     this.scene.add(view);
-    const camp = { id: this._id++, type: 'camp', gx, gy, w: 2, h: 2, hp: 320, maxHp: 320, view, cx: c.wx, cz: c.wz, cy, spawnT: 0 };
+    const camp = { id: this._id++, type: opts.lair ? 'lair' : 'camp', gx, gy, w, h, hp: baseHp, maxHp: baseHp,
+      baseHp, view, cx: c.wx, cz: c.wz, cy, spawnT: 0, lair: !!opts.lair, returnable: opts.returnable !== false };
     view.userData.entity = camp;
-    this.grid.occupy(gx, gy, 2, 2, camp.id, { walkable: false });
+    this.grid.occupy(gx, gy, w, h, camp.id, { walkable: false });
     this.camps.push(camp);
     return camp;
   }
   removeCamp(camp) {
     this.scene.remove(camp.view);
-    this.grid.occupy(camp.gx, camp.gy, 2, 2, null);
+    this.grid.occupy(camp.gx, camp.gy, camp.w, camp.h, null);
     this.camps = this.camps.filter(x => x !== camp);
+    this._byId.delete(camp.id);
     if (this.selected === camp) this.selected = null;
+    this.onCampDestroyed(camp);
   }
   campById(id) { return this.camps.find(c => c.id === id); }
 
@@ -503,7 +512,7 @@ export class GameState {
     return {
       v: 2, res: this.resources, happiness: this.happiness, rankIndex: this.rankIndex, day: this.day,
       era: this.era || 0,   // эпоха раньше не сохранялась: после перезагрузки держава откатывалась в I эпоху
-      estates: this.estates,
+      estates: this.estates, victory: this.victory, coup: this.coup,
       faction: this.faction ? this.faction.key : 'goyda', mapKey: this.mapKey || 'les',
       buildings: this.buildings.map(b => ({ kind: b.kind, gx: b.gx, gy: b.gy, built: b.built, hp: b.hp, rot: b.rot || 0, pendingCargo: (b._pendingCargo || 0) + (inTransitCargo.get(b.id) || 0) })),
       nodes: this.nodes.map(n => ({ kind: n.kind, gx: n.gx, gy: n.gy, amount: n.amount })),

@@ -46,6 +46,14 @@ function change(data, key, amount) {
   data.values[key] = clamp((data.values[key] == null ? 50 : data.values[key]) + amount, 0, 100);
 }
 
+// Внешние системы (дань, переворот) меняют отношение через тот же клэмп, что и политика.
+export function adjust(state, key, amount) {
+  if (!ESTATES[key]) return 0;
+  const data = dataFor(state);
+  change(data, key, amount);
+  return data.values[key];
+}
+
 function lowest(data) {
   return KEYS.reduce((best, key) => data.values[key] < data.values[best] ? key : best, KEYS[0]);
 }

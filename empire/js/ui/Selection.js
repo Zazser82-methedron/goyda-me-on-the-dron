@@ -1,7 +1,7 @@
 // ===== Панель выбранной сущности: HP, тренировка, инфо =====
 import { UNITS } from '../data/units.js?v=94';
 import { RES_LABEL } from '../data/config.js?v=102';
-import { costStr } from './BuildMenu.js?v=108';
+import { costStr } from './BuildMenu.js?v=113';
 import { roadPath } from '../sim/Transport.js?v=104';
 import { railPath } from '../sim/Railroad.js?v=105';
 import { homesteadNeeds, NEED_LABELS } from '../sim/Chains.js?v=3';

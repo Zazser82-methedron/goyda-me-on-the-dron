@@ -5,7 +5,8 @@ import { bark } from '../data/barks.js?v=94';
 import { hostileFor } from '../data/factions.js?v=94';
 import { floodReachable, nearestAdj } from '../world/Pathfinding.js?v=94';
 import { damage, setPath, setPathToBuilding } from './Units.js?v=109';
-import { RAID_FORMATS, composeRaid, pickRaidFormat } from './RaidFormats.js?v=96';
+import { RAID_FORMATS, composeRaid, pickRaidFormat, raidTarget } from './RaidFormats.js?v=101';
+import { adjust } from './Estates.js?v=11';
 
 // мягкий потолок одновременных врагов: меньше тормозов в лейте, угроза сохраняется (спавн просто
 // откладывается на 12с, а не жёстко режется — см. spawnWave). Было 56 — костыль от тормозов ДО
@@ -76,6 +77,8 @@ const WARN_STAGE_FRACS = [1, 2 / 3, 1 / 3]; // ~90/60/30с при полном �
 const WARN_ICONS = ['⚠️', '🔥', '🚨'];
 
 function raidWarnTargetName(state, format) {
+  const wonder = raidTarget(state, null);
+  if (wonder) return wonder.def.name;
   if (format !== 'sabotage') return null;
   const b = productiveBuilding(state);
   return b && b !== state.townhall ? b.def.name : null;
@@ -231,7 +234,7 @@ function startSiege(state, raid) {
   if (!spot) { // TODO: на картах без места под enemy_camp осада деградирует в обычный штурм.
     spawnPlan(state, raid, raid.plan, raid.entry); raid.phase = 'assault'; return;
   }
-  const camp = state.addCamp(spot.x, spot.y);
+  const camp = state.addCamp(spot.x, spot.y, { returnable: false });
   camp.spawnT = -999; // Camps.js не должен добавлять свою независимую очередь этой осаде.
   raid.campId = camp.id; raid.queue = raid.plan.slice(); raid.phase = 'camp'; raid.t = -16; // лагерь виден 24с до первого отряда
   raid.telegraph = '🏴 Вражий лагерь замечен у края: 24с до первого отряда.';
@@ -245,8 +248,8 @@ function startTribute(state, raid, ctx) {
   const gold = Math.min(70, 15 + state.rankIndex * 18), food = Math.min(100, 30 + state.rankIndex * 24);
   if (ctx.choiceEvent) ctx.choiceEvent({
     t: '📜 ТРЕБОВАНИЕ ДАНИ', m: 'Посол ждёт у края. Откупиться или готовить штурм.', choices: [
-      { lbl: 'Отдать ' + gold + ' 🪙', msg: 'Дань уплачена', f: s => { if (s.spend({ gold })) raid.paid = 'gold'; else raid.refused = true; } },
-      { lbl: 'Отдать ' + food + ' 🍞', msg: 'Дань уплачена', f: s => { if (s.spend({ food })) raid.paid = 'food'; else raid.refused = true; } },
+      { lbl: 'Отдать ' + gold + ' 🪙', msg: 'Дань уплачена', f: s => { if (s.spend({ gold })) { adjust(s, 'kupcy', -6); raid.paid = 'gold'; } else raid.refused = true; } },
+      { lbl: 'Отдать ' + food + ' 🍞', msg: 'Дань уплачена', f: s => { if (s.spend({ food })) { adjust(s, 'kupcy', -6); raid.paid = 'food'; } else raid.refused = true; } },
       { lbl: 'Отказать — к оружию!', msg: 'Посол зовёт штурм', f: () => { raid.refused = true; } },
     ],
   });
@@ -262,7 +265,7 @@ function productiveBuilding(state) {
 }
 
 function startSabotage(state, raid) {
-  const target = productiveBuilding(state);
+  const target = raidTarget(state, productiveBuilding(state));
   if (!target) { raid.phase = 'assault'; spawnPlan(state, raid, raid.plan, raid.entry); return; }
   raid.targetId = target.id; raid.exit = edgePoints(state, 1)[0]; raid.phase = 'telegraph'; raid.t = 16;
   raid.telegraph = '🔥 Метка диверсии: ' + target.def.name + '. Враги выйдут через 16с.';
@@ -270,7 +273,7 @@ function startSabotage(state, raid) {
 
 function startLoot(state, raid) {
   const drops = state.buildings.filter(b => b.built && (b.kind === 'ambar' || b.kind === 'market'));
-  const target = drops.reduce((best, b) => !best || dist2(b, raid.entry) < dist2(best, raid.entry) ? b : best, null) || state.nearestDrop(raid.entry.x, raid.entry.z);
+  const target = raidTarget(state, drops.reduce((best, b) => !best || dist2(b, raid.entry) < dist2(best, raid.entry) ? b : best, null) || state.nearestDrop(raid.entry.x, raid.entry.z));
   if (!target) { raid.phase = 'assault'; spawnPlan(state, raid, raid.plan, raid.entry); return; }
   raid.targetId = target.id; raid.exit = { x: -raid.entry.x, z: -raid.entry.z }; raid.phase = 'telegraph'; raid.t = 14;
   raid.telegraph = '💨 Дым указывает на ' + target.def.name + ': налёт через 14с.';
@@ -322,7 +325,10 @@ function updateTribute(state, raid, dt, ctx) {
     if (raid.refused || raid.t <= 0) beginTributeAssault(state, raid);
     return;
   }
-  if (!live.length) finishRaid(state, raid, ctx, true, '⚔️ Отряд, требовавший дань, разбит! +10☩.', { faith: 10 });
+  if (!live.length) {
+    if (raid.refused) adjust(state, 'oprichnina', 8);
+    finishRaid(state, raid, ctx, true, '⚔️ Отряд, требовавший дань, разбит! +10☩.' + (raid.refused ? ' Опричнина +8.' : ''), { faith: 10 });
+  }
 }
 
 function updateSabotage(state, raid, dt, ctx) {
@@ -398,9 +404,9 @@ function updateLoot(state, raid, dt, ctx) {
   if (escaped && !liveRaidUnits(state, raid).length) finishRaid(state, raid, ctx, false, '🐎 Налётчики скрылись с добычей.');
 }
 
-export function spawnBoss(state, key, ctx) {
+export function spawnBoss(state, key, ctx, origin = null) {
   const b = BOSSES[key]; if (!b || state.gameOver) return;
-  const pts = edgePoints(state, 1 + (b.escort || 0));
+  const pts = origin ? Array.from({ length: 1 + (b.escort || 0) }, (_, i) => ({ x: origin.x + (i ? (Math.random() - .5) * 2 : 0), z: origin.z + (i ? (Math.random() - .5) * 2 : 0) })) : edgePoints(state, 1 + (b.escort || 0));
   const hp = Math.round(UNITS.boss.hp * b.hpMul);
   const boss = state.addUnit('boss', pts[0].x, pts[0].z, { tint: b.tint, hp, maxHp: hp, bossKey: key });
   boss.dmg = Math.round(UNITS.boss.dmg * b.dmgMul);

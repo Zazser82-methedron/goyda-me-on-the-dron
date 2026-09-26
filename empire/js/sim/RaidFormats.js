@@ -11,6 +11,11 @@ export const RAID_FORMATS = Object.freeze({
   loot: { name: 'НАЛЁТ С УГОНОМ', icon: '🐎' },
 });
 
+// Чудо в лесах — приоритетная цель всей Орды, пока ещё можно сорвать победу.
+export function raidTarget(state, fallback) {
+  return state.idol && !state.idol.built && !state.idol.ruined ? state.idol : fallback;
+}
+
 const TEMPLATES = {
   siege: [
     ['raider', 'raider'],

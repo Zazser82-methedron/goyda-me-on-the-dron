@@ -21,6 +21,14 @@ const TEXTURED = {
   M_siding:  { tex: 'plaster', tint: 0xf0b848, rough: 0.8 },   // обшивка, крашенная охрой (светлая фактура держит яркий цвет)
 };
 
+// Цвета без фактуры, которые в GLB заданы слишком светлыми (линейные значения из goyda_kit.MATS):
+// «тёмное» выходило средне-серым, кожа и мех — бежевыми. Правка здесь чинит все модели сразу, без пересборки.
+const COLOR_FIX = {
+  M_dark: 0x1e1713,     // двери, проёмы, шатёр Логова
+  M_leather: 0x3e2616,  // сапоги, ремни, кожаные покрышки юрт
+  M_fur: 0x4c3521,      // меховые шапки, шкуры Орды
+};
+
 const loader = new THREE.TextureLoader();
 const texCache = {};
 const matCache = {};
@@ -54,6 +62,7 @@ function libMaterial(src, withAO) {
   } else {
     m = src.clone();   // краска/железо/окна — свой цвет из GLB, без фактуры
     m.flatShading = false;
+    if (COLOR_FIX[name] != null) m.color.setHex(COLOR_FIX[name]);
   }
   m.vertexColors = withAO;
   matCache[key] = m;

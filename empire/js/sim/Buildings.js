@@ -78,7 +78,7 @@ export function update(state, dt, ctx) {
         ctx.sfx && ctx.sfx('build');
         ctx.burst && ctx.burst(b.cx, (b.cy || 0) + 0.6, b.cz, 0xffcc44, 16);   // салют завершения стройки
         ctx.toast && ctx.toast(b.def.icon + ' ' + b.def.name + ' готов!');
-        if (b.def.wonder && ctx.onWin) ctx.onWin();
+        if (b.def.wonder && ctx.onWin) ctx.onWin('Чудо ДРОНА');
       }
       continue;
     }
@@ -133,6 +133,7 @@ export function startRepair(state, b, ctx) {
 export function placeBuilding(state, kind, gx, gy, ctx, opts = {}) {
   const def = BUILDINGS[kind];
   if (!def) return { ok: false, reason: 'нет такого здания' };
+  if (kind === 'idol' && state.era !== 2) return { ok: false, reason: 'Чудо ДРОН доступно только в III эпохе' };
   if ((def.rank || 0) > state.rankIndex) return { ok: false, reason: 'нужен ранг ' + RANKS[def.rank].name };
   if ((def.era || 0) > (state.era || 0)) return { ok: false, reason: 'откроется в эпохе «' + Eras.ERA_NAMES[def.era] + '»' };
   if (def.requiresTech && !(state.research && state.research.done[def.requiresTech])) return { ok: false, reason: 'изучите технологию (через обсерваторию)' };
