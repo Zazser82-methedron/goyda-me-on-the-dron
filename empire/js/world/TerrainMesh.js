@@ -340,8 +340,8 @@ diffuseColor.a *= goydaShoreAlpha;`)
       inst.instanceMatrix.needsUpdate = true;
       if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
     };
-    fill(bushes, bn, this.pal.b, this.pal.c, 0.1, 0.8, 1.5, ['grass', 'forest']);
-    fill(rocks, rn, PAL.rock, PAL.rockDk, 0.08, 0.6, 1.4, ['rock', 'sand']);
+    fill(bushes, bn, 0x2f6a2c, 0x3f7f34, 0.1, 0.8, 1.5, ['grass', 'forest']);   // сочная листва (цвета травы биома выходили бледно-салатовыми)
+    fill(rocks, rn, 0x5c5f66, 0x4a4d53, 0.08, 0.6, 1.4, ['rock', 'sand']);   // серые валуны (PAL.rock под AgX выходил бежевым)
     fill(stumps, sn, 0x6b5740, 0x55462f, 0.11, 0.7, 1.2, ['grass', 'forest']);
     scene.add(bushes); scene.add(rocks); scene.add(stumps);
   }

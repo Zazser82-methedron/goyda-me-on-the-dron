@@ -48,6 +48,8 @@ function onDay(state, ctx) {
   }
   const em = edictMods(state);
   prod.food += em.food; prod.gold += em.gold; prod.faith += em.faith; happyMod += em.happy;
+  const estateMods = state.estateMods || {};
+  prod.faith += estateMods.faith || 0; happyMod += estateMods.happy || 0;
   const am = AntiSpiral.productionMods(state);
   prod.food += am.food; happyMod += am.happy;
 
@@ -67,7 +69,7 @@ function onDay(state, ctx) {
   if (fm) { prod.faith *= fm.faithMul || 1; happyMod += fm.happy || 0; }
 
   const food = prod.food;   // для баланса счастья/голода ниже
-  if (prod.gold) prod.gold *= (0.78 + state.happiness / 100 * 0.44) * am.goldMul;   // довольный народ платит больше податей (0.78..1.22)
+  if (prod.gold) prod.gold *= (0.78 + state.happiness / 100 * 0.44) * am.goldMul * (estateMods.goldMul || 1);   // довольный народ платит больше податей (0.78..1.22)
   prod.gold = AntiSpiral.applyTaxDebt(state, prod.gold);
   state.gain(prod);
 

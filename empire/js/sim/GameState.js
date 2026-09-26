@@ -2,12 +2,12 @@
 import * as THREE from 'three';
 import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=102';
 import { Grid } from '../world/Grid.js?v=96';
-import { NodeField } from '../world/NodeField.js?v=116';
+import { NodeField } from '../world/NodeField.js?v=120';
 import { BUILDINGS } from '../data/buildings.js?v=106';
 import { UNITS } from '../data/units.js?v=94';
 import { RANKS } from '../data/ranks.js?v=94';
-import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=110';
-import * as Tiling from '../world/Tiling.js?v=109';
+import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=114';
+import * as Tiling from '../world/Tiling.js?v=113';
 
 // Модели, у которых есть облики эпох <model>_e1 / <model>_e2 (tools/blender/build_*.py), по эпохам:
 // если облик эпохи не отличается от предыдущего, файла нет и modelFor() берёт ближайший ранний.
@@ -69,6 +69,7 @@ export class GameState {
     this.rankIndex = 0;
     this.day = 0;
     this.starveAccum = 0;
+    this.estates = { values: { oprichnina: 50, veche: 50, church: 50, kupcy: 50 }, requirements: {}, nextDemandDay: 2, lastDay: 0, lastVecheDay: 0, lastVecheEra: null, agitTarget: null, warnings: {} };
 
     this.buildings = [];
     this.units = [];
@@ -502,6 +503,7 @@ export class GameState {
     return {
       v: 2, res: this.resources, happiness: this.happiness, rankIndex: this.rankIndex, day: this.day,
       era: this.era || 0,   // эпоха раньше не сохранялась: после перезагрузки держава откатывалась в I эпоху
+      estates: this.estates,
       faction: this.faction ? this.faction.key : 'goyda', mapKey: this.mapKey || 'les',
       buildings: this.buildings.map(b => ({ kind: b.kind, gx: b.gx, gy: b.gy, built: b.built, hp: b.hp, rot: b.rot || 0, pendingCargo: (b._pendingCargo || 0) + (inTransitCargo.get(b.id) || 0) })),
       nodes: this.nodes.map(n => ({ kind: n.kind, gx: n.gx, gy: n.gy, amount: n.amount })),

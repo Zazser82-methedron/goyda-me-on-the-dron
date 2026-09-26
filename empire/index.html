@@ -21,7 +21,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Ysabeau+SC:wght@400;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./css/theme.css?v=101">
-<link rel="stylesheet" href="./css/hud.css?v=95">
+<link rel="stylesheet" href="./css/hud.css?v=98">
 <link rel="stylesheet" href="./css/start-screen.css?v=105" data-goyda-start-screen="1">
 <script type="importmap">
 { "imports": {
@@ -44,6 +44,7 @@
       <div class="spacer"></div>
       <button id="superBtn" class="topbtn">СВЕРХ-ГОЙДА</button>
       <button id="techBtn" class="topbtn icon" title="Древо технологий (исследования)">🔬</button>
+      <button id="estatesBtn" class="topbtn icon" title="Сословия державы и их требования">🏛️</button>
       <button id="lbBtn" class="topbtn icon" title="Таблица рекордов (онлайн)">🏆</button>
       <button id="fxBtn" class="topbtn icon on" title="Графика: пост-обработка вкл/выкл (если тормозит — выключи)">✨</button>
       <button id="viewBtn" class="topbtn icon" title="Тактический обзор: показать всю базу сверху">⌖</button>
@@ -68,6 +69,9 @@
     <!-- древо технологий (исследования) -->
     <div id="research"></div>
 
+    <!-- сословия и поручения -->
+    <div id="estatesPanel"></div>
+
     <!-- нижняя панель построек + указы -->
     <div id="bottombar">
       <div id="buildbtns"></div>
@@ -88,6 +92,6 @@
 </div>
 
 <script src="../shared/expedition.js?v=96"></script>
-<script type="module" src="./js/main.js?v=163"></script>
+<script type="module" src="./js/main.js?v=167"></script>
 </body>
 </html>

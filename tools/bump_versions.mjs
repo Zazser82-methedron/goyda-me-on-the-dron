@@ -21,9 +21,9 @@ const files = [];
 
 const rel = (p) => path.relative(process.cwd(), p).replace(/\\/g, '/');
 const status = execFileSync('git', ['status', '--porcelain', '--', 'empire'], { encoding: 'utf8' });
-const changed = new Set(status.split('\n').filter(Boolean).map(l => path.resolve(l.slice(3).trim())).filter(p => /\.(js)$/.test(p)));
+const changed = new Set(status.split('\n').filter(Boolean).map(l => path.resolve(l.slice(3).trim())).filter(p => /\.(js|css)$/.test(p)));
 
-const IMPORT = /(['"])(\.{1,2}\/[^'"?]+\.js)\?v=(\d+)\1/g;
+const IMPORT = /(['"])(\.{1,2}\/[^'"?]+\.(?:js|css))\?v=(\d+)\1/g;   // и JS-импорты, и <link> стилей
 const queue = [...changed];
 const done = new Set();
 const edits = {};

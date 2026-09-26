@@ -5,9 +5,9 @@ import * as Quality from './engine/Quality.js?v=94';
 import { RTSCamera } from './engine/RTSCamera.js?v=100';
 import { Picker } from './engine/Picker.js?v=95';
 import { Loop } from './engine/Loop.js?v=100';
-import { Profiler } from './engine/Profiler.js?v=97';
-import { AssetManager } from './engine/AssetManager.js?v=131';
-import { TerrainMesh } from './world/TerrainMesh.js?v=104';
+import { Profiler } from './engine/Profiler.js?v=101';
+import { AssetManager } from './engine/AssetManager.js?v=135';
+import { TerrainMesh } from './world/TerrainMesh.js?v=106';
 import { WorldBase } from './world/WorldBase.js?v=102';
 import { Sky } from './world/Sky.js?v=94';
 import { Atmosphere } from './world/Atmosphere.js?v=95';
@@ -15,20 +15,21 @@ import { BuildingActivity } from './world/BuildingActivity.js?v=107';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
 import { nearestAdj } from './world/Pathfinding.js?v=94';
 import { UnitRenderer } from './world/UnitRenderer.js?v=97';
-import { GameState } from './sim/GameState.js?v=133';
-import * as Economy from './sim/Economy.js?v=107';
+import { GameState } from './sim/GameState.js?v=137';
+import * as Economy from './sim/Economy.js?v=111';
+import * as Estates from './sim/Estates.js?v=5';
 import * as BuildSys from './sim/Buildings.js?v=115';
-import * as Waves from './sim/Waves.js?v=99';
+import * as Waves from './sim/Waves.js?v=103';
 import * as Tech from './sim/Tech.js?v=94';
 import * as Nature from './sim/Nature.js?v=94';
-import * as Relics from './sim/Relics.js?v=95';
+import * as Relics from './sim/Relics.js?v=99';
 import * as Camps from './sim/Camps.js?v=94';
 import * as Wildlife from './sim/Wildlife.js?v=94';
 import * as Events from './sim/Events.js?v=94';
 import * as Achievements from './sim/Achievements.js?v=94';
 import * as Meta from './sim/Meta.js?v=94';
 import * as Research from './sim/Research.js?v=101';
-import { updateUnits, damage, awardExpeditionValor } from './sim/Units.js?v=105';
+import { updateUnits, damage, awardExpeditionValor } from './sim/Units.js?v=109';
 import { toggleEdict } from './sim/Edicts.js?v=94';
 import * as AntiSpiral from './sim/AntiSpiral.js?v=3';
 import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=94';
@@ -38,6 +39,7 @@ import { BuildMenu } from './ui/BuildMenu.js?v=106';
 import { Selection } from './ui/Selection.js?v=108';
 import { Minimap } from './ui/Minimap.js?v=94';
 import { ResearchPanel } from './ui/Research.js?v=104';
+import { EstatesPanel } from './ui/EstatesPanel.js?v=5';
 import { Toasts } from './ui/Toasts.js?v=94';
 import { Leaderboard } from './ui/Leaderboard.js?v=94';
 import { BUILDINGS } from './data/buildings.js?v=106';
@@ -99,6 +101,7 @@ class Game {
     this.selUI = new Selection(this);
     this.minimap = new Minimap(this);
     this.researchUI = new ResearchPanel(this);
+    this.estatesUI = new EstatesPanel(this);
     this.leaderboard = new Leaderboard(this);
     this.lobby = new Lobby(this);             // 3D-сцена стартового лобби (Фаза 3.1) — требует rdr/scene/assets выше
     this.startScreen = new StartScreen(this);
@@ -621,6 +624,7 @@ class Game {
     this.state.rankIndex = s.rankIndex || 0;
     this.state.day = s.day || 0;
     this.state.era = s.era || 0;                     // до зданий: они сразу берут облик своей эпохи
+    this.state.estates = s.estates && typeof s.estates === 'object' ? s.estates : this.state.estates;
     this.state.edicts = {};
     for (const n of (s.nodes || [])) this.state.addNode(n.kind, n.gx, n.gy, n.amount);
     for (const b of (s.buildings || [])) {
@@ -692,6 +696,8 @@ class Game {
     }
     const tb = document.getElementById('techBtn');
     if (tb) tb.onclick = () => { const open = this.researchUI.toggle(); tb.classList.toggle('on', open); sfx('click'); };
+    const eb = document.getElementById('estatesBtn');
+    if (eb) eb.onclick = () => { const open = this.estatesUI.toggle(); eb.classList.toggle('on', open); sfx('click'); };
     const xb = document.getElementById('fxBtn');
     if (xb) {
       const low0 = this.rdr.tier === 'low';
@@ -1328,6 +1334,7 @@ class Game {
     Transport.update(this.state, dt, this.ctx);   // телеги по дорогам (рынок → ратуша)
     Railroad.update(this.state, dt, this.ctx);    // паровоз между станциями
     BuildSys.update(this.state, dt, this.ctx);
+    Estates.update(this.state, dt, this.ctx);
     updateUnits(this.state, dt, this.ctx);
     Waves.update(this.state, dt, this.ctx);
     Tech.update(this.state, dt, this.ctx);
@@ -1576,7 +1583,7 @@ class Game {
     this.rdr.render(this.camera);
 
     this._uiT += fdt;
-    if (this._uiT > 0.1) { this.hud.update(); this.menu.update(); this.selUI.update(); this._updateObjective(); this._uiT = 0; }
+    if (this._uiT > 0.1) { this.hud.update(); this.menu.update(); this.selUI.update(); this.estatesUI.update(); this._updateObjective(); this._uiT = 0; }
     this.minimap.update(fdt);
     this.updateTracers(fdt);
   }

@@ -1,7 +1,7 @@
 // ===== Движение, бой и ИИ юнитов (свои воины + враги). Воркеры — в Jobs.js =====
 import { TILE, GRID_N } from '../data/config.js?v=102';
 import { findPath, nearestAdj } from '../world/Pathfinding.js?v=94';
-import { updateWorker } from './Jobs.js?v=96';
+import { updateWorker } from './Jobs.js?v=100';
 import { bark } from '../data/barks.js?v=94';
 import { SpatialHash } from './SpatialHash.js?v=94';
 
@@ -133,6 +133,7 @@ function tryAttack(state, u, target, ctx) {
   u.atkAnim = 0.2;                 // выпад-анимация (render)
   let bonus = (state.superTimer > 0 && u.faction === 'ours') ? 1.5 : 1;
   if (u.faction === 'ours' && state.research) bonus *= state.research.dmgMul;   // исследование «СЕЧА»
+  if (u.faction === 'ours' && state.estateMods) bonus *= state.estateMods.dmgMul || 1;
   if (u.vet) bonus *= 1 + 0.13 * u.vet;                                         // бонус ветерана (+13%/ранг)
   const dmg = u.dmg * bonus;
   if (u.def.ranged && ctx.tracer) {              // дальний бой: летит стрела, урон по прилёту

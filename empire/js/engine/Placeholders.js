@@ -666,17 +666,50 @@ function tree() {
   tiers.forEach(([r, h, y], i) => g.add(spruceTier(r, h, 0.06 - i * 0.008, mat(shades[i]), y, i * 0.31)));
   return g;
 }
+// Валун: додекаэдр с детерминированной неровностью вершин и приплюснутый — угловатый камень, а не шар.
+// seed фиксирован, чтобы NodeField сливал одинаковую геометрию для всех экземпляров.
+function boulder(r, m, x, y, z, seed, flat = 0.72) {
+  const geo = new THREE.DodecahedronGeometry(r, 0);
+  const p = geo.attributes.position;
+  let st = seed * 9301 + 49297;
+  const rnd = () => { st = (st * 9301 + 49297) % 233280; return st / 233280; };
+  const cache = new Map();                           // одинаковые вершины двигаем одинаково — без щелей
+  for (let i = 0; i < p.count; i++) {
+    const key = p.getX(i).toFixed(4) + ',' + p.getY(i).toFixed(4) + ',' + p.getZ(i).toFixed(4);
+    if (!cache.has(key)) cache.set(key, 0.82 + rnd() * 0.32);
+    const k = cache.get(key);
+    p.setXYZ(i, p.getX(i) * k, Math.max(-r * 0.35, p.getY(i) * k * flat), p.getZ(i) * k);
+  }
+  geo.computeVertexNormals();
+  const me = new THREE.Mesh(geo, m);
+  me.position.set(x, y, z); me.rotation.y = seed * 1.7; me.castShadow = true; me.receiveShadow = true;
+  return me;
+}
+
 function stoneNode() {
+  // Каменная россыпь: крупный валун, два поменьше, сколы; мох на макушках — чтобы камень не был «белым шаром».
   const g = new THREE.Group();
-  const rk = mat(PAL.rock), rd = mat(PAL.rockDk);
-  g.add(sph(0.32, rk, 0, 0.18, 0)); g.add(sph(0.22, rd, 0.28, 0.12, 0.1));
-  g.add(sph(0.18, rk, -0.22, 0.1, -0.15)); g.add(sph(0.14, rd, 0.05, 0.12, -0.28));
+  const rk = mat(0x55585e), rd = mat(0x44474d), moss = mat(0x2f5a24);   // темнее, чем кажется: солнце и небо высветляют камень почти до белого
+  g.add(boulder(0.3, rk, 0, 0.14, 0, 1));
+  g.add(boulder(0.2, rd, 0.27, 0.09, 0.12, 2));
+  g.add(boulder(0.16, rk, -0.24, 0.07, -0.12, 3));
+  g.add(boulder(0.09, rd, 0.06, 0.04, -0.3, 4, 0.6));
+  g.add(boulder(0.06, rk, -0.3, 0.03, 0.2, 5, 0.6));
+  g.add(boulder(0.17, moss, 0.02, 0.3, -0.02, 6, 0.28));   // мох на макушке
+  g.add(boulder(0.1, moss, 0.28, 0.2, 0.12, 7, 0.28));
   return g;
 }
 function oreNode() {
-  const g = stoneNode();
-  const gold = mat(PAL.oreGold, { emissive: PAL.oreGold, emi: 0.5, metal: 0.7, rough: 0.4 });
-  g.add(sph(0.1, gold, 0.1, 0.28, 0.05)); g.add(sph(0.07, gold, -0.15, 0.2, 0.12));
+  // Рудный выход: тёмная порода с ржавыми прожилками и золотыми самородками (слегка светятся — видно ночью).
+  const g = new THREE.Group();
+  const rk = mat(0x4f4e56), rust = mat(0x8a4a26), gold = mat(PAL.oreGold, { emissive: PAL.oreGold, emi: 0.35, metal: 0.8, rough: 0.35 });
+  g.add(boulder(0.3, rk, 0, 0.15, 0, 11, 0.85));
+  g.add(boulder(0.2, rk, 0.26, 0.1, -0.1, 12));
+  g.add(boulder(0.14, rust, -0.24, 0.08, 0.1, 13));
+  g.add(boulder(0.1, rust, 0.12, 0.3, 0.1, 14, 0.4));
+  const nug = (r, x, y, z, rot) => { const me = new THREE.Mesh(new THREE.OctahedronGeometry(r, 0), gold); me.position.set(x, y, z); me.rotation.set(rot, rot * 0.7, 0); return me; };
+  g.add(nug(0.07, 0.1, 0.33, 0.05, 0.4)); g.add(nug(0.05, -0.12, 0.26, 0.14, 1.1));
+  g.add(nug(0.045, 0.3, 0.2, -0.06, 0.7)); g.add(nug(0.035, -0.02, 0.05, -0.32, 0.2));
   return g;
 }
 
@@ -805,27 +838,53 @@ function bogatyr() {
 }
 
 // ---- дичь ----
+// Обтекаемая часть тела зверя: икосфера, растянутая по осям (вместо коробок).
+function blob(sx, sy, sz, m, x, y, z) {
+  const me = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 1), m);
+  me.scale.set(sx, sy, sz); me.position.set(x, y, z); me.castShadow = true; me.receiveShadow = true;
+  return me;
+}
+
 function deer() {
+  // Олень мордой по +X, в холке ~0.55 (человек 0.72): тело, тонкие ноги с копытами, белое «зеркало», ветвистые рога.
   const g = new THREE.Group();
-  const body = mat(0x9a6a3a), dark = mat(0x6a4622), light = mat(0xc8a060), antler = mat(0xd8cbb0);
-  g.add(box(0.6, 0.32, 0.26, body, 0, 0.55, 0));
-  for (const [x, z] of [[-0.22, -0.09], [0.22, -0.09], [-0.22, 0.09], [0.22, 0.09]]) g.add(cyl(0.04, 0.04, 0.45, 4, dark, x, 0.22, z));
-  const neck = cyl(0.07, 0.09, 0.32, 5, body, 0.3, 0.78, 0); neck.rotation.z = -0.5; g.add(neck);
-  g.add(box(0.2, 0.16, 0.14, light, 0.42, 0.92, 0));
-  const a1 = cone(0.03, 0.22, 4, antler, 0.46, 1.08, 0.05); a1.rotation.z = 0.3; g.add(a1);
-  const a2 = cone(0.03, 0.22, 4, antler, 0.46, 1.08, -0.05); a2.rotation.z = 0.3; g.add(a2);
-  g.add(box(0.05, 0.1, 0.05, light, -0.32, 0.6, 0));
+  const body = mat(0xa8683a), belly = mat(0xe2c9a0), dark = mat(0x3a2616), antler = mat(0xe6dcc4);
+  g.add(blob(0.24, 0.12, 0.1, body, 0, 0.42, 0));
+  g.add(blob(0.16, 0.06, 0.08, belly, 0.02, 0.35, 0));
+  g.add(blob(0.05, 0.06, 0.07, belly, -0.23, 0.45, 0));                       // белое «зеркало»
+  for (const [x, z] of [[-0.16, -0.06], [0.16, -0.06], [-0.16, 0.06], [0.16, 0.06]]) {
+    g.add(cyl(0.018, 0.022, 0.34, 6, body, x, 0.2, z));
+    g.add(cyl(0.024, 0.02, 0.04, 6, dark, x, 0.02, z));                       // копыта
+  }
+  const neck = cyl(0.04, 0.06, 0.2, 7, body, 0.21, 0.55, 0); neck.rotation.z = -0.55; g.add(neck);
+  g.add(blob(0.09, 0.055, 0.05, body, 0.31, 0.64, 0));                        // голова
+  g.add(blob(0.03, 0.025, 0.028, dark, 0.39, 0.62, 0));                        // нос
+  for (const zs of [-1, 1]) {
+    const ear = cone(0.02, 0.07, 5, body, 0.27, 0.71, zs * 0.045); ear.rotation.x = zs * 0.6; g.add(ear);
+    // рога: ствол и три отростка
+    const t = cyl(0.008, 0.012, 0.2, 5, antler, 0.28, 0.8, zs * 0.05); t.rotation.set(zs * 0.35, 0, 0.2); g.add(t);
+    for (let k = 0; k < 3; k++) {
+      const tine = cyl(0.005, 0.008, 0.08, 4, antler, 0.3 + k * 0.01, 0.78 + k * 0.05, zs * (0.08 + k * 0.02));
+      tine.rotation.set(zs * 0.8, 0, -0.6); g.add(tine);
+    }
+  }
   return g;
 }
 function boar() {
+  // Кабан мордой по +X, в холке ~0.4: щетинистая туша, грива по хребту, пятак, клыки.
   const g = new THREE.Group();
-  const body = mat(0x3a2e26), dark = mat(0x241c16), tusk = mat(0xe8e0cc);
-  g.add(box(0.62, 0.34, 0.3, body, 0, 0.4, 0));
-  g.add(box(0.3, 0.28, 0.26, dark, 0.18, 0.46, 0));
-  for (const [x, z] of [[-0.2, -0.1], [0.2, -0.1], [-0.2, 0.1], [0.2, 0.1]]) g.add(cyl(0.04, 0.05, 0.3, 4, dark, x, 0.15, z));
-  g.add(box(0.18, 0.16, 0.18, body, 0.46, 0.42, 0));
-  g.add(box(0.08, 0.08, 0.14, dark, 0.56, 0.4, 0));
-  g.add(cone(0.02, 0.1, 4, tusk, 0.54, 0.36, 0.07)); g.add(cone(0.02, 0.1, 4, tusk, 0.54, 0.36, -0.07));
+  const body = mat(0x3e3028), mane = mat(0x1e1712), snout = mat(0x8a6a5a), tusk = mat(0xefe6d2);
+  g.add(blob(0.26, 0.15, 0.13, body, 0, 0.28, 0));
+  g.add(blob(0.13, 0.13, 0.12, body, 0.17, 0.3, 0));                           // загривок
+  for (let k = 0; k < 6; k++) g.add(cone(0.03, 0.08, 4, mane, 0.18 - k * 0.07, 0.43 - k * 0.01, 0));   // щетина по хребту
+  for (const [x, z] of [[-0.15, -0.07], [0.15, -0.07], [-0.15, 0.07], [0.15, 0.07]]) g.add(cyl(0.025, 0.03, 0.16, 6, mane, x, 0.08, z));
+  g.add(blob(0.1, 0.08, 0.07, body, 0.33, 0.26, 0));                            // голова
+  const pyatak = cyl(0.04, 0.045, 0.04, 8, snout, 0.43, 0.23, 0); pyatak.rotation.z = Math.PI / 2; g.add(pyatak);
+  for (const zs of [-1, 1]) {
+    const tk = cone(0.012, 0.07, 5, tusk, 0.41, 0.26, zs * 0.04); tk.rotation.z = -0.4; g.add(tk);
+    const ear = cone(0.025, 0.06, 4, body, 0.28, 0.35, zs * 0.05); ear.rotation.x = zs * 0.5; g.add(ear);
+  }
+  const hvost = cyl(0.006, 0.006, 0.1, 4, mane, -0.27, 0.26, 0); hvost.rotation.z = 0.8; g.add(hvost);   // хвостик
   return g;
 }
 
