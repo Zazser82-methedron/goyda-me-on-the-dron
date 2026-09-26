@@ -1,5 +1,5 @@
 // ===== Три пути к победе и политический риск переворота =====
-import { ESTATES, adjust } from './Estates.js?v=11';
+import { ESTATES, adjust } from './Estates.js?v=12';
 
 const LOVE_DAYS = 12;
 const COUP_COOLDOWN_DAYS = 8;

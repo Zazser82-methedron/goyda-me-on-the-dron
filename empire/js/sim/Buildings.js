@@ -1,6 +1,6 @@
 // ===== Постройка, стройка-прогресс и тренировка юнитов =====
-import { BUILDINGS } from '../data/buildings.js?v=113';
-import { UNITS } from '../data/units.js?v=100';
+import { BUILDINGS } from '../data/buildings.js?v=114';
+import { UNITS } from '../data/units.js?v=101';
 import { RANKS } from '../data/ranks.js?v=94';
 import { nearestAdj } from '../world/Pathfinding.js?v=94';
 import { bark } from '../data/barks.js?v=94';
@@ -133,11 +133,13 @@ export function startRepair(state, b, ctx) {
 export function placeBuilding(state, kind, gx, gy, ctx, opts = {}) {
   const def = BUILDINGS[kind];
   if (!def) return { ok: false, reason: 'нет такого здания' };
+  if (def.hidden) return { ok: false, reason: 'эта постройка больше недоступна' };
   if (kind === 'idol' && state.era !== 2) return { ok: false, reason: 'Чудо ДРОН доступно только в III эпохе' };
   if ((def.rank || 0) > state.rankIndex) return { ok: false, reason: 'нужен ранг ' + RANKS[def.rank].name };
   if ((def.era || 0) > (state.era || 0)) return { ok: false, reason: 'откроется в эпохе «' + Eras.ERA_NAMES[def.era] + '»' };
   if (def.faction && (!state.faction || state.faction.key !== def.faction)) return { ok: false, reason: 'доступно только фракции «' + def.faction + '»' };
   if (def.requiresTech && !(state.research && state.research.done[def.requiresTech])) return { ok: false, reason: 'изучите технологию (через обсерваторию)' };
+  if (def.needs && !state.hasBuilt(def.needs)) return { ok: false, reason: 'нужна постройка: ' + BUILDINGS[def.needs].name };
   if (def.unique && state.buildings.some(b => b.kind === kind)) return { ok: false, reason: 'уже построено' };
   if (!state.grid.canPlace(gx, gy, def.w, def.h, !!def.onWater)) return { ok: false, reason: 'место занято' };
   if (!state.canAfford(def.cost)) return { ok: false, reason: 'мало ресурсов' };

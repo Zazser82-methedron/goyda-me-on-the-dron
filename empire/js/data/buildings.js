@@ -234,8 +234,9 @@ export const BUILDINGS = {
     w: 1, h: 1, hp: 160, cat: 'econ', era: 2, workers: 1,
     roadPort: { dx: 0, dy: 1 },
     cost: { wood: 25, tes: 25, stone: 35, iron: 15 }, build: 7,
+    needs: 'izba_plotnika',
     carpenter: { radius: 10, targets: 10, upkeep: { wood: 4, stone: 2, iron: 1 }, repair: 7 },
-    desc: 'Артельная мастерская — держит в исправности 10 построек в радиусе 10 клеток, сильнее Избы Плотника.',
+    desc: 'Апгрейд Избы Плотника: держит в исправности 10 построек в радиусе 10 клеток.',
   },
   agitpunkt: {
     kind: 'agitpunkt', name: 'АГИТПУНКТ', icon: '📯', model: 'bld_agitpunkt',
@@ -296,7 +297,12 @@ export const BUILDINGS = {
     kind: 'rel_giper', name: 'ГИПЕР-ИДОЛ', icon: '💥', model: 'idol_giper',
     w: 1, h: 1, hp: 180, cat: 'relic', rank: 3, build: 6,
     cost: { stone: 80, gold: 40, faith: 40 }, aura: { radius: 7, tick: 1.1, effect: 'aoe', power: 16 },
-    desc: 'Бьёт молнией по врагам в радиусе.',
+    gemUpgrade: {
+      key: 'samotsvety', name: 'Самоцветы', icon: '💠', cost: { gems: 15 },
+      aura: { radius: 9, tick: 0.95, effect: 'aoe', power: 22 },
+      desc: 'Самоцветы усиливают молнию: радиус 9, 22 урона каждые 0,95 с.',
+    },
+    desc: 'Бьёт молнией по врагам в радиусе. Улучшается самоцветами.',
   },
   rel_shipo: {
     kind: 'rel_shipo', name: 'ШИПО-ИДОЛ', icon: '🌵', model: 'idol_shipo',
@@ -308,13 +314,14 @@ export const BUILDINGS = {
     kind: 'rel_obereg', name: 'ИДОЛ-ОБЕРЕГ', icon: '🔰', model: 'idol_obereg',
     w: 1, h: 1, hp: 200, cat: 'relic', rank: 2, build: 5,
     cost: { stone: 55, gold: 20, faith: 22 }, aura: { radius: 9, tick: 1.0, effect: 'heal', power: 7 },
-    desc: 'Чинит постройки в радиусе.',
+    hidden: true, legacy: true,
+    desc: 'Устаревший идол старых сохранений: чинит постройки в радиусе.',
   },
   rel_goydushka: {
-    kind: 'rel_goydushka', name: 'ИДОЛ-GOYDUSHKA', icon: '🍲', model: 'idol_food',
+    kind: 'rel_goydushka', name: 'ИДОЛ ГУЛЯНЬЯ', icon: '🎶', model: 'idol_fonk',
     w: 1, h: 1, hp: 140, cat: 'relic', rank: 1, build: 4,
-    cost: { wood: 30, faith: 14 }, produce: { food: 6, happy: 2 },
-    desc: 'Кормит округу: +6 ЕДЫ и +счастье в день.',
+    cost: { wood: 35, faith: 18 }, produce: { food: 8, happy: 5, faith: 1 },
+    desc: 'Пир и фонк: +8 ЕДЫ, +5 веселья и +1 ВЕРЫ в день.',
   },
   rel_zlato: {
     kind: 'rel_zlato', name: 'ЗЛАТО-ИДОЛ', icon: '🪙', model: 'idol_gold',
@@ -326,7 +333,8 @@ export const BUILDINGS = {
     kind: 'rel_fonk', name: 'ФОНК-ИДОЛ', icon: '🎶', model: 'idol_fonk',
     w: 1, h: 1, hp: 140, cat: 'relic', rank: 1, build: 4,
     cost: { wood: 25, faith: 12 }, produce: { happy: 6, faith: 1 },
-    desc: 'Народ ликует: +счастье и немного ВЕРЫ.',
+    hidden: true, legacy: true,
+    desc: 'Устаревший идол старых сохранений; при загрузке станет Идолом Гулянья.',
   },
   rel_vera: {
     kind: 'rel_vera', name: 'ИДОЛ ВЕРЫ', icon: '☩', model: 'idol_vera',
@@ -338,7 +346,8 @@ export const BUILDINGS = {
     kind: 'rel_samotsvet', name: 'САМОЦВЕТНЫЙ ИДОЛ', icon: '💠', model: 'idol_samotsvet',
     w: 1, h: 1, hp: 210, cat: 'relic', rank: 3, build: 7,
     cost: { stone: 60, gems: 8, faith: 30 }, aura: { radius: 9, tick: 0.95, effect: 'aoe', power: 22 },
-    desc: 'Гранёный идол на самоцветах 💎 — бьёт самой мощной аурой по набегу.',
+    hidden: true, legacy: true,
+    desc: 'Устаревший идол старых сохранений; при загрузке станет Гипер-идолом с самоцветами.',
   },
 };
 
@@ -346,7 +355,7 @@ export const BUILDINGS = {
 export const BUILD_ORDER = ['izba', 'izba_plotnika', 'banya', 'ambar', 'ferma', 'roshcha', 'lesopilka', 'melnica', 'paseka', 'rudnik', 'zhila', 'kuznica', 'kazarma', 'chastokol', 'gate', 'road', 'bridge', 'rail', 'station', 'tower', 'church', 'observatory', 'veche', 'market', 'traktir',
   'prikaz_sbora', 'zastava_ostrog', 'tamozhnya', 'remontny_dvor', 'agitpunkt', 'sklad_putevoy',
   'kapishe_drona', 'oprichny_dvor', 'yurta_stavka', 'ledyanoy_chertog',
-  'rel_shipo', 'rel_krio', 'rel_obereg', 'rel_giper', 'rel_goydushka', 'rel_zlato', 'rel_fonk', 'rel_vera', 'rel_samotsvet', 'idol'];
+  'rel_shipo', 'rel_krio', 'rel_giper', 'rel_goydushka', 'rel_zlato', 'rel_vera', 'idol'];
 
 export const CATS = {
   econ: { name: 'ХОЗЯЙСТВО', color: '#b8763a' },

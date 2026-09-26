@@ -1,7 +1,7 @@
 // ===== Панель выбранной сущности: HP, тренировка, инфо =====
-import { UNITS } from '../data/units.js?v=100';
+import { UNITS } from '../data/units.js?v=101';
 import { RES_LABEL } from '../data/config.js?v=102';
-import { costStr } from './BuildMenu.js?v=118';
+import { costStr } from './BuildMenu.js?v=119';
 import { roadPath } from '../sim/Transport.js?v=104';
 import { railPath } from '../sim/Railroad.js?v=105';
 import { homesteadNeeds, NEED_LABELS } from '../sim/Chains.js?v=3';
@@ -71,6 +71,12 @@ export class Selection {
       }
       if (sel.def.drop) html += `<div class="sel-tag">📦 точка сдачи</div>`;
       if (sel.def.produce) html += `<div class="sel-tag">${produceStr(sel.def.produce)}</div>`;
+      if (sel.built && sel.def.gemUpgrade) {
+        const upg = sel.def.gemUpgrade;
+        html += sel.upg === upg.key
+          ? `<div class="sel-tag">${upg.icon} «${upg.name}»: ${upg.desc}</div>`
+          : `<button class="ubtn relic-upg" title="${upg.desc}">${upg.icon} УЛУЧШИТЬ: ${upg.name}<span class="bc">${costStr(upg.cost)}</span></button>`;
+      }
       if (sel.kind === 'izba') html += `<div class="sel-tag" id="sel-needs"></div>`;
       if (sel.kind === 'market' || sel.kind === 'traktir') html += `<div class="sel-tag" id="sel-road"></div>`;   // связь дорогой с ратушей (телеги) + накопленный груз
       if (sel.kind === 'station') html += `<div class="sel-tag" id="sel-rail"></div>`;  // связь рельсами с другой станцией
@@ -106,7 +112,9 @@ export class Selection {
       html += `<div class="sel-tag">ПКМ своим юнитом — охота 🏹 (+ЕДА и шкуры)</div>`;
     }
     this.el.innerHTML = html;
-    this.el.querySelectorAll('.ubtn').forEach(btn => { btn.onclick = () => this.game.train(sel, btn.dataset.u); });
+    this.el.querySelectorAll('.ubtn[data-u]').forEach(btn => { btn.onclick = () => this.game.train(sel, btn.dataset.u); });
+    const relicUpg = this.el.querySelector('.relic-upg');
+    if (relicUpg) relicUpg.onclick = () => this._upgradeRelic(sel);
     const cur = sel.stance || 'aggro';
     this.el.querySelectorAll('.stbtn').forEach(btn => {
       if (btn.dataset.st === cur) btn.classList.add('on');
@@ -117,6 +125,20 @@ export class Selection {
     });
     const ord = this.el.querySelector('.ord-btn');
     if (ord) ord.onclick = () => this.game._armOrder();
+  }
+
+  _upgradeRelic(b) {
+    const upg = b.def.gemUpgrade;
+    if (!upg || b.upg === upg.key) return;
+    const state = this.game.state;
+    if (!state.canAfford(upg.cost)) { this.game.toasts.show('Не хватает ресурсов: ' + costStr(upg.cost), { bad: true }); return; }
+    state.spend(upg.cost);
+    b.upg = upg.key;
+    state.save();
+    this.game.ctx.sfx && this.game.ctx.sfx('build');
+    this.game.toasts.show(`${upg.icon} ${b.def.name}: «${upg.name}» установлены — ${upg.desc}`, { gold: true });
+    this._full(b);
+    this.curId = b.id;
   }
 
   _dynamic(sel) {

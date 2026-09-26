@@ -4,7 +4,7 @@ import { edictMods } from './Edicts.js?v=94';
 import * as Wear from './Wear.js?v=2';
 import * as AntiSpiral from './AntiSpiral.js?v=3';
 import { needsCoverage, runConversions } from './Chains.js?v=3';
-import { adjust } from './Estates.js?v=11';
+import { adjust } from './Estates.js?v=12';
 
 const DAY_SECONDS = DAY_TICKS * SIM_DT;   // 8 сек
 const FOOD_PER_POP = 1;

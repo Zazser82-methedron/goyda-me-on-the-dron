@@ -3,8 +3,8 @@ import * as THREE from 'three';
 import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=102';
 import { Grid } from '../world/Grid.js?v=96';
 import { NodeField } from '../world/NodeField.js?v=130';
-import { BUILDINGS } from '../data/buildings.js?v=113';
-import { UNITS } from '../data/units.js?v=100';
+import { BUILDINGS } from '../data/buildings.js?v=114';
+import { UNITS } from '../data/units.js?v=101';
 import { RANKS } from '../data/ranks.js?v=94';
 import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=124';
 import * as Tiling from '../world/Tiling.js?v=123';
@@ -514,7 +514,7 @@ export class GameState {
       era: this.era || 0,   // эпоха раньше не сохранялась: после перезагрузки держава откатывалась в I эпоху
       estates: this.estates, victory: this.victory, coup: this.coup,
       faction: this.faction ? this.faction.key : 'goyda', mapKey: this.mapKey || 'les',
-      buildings: this.buildings.map(b => ({ kind: b.kind, gx: b.gx, gy: b.gy, built: b.built, hp: b.hp, rot: b.rot || 0, pendingCargo: (b._pendingCargo || 0) + (inTransitCargo.get(b.id) || 0) })),
+      buildings: this.buildings.map(b => ({ kind: b.kind, gx: b.gx, gy: b.gy, built: b.built, hp: b.hp, rot: b.rot || 0, upg: b.upg || null, pendingCargo: (b._pendingCargo || 0) + (inTransitCargo.get(b.id) || 0) })),
       nodes: this.nodes.map(n => ({ kind: n.kind, gx: n.gx, gy: n.gy, amount: n.amount })),
       units: this.units.filter(u => u.faction === 'ours').map(u => ({ kind: u.kind, x: u.x, z: u.z, hp: u.hp })),
     };

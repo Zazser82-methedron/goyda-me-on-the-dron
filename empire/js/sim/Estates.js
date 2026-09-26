@@ -1,6 +1,6 @@
 // ===== Сословия: политика державы, требования и собрание Вече =====
 
-const IDOLS = ['idol', 'rel_krio', 'rel_giper', 'rel_shipo', 'rel_obereg', 'rel_goydushka', 'rel_zlato', 'rel_fonk', 'rel_vera', 'rel_samotsvet'];
+const IDOLS = ['idol', 'rel_krio', 'rel_giper', 'rel_shipo', 'rel_goydushka', 'rel_zlato', 'rel_vera'];
 
 export const ESTATES = {
   oprichnina: { name: 'Опричнина', icon: '⚔️', color: '#e85a4f', likes: ['kazarma', 'zastava_ostrog', 'tower', 'chastokol'], dislikes: ['traktir'], likeEdicts: ['mob'], dislikeEdicts: ['prazdnik'] },

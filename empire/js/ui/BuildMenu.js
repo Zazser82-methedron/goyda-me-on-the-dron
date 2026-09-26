@@ -1,5 +1,5 @@
 // ===== Нижняя панель: вкладки-категории построек + модальная сетка карточек + указы =====
-import { BUILDINGS, BUILD_ORDER, CATS } from '../data/buildings.js?v=113';
+import { BUILDINGS, BUILD_ORDER, CATS } from '../data/buildings.js?v=114';
 import { RANKS } from '../data/ranks.js?v=94';
 import { RES_LABEL } from '../data/config.js?v=102';
 import { EDICTS } from '../sim/Edicts.js?v=94';
@@ -93,6 +93,7 @@ export class BuildMenu {
     // группируем здания по категориям, сохраняя порядок BUILD_ORDER
     this.catKinds = {};
     for (const kind of BUILD_ORDER) {
+      if (BUILDINGS[kind].hidden) continue;
       const c = BUILDINGS[kind].cat;
       (this.catKinds[c] = this.catKinds[c] || []).push(kind);
     }
@@ -185,6 +186,7 @@ export class BuildMenu {
     if ((d.era || 0) > (s.era || 0)) { this.game.toasts.show('Откроется в эпохе «' + ERA_NAMES[d.era] + '»', { bad: true }); return; }
     if (kind === 'idol' && s.era !== 2) { this.game.toasts.show('Чудо ДРОН доступно только в III эпохе', { bad: true }); return; }
     if (d.requiresTech && !(s.research && s.research.done[d.requiresTech])) { this.game.toasts.show('Изучите технологию: ' + TECHS[d.requiresTech].name, { bad: true }); return; }
+    if (d.needs && !s.hasBuilt(d.needs)) { this.game.toasts.show('Нужна постройка: ' + BUILDINGS[d.needs].name, { bad: true }); return; }
     this.game.enterBuild(kind);
     this.close();
   }
@@ -199,7 +201,8 @@ export class BuildMenu {
       const rankLock = (d.rank || 0) > s.rankIndex;
       const eraLock = (d.era || 0) > (s.era || 0) || (kind === 'idol' && s.era !== 2);   // Чудо — строго III эпоха
       const factionLock = d.faction && (!s.faction || s.faction.key !== d.faction);
-      const locked = rankLock || techLock || eraLock || factionLock;
+      const needsLock = d.needs && !s.hasBuilt(d.needs);
+      const locked = rankLock || techLock || eraLock || factionLock || needsLock;
       // антидребезг доступности: ресурсы скачут у границы цены → меняем подсветку только если держится ≈0.4с
       const afford = s.canAfford(d.cost);
       if (card._affShow === undefined) { card._affShow = afford; card._affCnt = 0; }
@@ -213,6 +216,7 @@ export class BuildMenu {
         lockEl.textContent = factionLock ? '🔒 фракция: ' + d.faction
           : rankLock ? '🔒 ранг: ' + RANKS[d.rank].name
           : eraLock ? '🔒 эпоха: ' + (kind === 'idol' ? ERA_NAMES[2] : (ERA_NAMES[d.era] || d.era))
+          : needsLock ? '🔒 нужна: ' + BUILDINGS[d.needs].name
           : '🔒 изучить: ' + ((TECHS[d.requiresTech] && TECHS[d.requiresTech].name) || '');
         lockEl.style.display = 'flex';
       } else lockEl.style.display = 'none';
@@ -230,7 +234,8 @@ export class BuildMenu {
         const d = BUILDINGS[kind];
         const techLock = d.requiresTech && !(s.research && s.research.done[d.requiresTech]);
         const factionLock = d.faction && (!s.faction || s.faction.key !== d.faction);
-        if (!((d.rank || 0) > s.rankIndex || techLock || factionLock || (d.era || 0) > (s.era || 0) || (kind === 'idol' && s.era !== 2))) unlocked++;
+        const needsLock = d.needs && !s.hasBuilt(d.needs);
+        if (!((d.rank || 0) > s.rankIndex || techLock || factionLock || needsLock || (d.era || 0) > (s.era || 0) || (kind === 'idol' && s.era !== 2))) unlocked++;
       }
       t.classList.toggle('alllocked', unlocked === 0);
       const bk = this.game.buildKind;

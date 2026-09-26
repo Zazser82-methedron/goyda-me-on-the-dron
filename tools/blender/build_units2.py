@@ -93,6 +93,22 @@ def kromeshnik():
     objs = K.in_rider_hand(kopyo)
 
 
+def luchnik():
+    # лесной лучник I эпохи: зелёный кафтан, колпак-куколь, колчан за спиной, лук в левой руке
+    K.humanoid('l', cloth='M_paint_green', trousers='M_leather', boots='M_leather', belt='M_wheat', hem=0.12)
+    K.lathe('l_kukol', [(0.068, 0), (0.07, 0.04), (0.045, 0.1), (0.0, 0.15)], (0, 0.012, 0.66), 'M_paint_green', segs=10)
+    K.box('l_kukol_hv', (0.03, 0.05, 0.03), (0, 0.06, 0.8), 'M_paint_green', rot=(0.6, 0, 0), bevel=0.008)
+    K.log('kolchan', 0.24, 0.03, (0.05, 0.1, 0.44), 'z', material='M_leather', segs=8, jitter=0)
+    K.bpy.data.objects['kolchan'].rotation_euler = (0.25, -0.3, 0)
+    for i in range(4):
+        K.box(f'operenie{i}', (0.012, 0.004, 0.04), (0.05 + (i - 1.5) * 0.012 + 0.03, 0.13, 0.58), 'M_paint_red', rot=(0.25, -0.3, 0), bevel=0)
+    def luk():
+        K.lathe('luk', [(0.2, 0), (0.21, 0.01), (0.2, 0.02)], (0, 0, 0), 'M_plank', segs=10)
+        b = K.bpy.data.objects['luk']; b.rotation_euler = (0, math.pi / 2, 0); b.scale = (0.5, 1, 1)
+        K.log('tetiva', 0.36, 0.003, (0.02, 0, 0.0), 'z', material='M_paint_white', segs=4, jitter=0)
+    K.in_left_hand('luk', luk)
+
+
 def konny_luchnik():
     z = K.horse('h', coat='M_leather', mane='M_dark', saddle='M_paint_blue')
     top = K.rider('r', z, cloth='M_fur', boots='M_leather')
@@ -128,7 +144,7 @@ def pushka():
     K.place(objs, (0, 0.42, 0), 0.0)
 
 
-UNITS = {'unit_strelec': strelec, 'unit_voevoda': voevoda, 'unit_zhrec': zhrec, 'unit_kriomag': kriomag,
+UNITS = {'unit_luchnik': luchnik, 'unit_strelec': strelec, 'unit_voevoda': voevoda, 'unit_zhrec': zhrec, 'unit_kriomag': kriomag,
          'unit_oprichnik_kon': oprichnik_kon, 'unit_kromeshnik': kromeshnik, 'unit_konny_luchnik': konny_luchnik,
          'unit_pushka': pushka}
 for name, fn in UNITS.items():

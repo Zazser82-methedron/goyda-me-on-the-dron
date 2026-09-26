@@ -27,7 +27,7 @@ export const UNITS = {
     desc: 'Герой: только один. Воодушевляет своих в радиусе 5 на +15% урона.',
   },
   luchnik: {
-    kind: 'luchnik', name: 'ЛУЧНИК', icon: '🏹', model: 'unit_ratnik', faction: 'ours',
+    kind: 'luchnik', name: 'ЛУЧНИК', icon: '🏹', model: 'unit_luchnik', faction: 'ours',
     hp: 55, speed: 2.2, dmg: 12, range: 5.5, atkCd: 1.3, ranged: true,
     trainAt: 'kazarma', trainTime: 7, cost: { food: 12, wood: 10, gold: 10 }, rank: 1, cls: 'ranged', era: 0,
     desc: 'Бьёт издали. Стеклянная пушка — держи за спинами копейщиков.',
