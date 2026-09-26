@@ -657,3 +657,62 @@ def separate_group(name, objs, loc):
     ob['separate'] = 1
     ob.location = loc
     return ob
+
+
+# ================= Конница: конь + всадник (части тела для шейдера UnitRenderer) =================
+# Дополнительные части: 5/6 — ноги коня накрест (перед-лев + зад-прав / перед-прав + зад-лев) — галоп;
+# 7/8 — левая/правая рука всадника (плечо выше, чем у пешего). Суставы — те же числа в UnitRenderer.js.
+PART_HORSE_A, PART_HORSE_B, PART_RIDER_ARM_L, PART_RIDER_ARM_R = 5, 6, 7, 8
+HORSE_LEG_Z = 0.36
+RIDER_SHOULDER_Z = 0.9
+
+
+def horse(p, coat='M_leather', mane='M_dark', saddle='M_paint_red', caparison=None):
+    """Конь мордой в -Y, длина ~0.72, холка ~0.5. Возвращает высоту седла."""
+    lathe(p + 'telo', [(0.0, -0.27), (0.1, -0.24), (0.13, -0.1), (0.13, 0.1), (0.11, 0.22), (0.0, 0.27)], (0, 0, 0), coat, segs=10)
+    b = bpy.data.objects[p + 'telo']
+    b.rotation_euler = (math.pi / 2, 0, 0); b.location = (0, 0.02, 0.46); b.scale = (0.85, 1.0, 1.0)
+    sheya = log(p + 'sheya', 0.3, 0.06, (0, -0.24, 0.62), 'y', material=coat, segs=8, jitter=0)
+    sheya.rotation_euler = (math.pi / 2 + 0.9, 0, 0)
+    golova = lathe(p + 'golova', [(0.0, 0), (0.05, 0.02), (0.055, 0.1), (0.04, 0.18), (0.0, 0.2)], (0, 0, 0), coat, segs=8)
+    golova.rotation_euler = (math.pi / 2 + 0.35, 0, 0); golova.location = (0, -0.34, 0.74)
+    for s in (-1, 1):
+        box(f'{p}uho{s}', (0.02, 0.02, 0.05), (s * 0.03, -0.3, 0.8), coat, bevel=0)
+        box(f'{p}glaz{s}', (0.01, 0.012, 0.012), (s * 0.045, -0.42, 0.74), 'M_dark', bevel=0)
+    grv = box(p + 'griva', (0.025, 0.24, 0.07), (0, -0.23, 0.7), mane, rot=(0.85, 0, 0), bevel=0.01)
+    hv = lathe(p + 'hvost', [(0.03, 0), (0.04, 0.1), (0.0, 0.22)], (0, 0, 0), mane, segs=6)
+    hv.rotation_euler = (-2.4, 0, 0); hv.location = (0, 0.28, 0.5)
+    for (sx, sy, part) in ((-1, -1, PART_HORSE_A), (1, 1, PART_HORSE_A), (1, -1, PART_HORSE_B), (-1, 1, PART_HORSE_B)):
+        def leg(sx=sx, sy=sy):
+            log(f'{p}noga{sx}{sy}', HORSE_LEG_Z, 0.025, (sx * 0.065, sy * 0.18, HORSE_LEG_Z / 2), 'z', material=coat, segs=6, jitter=0)
+            box(f'{p}kopyto{sx}{sy}', (0.045, 0.05, 0.035), (sx * 0.065, sy * 0.18 - 0.005, 0.018), 'M_dark', bevel=0.008)
+        as_part(part, leg)
+    box(p + 'sedlo', (0.2, 0.16, 0.04), (0, 0.0, 0.59), saddle, bevel=0.015)
+    if caparison:   # попона
+        for s in (-1, 1):
+            box(f'{p}popona{s}', (0.012, 0.36, 0.16), (s * 0.12, 0.02, 0.44), caparison, bevel=0.003)
+    return 0.61
+
+
+def rider(p, z, cloth='M_dark', skin='M_skin', boots='M_leather', hat=None):
+    """Всадник на седле z: торс, голова, ноги вдоль боков коня, руки — части 7/8. Возвращает Z макушки."""
+    lathe(p + 'tors', [(0.075, 0), (0.085, 0.12), (0.075, 0.26), (0.045, 0.3)], (0, 0.02, z), cloth, segs=10)
+    for s in (-1, 1):   # ноги в стременах
+        b = box(f'{p}noga{s}', (0.04, 0.05, 0.22), (s * 0.1, 0.0, z - 0.06), cloth, rot=(0.25, 0, 0), bevel=0.01)
+        box(f'{p}sapog{s}', (0.045, 0.07, 0.05), (s * 0.1, -0.04, z - 0.18), boots, bevel=0.01)
+    lathe(p + 'golova', [(0.0, 0), (0.045, 0.01), (0.058, 0.045), (0.055, 0.085), (0.038, 0.11), (0.0, 0.12)], (0, 0.02, z + 0.3), skin, segs=10)
+    for s in (-1, 1):
+        box(f'{p}glaz{s}', (0.012, 0.006, 0.012), (s * 0.021, -0.034, z + 0.36), 'M_dark', bevel=0)
+    for side, part in ((-1, PART_RIDER_ARM_L), (1, PART_RIDER_ARM_R)):
+        def arm(side=side):
+            x = side * 0.09
+            log(f'{p}ruka{side}', 0.19, 0.022, (x, 0.02, RIDER_SHOULDER_Z - 0.095), 'z', material=cloth, segs=7, jitter=0)
+            lathe(f'{p}kist{side}', [(0.0, 0), (0.02, 0.012), (0.02, 0.028), (0.0, 0.036)], (x, 0.02, RIDER_SHOULDER_Z - 0.225), skin, segs=7)
+        as_part(part, arm)
+    return z + 0.42
+
+
+def in_rider_hand(fn):
+    objs = as_part(PART_RIDER_ARM_R, fn)
+    place(objs, (0.09, 0.0, RIDER_SHOULDER_Z - 0.21), 0.0)
+    return objs

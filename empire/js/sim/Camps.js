@@ -1,7 +1,7 @@
 // ===== Вражьи станы: спавнят набеги, можно сносить =====
 import { nearestAdj, floodReachable } from '../world/Pathfinding.js?v=94';
-import { UNITS } from '../data/units.js?v=94';
-import { spawnBoss } from './Waves.js?v=108';
+import { UNITS } from '../data/units.js?v=95';
+import { spawnBoss } from './Waves.js?v=109';
 
 const SPAWN_EVERY = 32;
 const LAIR_SPAWN_EVERY = [0, 56, 46];

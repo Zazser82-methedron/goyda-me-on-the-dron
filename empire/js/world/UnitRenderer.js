@@ -19,6 +19,8 @@ const BOB_RATE = 16.0;       // рад/сек — темп бобра ходьб
 // Суставы фигур из tools/blender/goyda_kit.py (humanoid): высота бёдер и плеч в локальных координатах модели.
 // Номер части тела — во втором UV-канале (uv1.x = part/10): 0 туловище, 1/2 левая/правая рука, 3/4 левая/правая нога.
 const HIP_Y = 0.30, SHOULDER_Y = 0.52;
+// конница (goyda_kit.horse/rider): ноги коня (части 5/6) и руки всадника (части 7/8)
+const HORSE_LEG_Y = 0.36, RIDER_SHOULDER_Y = 0.9;
 const ANIM_WORK = new Set(['build', 'gather', 'working']);
 
 export class UnitRenderer {
@@ -110,15 +112,20 @@ export class UnitRenderer {
            float moving = step(0.0005, aWalkAmp);
            float stride = sin(uTime * ${(BOB_RATE / 2).toFixed(1)} + aInstancePhase);
            float ang = 0.0, pivot = 0.0;
-           if (aPart > 2.5) {                                   // ноги
-             pivot = ${HIP_Y.toFixed(3)};
-             ang = (aPart < 3.5 ? 1.0 : -1.0) * stride * 0.6 * moving;
-           } else if (aPart > 0.5) {                            // руки
-             pivot = ${SHOULDER_Y.toFixed(3)};
-             ang = (aPart < 1.5 ? -1.0 : 1.0) * stride * 0.5 * moving + sin(uTime * 2.0 + aInstancePhase) * 0.04;
-             if (aPart > 1.5 && aAnim.x > 1.5) {                // удар: из замаха вниз
+           // 5/6 — ноги коня накрест (галоп), 7/8 — руки всадника: сводим к пешим частям с другими суставами
+           float part = aPart;
+           float legPivot = ${HIP_Y.toFixed(3)}, armPivot = ${SHOULDER_Y.toFixed(3)}, legAmp = 0.6;
+           if (part > 6.5) { part -= 6.0; armPivot = ${RIDER_SHOULDER_Y.toFixed(3)}; }
+           else if (part > 4.5) { part -= 2.0; legPivot = ${HORSE_LEG_Y.toFixed(3)}; legAmp = 0.75; }
+           if (part > 2.5) {                                    // ноги
+             pivot = legPivot;
+             ang = (part < 3.5 ? 1.0 : -1.0) * stride * legAmp * moving;
+           } else if (part > 0.5) {                             // руки
+             pivot = armPivot;
+             ang = (part < 1.5 ? -1.0 : 1.0) * stride * 0.5 * moving + sin(uTime * 2.0 + aInstancePhase) * 0.04;
+             if (part > 1.5 && aAnim.x > 1.5) {                // удар: из замаха вниз
                ang = mix(-2.3, -0.2, aAnim.y);
-             } else if (aPart > 1.5 && aAnim.x > 0.5) {         // работа: медленный замах, резкий удар
+             } else if (part > 1.5 && aAnim.x > 0.5) {         // работа: медленный замах, резкий удар
                float w = fract(uTime * 0.9 + aInstancePhase * 0.16);
                ang = w < 0.65 ? mix(-0.3, -2.3, w / 0.65) : mix(-2.3, -0.2, (w - 0.65) / 0.35);
              }

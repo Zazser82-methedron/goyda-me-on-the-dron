@@ -5,12 +5,12 @@ export const UNITS = {
     kind: 'kholop', name: 'ХОЛОП', icon: '🧑‍🌾', model: 'unit_kholop', faction: 'ours',
     hp: 35, speed: 2.4, dmg: 3, range: 1.0, atkCd: 1.2,
     carry: 8, gatherRate: 4, trainAt: 'townhall', trainTime: 4, cost: { food: 10 },
-    worker: true, desc: 'Добытчик. Рубит лес, ломает камень, моет золото.',
+    worker: true, cls: 'worker', era: 0, desc: 'Добытчик. Рубит лес, ломает камень, моет золото.',
   },
   ratnik: {
     kind: 'ratnik', name: 'РАТНИК', icon: '🗡️', model: 'unit_ratnik', faction: 'ours',
     hp: 80, speed: 2.1, dmg: 9, range: 1.2, atkCd: 1.0,
-    trainAt: 'kazarma', trainTime: 6, cost: { food: 10, gold: 15 },
+    trainAt: 'kazarma', trainTime: 6, cost: { food: 10, gold: 15 }, cls: 'spear', era: 0,
     desc: 'Копейщик. Костяк дружины.',
   },
   oprichnik: {

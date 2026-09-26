@@ -1,6 +1,6 @@
 // ===== Постройка, стройка-прогресс и тренировка юнитов =====
 import { BUILDINGS } from '../data/buildings.js?v=108';
-import { UNITS } from '../data/units.js?v=94';
+import { UNITS } from '../data/units.js?v=95';
 import { RANKS } from '../data/ranks.js?v=94';
 import { nearestAdj } from '../world/Pathfinding.js?v=94';
 import { bark } from '../data/barks.js?v=94';

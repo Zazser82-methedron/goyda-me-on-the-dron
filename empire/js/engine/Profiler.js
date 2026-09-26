@@ -1,8 +1,8 @@
 // ===== Профилировщик производительности: тик/рендер/FPS/draw calls, оверлей по F3 =====
 // Подключается опционально в Loop (loop.profiler = ...) — при отсутствии профилировщика
 // в Loop нет накладных расходов, кроме одной проверки на null.
-import { reachSet } from '../sim/Waves.js?v=108';
-import { UNITS } from '../data/units.js?v=94';
+import { reachSet } from '../sim/Waves.js?v=109';
+import { UNITS } from '../data/units.js?v=95';
 import { hostileFor } from '../data/factions.js?v=94';
 
 const HIST = 30;      // скользящее среднее по 30 замерам
