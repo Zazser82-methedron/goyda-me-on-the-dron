@@ -6,7 +6,7 @@ import { RTSCamera } from './engine/RTSCamera.js?v=100';
 import { Picker } from './engine/Picker.js?v=95';
 import { Loop } from './engine/Loop.js?v=100';
 import { Profiler } from './engine/Profiler.js?v=113';
-import { AssetManager } from './engine/AssetManager.js?v=146';
+import { AssetManager } from './engine/AssetManager.js?v=147';
 import { TerrainMesh } from './world/TerrainMesh.js?v=106';
 import { WorldBase } from './world/WorldBase.js?v=102';
 import { Sky } from './world/Sky.js?v=99';
@@ -15,7 +15,7 @@ import { BuildingActivity } from './world/BuildingActivity.js?v=114';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
 import { nearestAdj } from './world/Pathfinding.js?v=94';
 import { UnitRenderer } from './world/UnitRenderer.js?v=98';
-import { GameState } from './sim/GameState.js?v=151';
+import { GameState } from './sim/GameState.js?v=152';
 import * as Economy from './sim/Economy.js?v=118';
 import * as Estates from './sim/Estates.js?v=12';
 import * as BuildSys from './sim/Buildings.js?v=129';
@@ -1220,7 +1220,7 @@ class Game {
       localStorage.removeItem('GOYDA_ARENA_TRIP'); // не смешиваем старую и новую схемы наград
       localStorage.setItem('GOYDA_BRIDGE', JSON.stringify(bridge));
     } catch (e) {}
-    this._portalSwirl(() => { location.href = '../'; });
+    this._portalSwirl(() => { location.href = '../arena/'; });
   }
 
   // возврат из карточной арены: награда за прирост побед, пока был там (обе игры делят localStorage)

@@ -8,19 +8,22 @@ import fs from 'fs';
 import path from 'path';
 import { execFileSync } from 'child_process';
 
-const ROOT = path.resolve('empire');
+// empire/ + общий хаб на корне (hub/, index.html) — хаб импортирует модули движка Империи
+const ROOTS = ['empire', 'hub'].map(d => path.resolve(d)).filter(d => fs.existsSync(d));
 const DRY = process.argv.includes('--dry');
 const files = [];
-(function walk(d) {
+function walk(d) {
   for (const e of fs.readdirSync(d, { withFileTypes: true })) {
     const p = path.join(d, e.name);
     if (e.isDirectory()) { if (e.name !== 'assets') walk(p); }
     else if (/\.(js|html)$/.test(e.name)) files.push(p);
   }
-})(ROOT);
+}
+ROOTS.forEach(walk);
+if (fs.existsSync('index.html')) files.push(path.resolve('index.html'));
 
 const rel = (p) => path.relative(process.cwd(), p).replace(/\\/g, '/');
-const status = execFileSync('git', ['status', '--porcelain', '--', 'empire'], { encoding: 'utf8' });
+const status = execFileSync('git', ['status', '--porcelain', '--', 'empire', 'hub'], { encoding: 'utf8' });
 const changed = new Set(status.split('\n').filter(Boolean).map(l => path.resolve(l.slice(3).trim())).filter(p => /\.(js|css)$/.test(p)));
 
 const IMPORT = /(['"])(\.{1,2}\/[^'"?]+\.(?:js|css))\?v=(\d+)\1/g;   // и JS-импорты, и <link> стилей

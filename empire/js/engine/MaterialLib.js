@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import * as Quality from './Quality.js?v=94';
 
-const BASE = './assets/textures/lib/';
+const BASE = new URL('../../assets/textures/lib/', import.meta.url).href;   // от модуля, а не от страницы — хаб на корне сайта грузит те же фактуры
 // имя материала → фактура (<tex>_diff.jpg / <tex>_nor.jpg), тон и шероховатость.
 // Тон (tint) умножается на фактуру. Стиль — сказочно-лубочный (выбор игрока 2026-09-25): медово-золотое
 // дерево как хохломская основа, золотая солома, серый камень; крыши и ставни крашеные и у каждого здания

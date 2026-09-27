@@ -2,12 +2,12 @@
 import * as THREE from 'three';
 import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=102';
 import { Grid } from '../world/Grid.js?v=96';
-import { NodeField } from '../world/NodeField.js?v=130';
+import { NodeField } from '../world/NodeField.js?v=131';
 import { BUILDINGS } from '../data/buildings.js?v=114';
 import { UNITS } from '../data/units.js?v=101';
 import { RANKS } from '../data/ranks.js?v=94';
-import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=124';
-import * as Tiling from '../world/Tiling.js?v=123';
+import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=125';
+import * as Tiling from '../world/Tiling.js?v=124';
 
 // Модели, у которых есть облики эпох <model>_e1 / <model>_e2 (tools/blender/build_*.py), по эпохам:
 // если облик эпохи не отличается от предыдущего, файла нет и modelFor() берёт ближайший ранний.
