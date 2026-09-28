@@ -655,6 +655,30 @@ function spruceTier(r, h, droop, m, y, twist) {
   return me;
 }
 
+// Лиственное дерево (дуб/берёза): изогнутый ствол и три округлые кроны разных оттенков. Второй вид леса рядом с елью.
+function treeB() {
+  const g = new THREE.Group();
+  const bark = mat(0x6a4a2c), crowns = [0x2f8a34, 0x43a03c, 0x62b84a, 0x52a840];
+  g.add(cyl(0.05, 0.1, 0.55, 7, bark, 0, 0.27, 0));
+  const blob = (r, y, x, z, c, sy = 0.86) => {
+    const geo = new THREE.IcosahedronGeometry(r, 1);
+    const p = geo.attributes.position; const seen = new Map();
+    for (let i = 0; i < p.count; i++) {   // одинаковые вершины двигаем одинаково — крона неровная, но без щелей
+      const key = p.getX(i).toFixed(3) + ',' + p.getY(i).toFixed(3) + ',' + p.getZ(i).toFixed(3);
+      if (!seen.has(key)) seen.set(key, 0.86 + ((Math.abs(Math.sin(i * 12.9898 + r * 78.233)) * 43758.5453) % 1) * 0.3);
+      const k = seen.get(key);
+      p.setXYZ(i, p.getX(i) * k, p.getY(i) * k * sy, p.getZ(i) * k);
+    }
+    geo.computeVertexNormals();
+    const me = new THREE.Mesh(geo, mat(c)); me.position.set(x, y, z); me.castShadow = true; me.receiveShadow = true; return me;
+  };
+  g.add(blob(0.36, 0.86, 0, 0, crowns[0]));
+  g.add(blob(0.27, 1.1, 0.12, -0.06, crowns[2]));
+  g.add(blob(0.24, 0.98, -0.2, 0.1, crowns[1]));
+  g.add(blob(0.2, 1.22, -0.04, 0.08, crowns[3]));
+  return g;
+}
+
 function tree() {
   // Лубочная ель: ствол, шесть неровных ярусов с опущенными лапами, тёмная хвоя внизу → светлые кончики вверху.
   // Сливается в одну геометрию NodeField (1 draw call на все деревья), вариативность — инстанс-цвет/размер.
@@ -1142,7 +1166,7 @@ const BUILDERS = {
   bld_ferma: ferma, bld_rudnik: rudnik, bld_zhila: zhila, bld_veche: veche, bld_observatory: observatory, bld_agitpunkt: agitpunkt, bld_tower: tower, bld_zastava: zastavaOstrog,
   bld_road: road, bld_bridge: bridge,
   bld_chastokol: chastokol, bld_chastokol_gate: chastokolGate,
-  res_tree: tree, res_stone: stoneNode, res_ore: oreNode,
+  res_tree: tree, res_tree_b: treeB, res_stone: stoneNode, res_ore: oreNode,
   unit_kholop: kholop, unit_ratnik: ratnik, unit_oprichnik: oprichnik, unit_bogatyr: bogatyr,
   unit_strelec: strelec, unit_oprichnik_kon: () => mountedWarrior(0x201018, PAL.crimson), unit_voevoda: voevodaUnit, unit_pushka: pushka,
   unit_zhrec: zhrec, unit_kromeshnik: kromeshnik, unit_konny_luchnik: konnyLuchnik, unit_kriomag: kriomag,

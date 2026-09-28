@@ -2,12 +2,12 @@
 import * as THREE from 'three';
 import { GRID_N, STORAGE_KEY, TILE } from '../data/config.js?v=102';
 import { Grid } from '../world/Grid.js?v=96';
-import { NodeField } from '../world/NodeField.js?v=131';
+import { NodeField } from '../world/NodeField.js?v=133';
 import { BUILDINGS } from '../data/buildings.js?v=114';
 import { UNITS } from '../data/units.js?v=101';
 import { RANKS } from '../data/ranks.js?v=94';
-import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=125';
-import * as Tiling from '../world/Tiling.js?v=124';
+import { buildScaffold, roadApron, railApron } from '../engine/Placeholders.js?v=127';
+import * as Tiling from '../world/Tiling.js?v=126';
 
 // Модели, у которых есть облики эпох <model>_e1 / <model>_e2 (tools/blender/build_*.py), по эпохам:
 // если облик эпохи не отличается от предыдущего, файла нет и modelFor() берёт ближайший ранний.
@@ -52,6 +52,7 @@ export class GameState {
     // инстансные поля ресурсов (1 draw call на тип вместо ~800 объектов)
     this.fields = {
       wood: new NodeField(scene, 'res_tree', 700, { wind: true }),
+      wood2: new NodeField(scene, 'res_tree_b', 500, { wind: true }),   // лиственный лес: те же ноды древесины, другой вид
       stone: new NodeField(scene, 'res_stone', 300),
       gold: new NodeField(scene, 'res_ore', 250),
     };
@@ -124,7 +125,9 @@ export class GameState {
   // ---- ноды ресурсов (инстансные) ----
   addNode(kind, gx, gy, amount) {
     const resType = kind === 'res_tree' ? 'wood' : kind === 'res_stone' ? 'stone' : 'gold';
-    const field = this.fields[resType];
+    const hb = (((gx * 73856093) ^ (gy * 19349663)) >>> 0);
+    // ~40% деревьев — лиственные (детерминированно по клетке: стабильно между сейвами); чем южнее/суше — тем чаще
+    const field = (resType === 'wood' && ((hb >> 5) & 255) / 255 < 0.4 && this.fields.wood2.inst.count < 500) ? this.fields.wood2 : this.fields[resType];
     const { wx, wz } = this.grid.gridToWorld(gx, gy);
     const y = this.grid.heightAt ? this.grid.heightAt(wx, wz) : 0;
     const ry = (gx * 1.7 + gy * 0.9) % (Math.PI * 2);

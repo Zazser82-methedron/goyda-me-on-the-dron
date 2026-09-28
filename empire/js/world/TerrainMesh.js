@@ -68,6 +68,7 @@ export class TerrainMesh {
     const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.96, metalness: 0, envMapIntensity: 0.3 });
     this._pbrGround(mat);                        // мгновенный процедурный детейл (без сети) — рисуем сразу
     if (this.tier !== 'low') this._loadRealTextures(mat);   // High: докачиваем фото-PBR (Poly Haven CC0), подменяем когда готово
+    mat.color.setRGB(1.3, 1.26, 1.12);   // >1: фото-текстура земли тёмная, лубочная трава должна быть яркой
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.receiveShadow = true; this.mesh.castShadow = false;
     scene.add(this.mesh);
@@ -82,6 +83,12 @@ export class TerrainMesh {
     this.water.material.normalMap = wn; this.water.material.normalScale = new THREE.Vector2(0.35, 0.35); this.water.material.needsUpdate = true;
     this._waterN = wn;
     scene.add(this.water);
+    // бескрайний океан вокруг острова: край карты не должен обрываться в пустоту
+    const seaMat = new THREE.MeshBasicMaterial({ color: 0x1f7c9c, fog: true });
+    this.sea = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000), seaMat);
+    this.sea.rotation.x = -Math.PI / 2;
+    this.sea.position.y = (grid.water ?? -0.5) - 0.35;
+    scene.add(this.sea);
 
     // ---- декор (кусты + валуны) по высоте ----
     this._scatterDecor(scene, grid, n);
@@ -249,6 +256,7 @@ diffuseColor.a *= goydaShoreAlpha;`)
 
   // анимация ряби воды (зовётся из render-loop)
   update(fdt) {
+    if (this._grassTime) this._grassTime.value += fdt;
     if (this._waterN) { this._waterN.offset.x += fdt * 0.015; this._waterN.offset.y += fdt * 0.02; }
     if (this._waterShader) this._waterShader.uniforms.uWaterTime.value += fdt;
   }
@@ -281,18 +289,21 @@ diffuseColor.a *= goydaShoreAlpha;`)
     }
     if (h < (T.sand ?? -0.15)) {                                 // песок/берег — влажные тёмные пятна у воды
       const wet = this._gnoise(cx, cy, 0.3, 3, 9);
-      out.setHex(0xb49a62).multiplyScalar(0.82 + wet * 0.32);
+      out.setHex(0xd2bd82).multiplyScalar(0.86 + wet * 0.26);
       return out;
     }
     // ---- ТРАВА: крупные пятна сочной/сухой/землистой травы вместо равномерного зелёного ----
     const patch = this._gnoise(cx, cy, 0.16, 0, 0);             // 0..1 — крупные пятна оттенка
     const dry = this._gnoise(cx, cy, 0.26, 21, 13);             // 0..1 — сухость/проплешины земли
     out.setHex(p.b).lerp(tc.setHex(p.c), patch);               // блендим тёмно↔светло-зелёный
-    if (dry > 0.6) {                                            // сухие/землистые проплешины
-      out.lerp(tc.setHex(p.dirt || 0x8a6a3a), Math.min(1, (dry - 0.6) / 0.32) * 0.7);
+    if (dry > 0.68) {                                            // сухие/землистые проплешины
+      out.lerp(tc.setHex(p.dirt || 0x8a6a3a), Math.min(1, (dry - 0.68) / 0.3) * 0.5);
     } else if (patch > 0.8) {                                   // редкие очень сочные луга (тёплый зелёный)
-      out.lerp(tc.setHex(0x9bbf3a), (patch - 0.8) / 0.2 * 0.38);
+      out.lerp(tc.setHex(0xb4dc3c), (patch - 0.8) / 0.2 * 0.5);
     }
+    // цветущие поляны: мелкий шум выбирает пятна, где трава уходит в жёлто-белый цвет цветов (лубок)
+    const fl = this._gnoise(cx, cy, 0.55, 5, 31);
+    if (fl > 0.74 && dry <= 0.68) out.lerp(tc.setHex(fl > 0.86 ? 0xffe27a : 0xf6f0c8), Math.min(1, (fl - 0.74) / 0.12) * 0.42);
     out.multiplyScalar(0.93 + Math.random() * 0.12);           // мелкая зернистость
     return out;
   }
@@ -344,6 +355,61 @@ diffuseColor.a *= goydaShoreAlpha;`)
     fill(rocks, rn, 0x5c5f66, 0x4a4d53, 0.08, 0.6, 1.4, ['rock', 'sand']);   // серые валуны (PAL.rock под AgX выходил бежевым)
     fill(stumps, sn, 0x6b5740, 0x55462f, 0.11, 0.7, 1.2, ['grass', 'forest']);
     scene.add(bushes); scene.add(rocks); scene.add(stumps);
+    this._scatterGrass(scene, grid, n);
+  }
+
+  // Пучки травы: три скрещённых лезвия, тысячи штук одним draw call. Качаются на ветру вершинным шейдером
+  // (амплитуда растёт с высотой лезвия, основание неподвижно). Дают траве объём и «живость» вблизи.
+  _scatterGrass(scene, grid, n) {
+    const low = this.tier === 'low';
+    const count = low ? 5000 : 26000;
+    const blade = (a, lean, hh) => {   // лезвие-треугольник: шире у основания, слегка наклонено наружу
+      const w = 0.03, h = hh, c = Math.cos(a), s = Math.sin(a);
+      return [-w * c, 0, -w * s, w * c, 0, w * s, c * lean * 0.5 * -s + s * 0 + Math.cos(a + 1.57) * 0 + c * lean, h, s * lean];
+    };
+    const pos = [];
+    for (let i = 0; i < 6; i++) pos.push(...blade(i * 1.05 + 0.2, 0.05 + (i % 3) * 0.03, 0.11 + (i % 4) * 0.035));
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.computeVertexNormals();
+    // нормали вверх — пучок освещается как земля, без тёмных боков
+    const nrm = geo.attributes.normal; for (let i = 0; i < nrm.count; i++) nrm.setXYZ(i, 0, 1, 0);
+    const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, side: THREE.DoubleSide, roughness: 1 });
+    this._grassTime = { value: 0 };
+    mat.onBeforeCompile = (sh) => {
+      sh.uniforms.uGrassTime = this._grassTime;
+      sh.vertexShader = sh.vertexShader
+        .replace('#include <color_vertex>', '#include <color_vertex>' + String.fromCharCode(10) + 'vColor.rgb *= mix(0.5, 1.0, clamp(position.y / 0.13, 0.0, 1.0));')
+        .replace('#include <common>', '#include <common>\nuniform float uGrassTime;')
+        .replace('#include <begin_vertex>', `#include <begin_vertex>
+        float gSway = position.y * 4.5;
+        vec4 gWorld = instanceMatrix * vec4(position, 1.0);
+        transformed.x += sin(uGrassTime * 1.7 + gWorld.x * 0.9 + gWorld.z * 0.6) * 0.06 * gSway;
+        transformed.z += cos(uGrassTime * 1.3 + gWorld.z * 0.8) * 0.04 * gSway;`);
+    };
+    const inst = new THREE.InstancedMesh(geo, mat, count);
+    inst.castShadow = false; inst.receiveShadow = true; inst.frustumCulled = false;
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), sc = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+    const cols = [0x5a962a, 0x74b036, 0x8cc244, 0x4a8424, 0x9ccb50];
+    let placed = 0;
+    for (let attempt = 0; attempt < count * 3 && placed < count; attempt++) {
+      const gx = 1 + Math.floor(Math.random() * (n - 2)), gy = 1 + Math.floor(Math.random() * (n - 2));
+      const t = grid.get(gx, gy);
+      if (!t || (t.biome !== 'grass' && t.biome !== 'forest')) continue;
+      const w = grid.gridToWorld(gx, gy);
+      const x = w.wx + (Math.random() - 0.5), z = w.wz + (Math.random() - 0.5);
+      const k = 0.8 + Math.random() * 0.9;
+      p.set(x, grid.heightAt(x, z) - 0.01, z);
+      q.setFromAxisAngle(up, Math.random() * 6.28);
+      sc.set(k * 0.9, k * (0.7 + Math.random() * 0.7), k * 0.9);
+      m.compose(p, q, sc); inst.setMatrixAt(placed, m);
+      inst.setColorAt(placed, new THREE.Color(cols[(Math.random() * cols.length) | 0]));
+      placed++;
+    }
+    inst.count = placed;
+    inst.instanceMatrix.needsUpdate = true; if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
+    this.grass = inst;
+    scene.add(inst);
   }
 
   setHover(tile, color) {

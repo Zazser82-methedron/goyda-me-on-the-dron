@@ -2,7 +2,7 @@
 // Вместо ~800 отдельных Object3D — по одному InstancedMesh на тип (1 draw call).
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { buildPlaceholder } from '../engine/Placeholders.js?v=125';
+import { buildPlaceholder } from '../engine/Placeholders.js?v=127';
 
 // Слить меши плейсхолдера в одну геометрию с запечёнными vertex-color (1 материал).
 function bakedGeometry(modelName) {
@@ -11,7 +11,8 @@ function bakedGeometry(modelName) {
   const geos = [];
   group.traverse(o => {
     if (!o.isMesh) return;
-    const g = o.geometry.clone();
+    let g = o.geometry.clone();
+    if (g.index) g = g.toNonIndexed();   // индексные и неиндексные меши иначе не склеиваются (mergeGeometries → null)
     g.applyMatrix4(o.matrixWorld);
     if (g.attributes.uv) g.deleteAttribute('uv');
     if (g.attributes.uv1) g.deleteAttribute('uv1');

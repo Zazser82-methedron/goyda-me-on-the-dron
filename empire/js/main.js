@@ -6,8 +6,8 @@ import { RTSCamera } from './engine/RTSCamera.js?v=100';
 import { Picker } from './engine/Picker.js?v=95';
 import { Loop } from './engine/Loop.js?v=100';
 import { Profiler } from './engine/Profiler.js?v=113';
-import { AssetManager } from './engine/AssetManager.js?v=147';
-import { TerrainMesh } from './world/TerrainMesh.js?v=106';
+import { AssetManager } from './engine/AssetManager.js?v=149';
+import { TerrainMesh } from './world/TerrainMesh.js?v=114';
 import { WorldBase } from './world/WorldBase.js?v=102';
 import { Sky } from './world/Sky.js?v=99';
 import { Atmosphere } from './world/Atmosphere.js?v=98';
@@ -15,7 +15,7 @@ import { BuildingActivity } from './world/BuildingActivity.js?v=114';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
 import { nearestAdj } from './world/Pathfinding.js?v=94';
 import { UnitRenderer } from './world/UnitRenderer.js?v=98';
-import { GameState } from './sim/GameState.js?v=152';
+import { GameState } from './sim/GameState.js?v=154';
 import * as Economy from './sim/Economy.js?v=118';
 import * as Estates from './sim/Estates.js?v=12';
 import * as BuildSys from './sim/Buildings.js?v=129';
@@ -48,8 +48,8 @@ import { RANKS } from './data/ranks.js?v=94';
 import { bark } from './data/barks.js?v=94';
 import { STORAGE_KEY } from './data/config.js?v=102';
 import { getFaction } from './data/factions.js?v=94';
-import { getMap, MAPS } from './data/maps.js?v=94';
-import { StartScreen } from './ui/StartScreen.js?v=104';
+import { getMap, MAPS } from './data/maps.js?v=102';
+import { StartScreen } from './ui/StartScreen.js?v=112';
 import { Lobby } from './ui/Lobby.js?v=12';
 import * as Transport from './sim/Transport.js?v=104';
 import * as Railroad from './sim/Railroad.js?v=105';
@@ -1527,7 +1527,7 @@ class Game {
     if (this.terrain && this.terrain.update) this.terrain.update(fdt);
     // суточный цикл день/ночь + погода (дождь/снег)
     if (this.sky) this.sky.update(fdt, this.cameraRig.target, this.map.key, now, this.camera);
-    if (this.state.fields && this.state.fields.wood) this.state.fields.wood.updateWind(now * 0.001);
+    if (this.state.fields && this.state.fields.wood) { this.state.fields.wood.updateWind(now * 0.001); this.state.fields.wood2.updateWind(now * 0.001); }
     this.buildingActivity.update(this.state.buildings, fdt, now * 0.001, this.sky ? this.sky.windGust : 0);
     // мокрая земля в дождь/грозу (темнее+глянцевее, сохнет после) — читает Sky.wetness
     if (this.terrain && this.terrain.setWetness && this.sky) this.terrain.setWetness(this.sky.wetness);
