@@ -1,17 +1,17 @@
 // ===== ГОЙДА-ИМПЕРИЯ — точка входа и оркестратор =====
 import * as THREE from 'three';
-import { Renderer } from './engine/Renderer.js?v=103';
+import { Renderer } from './engine/Renderer.js?v=106';
 import * as Quality from './engine/Quality.js?v=94';
 import { RTSCamera } from './engine/RTSCamera.js?v=100';
 import { Picker } from './engine/Picker.js?v=95';
 import { Loop } from './engine/Loop.js?v=100';
 import { Profiler } from './engine/Profiler.js?v=113';
 import { AssetManager } from './engine/AssetManager.js?v=149';
-import { TerrainMesh } from './world/TerrainMesh.js?v=114';
+import { TerrainMesh } from './world/TerrainMesh.js?v=118';
 import { WorldBase } from './world/WorldBase.js?v=102';
-import { Sky } from './world/Sky.js?v=99';
+import { Sky } from './world/Sky.js?v=101';
 import { Atmosphere } from './world/Atmosphere.js?v=98';
-import { BuildingActivity } from './world/BuildingActivity.js?v=114';
+import { BuildingActivity } from './world/BuildingActivity.js?v=116';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
 import { nearestAdj } from './world/Pathfinding.js?v=94';
 import { UnitRenderer } from './world/UnitRenderer.js?v=98';
@@ -36,10 +36,10 @@ import * as AntiSpiral from './sim/AntiSpiral.js?v=3';
 import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=94';
 import { AmbientAudio } from './audio/Music.js?v=94';
 import { HUD } from './ui/HUD.js?v=108';
-import { BuildMenu } from './ui/BuildMenu.js?v=119';
-import { Selection } from './ui/Selection.js?v=122';
+import { BuildMenu } from './ui/BuildMenu.js?v=123';
+import { Selection } from './ui/Selection.js?v=126';
 import { Minimap } from './ui/Minimap.js?v=94';
-import { ResearchPanel } from './ui/Research.js?v=117';
+import { ResearchPanel } from './ui/Research.js?v=121';
 import { EstatesPanel } from './ui/EstatesPanel.js?v=12';
 import { Toasts } from './ui/Toasts.js?v=94';
 import { Leaderboard } from './ui/Leaderboard.js?v=94';

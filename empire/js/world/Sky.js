@@ -28,7 +28,7 @@ export const LIGHT = { day: 1 };
 export class Sky {
   constructor(scene, rdr) {
     this.scene = scene; this.rdr = rdr;
-    this.t = 0.30;                 // старт — утро
+    this.t = 0.39;                 // старт — позднее утро: солнце уже высоко, картинка яркая с первой секунды
     this.weather = 'clear';
     this.wT = 26 + Math.random() * 20;
     this._bright = 1; this._fogMul = 1; this.wind = 0.15; this.windGust = 0.15; this._flash = 0;
@@ -131,7 +131,7 @@ export class Sky {
     if (this.dome) {
       if (camera) this.dome.position.copy(camera.position);
       const u = this.dome.material.uniforms;
-      this._sunVec.set(36, elev * 90 + 6, 26).normalize();      // высота солнца = ход суток
+      this._sunVec.set(-40, elev * 90 + 6, 10).normalize();      // высота солнца = ход суток
       u.sunDir.value.copy(this._sunVec);
       // зенит: ночь тёмно-синий → день голубой
       u.topC.value.setHex(0x0a1530).lerp(this._cTopDay, day);
@@ -166,9 +166,9 @@ export class Sky {
     let bright = (0.12 + 0.88 * day) * this._bright;
 
     const r = this.rdr;
-    r.key.intensity = this.base.keyI * bright + flash * 1.8;
-    r.hemi.intensity = this.base.hemiI * (0.25 + 0.75 * day) + flash * 0.6;
-    r.amb.intensity = this.base.ambI * (0.30 + 0.70 * day) + flash * 0.5;
+    r.key.intensity = this.base.keyI * 1.4 * bright + flash * 1.8;   // 1.4: контрастнее солнце — тени читаются
+    r.hemi.intensity = this.base.hemiI * 0.75 * (0.25 + 0.75 * day) + flash * 0.6;
+    r.amb.intensity = this.base.ambI * 0.7 * (0.30 + 0.70 * day) + flash * 0.5;
 
     const kc = new THREE.Color(0x22304f);                          // ночь — холодный синий
     kc.lerp(new THREE.Color(0xff8a44), Math.min(1, horizon * 1.2)); // оранж у горизонта

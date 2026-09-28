@@ -2,7 +2,7 @@
 // `time` in update() is expected in seconds. Every prop reuses this instance's
 // geometry/material library; update() does not allocate transient objects.
 import * as THREE from 'three';
-import { LIGHT } from './Sky.js?v=99';
+import { LIGHT } from './Sky.js?v=101';
 
 const TAU = Math.PI * 2;
 const SUPPORTED = new Set([

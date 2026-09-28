@@ -188,7 +188,10 @@
 }
 
 #edicts{ display:flex; flex-direction:column; gap:4px; background:var(--panel); border:1.5px solid var(--panel-br); border-radius:8px; padding:6px; }
-.ed-title{ font-size:9px; font-weight:900; letter-spacing:1px; opacity:.7; text-align:center; }
+.ed-title{ font-size:11px; font-weight:900; letter-spacing:1.5px; color:var(--gold); background:none; border:0; padding:3px 6px; text-align:center; cursor:pointer; }
+.ed-title:hover{ color:var(--gold-bright); }
+#edicts:not(.open) .edbtn{ display:none; }
+#edicts:not(.open){ gap:0; padding:3px; }
 .edbtn{
   display:flex; align-items:center; gap:6px; background:rgba(0,0,0,.3); border:1px solid var(--panel-br);
   color:var(--text); border-radius:5px; padding:4px 8px; font-size:11px; font-weight:700; transition:all .15s; width:160px;

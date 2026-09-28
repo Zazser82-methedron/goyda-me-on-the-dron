@@ -368,7 +368,7 @@ diffuseColor.a *= goydaShoreAlpha;`)
       return [-w * c, 0, -w * s, w * c, 0, w * s, c * lean * 0.5 * -s + s * 0 + Math.cos(a + 1.57) * 0 + c * lean, h, s * lean];
     };
     const pos = [];
-    for (let i = 0; i < 6; i++) pos.push(...blade(i * 1.05 + 0.2, 0.05 + (i % 3) * 0.03, 0.11 + (i % 4) * 0.035));
+    for (let i = 0; i < 6; i++) pos.push(...blade(i * 1.05 + 0.2, 0.05 + (i % 3) * 0.03, 0.09 + (i % 4) * 0.028));
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
     geo.computeVertexNormals();
@@ -379,7 +379,7 @@ diffuseColor.a *= goydaShoreAlpha;`)
     mat.onBeforeCompile = (sh) => {
       sh.uniforms.uGrassTime = this._grassTime;
       sh.vertexShader = sh.vertexShader
-        .replace('#include <color_vertex>', '#include <color_vertex>' + String.fromCharCode(10) + 'vColor.rgb *= mix(0.5, 1.0, clamp(position.y / 0.13, 0.0, 1.0));')
+        .replace('#include <color_vertex>', '#include <color_vertex>' + String.fromCharCode(10) + 'vColor.rgb *= mix(0.5, 1.0, clamp(position.y / 0.1, 0.0, 1.0));')
         .replace('#include <common>', '#include <common>\nuniform float uGrassTime;')
         .replace('#include <begin_vertex>', `#include <begin_vertex>
         float gSway = position.y * 4.5;
@@ -390,7 +390,7 @@ diffuseColor.a *= goydaShoreAlpha;`)
     const inst = new THREE.InstancedMesh(geo, mat, count);
     inst.castShadow = false; inst.receiveShadow = true; inst.frustumCulled = false;
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), sc = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
-    const cols = [0x5a962a, 0x74b036, 0x8cc244, 0x4a8424, 0x9ccb50];
+    const cols = [0x4f8a26, 0x66a030, 0x7db83c, 0x427820, 0x88b846];
     let placed = 0;
     for (let attempt = 0; attempt < count * 3 && placed < count; attempt++) {
       const gx = 1 + Math.floor(Math.random() * (n - 2)), gy = 1 + Math.floor(Math.random() * (n - 2));

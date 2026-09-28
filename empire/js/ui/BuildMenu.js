@@ -112,7 +112,20 @@ export class BuildMenu {
   }
 
   _renderEdicts() {
-    this.edictsEl.innerHTML = '<div class="ed-title">УКАЗЫ</div>';
+    // панель указов свёрнута в одну кнопку — раньше 6 кнопок постоянно закрывали поле; состояние помним
+    let open = false; try { open = localStorage.getItem('GOYDA_EDICTS_OPEN') === '1'; } catch (e) {}
+    this.edictsEl.classList.toggle('open', open);
+    this.edictsEl.innerHTML = '';
+    const head = document.createElement('button');
+    head.className = 'ed-title';
+    const paint = () => { head.textContent = (this.edictsEl.classList.contains('open') ? '📜 УКАЗЫ ▾' : '📜 УКАЗЫ ▴'); };
+    head.onclick = () => {
+      this.edictsEl.classList.toggle('open');
+      try { localStorage.setItem('GOYDA_EDICTS_OPEN', this.edictsEl.classList.contains('open') ? '1' : '0'); } catch (e) {}
+      paint();
+    };
+    paint();
+    this.edictsEl.appendChild(head);
     this._ed = {};
     for (const e of EDICTS) {
       const b = document.createElement('button');

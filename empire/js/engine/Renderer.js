@@ -68,7 +68,7 @@ export class Renderer {
     const cam = this.key.shadow.camera;
     cam.left = -d; cam.right = d; cam.top = d; cam.bottom = -d;
     cam.near = 1; cam.far = 200; cam.updateProjectionMatrix();
-    this.key.shadow.bias = -0.0004;
+    this.key.shadow.bias = -0.0004; this.key.shadow.normalBias = 0.04;
     this.scene.add(this.key);
     this.scene.add(this.key.target);
     this.renderer.shadowMap.autoUpdate = false;
@@ -136,6 +136,7 @@ export class Renderer {
       const { RoomEnvironment } = await import('three/addons/environments/RoomEnvironment.js');
       const pmrem = new THREE.PMREMGenerator(this.renderer);
       this.scene.environment = pmrem.fromScene(new RoomEnvironment(this.renderer), 0.04).texture;
+      this.scene.environmentIntensity = 0.6;   // IBL слабее: прямое солнце и тени доминируют
       // компенсируем добавленный IBL-свет, чтобы общая яркость не подскочила
       this.hemi.intensity = 0.7; this.amb.intensity = 0.15;
       this.envReady = true;
@@ -156,7 +157,7 @@ export class Renderer {
     const now = performance.now();
     const moved = !Number.isFinite(this._shadowX) || Math.hypot(tx - this._shadowX, tz - this._shadowZ) > 0.45;
     if (!moved && now - this._shadowAt < 66) return;
-    this.key.position.set(tx + 36, 64, tz + 26);
+    this.key.position.set(tx - 40, 34, tz + 10);   // низкое солнце (~32°): длинные тени читаются, здания получают объём
     this.key.target.position.set(tx, 0, tz);
     this.key.target.updateMatrixWorld();
     this._shadowAt = now; this._shadowX = tx; this._shadowZ = tz;
