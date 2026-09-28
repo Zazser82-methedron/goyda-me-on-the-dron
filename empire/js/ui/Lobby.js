@@ -10,13 +10,27 @@ import * as THREE from 'three';
 // той же техникой, что addBuilding (клон + собственные материалы, чтобы не красить общий кэш).
 const RING = [
   { model: 'bld_izba', angle: 20, radius: 1.55, scale: 0.24 },
-  { model: 'bld_ambar', angle: 95, radius: 1.7, scale: 0.22 },
-  { model: 'bld_church', angle: 165, radius: 1.65, scale: 0.22 },
-  { model: 'bld_izba', angle: 235, radius: 1.55, scale: 0.24 },
-  { model: 'bld_tower', angle: 305, radius: 1.6, scale: 0.24 },
+  { model: 'bld_melnica', angle: 70, radius: 1.75, scale: 0.24 },
+  { model: 'bld_church', angle: 130, radius: 1.7, scale: 0.24 },
+  { model: 'bld_ambar', angle: 185, radius: 1.6, scale: 0.22 },
+  { model: 'bld_townhall', angle: 235, radius: 1.75, scale: 0.26 },
+  { model: 'bld_tower', angle: 285, radius: 1.65, scale: 0.24 },
+  { model: 'bld_kuznica', angle: 335, radius: 1.7, scale: 0.22 },
 ];
+// лубочная раскраска крыш/ставен — та же палитра, что GameState.paintBuilding
+const PAINT = {
+  M_roof: [0xe8583e, 0x3cb074, 0x4f82e0, 0xf0b440, 0xc03a58],
+  M_roof_iron: [0x17703a, 0xa8281a, 0x1f4494, 0xb8781a],
+  M_shutter: [0xd23a2a, 0x2f9a5a, 0x2f5fc8, 0xe8b030],
+};
+function paint(obj, seed) {
+  obj.traverse(o => {
+    const pal = o.isMesh && PAINT[o.material && o.material.name];
+    if (pal) o.material.color.setHex(pal[seed % pal.length]);
+  });
+}
 
-const DRONE_BOB_AMPL = 0.2;     // м, по спеке
+const DRONE_BOB_AMPL = 0.03;     // м, по спеке
 const DRONE_BOB_PERIOD = 2.4;   // с, по спеке
 const EYE_PULSE_MIN = 0.5, EYE_PULSE_MAX = 1.5;   // emissiveIntensity, по спеке
 const EYE_PULSE_PERIOD = 2.0;
@@ -52,6 +66,13 @@ export class Lobby {
     this._raf = requestAnimationFrame(() => this._loop());
   }
 
+  // модели догрузились уже после старта лобби — пересобрать диораму с настоящими GLB вместо коробок-заглушек
+  refresh() {
+    if (!this._running || this._transitioning) return;
+    this._teardown();
+    this._build();
+  }
+
   stop() {
     this._running = false;
     if (this._raf) cancelAnimationFrame(this._raf);
@@ -82,14 +103,14 @@ export class Lobby {
     const diveTo = new THREE.Vector3(0.15, 0.5, 1.3);       // низко над площадкой — «падаем» внутрь мира
     const lookFrom = this._camLook.clone();
     const lookTo = new THREE.Vector3(0, 0.5, -0.4);
-    const droneBaseScale = 0.17;
+    const droneBaseScale = 0.42;
 
     const stepDive = () => {
       const t = (performance.now() - t0) / 1000;
       if (t < 0.4) {
         // импульс Дрона: глаз вспыхивает к максимуму, силуэт слегка раздувается
         const k = t / 0.4;
-        if (this.droneEye) this.droneEye.emissiveIntensity = this.droneEyeBase + (3.5 - this.droneEyeBase) * Math.sin(k * Math.PI);
+        if (this.glowMats) for (const m of this.glowMats) m.emissiveIntensity = this.droneEyeBase + (3.5 - this.droneEyeBase) * Math.sin(k * Math.PI);
         if (this.drone) this.drone.scale.setScalar(droneBaseScale * (1 + 0.3 * Math.sin(k * Math.PI)));
         this.game.rdr.render(this.game.camera);
         this._raf = requestAnimationFrame(stepDive);
@@ -130,19 +151,12 @@ export class Lobby {
 
     // круглый подиум — своя геометрия/материал (не из AssetManager), явно освобождается в _teardown
     const platGeo = new THREE.CylinderGeometry(2.35, 2.65, 0.22, 40);
-    const platMat = new THREE.MeshStandardMaterial({ color: 0x241a10, roughness: 0.92, metalness: 0.04 });
+    const platMat = new THREE.MeshStandardMaterial({ color: 0x5f8f3a, roughness: 0.95, metalness: 0 })   // зелёная травяная макушка острова;
     const plat = new THREE.Mesh(platGeo, platMat);
     plat.position.y = -0.11;
     plat.receiveShadow = true;
     g.add(plat);
     this._ownGeo = [platGeo]; this._ownMat = [platMat];
-
-    // ратуша — сердце поселения, прямо под Дроном
-    const th = assets.get('bld_townhall');
-    cloneOwnMaterials(th);
-    th.scale.setScalar(0.3);
-    th.position.set(0, 0, 0);
-    g.add(th);
 
     // застава по кругу
     for (const b of RING) {
@@ -152,27 +166,25 @@ export class Lobby {
       view.position.set(Math.cos(rad) * b.radius, 0, Math.sin(rad) * b.radius);
       view.scale.setScalar(b.scale);
       view.rotation.y = -rad + Math.PI;   // фасадом примерно к центру площадки
+      paint(view, RING.indexOf(b) * 3 + 1);
       g.add(view);
     }
 
     // Дрон — левитирующий идол над центром. Модель idol_dron — «чудо»-монумент реальной игры
     // (метра 4-5 в высоту на масштабе 1), для диорамы уменьшаем на порядок, а не как здания.
-    const drone = assets.get('idol_dron');
+    const drone = assets.get('bld_chudo');   // капище Идола Дрона из самой игры — парит над заставой
     cloneOwnMaterials(drone);
-    drone.position.set(0, 1.05, 0);
-    drone.scale.setScalar(0.17);
+    drone.position.set(0, 0.02, 0);
+    drone.scale.setScalar(0.42);
     g.add(drone);
     this.drone = drone;
-    drone.traverse(o => {
-      if (o.isMesh && o.material && o.material.name === 'idol_eye') {
-        this.droneEye = o.material;
-        this.droneEyeBase = o.material.emissiveIntensity ?? 1;
-      }
-    });
+    this.glowMats = [];   // светящиеся руны/глаз — пульсируют
+    drone.traverse(o => { if (o.isMesh && o.material && (o.material.emissive && o.material.emissive.getHex() > 0 && o.material.emissiveIntensity > 0.2)) this.glowMats.push(o.material); });
+    this.droneEyeBase = 1;
 
     // прожектор Дрона — сканирует площадку медленным кругом
     const spot = new THREE.SpotLight(0x9fe8ff, 5.5, 11, Math.PI / 6.5, 0.45, 1.3);
-    spot.position.set(0, 1.05, 0);
+    spot.position.set(0, 1.5, 0);
     const spotTarget = new THREE.Object3D();
     spotTarget.position.set(1.7, 0, 0);
     g.add(spotTarget);
@@ -180,6 +192,8 @@ export class Lobby {
     g.add(spot);
     this.spot = spot; this.spotTarget = spotTarget;
 
+    const fill = new THREE.HemisphereLight(0xfff0d0, 0x6a7a4a, 1.4);   // мягкая заливка: диорама не тонет в тени
+    g.add(fill);
     scene.add(g);
     this.group = g;
 
@@ -187,8 +201,10 @@ export class Lobby {
     // тот пересчитает camera.position с нуля на первом же кадре настоящего Loop после старта партии)
     // диорама смещена в кадре к правому краю (там же, где в разметке #start остаётся видимый зазор
     // у панели) — камера смотрит НЕ в центр группы, а левее её, отчего сама группа уезжает вправо.
-    this._camBase = new THREE.Vector3(0.5, 1.9, 5.6);
-    this._camLook = new THREE.Vector3(-4.8, 0.65, 0);
+    const wideCam = window.innerWidth >= 1400 && window.innerHeight >= 700;
+    this._camBase = wideCam ? new THREE.Vector3(0.4, 2.6, 7.4) : new THREE.Vector3(0.5, 1.9, 5.6);
+    const wide = window.innerWidth >= 1400 && window.innerHeight >= 700;
+    this._camLook = new THREE.Vector3(wide ? -3.0 : -4.8, wide ? 0.85 : 0.65, 0);
     this.game.camera.position.copy(this._camBase);
     this.game.camera.lookAt(this._camLook);
   }
@@ -200,7 +216,7 @@ export class Lobby {
     this.game.scene.remove(this.group);
     for (const geo of this._ownGeo) geo.dispose();
     for (const mat of this._ownMat) mat.dispose();
-    this.group = null; this.drone = null; this.droneEye = null; this.spot = null; this.spotTarget = null;
+    this.group = null; this.drone = null; this.glowMats = null; this.spot = null; this.spotTarget = null;
     this._ownGeo = []; this._ownMat = [];
   }
 
@@ -212,12 +228,13 @@ export class Lobby {
     this._t += dt;
 
     if (this.drone) {
-      this.drone.position.y = 1.05 + Math.sin((this._t / DRONE_BOB_PERIOD) * Math.PI * 2) * DRONE_BOB_AMPL;
+      this.drone.position.y = 0.02 + Math.sin((this._t / DRONE_BOB_PERIOD) * Math.PI * 2) * DRONE_BOB_AMPL;
       this.drone.rotation.y += dt * 0.22;
     }
-    if (this.droneEye) {
+    if (this.glowMats && this.glowMats.length) {
       const k = 0.5 + 0.5 * Math.sin((this._t / EYE_PULSE_PERIOD) * Math.PI * 2);
-      this.droneEye.emissiveIntensity = EYE_PULSE_MIN + (EYE_PULSE_MAX - EYE_PULSE_MIN) * k;
+      const v = EYE_PULSE_MIN + (EYE_PULSE_MAX - EYE_PULSE_MIN) * k;
+      for (const m of this.glowMats) m.emissiveIntensity = v;
     }
     if (this.spotTarget) {
       const a = (this._t / SPOT_SWEEP_PERIOD) * Math.PI * 2;

@@ -299,3 +299,9 @@ body.start-screen-open #bootlog{display:none!important}
 @media (prefers-reduced-motion:reduce){
   #start *,#start *::before,#start *::after{animation:none!important;transition-duration:.01ms!important}
 }
+
+/* Широкий экран: панель уезжает влево, справа открывается диорама лобби (Дрон над заставой) — раньше её целиком глушило стекло. */
+@media (min-width:1400px) and (min-height:700px){
+  #start{ justify-content:flex-start; padding-left:clamp(24px,4vw,80px); }
+  #start .start-box{ width:min(1040px,58vw); }
+}

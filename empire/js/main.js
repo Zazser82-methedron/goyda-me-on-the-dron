@@ -50,7 +50,7 @@ import { STORAGE_KEY } from './data/config.js?v=102';
 import { getFaction } from './data/factions.js?v=94';
 import { getMap, MAPS } from './data/maps.js?v=94';
 import { StartScreen } from './ui/StartScreen.js?v=104';
-import { Lobby } from './ui/Lobby.js?v=6';
+import { Lobby } from './ui/Lobby.js?v=12';
 import * as Transport from './sim/Transport.js?v=104';
 import * as Railroad from './sim/Railroad.js?v=105';
 
@@ -173,7 +173,7 @@ class Game {
     const G = window.__gboot || function () {};
     try {
       // модели грузятся в фоне — стартовый экран не ждёт (есть плейсхолдеры)
-      const modelsReady = this.assets.preload(MODELS).then(c => { this._glb = c; this._installHomeDetails(); G('models ' + c); }).catch(() => {});
+      const modelsReady = this.assets.preload(MODELS).then(c => { this._glb = c; this._installHomeDetails(); if (this.lobby) this.lobby.refresh(); G('models ' + c); }).catch(() => {});
       // но сейв/портал строят здания СРАЗУ: без ожидания они навсегда оставались плейсхолдер-коробками.
       // Ждём модели не дольше 4с — на медленной сети игра всё равно запустится.
       const waitModels = () => Promise.race([modelsReady, new Promise(r => setTimeout(r, 4000))]);
