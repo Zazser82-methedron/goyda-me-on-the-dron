@@ -4,7 +4,7 @@ export const MAPS = [
     pal: { a: 0x5f8f31, b: 0x7db03c, c: 0x9fd056, dirt: 0x97723f }, res: { tree: 1.7, stone: 0.8, ore: 0.8 },
     terr: { amp: 1.05, water: -0.7, river: 0.045, sand: -0.35, rock: 2.4, snow: 3.6, slopeMax: 1.1 } },
   { key: 'step', name: 'СТЕПЬ', emoji: '🌾', desc: 'Открытая равнина — мало леса, мало воды.',
-    pal: { a: 0x9aa840, b: 0xb4bf4c, c: 0xd0d466, dirt: 0xa88450 }, res: { tree: 0.5, stone: 1.0, ore: 1.1 },
+    pal: { a: 0x8fa04a, b: 0xa8b85a, c: 0xc4d072, dirt: 0xa08a5c }, res: { tree: 0.5, stone: 1.0, ore: 1.1 },
     terr: { amp: 0.38, water: -1.4, river: 0.015, sand: -0.95, rock: 2.8, snow: 4.0, slopeMax: 0.75 } },
   { key: 'gory', name: 'ГОРЫ', emoji: '⛰️', desc: 'Высокие горы — камень и золото.',
     pal: { a: 0x6f8a52, b: 0x88a266, c: 0xa4bc80, dirt: 0x8f7c5e }, res: { tree: 0.7, stone: 1.9, ore: 1.8 },

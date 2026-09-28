@@ -68,7 +68,7 @@ export class TerrainMesh {
     const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.96, metalness: 0, envMapIntensity: 0.3 });
     this._pbrGround(mat);                        // мгновенный процедурный детейл (без сети) — рисуем сразу
     if (this.tier !== 'low') this._loadRealTextures(mat);   // High: докачиваем фото-PBR (Poly Haven CC0), подменяем когда готово
-    mat.color.setRGB(1.3, 1.26, 1.12);   // >1: фото-текстура земли тёмная, лубочная трава должна быть яркой
+    mat.color.setRGB(1.26, 1.26, 1.18);   // >1: фото-текстура земли тёмная, лубочная трава должна быть яркой
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.receiveShadow = true; this.mesh.castShadow = false;
     scene.add(this.mesh);
@@ -390,7 +390,9 @@ diffuseColor.a *= goydaShoreAlpha;`)
     const inst = new THREE.InstancedMesh(geo, mat, count);
     inst.castShadow = false; inst.receiveShadow = true; inst.frustumCulled = false;
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), sc = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
-    const cols = [0x4f8a26, 0x66a030, 0x7db83c, 0x427820, 0x88b846];
+    // цвет травы берём из палитры карты (лес — сочно-зелёная, степь — золотисто-оливковая), а не одним зелёным на все карты
+    const pb = new THREE.Color(this.pal.b), pc = new THREE.Color(this.pal.c);
+    const cols = [pb.clone().multiplyScalar(0.8), pb.clone(), pc.clone().multiplyScalar(0.9), pb.clone().multiplyScalar(0.65), pc.clone()].map(c => c.getHex());
     let placed = 0;
     for (let attempt = 0; attempt < count * 3 && placed < count; attempt++) {
       const gx = 1 + Math.floor(Math.random() * (n - 2)), gy = 1 + Math.floor(Math.random() * (n - 2));

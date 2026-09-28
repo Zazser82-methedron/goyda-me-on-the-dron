@@ -1,7 +1,7 @@
 // ===== Движение, бой и ИИ юнитов (свои воины + враги). Воркеры — в Jobs.js =====
 import { TILE, GRID_N } from '../data/config.js?v=102';
 import { findPath, nearestAdj } from '../world/Pathfinding.js?v=94';
-import { updateWorker } from './Jobs.js?v=105';
+import { updateWorker } from './Jobs.js?v=111';
 import { bark } from '../data/barks.js?v=94';
 import { SpatialHash } from './SpatialHash.js?v=94';
 
@@ -336,6 +336,8 @@ export function updateUnits(state, dt, ctx) {
   buildingsHash.rebuild(state.buildings, getBX, getBZ);
   buildingsMaxBR = 0.3;
   for (const b of state.buildings) { const r = bRadius(b); if (r > buildingsMaxBR) buildingsMaxBR = r; }
+  state._jobTick = (state._jobTick || 0) + 1; state._simT = (state._simT || 0) + dt;   // для Jobs.js: нагрузка на ноды и чёрный список
+  state._foes = state.units.filter(u => u.faction === 'enemy' && u.hp > 0);   // для реакции холопов на угрозу (Jobs.js)
   aiTick++;   // ровно раз за тик симуляции — база для распределения ИИ-решений по кадрам
 
   for (const u of state.units) {
@@ -374,4 +376,8 @@ export function updateUnits(state, dt, ctx) {
       }
     } else u.stuckT = 0;
   }
+  // свободные холопы (стоят без дела ≥3 с): HUD подсвечивает их и зовёт нажать I
+  let idle = 0;
+  for (const u of state.units) if (u.faction === 'ours' && u.def.worker && u.hp > 0 && u.state === 'idle' && (u.idleT || 0) >= 3 && !u.moveOrder && !u.huntId && !u._waitFull) idle++;
+  state.idleWorkers = idle;
 }

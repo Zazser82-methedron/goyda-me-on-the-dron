@@ -5,12 +5,12 @@ import * as Quality from './engine/Quality.js?v=94';
 import { RTSCamera } from './engine/RTSCamera.js?v=100';
 import { Picker } from './engine/Picker.js?v=95';
 import { Loop } from './engine/Loop.js?v=100';
-import { Profiler } from './engine/Profiler.js?v=113';
+import { Profiler } from './engine/Profiler.js?v=119';
 import { AssetManager } from './engine/AssetManager.js?v=149';
-import { TerrainMesh } from './world/TerrainMesh.js?v=118';
+import { TerrainMesh } from './world/TerrainMesh.js?v=126';
 import { WorldBase } from './world/WorldBase.js?v=102';
 import { Sky } from './world/Sky.js?v=101';
-import { Atmosphere } from './world/Atmosphere.js?v=98';
+import { Atmosphere } from './world/Atmosphere.js?v=105';
 import { BuildingActivity } from './world/BuildingActivity.js?v=116';
 // Туман войны убран по просьбе игрока (Fog.js больше не используется)
 import { nearestAdj } from './world/Pathfinding.js?v=94';
@@ -19,25 +19,25 @@ import { GameState } from './sim/GameState.js?v=154';
 import * as Economy from './sim/Economy.js?v=118';
 import * as Estates from './sim/Estates.js?v=12';
 import * as BuildSys from './sim/Buildings.js?v=129';
-import * as Waves from './sim/Waves.js?v=115';
+import * as Waves from './sim/Waves.js?v=121';
 import * as Tech from './sim/Tech.js?v=94';
 import * as Nature from './sim/Nature.js?v=94';
-import * as Relics from './sim/Relics.js?v=105';
-import * as Camps from './sim/Camps.js?v=106';
+import * as Relics from './sim/Relics.js?v=111';
+import * as Camps from './sim/Camps.js?v=112';
 import * as Victory from './sim/Victory.js?v=11';
 import * as Wildlife from './sim/Wildlife.js?v=94';
 import * as Events from './sim/Events.js?v=94';
 import * as Achievements from './sim/Achievements.js?v=94';
 import * as Meta from './sim/Meta.js?v=94';
 import * as Research from './sim/Research.js?v=109';
-import { updateUnits, damage, awardExpeditionValor } from './sim/Units.js?v=114';
+import { updateUnits, damage, awardExpeditionValor } from './sim/Units.js?v=120';
 import { toggleEdict } from './sim/Edicts.js?v=94';
 import * as AntiSpiral from './sim/AntiSpiral.js?v=3';
 import { sfx, toggleMute, isMuted, resumeAudio } from './audio/Sfx.js?v=94';
 import { AmbientAudio } from './audio/Music.js?v=94';
-import { HUD } from './ui/HUD.js?v=108';
+import { HUD } from './ui/HUD.js?v=114';
 import { BuildMenu } from './ui/BuildMenu.js?v=123';
-import { Selection } from './ui/Selection.js?v=126';
+import { Selection } from './ui/Selection.js?v=132';
 import { Minimap } from './ui/Minimap.js?v=94';
 import { ResearchPanel } from './ui/Research.js?v=121';
 import { EstatesPanel } from './ui/EstatesPanel.js?v=12';
@@ -48,8 +48,8 @@ import { RANKS } from './data/ranks.js?v=94';
 import { bark } from './data/barks.js?v=94';
 import { STORAGE_KEY } from './data/config.js?v=102';
 import { getFaction } from './data/factions.js?v=94';
-import { getMap, MAPS } from './data/maps.js?v=102';
-import { StartScreen } from './ui/StartScreen.js?v=112';
+import { getMap, MAPS } from './data/maps.js?v=110';
+import { StartScreen } from './ui/StartScreen.js?v=120';
 import { Lobby } from './ui/Lobby.js?v=12';
 import * as Transport from './sim/Transport.js?v=104';
 import * as Railroad from './sim/Railroad.js?v=105';
@@ -658,10 +658,10 @@ class Game {
       resumeAudio();
       this.picker.setFromEvent(e);
       if (e.button === 0) {            // ЛКМ — выбор / постройка / (если взведён 🎯 ПРИКАЗ) — команда
-        this._keepBuild = e.shiftKey;
+        this._keepBuild = e.shiftKey; this._shift = e.shiftKey;
         if (this._orderPending) { this._orderPending = false; this._command(); this._syncOrderBtn(); }
         else if (this.buildKind) { this.placing = true; this._placeAt(); }
-        else this._select();
+        else { this._select(); this._boxStart = { x: e.clientX, y: e.clientY, on: false }; }
       } else if (e.button === 2) {     // ПКМ — команда (или отмена стройки)
         e.preventDefault();
         if (this.buildKind) { this.buildKind = null; this.terrain.hideGhost(); }
@@ -670,14 +670,15 @@ class Game {
     });
     cv.addEventListener('pointermove', (e) => {
       if (e.pointerType === 'touch') return;
+      if (this._boxStart && (e.buttons & 1)) this._boxDrag(e);
       this.picker.setFromEvent(e);
       this._pointerMoved = true;
       if (this.placing && this.buildKind && BUILDINGS[this.buildKind].wall) this._placeAt(true);
     });
-    window.addEventListener('pointerup', () => { this.placing = false; });
+    window.addEventListener('pointerup', (e) => { this.placing = false; this._boxEnd(e); });
     this._touchInput();
     window.addEventListener('keydown', (e) => {
-      if (e.code === 'Escape') { this.buildKind = null; this.terrain.hideGhost(); this.state.selected = null; this._orderPending = false; }
+      if (e.code === 'Escape') { this.buildKind = null; this.terrain.hideGhost(); this.state.selected = null; this.group = []; this._orderPending = false; }
       else if (e.code === 'Space') { e.preventDefault(); this.activateSuper(); }
       else if (e.code === 'KeyR' && this.buildKind) { this._buildRot = ((this._buildRot || 0) + 1) % 4; sfx('click'); }   // R — повернуть постройку
       else if (e.code === 'KeyP') { this._setSpeed(this.loop.speed > 0 ? 0 : (this._lastSpeed || 1)); }                  // P — пауза/продолжить
@@ -686,7 +687,9 @@ class Game {
       else if (e.code === 'Digit3') this._setSpeed(3);
       else if (e.code === 'Home') { e.preventDefault(); this._tacticalHome(); }
       else if (e.code === 'KeyC') this._focusTownhall();
-      else if (e.code === 'KeyI') this._cycleUnit(u => u.def.worker && !u.job && !u.moveOrder && !u.path && u.state !== 'build', 'Свободных холопов нет');
+      else if (e.code === 'KeyI') this._cycleUnit(u => u.def.worker && u.state === 'idle' && !u.moveOrder && !u.huntId, 'Свободных холопов нет');
+      else if (e.code === 'KeyZ') this._selectAll(u => u.def.worker, 'холопов');
+      else if (e.code === 'KeyX') this._selectAll(u => !u.def.worker, 'воинов');
       else if (e.code === 'Tab') { e.preventDefault(); this._cycleUnit(u => !u.def.worker, 'Воинов пока нет'); }
     });
     document.getElementById('superBtn').onclick = () => this.activateSuper();
@@ -826,62 +829,158 @@ class Game {
   // ЛКМ / тап — только выбор
   _select(cx, cy) {
     const ent = this._entUnder(cx, cy);
+    const own = ent && ent.type === 'unit' && ent.faction === 'ours';
+    if (this._shift && own && this.state.selected && this.state.selected.type === 'unit' && this.state.selected.faction === 'ours') {
+      // Shift+клик — добавить/убрать юнита из группы
+      const g = this._group().slice();
+      const i = g.indexOf(ent);
+      if (i >= 0) g.splice(i, 1); else g.push(ent);
+      this.group = g;
+      if (i >= 0 && this.state.selected === ent) this.state.selected = g[0] || null;
+      else if (i < 0) this.state.selected = g[0];
+      sfx('click');
+      return;
+    }
     this.state.selected = ent || null;
+    this.group = own ? [ent] : [];
     if (ent) {
       sfx('click');
       if (ent.type === 'unit' && ent.faction === 'ours') this.float(ent.x, ent.z, bark('select'), '#ffe8b5', 1.4);
     }
   }
 
-  // ПКМ / 🎯 ПРИКАЗ / двойной тап — команда выбранному своему юниту (двигаться / рубить / в атаку)
+  // ---- ГРУППА: рамка мышью / Shift+клик / Z,X. state.selected — главный, this.group — все выбранные свои юниты ----
+  _group() {
+    const alive = (this.group || []).filter(u => u && u.hp > 0 && this.state.units.includes(u));
+    const sel = this.state.selected;
+    if (sel && sel.type === 'unit' && sel.faction === 'ours' && !alive.includes(sel)) alive.unshift(sel);
+    return alive;
+  }
+  groupSize() { return this._group().length || 1; }
+
+  _selectAll(pred, what) {
+    const list = this.state.units.filter(u => u.faction === 'ours' && u.hp > 0 && pred(u));
+    if (!list.length) { this.toasts.show('Нет ' + what, { bad: true }); return; }
+    this.group = list; this.state.selected = list[0]; sfx('click');
+    this.toasts.show('Выбрано ' + what + ': ' + list.length + ' · ПКМ — приказ всем', { gold: true });
+  }
+
+  // рамка выделения: тянем ЛКМ по земле
+  _boxDrag(e) {
+    const b = this._boxStart;
+    if (!b || this.buildKind || this._orderPending) return;
+    if (!b.on && Math.hypot(e.clientX - b.x, e.clientY - b.y) < 8) return;
+    b.on = true;
+    if (!this._selBoxEl) { this._selBoxEl = document.createElement('div'); this._selBoxEl.id = 'selBox'; document.body.appendChild(this._selBoxEl); }
+    const el = this._selBoxEl;
+    el.style.display = 'block';
+    el.style.left = Math.min(b.x, e.clientX) + 'px'; el.style.top = Math.min(b.y, e.clientY) + 'px';
+    el.style.width = Math.abs(e.clientX - b.x) + 'px'; el.style.height = Math.abs(e.clientY - b.y) + 'px';
+  }
+  _boxEnd(e) {
+    const b = this._boxStart; this._boxStart = null;
+    if (this._selBoxEl) this._selBoxEl.style.display = 'none';
+    if (!b || !b.on || !this.state) return;
+    const rc = this.canvas.getBoundingClientRect();
+    const x0 = Math.min(b.x, e.clientX), x1 = Math.max(b.x, e.clientX), y0 = Math.min(b.y, e.clientY), y1 = Math.max(b.y, e.clientY);
+    const v = new THREE.Vector3(), list = [];
+    for (const u of this.state.units) {
+      if (u.faction !== 'ours' || u.hp <= 0) continue;
+      v.set(u.x, (this.state.grid.heightAt ? this.state.grid.heightAt(u.x, u.z) : 0) + 0.5, u.z).project(this.camera);
+      if (v.z > 1) continue;
+      const sx = rc.left + (v.x * 0.5 + 0.5) * rc.width, sy = rc.top + (-v.y * 0.5 + 0.5) * rc.height;
+      if (sx >= x0 && sx <= x1 && sy >= y0 && sy <= y1) list.push(u);
+    }
+    if (!list.length) return;
+    // если в рамке есть и холопы, и воины — берём воинов (их чаще выбирают рамкой), холопов — Z
+    const fighters = list.filter(u => !u.def.worker);
+    const pick = fighters.length && fighters.length < list.length ? (this._shift ? list : fighters) : list;
+    const merged = this._shift ? Array.from(new Set([...this._group(), ...pick])) : pick;
+    this.group = merged; this.state.selected = merged[0]; sfx('click');
+    this.toasts.show('Выбрано: ' + merged.length + ' · ПКМ — приказ всем', { gold: true });
+  }
+
+  // массовая смена ресурса: кнопки 🪵🪨⛏ в панели выбора → все выбранные холопы добывают этот тип рядом
+  setGatherType(type) {
+    const list = this._group().filter(u => u.def.worker);
+    if (!list.length) return;
+    for (const u of list) {
+      u.huntId = null; u.workSite = null; u.job = null; u.jobType = type; u.pref = type;
+      u.manualIdle = false; u.moveOrder = null; u.path = null; u.idleT = 0; u._bad = null;
+    }
+    sfx('click');
+    const lbl = { wood: '🪵 рубим лес', stone: '🪨 добываем камень', gold: '⛏️ ищем руду' }[type];
+    this.toasts.show((list.length > 1 ? list.length + ' холопов: ' : 'Холоп: ') + lbl, { gold: true });
+  }
+
+  // ПКМ / 🎯 ПРИКАЗ / двойной тап — команда выбранному своему юниту ИЛИ всей выбранной группе
   _command(cx, cy) {
     const sel = this.state.selected;
     if (!(sel && sel.type === 'unit' && sel.faction === 'ours')) return;
     const ent = this._entUnder(cx, cy);
+    const t = this.picker.tileUnder(this.camera, this.state.grid);
+    const units = this._group();
+    const list = units.length > 1 ? units : [sel];
+    this._orderSlotsFull = false;
+    list.forEach((u, i) => this._orderOne(u, ent, t, i, list.length));
+    if (list.length > 1 && this._orderSlotsFull) this.toast('Не всем хватило рабочих мест', { bad: true });
+  }
+
+  // смещения для группового приказа «идти»: юниты встают россыпью вокруг точки, а не в одну клетку
+  _spread(t, i) {
+    const OFF = [[0,0],[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1],[2,0],[-2,0],[0,2],[0,-2],[2,1],[-2,-1],[1,2],[-1,-2],[2,-1],[-2,1],[1,-2],[-1,2],[3,0],[-3,0],[0,3],[0,-3]];
+    const o = OFF[i % OFF.length], n = this.state.grid.n;
+    return { x: Math.max(1, Math.min(n - 2, t.x + o[0])), y: Math.max(1, Math.min(n - 2, t.y + o[1])) };
+  }
+
+  _orderOne(sel, ent, t, i, total) {
+    const first = i === 0;   // звук/всплывашки/кольцо — один раз на группу
     // рубить ресурс (для добытчика)
     if (ent && ent.type === 'node' && sel.def.worker) {
-      sel.huntId = null; sel.workSite = null; sel.job = ent.id; sel.jobType = ent.resType; sel.manualIdle = false; sel.moveOrder = null; sel.path = null; sel.state = 'toNode';
-      sfx('click'); this.float(sel.x, sel.z, 'Иду рубить!', '#9effd0', 1.4);
-      { const w = this.state.grid.gridToWorld(ent.gx, ent.gy); this.orderRipple(w.wx, w.wz, 0x9effd0); } return;
+      sel.huntId = null; sel.workSite = null; sel.job = ent.id; sel.jobType = ent.resType; sel.pref = ent.resType; sel.manualIdle = false; sel.moveOrder = null; sel.path = null; sel.state = 'toNode'; sel.idleT = 0; sel._bad = null;
+      if (first) { sfx('click'); this.float(sel.x, sel.z, total > 1 ? 'Добываем! ×' + total : 'Иду добывать!', '#9effd0', 1.4);
+        const w = this.state.grid.gridToWorld(ent.gx, ent.gy); this.orderRipple(w.wx, w.wz, 0x9effd0); }
+      return;
     }
     // постоянная работа на добывающем здании (слот резервируется ещё пока холоп идёт)
     if (ent && ent.type === 'building' && sel.def.worker && ent.built && !ent.ruined && ent.def.workSlots) {
       const assigned = this.state.units.reduce((n, u) => n + (u.id !== sel.id && u.faction === 'ours' && u.def.worker && u.workSite === ent.id ? 1 : 0), 0);
       if (assigned >= ent.def.workSlots) {
-        this.toast('Все рабочие места заняты', { bad: true });
+        if (total > 1) this._orderSlotsFull = true; else this.toast('Все рабочие места заняты', { bad: true });
         return;
       }
-      sel.huntId = null; sel.buildSite = null; sel.workSite = ent.id; sel.job = null; sel.manualIdle = true; sel.moveOrder = null; sel.path = null; sel.state = sel.carry > 0 ? 'toDrop' : 'toWork';
-      sfx('click'); this.float(sel.x, sel.z, 'На работу: ' + ent.def.icon, '#9effd0', 1.4);
-      this.orderRipple(ent.cx, ent.cz, 0x9effd0); return;
+      sel.huntId = null; sel.buildSite = null; sel.workSite = ent.id; sel.job = null; sel.manualIdle = true; sel.moveOrder = null; sel.path = null; sel.state = sel.carry > 0 ? 'toDrop' : 'toWork'; sel.idleT = 0;
+      if (first) { sfx('click'); this.float(sel.x, sel.z, 'На работу: ' + ent.def.icon, '#9effd0', 1.4); this.orderRipple(ent.cx, ent.cz, 0x9effd0); }
+      return;
     }
     // охота на зверя (любой свой юнит)
     if (ent && ent.type === 'animal') {
       sel.huntId = ent.id; sel.moveOrder = null; sel.path = null; sel._huntTx = null;
-      if (sel.def.worker) { sel.workSite = null; sel.job = null; sel.manualIdle = true; }
-      sfx('click'); this.float(sel.x, sel.z, 'На охоту! ' + ent.def.icon, '#ffe08a', 1.4);
-      this.orderRipple(ent.x, ent.z, 0xffe08a); return;
+      if (sel.def.worker) { sel.workSite = null; sel.job = null; sel.manualIdle = true; sel.idleT = 0; }
+      if (first) { sfx('click'); this.float(sel.x, sel.z, 'На охоту! ' + ent.def.icon, '#ffe08a', 1.4); this.orderRipple(ent.x, ent.z, 0xffe08a); }
+      return;
     }
     // в атаку на врага (для воина)
     if (ent && ent.type === 'unit' && ent.faction === 'enemy' && !sel.def.worker) {
       const g = this.state.grid.worldToGrid(ent.x, ent.z);
       sel.huntId = null; sel.moveOrder = { x: g.x, y: g.y }; sel.path = null;
-      sfx('click'); this.float(sel.x, sel.z, 'В атаку!', '#ff8a8a', 1.4);
-      this.orderRipple(ent.x, ent.z, 0xff6a6a); return;
+      if (first) { sfx('click'); this.float(sel.x, sel.z, total > 1 ? 'В атаку! ×' + total : 'В атаку!', '#ff8a8a', 1.4); this.orderRipple(ent.x, ent.z, 0xff6a6a); }
+      return;
     }
     // снести вражий стан (для воина)
     if (ent && ent.type === 'camp' && !sel.def.worker) {
       sel.huntId = null; sel.targetCampId = ent.id; sel.moveOrder = null; sel.path = null;
-      sfx('click'); this.float(sel.x, sel.z, 'Снести стан!', '#ff8a8a', 1.4);
-      this.orderRipple(ent.cx, ent.cz, 0xff6a6a); return;
+      if (first) { sfx('click'); this.float(sel.x, sel.z, 'Снести стан!', '#ff8a8a', 1.4); this.orderRipple(ent.cx, ent.cz, 0xff6a6a); }
+      return;
     }
-    // идти на указанную точку (любой свой юнит — куда скажешь)
-    const t = this.picker.tileUnder(this.camera, this.state.grid);
+    // идти на указанную точку (любой свой юнит — куда скажешь); группа встаёт россыпью
     if (t) {
-      sel.huntId = null; sel.moveOrder = { x: t.x, y: t.y }; sel.path = null;
-      if (sel.def.worker) { sel.workSite = null; sel.job = null; sel.manualIdle = true; }
-      sfx('click'); this.float(sel.x, sel.z, 'Идём!', '#9effd0', 1.4);
-      { const w = this.state.grid.gridToWorld(t.x, t.y); this.orderRipple(w.wx, w.wz, 0x9effd0); }
+      const d = total > 1 ? this._spread(t, i) : t;
+      sel.huntId = null; sel.moveOrder = { x: d.x, y: d.y }; sel.path = null;
+      // холоп после «идти» постоит немного и сам вернётся к делу (Jobs.js, IDLE_RESUME) — раньше стоял вечно
+      if (sel.def.worker) { sel.workSite = null; sel.job = null; sel.manualIdle = true; sel.idleT = 0; }
+      if (first) { sfx('click'); this.float(sel.x, sel.z, total > 1 ? 'Идём! ×' + total : 'Идём!', '#9effd0', 1.4);
+        const w = this.state.grid.gridToWorld(t.x, t.y); this.orderRipple(w.wx, w.wz, 0x9effd0); }
     }
   }
 
@@ -978,6 +1077,7 @@ class Game {
       this._selRing.rotation.x = -Math.PI / 2; this._selRing.renderOrder = 5;
       this.scene.add(this._selRing);
     }
+    this._updateGroupRings(alpha);
     const r = this._selRing;
     let x, z, rad = 0.8, col = 0xffd24a;
     if (sel.type === 'unit' || sel.type === 'animal') {
@@ -996,6 +1096,24 @@ class Game {
     r.rotation.z = now * 0.0011;
     r.material.color.setHex(col);
     r.visible = true;
+  }
+
+  // кольца под остальными выбранными юнитами группы (главный подсвечен большим кольцом отдельно)
+  _updateGroupRings(alpha) {
+    const g = this._group();
+    if (!this._grpRings) this._grpRings = [];
+    const rings = this._grpRings, sel = this.state.selected;
+    const others = g.length > 1 ? g.filter(u => u !== sel) : [];
+    for (let i = 0; i < Math.max(rings.length, others.length); i++) {
+      if (i >= others.length) { if (rings[i]) rings[i].visible = false; continue; }
+      if (!rings[i]) {
+        const m = new THREE.Mesh(new THREE.RingGeometry(0.34, 0.44, 24), new THREE.MeshBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.8, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+        m.rotation.x = -Math.PI / 2; m.renderOrder = 5; this.scene.add(m); rings[i] = m;
+      }
+      const u = others[i];
+      const x = u.px + (u.x - u.px) * alpha, z = u.pz + (u.z - u.pz) * alpha;
+      rings[i].position.set(x, this.state.grid.heightAt(x, z) + 0.07, z); rings[i].visible = true;
+    }
   }
 
   // расходящееся кольцо-подтверждение команды (на земле под точкой приказа)

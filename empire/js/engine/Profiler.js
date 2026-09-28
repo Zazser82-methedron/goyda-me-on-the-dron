@@ -1,7 +1,7 @@
 // ===== Профилировщик производительности: тик/рендер/FPS/draw calls, оверлей по F3 =====
 // Подключается опционально в Loop (loop.profiler = ...) — при отсутствии профилировщика
 // в Loop нет накладных расходов, кроме одной проверки на null.
-import { reachSet } from '../sim/Waves.js?v=115';
+import { reachSet } from '../sim/Waves.js?v=121';
 import { UNITS } from '../data/units.js?v=101';
 import { hostileFor } from '../data/factions.js?v=94';
 

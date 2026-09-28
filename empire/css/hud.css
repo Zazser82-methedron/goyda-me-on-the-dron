@@ -297,3 +297,14 @@
   .bcard{ min-height:148px; }
   .bcard-img{ height:58px; }
 }
+
+/* свободные холопы: заметный пульсирующий значок в верхней панели */
+.idle-badge{ background:linear-gradient(135deg,#5a3a08,#2a1a04); border:1.5px solid var(--gold); color:var(--gold-bright); border-radius:999px;
+  padding:3px 10px; font-size:13px; font-weight:900; letter-spacing:.5px; animation:idlePulse 1.6s ease-in-out infinite; }
+.idle-badge:hover{ filter:brightness(1.2); }
+@keyframes idlePulse{ 50%{ box-shadow:0 0 12px rgba(255,204,0,.65); } }
+/* рамка выделения мышью */
+#selBox{ position:fixed; z-index:60; pointer-events:none; border:1.5px solid rgba(255,214,110,.95); background:rgba(255,214,110,.14); display:none; }
+.sel-gather{ display:flex; gap:4px; margin:4px 0; }
+.gbtn{ flex:1; background:rgba(0,0,0,.35); border:1px solid var(--panel-br); color:var(--text); border-radius:6px; padding:5px 4px; font-size:11px; font-weight:800; }
+.gbtn:hover{ border-color:var(--gold); color:var(--gold-bright); }

@@ -102,17 +102,17 @@ export class Atmosphere {
 
   _buildBirds() {
     this.birds = [];
-    const mat = new THREE.MeshBasicMaterial({ color: this.neon ? 0x301a44 : 0x20242c, fog: true });
+    const mat = new THREE.MeshBasicMaterial({ color: this.neon ? 0x4a2a66 : 0x4a4f5a, fog: true });
     const half = this.grid.n * 0.4;
     for (let i = 0; i < (this.low ? 3 : 7); i++) {
       const g = new THREE.Group();
-      const wl = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.04, 0.18), mat);
-      const wr = wl.clone(); wl.position.x = -0.26; wr.position.x = 0.26;
+      const wl = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.03, 0.12), mat);
+      const wr = wl.clone(); wl.position.x = -0.18; wr.position.x = 0.18;
       g.add(wl, wr); g.renderOrder = 8; this.scene.add(g);
       this.birds.push({
         g, wl, wr,
         cx: (Math.random() - 0.5) * half, cz: (Math.random() - 0.5) * half,   // МИРОВОЙ центр круга (не камера!)
-        a: Math.random() * 6.28, r: 6 + Math.random() * 10, h: 10 + Math.random() * 7,
+        a: Math.random() * 6.28, r: 6 + Math.random() * 10, h: 16 + Math.random() * 9,
         spd: (0.09 + Math.random() * 0.12) * (Math.random() < 0.5 ? 1 : -1),    // разные направления вращения
         flap: Math.random() * 6.28, flapSpd: 7 + Math.random() * 4, glide: 0,
         driftA: Math.random() * 6.28, driftR: 5 + Math.random() * 6,

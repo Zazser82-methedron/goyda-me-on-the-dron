@@ -35,6 +35,12 @@ export class HUD {
       `<span class="chip" title="${label(k).ru}"><b style="color:${label(k).color}">${label(k).icon}</b><i id="r-${k}">0</i></span>`
     ).join('');
     for (const k of HUD_RES) this._chips[k] = document.getElementById('r-' + k);
+    // значок «свободные холопы»: виден только когда есть простаивающие; клик — выбрать ближайшего (как клавиша I)
+    this.idleEl = document.createElement('button');
+    this.idleEl.className = 'idle-badge'; this.idleEl.style.display = 'none';
+    this.idleEl.title = 'Холопы без дела — клик: выбрать (клавиша I); Z — выбрать всех холопов';
+    this.idleEl.onclick = () => this.game._cycleUnit(u => u.def.worker && u.state === 'idle' && !u.moveOrder && !u.huntId, 'Свободных холопов нет');
+    this.statusEl.parentElement.insertBefore(this.idleEl, this.statusEl.nextSibling);
   }
 
   update() {
@@ -57,6 +63,10 @@ export class HUD {
 
     const hc = s.happiness > 60 ? '#5eff8b' : s.happiness > 35 ? '#ffcc00' : '#ff5050';
     this.statusEl.innerHTML = `👥 <b>${s.population}/${s.popCap}</b> · <span style="color:${hc}">😊 ${Math.round(s.happiness)}%</span> · 📅 <b>${s.day}</b><small style="display:block;opacity:.82" title="Три пути к победе">${progressText(s)}</small>`;
+
+    const idle = s.idleWorkers || 0;
+    this.idleEl.style.display = idle > 0 ? '' : 'none';
+    if (idle > 0) this.idleEl.textContent = '💤 ' + idle;
 
     if (this.waveEl) {
       const tw = Math.max(0, Math.ceil(s.nextWaveIn || 0));

@@ -1,6 +1,6 @@
 // ===== Стартовый экран: выбор фракции и земли =====
 import { FACTIONS } from '../data/factions.js?v=94';
-import { MAPS } from '../data/maps.js?v=102';
+import { MAPS } from '../data/maps.js?v=110';
 
 const factionByKey = (key) => FACTIONS.find(f => f.key === key) || FACTIONS[0];
 const mapByKey = (key) => MAPS.find(m => m.key === key) || MAPS[0];

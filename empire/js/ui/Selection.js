@@ -92,8 +92,9 @@ export class Selection {
         html += `<button class="ord-btn" title="Нажми, потом укажи цель на карте">🎯 ПРИКАЗ</button>`;
         html += `<div class="sel-tag">ПКМ (или 🎯 ПРИКАЗ) — идти куда укажешь / в атаку</div>`;
       } else if (sel.def.worker) {
+        html += `<div class="sel-gather"><button class="gbtn" data-g="wood" title="Рубить лес рядом — сами носят на склад">🪵 Лес</button><button class="gbtn" data-g="stone" title="Добывать камень рядом">🪨 Камень</button><button class="gbtn" data-g="gold" title="Добывать руду рядом">⛏️ Руда</button></div>`;
         html += `<button class="ord-btn" title="Нажми, потом укажи цель на карте">🎯 ПРИКАЗ</button>`;
-        html += `<div class="sel-tag">ПКМ (или 🎯 ПРИКАЗ) по ресурсу 🌳🪨🪙 — рубить · по земле — идти</div>`;
+        html += `<div class="sel-tag">ПКМ по ресурсу 🌳🪨🪙 — добывать · по зданию — на работу · по земле — идти. Рамка мышью / Shift — выбрать группу, Z — все холопы</div>`;
       }
     } else if (sel.type === 'node') {
       const lbl = RES_LABEL[sel.resType];
@@ -123,6 +124,7 @@ export class Selection {
         this.el.querySelectorAll('.stbtn').forEach(b => b.classList.toggle('on', b.dataset.st === btn.dataset.st));
       };
     });
+    this.el.querySelectorAll('.gbtn').forEach(btn => { btn.onclick = () => this.game.setGatherType(btn.dataset.g); });
     const ord = this.el.querySelector('.ord-btn');
     if (ord) ord.onclick = () => this.game._armOrder();
   }
@@ -178,10 +180,18 @@ export class Selection {
       else if (sel.type === 'building' && sel.idle) sub.textContent = '🛑 простой: не хватает сырья';
       else if (sel.type === 'building' && sel.def.workSlots) sub.textContent = `👷 ${sel._activeWorkers || 0}/${sel.def.workSlots} работников`;
       else if (sel.type === 'building' && sel.trainQueue && sel.trainQueue.length) sub.textContent = `очередь: ${sel.trainQueue.length} (${Math.ceil(sel.trainLeft)}с)`;
-      else if (sel.type === 'unit' && sel.faction === 'ours' && sel.def.worker) sub.textContent = sel.carry > 0 ? `несёт ${sel.carry} ${RES_LABEL[sel.carryType] ? RES_LABEL[sel.carryType].icon : ''}` : (sel.state || '');
+      else if (sel.type === 'unit' && sel.faction === 'ours' && sel.def.worker) sub.textContent = workerStatus(sel, this.game.groupSize ? this.game.groupSize() : 1);
       else sub.textContent = sel.bossName ? '☠️ ' + sel.bossName : '';
     }
   }
+}
+
+// понятный статус работника вместо сырого кода состояния
+const WSTATE = { idle: '💤 без дела', gather: '⛏️ добывает', toNode: '🚶 идёт к ресурсу', toDrop: '📦 несёт на склад', toWork: '🚶 идёт на работу', working: '🔧 работает', toBuild: '🚶 идёт на стройку', build: '🔨 строит' };
+function workerStatus(u, group) {
+  const carry = u.carry > 0 ? ' · несёт ' + u.carry + ' ' + (RES_LABEL[u.carryType] ? RES_LABEL[u.carryType].icon : '') : '';
+  const pref = u.pref && RES_LABEL[u.pref] ? ' · ' + RES_LABEL[u.pref].icon : '';
+  return (group > 1 ? 'Выбрано: ' + group + ' · ' : '') + (u.moveOrder ? '🚶 идёт' : (WSTATE[u.state] || u.state || '')) + carry + pref;
 }
 
 function produceStr(p) {
