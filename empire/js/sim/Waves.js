@@ -47,7 +47,7 @@ export function update(state, dt, ctx) {
   if (!canDefend) { state.nextWaveIn = undefined; resetRaidWarning(state); state._pendingFormat = null; return; }
 
   if (state.nextWaveIn === undefined) {
-    state.nextWaveIn = 28;   // мирная фора после готовности к обороне
+    state.nextWaveIn = 75;   // мирная фора после готовности к обороне (была 28 с — новичок не успевал построить казарму)
     ctx.toast && ctx.toast('🕊️ Скоро придут набеги — ставь ЧАСТОКОЛ и куй дружину.');
   }
 
