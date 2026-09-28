@@ -764,7 +764,29 @@ class Game {
 
   // cx,cy (экранные px) переданы только с тача — тогда, если точный райкаст промазал, пробуем с запасом радиуса
   // (палец толще курсора мыши; так тап-цели юнитов/ресурсов эффективно крупнее)
-  _entUnder(cx, cy) {
+  // ближайший юнит к точке экрана (px): выбор кликом не должен промахиваться по маленькому холопу рядом с камнем/зданием
+  _unitNear(px, py, rad) {
+    const rc = this.canvas.getBoundingClientRect(), v = new THREE.Vector3();
+    let best = null, bd = rad * rad;
+    for (const u of this.state.units) {
+      if (u.hp <= 0 || u.hidden) continue;
+      v.set(u.x, (this.state.grid.heightAt ? this.state.grid.heightAt(u.x, u.z) : 0) + 0.45, u.z).project(this.camera);
+      if (v.z > 1) continue;
+      const dx = rc.left + (v.x * 0.5 + 0.5) * rc.width - px, dy = rc.top + (-v.y * 0.5 + 0.5) * rc.height - py;
+      const d = dx * dx + dy * dy;
+      if (d < bd) { bd = d; best = u; }
+    }
+    return best;
+  }
+
+  _entUnder(cx, cy, preferUnits) {
+    if (preferUnits) {
+      const rc = this.canvas.getBoundingClientRect();
+      const px = cx !== undefined ? cx : rc.left + (this.picker.ndc.x * 0.5 + 0.5) * rc.width;
+      const py = cy !== undefined ? cy : rc.top + (-this.picker.ndc.y * 0.5 + 0.5) * rc.height;
+      const near = this._unitNear(px, py, cx !== undefined ? 26 : 16);
+      if (near) return near;
+    }
     // юниты — инстансные (InstancedMesh), поэтому идут через fields (nodeAt(instanceId)), а не pickables
     const list = this._pickables(), fields = Object.values(this.state.fields).concat(this.unitRenderer.pickFields());
     const exact = this.picker.entityUnder(this.camera, list, fields);
@@ -828,7 +850,7 @@ class Game {
 
   // ЛКМ / тап — только выбор
   _select(cx, cy) {
-    const ent = this._entUnder(cx, cy);
+    const ent = this._entUnder(cx, cy, true);
     const own = ent && ent.type === 'unit' && ent.faction === 'ours';
     if (this._shift && own && this.state.selected && this.state.selected.type === 'unit' && this.state.selected.faction === 'ours') {
       // Shift+клик — добавить/убрать юнита из группы
